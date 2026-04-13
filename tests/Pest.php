@@ -1,50 +1,56 @@
 <?php
 
+use App\Models\Company;
+use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/*
-|--------------------------------------------------------------------------
-| Test Case
-|--------------------------------------------------------------------------
-|
-| The closure you provide to your test functions is always bound to a specific PHPUnit test
-| case class. By default, that class is "PHPUnit\Framework\TestCase". Of course, you may
-| need to change it using the "pest()" function to bind different classes or traits.
-|
-*/
-
 pest()->extend(TestCase::class)
- // ->use(RefreshDatabase::class)
+    ->use(RefreshDatabase::class)
+    ->beforeEach(function () {
+        // 创建 Passport personal access client
+        $this->artisan('passport:client', [
+            '--personal' => true,
+            '--name' => 'Test',
+            '--provider' => 'users',
+        ]);
+
+        // 初始化角色和权限
+        $this->seed(RolesAndPermissionsSeeder::class);
+    })
     ->in('Feature');
 
-/*
-|--------------------------------------------------------------------------
-| Expectations
-|--------------------------------------------------------------------------
-|
-| When you're writing tests, you often need to check that values meet certain conditions. The
-| "expect()" function gives you access to a set of "expectations" methods that you can use
-| to assert different things. Of course, you may extend the Expectation API at any time.
-|
-*/
+// ── 测试辅助函数 ──────────────────────────────────────────
 
-expect()->extend('toBeOne', function () {
-    return $this->toBe(1);
-});
-
-/*
-|--------------------------------------------------------------------------
-| Functions
-|--------------------------------------------------------------------------
-|
-| While Pest is very powerful out-of-the-box, you may have some testing code specific to your
-| project that you don't want to repeat in every file. Here you can also expose helpers as
-| global functions to help you to reduce the number of lines of code in your test files.
-|
-*/
-
-function something()
+function createUserWithCompany(): array
 {
-    // ..
+    $company = Company::factory()->create();
+    $user = User::factory()->create(['company_id' => $company->id]);
+    $user->assignRole('user');
+    return [$user, $company];
+}
+
+function createAdminWithCompany(): array
+{
+    $company = Company::factory()->create();
+    $user = User::factory()->create(['company_id' => $company->id]);
+    $user->assignRole('admin');
+    return [$user, $company];
+}
+
+function createSuperAdminWithCompany(): array
+{
+    $company = Company::factory()->create();
+    $user = User::factory()->create(['company_id' => $company->id]);
+    $user->assignRole('super-admin');
+    return [$user, $company];
+}
+
+function createReviewerWithCompany(): array
+{
+    $company = Company::factory()->create();
+    $user = User::factory()->create(['company_id' => $company->id]);
+    $user->assignRole('reviewer');
+    return [$user, $company];
 }

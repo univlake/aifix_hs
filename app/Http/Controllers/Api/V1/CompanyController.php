@@ -1,0 +1,210 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreCompanyRequest;
+use App\Models\Company;
+use App\Traits\ApiTree;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+
+class CompanyController extends Controller
+{
+    use ApiTree;
+
+    /**
+     * 企业列表
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = Company::query();
+
+        // 搜索
+        if ($request->filled('title')) {
+            $query->where('title', 'like', '%' . $request->title . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('enterprise_type_id')) {
+            $query->where('enterprise_type_id', $request->enterprise_type_id);
+        }
+
+        if ($request->filled('operational_type_id')) {
+            $query->where('operational_type_id', $request->operational_type_id);
+        }
+
+        // 层级过滤：如果有 pid，只获取该企业的下属
+        if ($request->filled('pid')) {
+            $query->where('pid', $request->pid);
+        }
+
+        $list = $query->with(['enterpriseType', 'operationalType', 'pidName'])
+            ->orderBy('id', 'desc')
+            ->paginate($request->get('per_page', 15));
+
+        return $this->success($list);
+    }
+
+    /**
+     * 企业详情
+     */
+    public function show(int $id): JsonResponse
+    {
+        $company = Company::query()
+            ->with(['enterpriseType', 'operationalType', 'baseArea', 'users', 'pidName'])
+            ->find($id);
+
+        if (!$company) {
+            return $this->notFound('企业不存在');
+        }
+
+        return $this->success($company);
+    }
+
+    /**
+     * 创建企业
+     */
+    public function store(StoreCompanyRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $data['user_id'] = auth()->id() ?? 0;
+
+        $company = Company::create($data);
+
+        return $this->success($company);
+    }
+
+    /**
+     * 更新企业
+     */
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $company = Company::find($id);
+
+        if (!$company) {
+            return $this->notFound('企业不存在');
+        }
+
+        Gate::authorize('update', $company);
+
+        $data = $request->validate([
+            'title' => 'sometimes|required|string|max:255',
+            'enterprise_type_id' => 'nullable|integer',
+            'operational_type_id' => 'nullable|integer',
+            'area_id' => 'nullable|integer',
+            'address' => 'nullable|string',
+            'established' => 'nullable|date',
+            'credit_code' => 'nullable|string|max:255',
+            'business_scope' => 'nullable|string',
+            'company_introduction' => 'nullable|string',
+            'longitude' => 'nullable|numeric',
+            'dimension' => 'nullable|numeric',
+            'geographic_range' => 'nullable|string',
+            'acreage' => 'nullable|numeric',
+            'supervise_name' => 'nullable|string|max:255',
+            'supervise_tel' => 'nullable|string|max:255',
+            'supervise_fix' => 'nullable|string|max:255',
+            'supervise_email' => 'nullable|email|max:255',
+            'supervise_position' => 'nullable|string|max:255',
+            'status' => 'nullable|integer|in:0,1,2',
+            'is_produce' => 'nullable|integer|in:0,1',
+            'is_bloc' => 'nullable|integer|in:0,1',
+            'inherent_risk' => 'nullable|numeric',
+            'inherent_risk_grade' => 'nullable|string|max:255',
+            'float_risk' => 'nullable|numeric',
+            'float_risk_grade' => 'nullable|string|max:255',
+        ]);
+
+        $data['last_user_id'] = auth()->id() ?? 0;
+        $company->update($data);
+
+        return $this->success($company->fresh());
+    }
+
+    /**
+     * 删除企业
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        $company = Company::find($id);
+
+        if (!$company) {
+            return $this->notFound('企业不存在');
+        }
+
+        Gate::authorize('delete', $company);
+
+        $company->delete();
+
+        return $this->message('删除成功');
+    }
+
+    /**
+     * 企业树
+     */
+    public function tree(Request $request): JsonResponse
+    {
+        $query = Company::query()->where('status', 1);
+
+        if ($request->filled('pid')) {
+            $query->where('pid', $request->pid);
+        } else {
+            $query->where('pid', 0);
+        }
+
+        $companies = $query->with('companies:id,title,pid,status')
+            ->select(['id', 'title', 'pid', 'status'])
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return $this->success($companies);
+    }
+
+    /**
+     * 审核列表
+     */
+    public function reviewList(Request $request): JsonResponse
+    {
+        $query = Company::query()->where('status', 0);
+
+        if ($request->filled('title')) {
+            $query->where('title', 'like', '%' . $request->title . '%');
+        }
+
+        $list = $query->with(['enterpriseType', 'operationalType'])
+            ->orderBy('id', 'desc')
+            ->paginate($request->get('per_page', 15));
+
+        return $this->success($list);
+    }
+
+    /**
+     * 审核
+     */
+    public function review(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'status' => 'required|integer|in:1,2',
+        ]);
+
+        $company = Company::find($id);
+
+        if (!$company) {
+            return $this->notFound('企业不存在');
+        }
+
+        Gate::authorize('review', $company);
+
+        $company->update([
+            'status' => $request->status,
+            'last_user_id' => auth()->id() ?? 0,
+        ]);
+
+        return $this->message('审核成功');
+    }
+}

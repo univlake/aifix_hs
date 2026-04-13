@@ -10,6 +10,7 @@
     "sail": false,
     "skills": [
         "laravel-best-practices",
+        "passport-development",
         "wayfinder-development",
         "pest-testing",
         "inertia-react-development",
