@@ -1,0 +1,209 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Api\Controller;
+use App\Models\HiddenDangerInfo;
+use App\Models\HiddenUploadAnnex;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class HiddenDangerInfoController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $request->validate([
+            'expert_inspection_id' => 'required',
+        ]);
+
+        $query = HiddenDangerInfo::query()
+            ->where('expert_inspection_id', $request->expert_inspection_id)
+            ->when($request->filled('expert_company_id'), function ($q) use ($request) {
+                $q->where('expert_company_id', $request->expert_company_id);
+            })
+            ->when($request->filled('area'), function ($q) use ($request) {
+                $q->where('area', 'like', '%' . $request->area . '%');
+            })
+            ->with(['hiddenReviewAnnex', 'hiddenExamineAnnex'])
+            ->orderByDesc('created_at');
+
+        $data = $query->paginate($request->get('per_page', 15));
+
+        return $this->success($data);
+    }
+
+    public function show(int $id): JsonResponse
+    {
+        $data = HiddenDangerInfo::with(['hiddenReviewAnnex', 'hiddenExamineAnnex'])->find($id);
+
+        if (!$data) {
+            return $this->notFound('隐患信息不存在');
+        }
+
+        return $this->success($data);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'expert_inspection_id' => 'required|integer',
+            'expert_company_id' => 'required|integer',
+            'check_company_id' => 'nullable|integer',
+            'area' => 'required|string|max:255',
+            'session' => 'nullable|string|max:255',
+            'description' => 'required|string',
+            'hidden_type' => 'required|string|max:255',
+            'hidden_level' => 'required|string|max:255',
+            'legalises' => 'nullable|string',
+            'proposal' => 'nullable|string',
+            'correct_deadline' => 'nullable|date',
+            'invest_status' => 'nullable|integer',
+            'correct_status' => 'nullable|integer',
+            'correct_date' => 'nullable|date',
+            'review_description' => 'nullable|string',
+            'review_user_id' => 'nullable|integer',
+            'archive_user_id' => 'nullable|integer',
+            'comment' => 'nullable|string',
+            'company_id' => 'required|integer',
+            'hiddenExamineAnnex' => 'nullable|array',
+            'hiddenExamineAnnex.*.geolocation' => 'nullable|string',
+            'hiddenExamineAnnex.*.annex_url' => 'nullable|string',
+            'hiddenReviewAnnex' => 'nullable|array',
+            'hiddenReviewAnnex.*.geolocation' => 'nullable|string',
+            'hiddenReviewAnnex.*.annex_url' => 'nullable|string',
+        ]);
+
+        $data['user_id'] = auth()->id() ?? 0;
+        $data['last_user_id'] = auth()->id() ?? 0;
+
+        $hiddenExamineAnnex = $data['hiddenExamineAnnex'] ?? [];
+        $hiddenReviewAnnex = $data['hiddenReviewAnnex'] ?? [];
+        unset($data['hiddenExamineAnnex'], $data['hiddenReviewAnnex']);
+
+        $result = DB::transaction(function () use ($data, $hiddenExamineAnnex, $hiddenReviewAnnex) {
+            $hiddenDangerInfo = HiddenDangerInfo::create($data);
+
+            foreach ($hiddenExamineAnnex as $v) {
+                $hiddenDangerInfo->hiddenExamineAnnex()->create([
+                    'geolocation' => $v['geolocation'] ?? '',
+                    'is_review' => 1,
+                    'annex_url' => $v['annex_url'] ?? '',
+                    'user_id' => auth()->id() ?? 0,
+                ]);
+            }
+
+            foreach ($hiddenReviewAnnex as $v) {
+                $hiddenDangerInfo->hiddenReviewAnnex()->create([
+                    'geolocation' => $v['geolocation'] ?? '',
+                    'is_review' => 2,
+                    'annex_url' => $v['annex_url'] ?? '',
+                    'user_id' => auth()->id() ?? 0,
+                ]);
+            }
+
+            return $hiddenDangerInfo->load(['hiddenReviewAnnex', 'hiddenExamineAnnex']);
+        });
+
+        return $this->success($result);
+    }
+
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $hiddenDangerInfo = HiddenDangerInfo::find($id);
+
+        if (!$hiddenDangerInfo) {
+            return $this->notFound('隐患信息不存在');
+        }
+
+        $data = $request->validate([
+            'expert_inspection_id' => 'sometimes|nullable|integer',
+            'expert_company_id' => 'sometimes|nullable|integer',
+            'check_company_id' => 'sometimes|nullable|integer',
+            'area' => 'sometimes|nullable|string|max:255',
+            'session' => 'sometimes|nullable|string|max:255',
+            'description' => 'sometimes|nullable|string',
+            'hidden_type' => 'sometimes|nullable|string|max:255',
+            'hidden_level' => 'sometimes|nullable|string|max:255',
+            'legalises' => 'sometimes|nullable|string',
+            'proposal' => 'sometimes|nullable|string',
+            'correct_deadline' => 'sometimes|nullable|date',
+            'invest_status' => 'sometimes|nullable|integer',
+            'zg_user_id' => 'sometimes|nullable|integer',
+            'correct_status' => 'sometimes|nullable|integer',
+            'correct_date' => 'sometimes|nullable|date',
+            'review_description' => 'sometimes|nullable|string',
+            'review_user_id' => 'sometimes|nullable|integer',
+            'review_time' => 'sometimes|nullable|date',
+            'archive_user_id' => 'sometimes|nullable|integer',
+            'comment' => 'sometimes|nullable|string',
+            'company_id' => 'sometimes|nullable|integer',
+            'hiddenExamineAnnex' => 'nullable|array',
+            'hiddenExamineAnnex.*.geolocation' => 'nullable|string',
+            'hiddenExamineAnnex.*.annex_url' => 'nullable|string',
+            'hiddenReviewAnnex' => 'nullable|array',
+            'hiddenReviewAnnex.*.geolocation' => 'nullable|string',
+            'hiddenReviewAnnex.*.annex_url' => 'nullable|string',
+        ]);
+
+        $data['last_user_id'] = auth()->id() ?? 0;
+
+        if (!empty($data['review_description'])) {
+            $data['zg_user_id'] = auth()->id() ?? 0;
+        }
+        if (!empty($data['review_user_id'])) {
+            $data['review_time'] = now();
+        }
+
+        $hiddenExamineAnnex = $data['hiddenExamineAnnex'] ?? null;
+        $hiddenReviewAnnex = $data['hiddenReviewAnnex'] ?? null;
+        unset($data['hiddenExamineAnnex'], $data['hiddenReviewAnnex']);
+
+        DB::transaction(function () use ($hiddenDangerInfo, $data, $hiddenExamineAnnex, $hiddenReviewAnnex) {
+            $hiddenDangerInfo->update($data);
+
+            if ($hiddenExamineAnnex !== null) {
+                $hiddenDangerInfo->hiddenExamineAnnex()->delete();
+                foreach ($hiddenExamineAnnex as $v) {
+                    $hiddenDangerInfo->hiddenExamineAnnex()->create([
+                        'geolocation' => $v['geolocation'] ?? '',
+                        'is_review' => 1,
+                        'annex_url' => $v['annex_url'] ?? '',
+                        'user_id' => auth()->id() ?? 0,
+                    ]);
+                }
+            }
+
+            if ($hiddenReviewAnnex !== null) {
+                $hiddenDangerInfo->hiddenReviewAnnex()->delete();
+                foreach ($hiddenReviewAnnex as $v) {
+                    $hiddenDangerInfo->hiddenReviewAnnex()->create([
+                        'geolocation' => $v['geolocation'] ?? '',
+                        'is_review' => 2,
+                        'annex_url' => $v['annex_url'] ?? '',
+                        'user_id' => auth()->id() ?? 0,
+                    ]);
+                }
+            }
+        });
+
+        return $this->success($hiddenDangerInfo->fresh()->load(['hiddenReviewAnnex', 'hiddenExamineAnnex']));
+    }
+
+    public function destroy(int $id): JsonResponse
+    {
+        $hiddenDangerInfo = HiddenDangerInfo::find($id);
+
+        if (!$hiddenDangerInfo) {
+            return $this->notFound('隐患信息不存在');
+        }
+
+        DB::transaction(function () use ($hiddenDangerInfo) {
+            $hiddenDangerInfo->hiddenExamineAnnex()->delete();
+            $hiddenDangerInfo->hiddenReviewAnnex()->delete();
+            $hiddenDangerInfo->delete();
+        });
+
+        return $this->message('删除成功');
+    }
+}

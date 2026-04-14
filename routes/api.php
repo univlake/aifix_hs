@@ -64,7 +64,27 @@ use App\Http\Controllers\Api\V1\OfficeNotifyController;
 use App\Http\Controllers\Api\V1\NewNotifyController;
 use App\Http\Controllers\Api\V1\SecurityInvestmentController;
 use App\Http\Controllers\Api\V1\FundingExecutionController;
+use App\Http\Controllers\Api\V1\HiddenDangerInfoController;
+use App\Http\Controllers\Api\V1\RectificationSheetController;
+use App\Http\Controllers\Api\V1\HazardController;
+use App\Http\Controllers\Api\V1\RiskLogController;
+use App\Http\Controllers\Api\V1\InherentRiskLogController;
+use App\Http\Controllers\Api\V1\FloatRiskLogController;
+use App\Http\Controllers\Api\V1\RiskMaxValueController;
+use App\Http\Controllers\Api\V1\RiskDistributionMapController;
+use App\Http\Controllers\Api\V1\MonthlyInvestigationController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\DailyCheckTemplatesController;
+use App\Http\Controllers\Api\V1\DailyChecksController;
+use App\Http\Controllers\Api\V1\DoubleCheckTemplatesController;
+use App\Http\Controllers\Api\V1\DoubleChecksController;
+use App\Http\Controllers\Api\V1\SystemChecksController;
+use App\Http\Controllers\Api\V1\NormChecksController;
+use App\Http\Controllers\Api\V1\AccidentCheckTemplatesController;
+use App\Http\Controllers\Api\V1\AccidentChecksController;
+use App\Http\Controllers\Api\V1\AddPointsTemplatesController;
+use App\Http\Controllers\Api\V1\AddPointsController;
+use App\Http\Controllers\Api\V1\CheckStatisticsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -1003,5 +1023,323 @@ Route::prefix('v1')->group(function () {
         Route::middleware('permission:funding-executions.delete')->group(function () {
             Route::delete('/funding-executions/{id}', [FundingExecutionController::class, 'destroy']);
         });
+
+        // ══════════════════════════════════════════════
+        // Phase 5 批次 5.1: 隐患整改 (3 modules)
+        // ══════════════════════════════════════════════
+
+        // ── 隐患信息 ──────────────────────────────
+        Route::middleware('permission:hidden-danger-infos.list')->group(function () {
+            Route::get('/hidden-danger-infos', [HiddenDangerInfoController::class, 'index']);
+            Route::get('/hidden-danger-infos/{id}', [HiddenDangerInfoController::class, 'show']);
+        });
+        Route::middleware('permission:hidden-danger-infos.create')->group(function () {
+            Route::post('/hidden-danger-infos', [HiddenDangerInfoController::class, 'store']);
+        });
+        Route::middleware('permission:hidden-danger-infos.update')->group(function () {
+            Route::put('/hidden-danger-infos/{id}', [HiddenDangerInfoController::class, 'update']);
+            Route::patch('/hidden-danger-infos/{id}', [HiddenDangerInfoController::class, 'update']);
+        });
+        Route::middleware('permission:hidden-danger-infos.delete')->group(function () {
+            Route::delete('/hidden-danger-infos/{id}', [HiddenDangerInfoController::class, 'destroy']);
+        });
+
+        // ── 整改单 ──────────────────────────────
+        Route::middleware('permission:rectification-sheets.list')->group(function () {
+            Route::get('/rectification-sheets', [RectificationSheetController::class, 'index']);
+            Route::get('/rectification-sheets/{id}', [RectificationSheetController::class, 'show']);
+        });
+        Route::middleware('permission:rectification-sheets.create')->group(function () {
+            Route::post('/rectification-sheets', [RectificationSheetController::class, 'store']);
+        });
+        Route::middleware('permission:rectification-sheets.update')->group(function () {
+            Route::put('/rectification-sheets/{id}', [RectificationSheetController::class, 'update']);
+            Route::patch('/rectification-sheets/{id}', [RectificationSheetController::class, 'update']);
+        });
+        Route::middleware('permission:rectification-sheets.delete')->group(function () {
+            Route::delete('/rectification-sheets/{id}', [RectificationSheetController::class, 'destroy']);
+        });
+
+        // ══════════════════════════════════════════════
+        // Phase 5 批次 5.2: 风险管控 (9 modules)
+        // ══════════════════════════════════════════════
+
+        // ── 危险有害因素 ──────────────────────────────
+        Route::middleware('permission:hazards.list')->group(function () {
+            Route::get('/hazards', [HazardController::class, 'index']);
+            Route::get('/hazards/{id}', [HazardController::class, 'show']);
+        });
+        Route::middleware('permission:hazards.create')->group(function () {
+            Route::post('/hazards', [HazardController::class, 'store']);
+        });
+        Route::middleware('permission:hazards.update')->group(function () {
+            Route::put('/hazards/{id}', [HazardController::class, 'update']);
+            Route::patch('/hazards/{id}', [HazardController::class, 'update']);
+        });
+        Route::middleware('permission:hazards.delete')->group(function () {
+            Route::delete('/hazards/{id}', [HazardController::class, 'destroy']);
+        });
+
+        // ── 风险日志 ──────────────────────────────
+        Route::middleware('permission:risk-logs.list')->group(function () {
+            Route::get('/risk-logs', [RiskLogController::class, 'index']);
+            Route::get('/risk-logs/{id}', [RiskLogController::class, 'show']);
+        });
+        Route::middleware('permission:risk-logs.create')->group(function () {
+            Route::post('/risk-logs', [RiskLogController::class, 'store']);
+        });
+        Route::middleware('permission:risk-logs.update')->group(function () {
+            Route::put('/risk-logs/{id}', [RiskLogController::class, 'update']);
+            Route::patch('/risk-logs/{id}', [RiskLogController::class, 'update']);
+        });
+        Route::middleware('permission:risk-logs.delete')->group(function () {
+            Route::delete('/risk-logs/{id}', [RiskLogController::class, 'destroy']);
+        });
+
+        // ── 固有风险日志 (仅 index/store/update) ──────────────────────────────
+        Route::middleware('permission:inherent-risk-logs.list')->group(function () {
+            Route::get('/inherent-risk-logs', [InherentRiskLogController::class, 'index']);
+            Route::get('/inherent-risk-logs/{id}', [InherentRiskLogController::class, 'show']);
+        });
+        Route::middleware('permission:inherent-risk-logs.create')->group(function () {
+            Route::post('/inherent-risk-logs', [InherentRiskLogController::class, 'store']);
+        });
+        Route::middleware('permission:inherent-risk-logs.update')->group(function () {
+            Route::put('/inherent-risk-logs/{id}', [InherentRiskLogController::class, 'update']);
+            Route::patch('/inherent-risk-logs/{id}', [InherentRiskLogController::class, 'update']);
+        });
+        Route::middleware('permission:inherent-risk-logs.delete')->group(function () {
+            Route::delete('/inherent-risk-logs/{id}', [InherentRiskLogController::class, 'destroy']);
+        });
+
+        // ── 动态风险日志 ──────────────────────────────
+        Route::middleware('permission:float-risk-logs.list')->group(function () {
+            Route::get('/float-risk-logs', [FloatRiskLogController::class, 'index']);
+            Route::get('/float-risk-logs/{id}', [FloatRiskLogController::class, 'show']);
+        });
+        Route::middleware('permission:float-risk-logs.create')->group(function () {
+            Route::post('/float-risk-logs', [FloatRiskLogController::class, 'store']);
+        });
+        Route::middleware('permission:float-risk-logs.update')->group(function () {
+            Route::put('/float-risk-logs/{id}', [FloatRiskLogController::class, 'update']);
+            Route::patch('/float-risk-logs/{id}', [FloatRiskLogController::class, 'update']);
+        });
+        Route::middleware('permission:float-risk-logs.delete')->group(function () {
+            Route::delete('/float-risk-logs/{id}', [FloatRiskLogController::class, 'destroy']);
+        });
+
+        // ── 风险最大值 ──────────────────────────────
+        Route::middleware('permission:risk-max-values.list')->group(function () {
+            Route::get('/risk-max-values', [RiskMaxValueController::class, 'index']);
+            Route::get('/risk-max-values/{id}', [RiskMaxValueController::class, 'show']);
+        });
+        Route::middleware('permission:risk-max-values.create')->group(function () {
+            Route::post('/risk-max-values', [RiskMaxValueController::class, 'store']);
+        });
+        Route::middleware('permission:risk-max-values.update')->group(function () {
+            Route::put('/risk-max-values/{id}', [RiskMaxValueController::class, 'update']);
+            Route::patch('/risk-max-values/{id}', [RiskMaxValueController::class, 'update']);
+        });
+        Route::middleware('permission:risk-max-values.delete')->group(function () {
+            Route::delete('/risk-max-values/{id}', [RiskMaxValueController::class, 'destroy']);
+        });
+
+        // ── 风险分布图 (仅 index/store/update) ──────────────────────────────
+        Route::middleware('permission:risk-distribution-maps.list')->group(function () {
+            Route::get('/risk-distribution-maps', [RiskDistributionMapController::class, 'index']);
+        });
+        Route::middleware('permission:risk-distribution-maps.create')->group(function () {
+            Route::post('/risk-distribution-maps', [RiskDistributionMapController::class, 'store']);
+        });
+        Route::middleware('permission:risk-distribution-maps.update')->group(function () {
+            Route::put('/risk-distribution-maps/{id}', [RiskDistributionMapController::class, 'update']);
+            Route::patch('/risk-distribution-maps/{id}', [RiskDistributionMapController::class, 'update']);
+        });
+
+        // ── 月度排查 ──────────────────────────────
+        Route::middleware('permission:monthly-investigations.list')->group(function () {
+            Route::get('/monthly-investigations', [MonthlyInvestigationController::class, 'index']);
+            Route::get('/monthly-investigations/{id}', [MonthlyInvestigationController::class, 'show']);
+        });
+        Route::middleware('permission:monthly-investigations.create')->group(function () {
+            Route::post('/monthly-investigations', [MonthlyInvestigationController::class, 'store']);
+        });
+        Route::middleware('permission:monthly-investigations.update')->group(function () {
+            Route::put('/monthly-investigations/{id}', [MonthlyInvestigationController::class, 'update']);
+            Route::patch('/monthly-investigations/{id}', [MonthlyInvestigationController::class, 'update']);
+        });
+        Route::middleware('permission:monthly-investigations.delete')->group(function () {
+            Route::delete('/monthly-investigations/{id}', [MonthlyInvestigationController::class, 'destroy']);
+        });
+
+        // ══════════════════════════════════════════════
+        // Phase 5.3: 检查管理
+        // ══════════════════════════════════════════════
+
+        // ── 日常检查模板 ──────────────────────────────
+        Route::middleware('permission:daily-check-templates.list')->group(function () {
+            Route::get('/daily-check-templates', [DailyCheckTemplatesController::class, 'index']);
+            Route::get('/daily-check-templates/{id}', [DailyCheckTemplatesController::class, 'show']);
+        });
+        Route::middleware('permission:daily-check-templates.create')->group(function () {
+            Route::post('/daily-check-templates', [DailyCheckTemplatesController::class, 'store']);
+        });
+        Route::middleware('permission:daily-check-templates.update')->group(function () {
+            Route::put('/daily-check-templates/{id}', [DailyCheckTemplatesController::class, 'update']);
+            Route::patch('/daily-check-templates/{id}', [DailyCheckTemplatesController::class, 'update']);
+        });
+        Route::middleware('permission:daily-check-templates.delete')->group(function () {
+            Route::delete('/daily-check-templates/{id}', [DailyCheckTemplatesController::class, 'destroy']);
+        });
+
+        // ── 日常检查 ──────────────────────────────
+        Route::middleware('permission:daily-checks.list')->group(function () {
+            Route::get('/daily-checks', [DailyChecksController::class, 'index']);
+            Route::get('/daily-checks/{id}', [DailyChecksController::class, 'show']);
+        });
+        Route::middleware('permission:daily-checks.create')->group(function () {
+            Route::post('/daily-checks', [DailyChecksController::class, 'store']);
+        });
+        Route::middleware('permission:daily-checks.update')->group(function () {
+            Route::put('/daily-checks/{id}', [DailyChecksController::class, 'update']);
+            Route::patch('/daily-checks/{id}', [DailyChecksController::class, 'update']);
+        });
+        Route::middleware('permission:daily-checks.delete')->group(function () {
+            Route::delete('/daily-checks/{id}', [DailyChecksController::class, 'destroy']);
+        });
+
+        // ── 双重预防检查模板 ──────────────────────────────
+        Route::middleware('permission:double-check-templates.list')->group(function () {
+            Route::get('/double-check-templates', [DoubleCheckTemplatesController::class, 'index']);
+            Route::get('/double-check-templates/{id}', [DoubleCheckTemplatesController::class, 'show']);
+        });
+        Route::middleware('permission:double-check-templates.create')->group(function () {
+            Route::post('/double-check-templates', [DoubleCheckTemplatesController::class, 'store']);
+        });
+        Route::middleware('permission:double-check-templates.update')->group(function () {
+            Route::put('/double-check-templates/{id}', [DoubleCheckTemplatesController::class, 'update']);
+            Route::patch('/double-check-templates/{id}', [DoubleCheckTemplatesController::class, 'update']);
+        });
+        Route::middleware('permission:double-check-templates.delete')->group(function () {
+            Route::delete('/double-check-templates/{id}', [DoubleCheckTemplatesController::class, 'destroy']);
+        });
+
+        // ── 双重预防检查 ──────────────────────────────
+        Route::middleware('permission:double-checks.list')->group(function () {
+            Route::get('/double-checks', [DoubleChecksController::class, 'index']);
+            Route::get('/double-checks/{id}', [DoubleChecksController::class, 'show']);
+        });
+        Route::middleware('permission:double-checks.create')->group(function () {
+            Route::post('/double-checks', [DoubleChecksController::class, 'store']);
+        });
+        Route::middleware('permission:double-checks.update')->group(function () {
+            Route::put('/double-checks/{id}', [DoubleChecksController::class, 'update']);
+            Route::patch('/double-checks/{id}', [DoubleChecksController::class, 'update']);
+        });
+        Route::middleware('permission:double-checks.delete')->group(function () {
+            Route::delete('/double-checks/{id}', [DoubleChecksController::class, 'destroy']);
+        });
+
+        // ── 系统检查 ──────────────────────────────
+        Route::middleware('permission:system-checks.list')->group(function () {
+            Route::get('/system-checks', [SystemChecksController::class, 'index']);
+            Route::get('/system-checks/{id}', [SystemChecksController::class, 'show']);
+        });
+        Route::middleware('permission:system-checks.create')->group(function () {
+            Route::post('/system-checks', [SystemChecksController::class, 'store']);
+        });
+        Route::middleware('permission:system-checks.update')->group(function () {
+            Route::put('/system-checks/{id}', [SystemChecksController::class, 'update']);
+            Route::patch('/system-checks/{id}', [SystemChecksController::class, 'update']);
+        });
+        Route::middleware('permission:system-checks.delete')->group(function () {
+            Route::delete('/system-checks/{id}', [SystemChecksController::class, 'destroy']);
+        });
+
+        // ── 规范检查 ──────────────────────────────
+        Route::middleware('permission:norm-checks.list')->group(function () {
+            Route::get('/norm-checks', [NormChecksController::class, 'index']);
+            Route::get('/norm-checks/{id}', [NormChecksController::class, 'show']);
+        });
+        Route::middleware('permission:norm-checks.create')->group(function () {
+            Route::post('/norm-checks', [NormChecksController::class, 'store']);
+        });
+        Route::middleware('permission:norm-checks.update')->group(function () {
+            Route::put('/norm-checks/{id}', [NormChecksController::class, 'update']);
+            Route::patch('/norm-checks/{id}', [NormChecksController::class, 'update']);
+        });
+        Route::middleware('permission:norm-checks.delete')->group(function () {
+            Route::delete('/norm-checks/{id}', [NormChecksController::class, 'destroy']);
+        });
+
+        // ── 事故检查模板 ──────────────────────────────
+        Route::middleware('permission:accident-check-templates.list')->group(function () {
+            Route::get('/accident-check-templates', [AccidentCheckTemplatesController::class, 'index']);
+            Route::get('/accident-check-templates/{id}', [AccidentCheckTemplatesController::class, 'show']);
+        });
+        Route::middleware('permission:accident-check-templates.create')->group(function () {
+            Route::post('/accident-check-templates', [AccidentCheckTemplatesController::class, 'store']);
+        });
+        Route::middleware('permission:accident-check-templates.update')->group(function () {
+            Route::put('/accident-check-templates/{id}', [AccidentCheckTemplatesController::class, 'update']);
+            Route::patch('/accident-check-templates/{id}', [AccidentCheckTemplatesController::class, 'update']);
+        });
+        Route::middleware('permission:accident-check-templates.delete')->group(function () {
+            Route::delete('/accident-check-templates/{id}', [AccidentCheckTemplatesController::class, 'destroy']);
+        });
+
+        // ── 事故检查 ──────────────────────────────
+        Route::middleware('permission:accident-checks.list')->group(function () {
+            Route::get('/accident-checks', [AccidentChecksController::class, 'index']);
+            Route::get('/accident-checks/{id}', [AccidentChecksController::class, 'show']);
+        });
+        Route::middleware('permission:accident-checks.create')->group(function () {
+            Route::post('/accident-checks', [AccidentChecksController::class, 'store']);
+        });
+        Route::middleware('permission:accident-checks.update')->group(function () {
+            Route::put('/accident-checks/{id}', [AccidentChecksController::class, 'update']);
+            Route::patch('/accident-checks/{id}', [AccidentChecksController::class, 'update']);
+        });
+        Route::middleware('permission:accident-checks.delete')->group(function () {
+            Route::delete('/accident-checks/{id}', [AccidentChecksController::class, 'destroy']);
+        });
+
+        // ── 加分模板 ──────────────────────────────
+        Route::middleware('permission:add-points-templates.list')->group(function () {
+            Route::get('/add-points-templates', [AddPointsTemplatesController::class, 'index']);
+            Route::get('/add-points-templates/{id}', [AddPointsTemplatesController::class, 'show']);
+        });
+        Route::middleware('permission:add-points-templates.create')->group(function () {
+            Route::post('/add-points-templates', [AddPointsTemplatesController::class, 'store']);
+        });
+        Route::middleware('permission:add-points-templates.update')->group(function () {
+            Route::put('/add-points-templates/{id}', [AddPointsTemplatesController::class, 'update']);
+            Route::patch('/add-points-templates/{id}', [AddPointsTemplatesController::class, 'update']);
+        });
+        Route::middleware('permission:add-points-templates.delete')->group(function () {
+            Route::delete('/add-points-templates/{id}', [AddPointsTemplatesController::class, 'destroy']);
+        });
+
+        // ── 加分检查 ──────────────────────────────
+        Route::middleware('permission:add-points.list')->group(function () {
+            Route::get('/add-points', [AddPointsController::class, 'index']);
+            Route::get('/add-points/{id}', [AddPointsController::class, 'show']);
+        });
+        Route::middleware('permission:add-points.create')->group(function () {
+            Route::post('/add-points', [AddPointsController::class, 'store']);
+        });
+        Route::middleware('permission:add-points.update')->group(function () {
+            Route::put('/add-points/{id}', [AddPointsController::class, 'update']);
+            Route::patch('/add-points/{id}', [AddPointsController::class, 'update']);
+        });
+        Route::middleware('permission:add-points.delete')->group(function () {
+            Route::delete('/add-points/{id}', [AddPointsController::class, 'destroy']);
+        });
+
+        // ── 检查统计 (聚合) ──────────────────────────────
+        Route::middleware('permission:check-statistics.list')->group(function () {
+            Route::get('/check-statistics', [CheckStatisticsController::class, 'index']);
+        });
+
     });
 });

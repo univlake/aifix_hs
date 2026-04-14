@@ -346,6 +346,61 @@ class RolesAndPermissionsSeeder extends Seeder
             'funding-executions.create',
             'funding-executions.update',
             'funding-executions.delete',
+
+            // ── Phase 5: 隐患整改 + 风险管控 ──────────────────────
+
+            // 隐患信息
+            'hidden-danger-infos.list',
+            'hidden-danger-infos.create',
+            'hidden-danger-infos.update',
+            'hidden-danger-infos.delete',
+
+            // 整改单
+            'rectification-sheets.list',
+            'rectification-sheets.create',
+            'rectification-sheets.update',
+            'rectification-sheets.delete',
+
+            // 危险有害因素
+            'hazards.list',
+            'hazards.create',
+            'hazards.update',
+            'hazards.delete',
+
+            // 风险日志
+            'risk-logs.list',
+            'risk-logs.create',
+            'risk-logs.update',
+            'risk-logs.delete',
+
+            // 固有风险日志
+            'inherent-risk-logs.list',
+            'inherent-risk-logs.create',
+            'inherent-risk-logs.update',
+            'inherent-risk-logs.delete',
+
+            // 动态风险日志
+            'float-risk-logs.list',
+            'float-risk-logs.create',
+            'float-risk-logs.update',
+            'float-risk-logs.delete',
+
+            // 风险最大值
+            'risk-max-values.list',
+            'risk-max-values.create',
+            'risk-max-values.update',
+            'risk-max-values.delete',
+
+            // 风险分布图 (无删除)
+            'risk-distribution-maps.list',
+            'risk-distribution-maps.create',
+            'risk-distribution-maps.update',
+
+            // 月度排查
+            'monthly-investigations.list',
+            'monthly-investigations.create',
+            'monthly-investigations.update',
+            'monthly-investigations.delete',
         ];
 
         foreach ($permissions as $name) {
