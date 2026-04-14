@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\AddPointsTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreAddPointsTemplatesRequest;
+use App\Http\Requests\Api\V1\UpdateAddPointsTemplatesRequest;
 
 class AddPointsTemplatesController extends Controller
 {
@@ -40,39 +42,22 @@ class AddPointsTemplatesController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreAddPointsTemplatesRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'required|string',
-            'level' => 'nullable|integer',
-            'sort' => 'nullable|integer',
-            'pid' => 'nullable|integer',
-            'year' => 'required|integer',
-            'score_range' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $record = AddPointsTemplate::create($data);
 
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateAddPointsTemplatesRequest $request, int $id): JsonResponse
     {
         $record = AddPointsTemplate::find($id);
 
         if (!$record) {
             return $this->notFound('加分项模板不存在');
         }
-
-        $data = $request->validate([
-            'title' => 'sometimes|required|string',
-            'level' => 'sometimes|nullable|integer',
-            'sort' => 'sometimes|nullable|integer',
-            'pid' => 'sometimes|nullable|integer',
-            'year' => 'sometimes|required|integer',
-            'score_range' => 'sometimes|nullable|string',
-        ]);
-
+        $data = $request->validated();
         $record->update($data);
 
         return $this->success($record->fresh());

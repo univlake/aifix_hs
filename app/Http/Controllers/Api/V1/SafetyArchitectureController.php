@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\SafetyArchitecture;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreSafetyArchitectureRequest;
+use App\Http\Requests\Api\V1\UpdateSafetyArchitectureRequest;
 
 class SafetyArchitectureController extends Controller
 {
@@ -24,14 +26,9 @@ class SafetyArchitectureController extends Controller
     /**
      * 创建安全架构
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreSafetyArchitectureRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer|unique:safety_architectures',
-            'thumbnail_url' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -43,19 +40,14 @@ class SafetyArchitectureController extends Controller
     /**
      * 更新安全架构
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateSafetyArchitectureRequest $request, int $id): JsonResponse
     {
         $record = SafetyArchitecture::find($id);
 
         if (!$record) {
             return $this->notFound('安全架构不存在');
         }
-
-        $data = $request->validate([
-            'thumbnail_url' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

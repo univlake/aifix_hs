@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\SpecialEquipment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreSpecialEquipmentRequest;
+use App\Http\Requests\Api\V1\UpdateSpecialEquipmentRequest;
 
 class SpecialEquipmentController extends Controller
 {
@@ -43,25 +45,9 @@ class SpecialEquipmentController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreSpecialEquipmentRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'equipment_name' => 'nullable|string|max:255',
-            'special_type_id' => 'nullable|integer',
-            'utilized_location' => 'nullable|string|max:255',
-            'norm_model1' => 'nullable|string|max:255',
-            'norm_model2' => 'nullable|string|max:255',
-            'norm_model3' => 'nullable|string|max:255',
-            'norm_model4' => 'nullable|string|max:255',
-            'serial_number' => 'nullable|string|max:255',
-            'use_time' => 'nullable|date',
-            'valid_period' => 'nullable|date',
-            'inspect_unit' => 'nullable|string|max:255',
-            'maintain_info' => 'nullable|string|max:255',
-            'comment' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -70,31 +56,14 @@ class SpecialEquipmentController extends Controller
         return $this->success($specialEquipment);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateSpecialEquipmentRequest $request, int $id): JsonResponse
     {
         $specialEquipment = SpecialEquipment::find($id);
 
         if (!$specialEquipment) {
             return $this->notFound('特种设备不存在');
         }
-
-        $data = $request->validate([
-            'equipment_name' => 'sometimes|nullable|string|max:255',
-            'special_type_id' => 'sometimes|nullable|integer',
-            'utilized_location' => 'sometimes|nullable|string|max:255',
-            'norm_model1' => 'sometimes|nullable|string|max:255',
-            'norm_model2' => 'sometimes|nullable|string|max:255',
-            'norm_model3' => 'sometimes|nullable|string|max:255',
-            'norm_model4' => 'sometimes|nullable|string|max:255',
-            'serial_number' => 'sometimes|nullable|string|max:255',
-            'use_time' => 'sometimes|nullable|date',
-            'valid_period' => 'sometimes|nullable|date',
-            'inspect_unit' => 'sometimes|nullable|string|max:255',
-            'maintain_info' => 'sometimes|nullable|string|max:255',
-            'comment' => 'sometimes|nullable|string',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $specialEquipment->update($data);
 

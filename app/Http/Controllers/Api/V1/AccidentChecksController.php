@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\AccidentCheck;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreAccidentChecksRequest;
+use App\Http\Requests\Api\V1\UpdateAccidentChecksRequest;
 
 class AccidentChecksController extends Controller
 {
@@ -39,17 +41,9 @@ class AccidentChecksController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreAccidentChecksRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'accident_check_template_id' => 'required|integer',
-            'path' => 'nullable|string',
-            'number' => 'nullable|integer',
-            'comment' => 'nullable|string',
-            'company_id' => 'required|integer',
-            'year' => 'required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -58,23 +52,14 @@ class AccidentChecksController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateAccidentChecksRequest $request, int $id): JsonResponse
     {
         $record = AccidentCheck::find($id);
 
         if (!$record) {
             return $this->notFound('事故检查记录不存在');
         }
-
-        $data = $request->validate([
-            'accident_check_template_id' => 'sometimes|required|integer',
-            'path' => 'sometimes|nullable|string',
-            'number' => 'sometimes|nullable|integer',
-            'comment' => 'sometimes|nullable|string',
-            'company_id' => 'sometimes|required|integer',
-            'year' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

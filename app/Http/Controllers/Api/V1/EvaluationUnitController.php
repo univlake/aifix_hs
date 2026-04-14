@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\EvaluationUnit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreEvaluationUnitRequest;
+use App\Http\Requests\Api\V1\UpdateEvaluationUnitRequest;
 
 class EvaluationUnitController extends Controller
 {
@@ -47,23 +49,9 @@ class EvaluationUnitController extends Controller
     /**
      * 创建评价单位
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreEvaluationUnitRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'is_qualification' => 'nullable|integer',
-            'qualification_name' => 'nullable|string|max:255',
-            'qualification_annex_url' => 'nullable|string',
-            'evaluation_area' => 'nullable|string',
-            'contact' => 'nullable|string|max:255',
-            'contact_tel' => 'nullable|string|max:255',
-            'is_agreement' => 'nullable|integer',
-            'agreement_annex_url' => 'nullable|string|max:255',
-            'supervision_url' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -75,29 +63,14 @@ class EvaluationUnitController extends Controller
     /**
      * 更新评价单位
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateEvaluationUnitRequest $request, int $id): JsonResponse
     {
         $record = EvaluationUnit::find($id);
 
         if (!$record) {
             return $this->notFound('评价单位不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'sometimes|required|string|max:255',
-            'is_qualification' => 'nullable|integer',
-            'qualification_name' => 'nullable|string|max:255',
-            'qualification_annex_url' => 'nullable|string',
-            'evaluation_area' => 'nullable|string',
-            'contact' => 'nullable|string|max:255',
-            'contact_tel' => 'nullable|string|max:255',
-            'is_agreement' => 'nullable|integer',
-            'agreement_annex_url' => 'nullable|string|max:255',
-            'supervision_url' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

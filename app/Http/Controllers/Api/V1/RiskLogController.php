@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\RiskLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreRiskLogRequest;
+use App\Http\Requests\Api\V1\UpdateRiskLogRequest;
 
 class RiskLogController extends Controller
 {
@@ -34,20 +36,9 @@ class RiskLogController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreRiskLogRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'type' => 'nullable|integer',
-            'old_risk_num' => 'nullable|numeric',
-            'risk_num' => 'nullable|numeric',
-            'date' => 'nullable|integer',
-            'content' => 'nullable|string|max:255',
-            'company_name' => 'nullable|string|max:255',
-            'old_risk_grade' => 'nullable|string|max:255',
-            'risk_grade' => 'nullable|string|max:255',
-            'company_id' => 'nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -56,26 +47,14 @@ class RiskLogController extends Controller
         return $this->success($riskLog);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateRiskLogRequest $request, int $id): JsonResponse
     {
         $riskLog = RiskLog::find($id);
 
         if (!$riskLog) {
             return $this->notFound('风险日志不存在');
         }
-
-        $data = $request->validate([
-            'type' => 'sometimes|nullable|integer',
-            'old_risk_num' => 'sometimes|nullable|numeric',
-            'risk_num' => 'sometimes|nullable|numeric',
-            'date' => 'sometimes|nullable|integer',
-            'content' => 'sometimes|nullable|string|max:255',
-            'company_name' => 'sometimes|nullable|string|max:255',
-            'old_risk_grade' => 'sometimes|nullable|string|max:255',
-            'risk_grade' => 'sometimes|nullable|string|max:255',
-            'company_id' => 'sometimes|nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $riskLog->update($data);
 

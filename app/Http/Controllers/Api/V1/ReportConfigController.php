@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\ReportConfig;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreReportConfigRequest;
+use App\Http\Requests\Api\V1\UpdateReportConfigRequest;
 
 class ReportConfigController extends Controller
 {
@@ -29,14 +31,9 @@ class ReportConfigController extends Controller
     /**
      * 创建报表配置
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreReportConfigRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'config_day' => 'nullable|string|max:255',
-            'type' => 'nullable|integer',
-            'company_id' => 'required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $type = ReportConfig::create($data);
 
@@ -46,20 +43,14 @@ class ReportConfigController extends Controller
     /**
      * 更新报表配置
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateReportConfigRequest $request, int $id): JsonResponse
     {
         $type = ReportConfig::find($id);
 
         if (!$type) {
             return $this->notFound('报表配置不存在');
         }
-
-        $data = $request->validate([
-            'config_day' => 'nullable|string|max:255',
-            'type' => 'nullable|integer',
-            'company_id' => 'required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $type->update($data);
 

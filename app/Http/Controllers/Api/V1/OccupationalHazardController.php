@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\OccupationalHazard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreOccupationalHazardRequest;
+use App\Http\Requests\Api\V1\UpdateOccupationalHazardRequest;
 
 class OccupationalHazardController extends Controller
 {
@@ -42,17 +44,9 @@ class OccupationalHazardController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreOccupationalHazardRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'type' => 'nullable|string|max:255',
-            'number' => 'nullable|integer',
-            'is_declare' => 'nullable|string|max:255',
-            'declare_date' => 'nullable|date',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -61,23 +55,14 @@ class OccupationalHazardController extends Controller
         return $this->success($occupationalHazard);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateOccupationalHazardRequest $request, int $id): JsonResponse
     {
         $occupationalHazard = OccupationalHazard::find($id);
 
         if (!$occupationalHazard) {
             return $this->notFound('职业危害清单不存在');
         }
-
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'type' => 'sometimes|nullable|string|max:255',
-            'number' => 'sometimes|nullable|integer',
-            'is_declare' => 'sometimes|nullable|string|max:255',
-            'declare_date' => 'sometimes|nullable|date',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $occupationalHazard->update($data);
 

@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\InformationDraft;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreInformationDraftsRequest;
+use App\Http\Requests\Api\V1\UpdateInformationDraftsRequest;
 
 class InformationDraftsController extends Controller
 {
@@ -39,21 +41,9 @@ class InformationDraftsController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreInformationDraftsRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'company_name' => 'required|string|max:255',
-            'company_id' => 'required|integer',
-            'draft_department' => 'nullable|string|max:255',
-            'draft_others' => 'nullable|string|max:255',
-            'comment' => 'nullable|string',
-            'annex_url' => 'nullable|string|max:255',
-            'next_reviewer' => 'nullable|integer',
-            'is_top' => 'nullable|integer',
-            'status' => 'nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -62,27 +52,14 @@ class InformationDraftsController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateInformationDraftsRequest $request, int $id): JsonResponse
     {
         $record = InformationDraft::find($id);
 
         if (!$record) {
             return $this->notFound('制度草案不存在');
         }
-
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'company_name' => 'sometimes|required|string|max:255',
-            'company_id' => 'sometimes|required|integer',
-            'draft_department' => 'sometimes|nullable|string|max:255',
-            'draft_others' => 'sometimes|nullable|string|max:255',
-            'comment' => 'sometimes|nullable|string',
-            'annex_url' => 'sometimes|nullable|string|max:255',
-            'next_reviewer' => 'sometimes|nullable|integer',
-            'is_top' => 'sometimes|nullable|integer',
-            'status' => 'sometimes|nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

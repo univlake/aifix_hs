@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\MeetingSignUp;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreMeetingSignUpRequest;
+use App\Http\Requests\Api\V1\UpdateMeetingSignUpRequest;
 
 class MeetingSignUpController extends Controller
 {
@@ -38,20 +40,9 @@ class MeetingSignUpController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreMeetingSignUpRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'meeting_id' => 'required|integer',
-            'company_name' => 'nullable|string|max:255',
-            'name' => 'nullable|string|max:255',
-            'sex' => 'nullable|string|max:10',
-            'job_title' => 'nullable|string|max:255',
-            'tel' => 'nullable|string|max:255',
-            'card_number' => 'nullable|string|max:255',
-            'is_driving' => 'nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -60,26 +51,14 @@ class MeetingSignUpController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateMeetingSignUpRequest $request, int $id): JsonResponse
     {
         $record = MeetingSignUp::find($id);
 
         if (!$record) {
             return $this->notFound('会议报名不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'meeting_id' => 'sometimes|required|integer',
-            'company_name' => 'sometimes|nullable|string|max:255',
-            'name' => 'sometimes|nullable|string|max:255',
-            'sex' => 'sometimes|nullable|string|max:10',
-            'job_title' => 'sometimes|nullable|string|max:255',
-            'tel' => 'sometimes|nullable|string|max:255',
-            'card_number' => 'sometimes|nullable|string|max:255',
-            'is_driving' => 'sometimes|nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

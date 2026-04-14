@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\FundingExecution;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreFundingExecutionRequest;
+use App\Http\Requests\Api\V1\UpdateFundingExecutionRequest;
 
 class FundingExecutionController extends Controller
 {
@@ -35,17 +37,9 @@ class FundingExecutionController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreFundingExecutionRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'year' => 'nullable|string|max:255',
-            'security_investment_id' => 'nullable|integer',
-            'simple_content' => 'nullable|string|max:255',
-            'content' => 'nullable|string',
-            'budget' => 'nullable|numeric',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -54,23 +48,14 @@ class FundingExecutionController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateFundingExecutionRequest $request, int $id): JsonResponse
     {
         $record = FundingExecution::find($id);
 
         if (!$record) {
             return $this->notFound('经费执行情况不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'year' => 'sometimes|nullable|string|max:255',
-            'security_investment_id' => 'sometimes|nullable|integer',
-            'simple_content' => 'sometimes|nullable|string|max:255',
-            'content' => 'sometimes|nullable|string',
-            'budget' => 'sometimes|nullable|numeric',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

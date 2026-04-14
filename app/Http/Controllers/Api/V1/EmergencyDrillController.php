@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\EmergencyDrill;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreEmergencyDrillRequest;
+use App\Http\Requests\Api\V1\UpdateEmergencyDrillRequest;
 
 class EmergencyDrillController extends Controller
 {
@@ -38,24 +40,9 @@ class EmergencyDrillController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreEmergencyDrillRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'nullable|string|max:255',
-            'drill_time' => 'nullable|date',
-            'drill_local' => 'nullable|string|max:255',
-            'organization_department' => 'nullable|string|max:255',
-            'join_department' => 'nullable|string|max:255',
-            'drill_number' => 'nullable|string|max:255',
-            'drill_type' => 'nullable|string|max:255',
-            'drill_form' => 'nullable|string|max:255',
-            'drill_plan' => 'nullable|string|max:255',
-            'drill_kind' => 'nullable|string|max:255',
-            'event' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -64,30 +51,14 @@ class EmergencyDrillController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateEmergencyDrillRequest $request, int $id): JsonResponse
     {
         $record = EmergencyDrill::find($id);
 
         if (!$record) {
             return $this->notFound('应急演练不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'sometimes|nullable|string|max:255',
-            'drill_time' => 'sometimes|nullable|date',
-            'drill_local' => 'sometimes|nullable|string|max:255',
-            'organization_department' => 'sometimes|nullable|string|max:255',
-            'join_department' => 'sometimes|nullable|string|max:255',
-            'drill_number' => 'sometimes|nullable|string|max:255',
-            'drill_type' => 'sometimes|nullable|string|max:255',
-            'drill_form' => 'sometimes|nullable|string|max:255',
-            'drill_plan' => 'sometimes|nullable|string|max:255',
-            'drill_kind' => 'sometimes|nullable|string|max:255',
-            'event' => 'sometimes|nullable|string',
-            'annex_url' => 'sometimes|nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

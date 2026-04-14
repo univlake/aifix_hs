@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\RegulationLibrary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreRegulationLibraryRequest;
 
 class RegulationLibraryController extends Controller
 {
@@ -39,18 +40,9 @@ class RegulationLibraryController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreRegulationLibraryRequest $request): JsonResponse
     {
-        $request->validate([
-            'company_id' => 'required|integer',
-            'title' => 'required|string',
-        ]);
-
-        $data = $request->only(
-            'type', 'title', 'established_date', 'effective_date',
-            'promulgating_department', 'standard_encoding', 'identify_date',
-            'status', 'annex_url', 'regulation_library_type_id', 'company_id'
-        );
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 

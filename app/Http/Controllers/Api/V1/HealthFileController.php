@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\HealthFile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreHealthFileRequest;
+use App\Http\Requests\Api\V1\UpdateHealthFileRequest;
 
 class HealthFileController extends Controller
 {
@@ -38,22 +40,9 @@ class HealthFileController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreHealthFileRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'number' => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'post' => 'nullable|string|max:255',
-            'checkup_date' => 'nullable|date',
-            'checkup_expiry' => 'nullable|string',
-            'review_situation' => 'nullable|string|max:255',
-            'handling_opinions' => 'nullable|string|max:255',
-            'process_result' => 'nullable|string|max:255',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -62,28 +51,14 @@ class HealthFileController extends Controller
         return $this->success($healthFile);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateHealthFileRequest $request, int $id): JsonResponse
     {
         $healthFile = HealthFile::find($id);
 
         if (!$healthFile) {
             return $this->notFound('健康档案不存在');
         }
-
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'number' => 'sometimes|nullable|string|max:255',
-            'department' => 'sometimes|nullable|string|max:255',
-            'post' => 'sometimes|nullable|string|max:255',
-            'checkup_date' => 'sometimes|nullable|date',
-            'checkup_expiry' => 'sometimes|nullable|string',
-            'review_situation' => 'sometimes|nullable|string|max:255',
-            'handling_opinions' => 'sometimes|nullable|string|max:255',
-            'process_result' => 'sometimes|nullable|string|max:255',
-            'annex_url' => 'sometimes|nullable|string',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $healthFile->update($data);
 

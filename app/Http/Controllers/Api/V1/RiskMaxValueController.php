@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\RiskMaxValue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreRiskMaxValueRequest;
+use App\Http\Requests\Api\V1\UpdateRiskMaxValueRequest;
 
 class RiskMaxValueController extends Controller
 {
@@ -34,25 +36,9 @@ class RiskMaxValueController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreRiskMaxValueRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'security_officer_scale' => 'nullable|numeric',
-            'already_obtain_people_scale' => 'nullable|numeric',
-            'last_year_income_scale' => 'nullable|numeric',
-            'acreage_scale' => 'nullable|numeric',
-            'hazardous_processes_scale' => 'nullable|numeric',
-            'hazardous_chemicals_scale' => 'nullable|numeric',
-            'internal_meeting_scale' => 'nullable|numeric',
-            'internal_training_scale' => 'nullable|numeric',
-            'accident_bulletin_scale' => 'nullable|numeric',
-            'emergency_team_scale' => 'nullable|numeric',
-            'emergency_drill_scale' => 'nullable|numeric',
-            'job_management_scale' => 'nullable|numeric',
-            'health_checkup_scale' => 'nullable|numeric',
-            'company_id' => 'nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -61,31 +47,14 @@ class RiskMaxValueController extends Controller
         return $this->success($riskMaxValue);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateRiskMaxValueRequest $request, int $id): JsonResponse
     {
         $riskMaxValue = RiskMaxValue::find($id);
 
         if (!$riskMaxValue) {
             return $this->notFound('风险最大值不存在');
         }
-
-        $data = $request->validate([
-            'security_officer_scale' => 'sometimes|nullable|numeric',
-            'already_obtain_people_scale' => 'sometimes|nullable|numeric',
-            'last_year_income_scale' => 'sometimes|nullable|numeric',
-            'acreage_scale' => 'sometimes|nullable|numeric',
-            'hazardous_processes_scale' => 'sometimes|nullable|numeric',
-            'hazardous_chemicals_scale' => 'sometimes|nullable|numeric',
-            'internal_meeting_scale' => 'sometimes|nullable|numeric',
-            'internal_training_scale' => 'sometimes|nullable|numeric',
-            'accident_bulletin_scale' => 'sometimes|nullable|numeric',
-            'emergency_team_scale' => 'sometimes|nullable|numeric',
-            'emergency_drill_scale' => 'sometimes|nullable|numeric',
-            'job_management_scale' => 'sometimes|nullable|numeric',
-            'health_checkup_scale' => 'sometimes|nullable|numeric',
-            'company_id' => 'sometimes|nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $riskMaxValue->update($data);
 

@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\DangerousEquipment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreDangerousEquipmentRequest;
+use App\Http\Requests\Api\V1\UpdateDangerousEquipmentRequest;
 
 class DangerousEquipmentController extends Controller
 {
@@ -38,20 +40,9 @@ class DangerousEquipmentController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreDangerousEquipmentRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'equipment_name' => 'nullable|string|max:255',
-            'utilized_location' => 'nullable|string|max:255',
-            'norm_model' => 'nullable|string|max:255',
-            'serial_number' => 'nullable|string|max:255',
-            'use_time' => 'nullable|date',
-            'automation_type' => 'nullable|string|max:255',
-            'maintain_info' => 'nullable|string|max:255',
-            'comment' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -60,26 +51,14 @@ class DangerousEquipmentController extends Controller
         return $this->success($dangerousEquipment);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateDangerousEquipmentRequest $request, int $id): JsonResponse
     {
         $dangerousEquipment = DangerousEquipment::find($id);
 
         if (!$dangerousEquipment) {
             return $this->notFound('危险化工设备不存在');
         }
-
-        $data = $request->validate([
-            'equipment_name' => 'sometimes|nullable|string|max:255',
-            'utilized_location' => 'sometimes|nullable|string|max:255',
-            'norm_model' => 'sometimes|nullable|string|max:255',
-            'serial_number' => 'sometimes|nullable|string|max:255',
-            'use_time' => 'sometimes|nullable|date',
-            'automation_type' => 'sometimes|nullable|string|max:255',
-            'maintain_info' => 'sometimes|nullable|string|max:255',
-            'comment' => 'sometimes|nullable|string',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $dangerousEquipment->update($data);
 

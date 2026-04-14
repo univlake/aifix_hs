@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\NormCheck;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreNormChecksRequest;
+use App\Http\Requests\Api\V1\UpdateNormChecksRequest;
 
 class NormChecksController extends Controller
 {
@@ -43,16 +45,9 @@ class NormChecksController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreNormChecksRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'path' => 'nullable|string',
-            'number' => 'nullable|integer',
-            'year' => 'required|integer',
-            'type' => 'required|string',
-            'company_id' => 'required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -61,22 +56,14 @@ class NormChecksController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateNormChecksRequest $request, int $id): JsonResponse
     {
         $record = NormCheck::find($id);
 
         if (!$record) {
             return $this->notFound('标准化检查记录不存在');
         }
-
-        $data = $request->validate([
-            'path' => 'sometimes|nullable|string',
-            'number' => 'sometimes|nullable|integer',
-            'year' => 'sometimes|required|integer',
-            'type' => 'sometimes|required|string',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\CertificateStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreCertificateStatusRequest;
+use App\Http\Requests\Api\V1\UpdateCertificateStatusRequest;
 
 class CertificateStatusController extends Controller
 {
@@ -49,18 +51,9 @@ class CertificateStatusController extends Controller
     /**
      * 创建持证情况
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreCertificateStatusRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'nullable|string|max:255',
-            'type' => 'nullable|integer',
-            'should_obtain_people' => 'nullable|integer',
-            'already_obtain_people' => 'nullable|integer',
-            'no_obtain_people' => 'nullable|string|max:255',
-            'train_people' => 'nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -72,24 +65,14 @@ class CertificateStatusController extends Controller
     /**
      * 更新持证情况
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateCertificateStatusRequest $request, int $id): JsonResponse
     {
         $record = CertificateStatus::find($id);
 
         if (!$record) {
             return $this->notFound('持证情况不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'nullable|string|max:255',
-            'type' => 'nullable|integer',
-            'should_obtain_people' => 'nullable|integer',
-            'already_obtain_people' => 'nullable|integer',
-            'no_obtain_people' => 'nullable|string|max:255',
-            'train_people' => 'nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

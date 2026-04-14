@@ -7,6 +7,8 @@ use App\Models\MajorHazard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreMajorHazardRequest;
+use App\Http\Requests\Api\V1\UpdateMajorHazardRequest;
 
 class MajorHazardController extends Controller
 {
@@ -36,19 +38,9 @@ class MajorHazardController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreMajorHazardRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'level' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'r_value' => 'nullable|string|max:255',
-            'is_sis' => 'nullable|integer',
-            'sil_level' => 'nullable|string|max:255',
-            'detect_parameter' => 'nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -73,25 +65,14 @@ class MajorHazardController extends Controller
         return $this->success($result);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateMajorHazardRequest $request, int $id): JsonResponse
     {
         $majorHazard = MajorHazard::find($id);
 
         if (!$majorHazard) {
             return $this->notFound('重大危险源不存在');
         }
-
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'level' => 'sometimes|nullable|string|max:255',
-            'position' => 'sometimes|nullable|string|max:255',
-            'r_value' => 'sometimes|nullable|string|max:255',
-            'is_sis' => 'sometimes|nullable|integer',
-            'sil_level' => 'sometimes|nullable|string|max:255',
-            'detect_parameter' => 'sometimes|nullable|string|max:255',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
 
         $result = DB::transaction(function () use ($request, $majorHazard, $data) {

@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\SpecialEquipmentStaff;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreSpecialEquipmentStaffRequest;
+use App\Http\Requests\Api\V1\UpdateSpecialEquipmentStaffRequest;
 
 class SpecialEquipmentStaffController extends Controller
 {
@@ -38,16 +40,9 @@ class SpecialEquipmentStaffController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreSpecialEquipmentStaffRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'nullable|string|max:255',
-            'cert_title' => 'nullable|string|max:255',
-            'cert_number' => 'nullable|string|max:255',
-            'valid_period' => 'nullable|date',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -56,22 +51,14 @@ class SpecialEquipmentStaffController extends Controller
         return $this->success($specialEquipmentStaff);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateSpecialEquipmentStaffRequest $request, int $id): JsonResponse
     {
         $specialEquipmentStaff = SpecialEquipmentStaff::find($id);
 
         if (!$specialEquipmentStaff) {
             return $this->notFound('特种设备人员不存在');
         }
-
-        $data = $request->validate([
-            'name' => 'sometimes|nullable|string|max:255',
-            'cert_title' => 'sometimes|nullable|string|max:255',
-            'cert_number' => 'sometimes|nullable|string|max:255',
-            'valid_period' => 'sometimes|nullable|date',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $specialEquipmentStaff->update($data);
 

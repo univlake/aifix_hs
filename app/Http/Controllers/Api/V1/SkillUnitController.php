@@ -8,6 +8,8 @@ use App\Models\SkillUnitKid;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreSkillUnitRequest;
+use App\Http\Requests\Api\V1\UpdateSkillUnitRequest;
 
 class SkillUnitController extends Controller
 {
@@ -50,21 +52,9 @@ class SkillUnitController extends Controller
     /**
      * 创建施工单位
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreSkillUnitRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'serving_type' => 'required|string|max:255',
-            'is_qualification' => 'nullable|integer',
-            'evaluation_area' => 'nullable|string',
-            'contact' => 'nullable|string|max:255',
-            'contact_tel' => 'nullable|string|max:255',
-            'kids' => 'nullable|array',
-            'kids.*.qualification_name' => 'nullable|string|max:255',
-            'kids.*.qualification_annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $kids = $data['kids'] ?? [];
         unset($data['kids']);
 
@@ -91,27 +81,14 @@ class SkillUnitController extends Controller
     /**
      * 更新施工单位
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateSkillUnitRequest $request, int $id): JsonResponse
     {
         $skillUnit = SkillUnit::find($id);
 
         if (!$skillUnit) {
             return $this->notFound('施工单位不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'sometimes|required|string|max:255',
-            'serving_type' => 'sometimes|required|string|max:255',
-            'is_qualification' => 'nullable|integer',
-            'evaluation_area' => 'nullable|string',
-            'contact' => 'nullable|string|max:255',
-            'contact_tel' => 'nullable|string|max:255',
-            'kids' => 'nullable|array',
-            'kids.*.qualification_name' => 'nullable|string|max:255',
-            'kids.*.qualification_annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $kids = $data['kids'] ?? [];
         unset($data['kids']);
 

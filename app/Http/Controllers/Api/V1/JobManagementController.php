@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\JobManagement;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreJobManagementRequest;
+use App\Http\Requests\Api\V1\UpdateJobManagementRequest;
 
 class JobManagementController extends Controller
 {
@@ -56,25 +58,9 @@ class JobManagementController extends Controller
     /**
      * 创建作业管理
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreJobManagementRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'department' => 'nullable|string|max:255',
-            'content' => 'nullable|string',
-            'type' => 'nullable|string|max:255',
-            'special_type' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'job_time' => 'nullable|date',
-            'unit' => 'nullable|string|max:255',
-            'is_outsourcing' => 'nullable|integer',
-            'evaluation_unit_id' => 'nullable|integer',
-            'job_people_number' => 'nullable|integer',
-            'job_people_name' => 'nullable|string|max:255',
-            'risk_analysis' => 'nullable|string',
-            'risk_protection' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -86,31 +72,14 @@ class JobManagementController extends Controller
     /**
      * 更新作业管理
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateJobManagementRequest $request, int $id): JsonResponse
     {
         $jobManagement = JobManagement::find($id);
 
         if (!$jobManagement) {
             return $this->notFound('作业管理不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'department' => 'nullable|string|max:255',
-            'content' => 'nullable|string',
-            'type' => 'nullable|string|max:255',
-            'special_type' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'job_time' => 'nullable|date',
-            'unit' => 'nullable|string|max:255',
-            'is_outsourcing' => 'nullable|integer',
-            'evaluation_unit_id' => 'nullable|integer',
-            'job_people_number' => 'nullable|integer',
-            'job_people_name' => 'nullable|string|max:255',
-            'risk_analysis' => 'nullable|string',
-            'risk_protection' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $jobManagement->update($data);
 

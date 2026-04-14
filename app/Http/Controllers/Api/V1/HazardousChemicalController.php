@@ -8,6 +8,8 @@ use App\Models\HazardousChemical;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreHazardousChemicalRequest;
+use App\Http\Requests\Api\V1\UpdateHazardousChemicalRequest;
 
 class HazardousChemicalController extends Controller
 {
@@ -53,33 +55,9 @@ class HazardousChemicalController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreHazardousChemicalRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'alias' => 'nullable|string|max:255',
-            'is_supervision' => 'nullable|integer',
-            'is_toxin' => 'nullable|integer',
-            'is_explosion' => 'nullable|integer',
-            'is_easy_explode' => 'nullable|integer',
-            'is_narcotics' => 'nullable|integer',
-            'is_monitor' => 'nullable|integer',
-            'is_mixing' => 'nullable|integer',
-            'cas' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'temperature' => 'nullable|string|max:255',
-            'storage' => 'nullable|string|max:255',
-            'year_use' => 'nullable|string|max:255',
-            'year_use_unit' => 'nullable|string|max:255',
-            'storage_unit' => 'nullable|string|max:255',
-            'pressure' => 'nullable|string|max:255',
-            'pressure_unit' => 'nullable|string|max:255',
-            'fire_class' => 'nullable|string|max:255',
-            'matter_state' => 'nullable|string|max:255',
-            'msds' => 'nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -104,39 +82,14 @@ class HazardousChemicalController extends Controller
         return $this->success($result);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateHazardousChemicalRequest $request, int $id): JsonResponse
     {
         $hazardousChemical = HazardousChemical::find($id);
 
         if (!$hazardousChemical) {
             return $this->notFound('危险化学品不存在');
         }
-
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'alias' => 'sometimes|nullable|string|max:255',
-            'is_supervision' => 'sometimes|nullable|integer',
-            'is_toxin' => 'sometimes|nullable|integer',
-            'is_explosion' => 'sometimes|nullable|integer',
-            'is_easy_explode' => 'sometimes|nullable|integer',
-            'is_narcotics' => 'sometimes|nullable|integer',
-            'is_monitor' => 'sometimes|nullable|integer',
-            'is_mixing' => 'sometimes|nullable|integer',
-            'cas' => 'sometimes|nullable|string|max:255',
-            'position' => 'sometimes|nullable|string|max:255',
-            'temperature' => 'sometimes|nullable|string|max:255',
-            'storage' => 'sometimes|nullable|string|max:255',
-            'year_use' => 'sometimes|nullable|string|max:255',
-            'year_use_unit' => 'sometimes|nullable|string|max:255',
-            'storage_unit' => 'sometimes|nullable|string|max:255',
-            'pressure' => 'sometimes|nullable|string|max:255',
-            'pressure_unit' => 'sometimes|nullable|string|max:255',
-            'fire_class' => 'sometimes|nullable|string|max:255',
-            'matter_state' => 'sometimes|nullable|string|max:255',
-            'msds' => 'sometimes|nullable|string|max:255',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
 
         $result = DB::transaction(function () use ($request, $hazardousChemical, $data) {

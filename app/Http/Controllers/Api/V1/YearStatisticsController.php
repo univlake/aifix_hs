@@ -8,6 +8,8 @@ use App\Models\YearStatisticKid;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreYearStatisticsRequest;
+use App\Http\Requests\Api\V1\UpdateYearStatisticsRequest;
 
 class YearStatisticsController extends Controller
 {
@@ -39,19 +41,9 @@ class YearStatisticsController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreYearStatisticsRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'company_name' => 'nullable|string|max:255',
-            'base_area' => 'nullable|string|max:255',
-            'enterprise_type' => 'nullable|string|max:255',
-            'safety_funding' => 'nullable|string|max:255',
-            'fire_fighting' => 'nullable|string|max:255',
-            'compliance_time' => 'nullable|date',
-            'revaluation_time' => 'nullable|date',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -79,25 +71,14 @@ class YearStatisticsController extends Controller
         return $this->success($result);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateYearStatisticsRequest $request, int $id): JsonResponse
     {
         $yearStatistic = YearStatistic::find($id);
 
         if (!$yearStatistic) {
             return $this->notFound('年度统计不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'company_name' => 'sometimes|nullable|string|max:255',
-            'base_area' => 'sometimes|nullable|string|max:255',
-            'enterprise_type' => 'sometimes|nullable|string|max:255',
-            'safety_funding' => 'sometimes|nullable|string|max:255',
-            'fire_fighting' => 'sometimes|nullable|string|max:255',
-            'compliance_time' => 'sometimes|nullable|date',
-            'revaluation_time' => 'sometimes|nullable|date',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
 
         $result = DB::transaction(function () use ($request, $yearStatistic, $data) {

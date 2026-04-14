@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\DesignUnit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreDesignUnitRequest;
+use App\Http\Requests\Api\V1\UpdateDesignUnitRequest;
 
 class DesignUnitController extends Controller
 {
@@ -47,17 +49,9 @@ class DesignUnitController extends Controller
     /**
      * 创建设计单位
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreDesignUnitRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'qualification_name' => 'nullable|string|max:255',
-            'contact' => 'nullable|string|max:255',
-            'contact_tel' => 'nullable|string|max:255',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -69,23 +63,14 @@ class DesignUnitController extends Controller
     /**
      * 更新设计单位
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateDesignUnitRequest $request, int $id): JsonResponse
     {
         $record = DesignUnit::find($id);
 
         if (!$record) {
             return $this->notFound('设计单位不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'sometimes|required|string|max:255',
-            'qualification_name' => 'nullable|string|max:255',
-            'contact' => 'nullable|string|max:255',
-            'contact_tel' => 'nullable|string|max:255',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

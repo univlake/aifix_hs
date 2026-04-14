@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\OtherTraining;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreOtherTrainingRequest;
+use App\Http\Requests\Api\V1\UpdateOtherTrainingRequest;
 
 class OtherTrainingController extends Controller
 {
@@ -38,23 +40,9 @@ class OtherTrainingController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreOtherTrainingRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'nullable|string|max:255',
-            'comment' => 'nullable|string',
-            'object' => 'nullable|string|max:255',
-            'number' => 'nullable|integer',
-            'training_date' => 'nullable|date',
-            'task_content' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-            'summary_annex_url' => 'nullable|string',
-            'sign_annex_url' => 'nullable|string',
-            'material_annex_url' => 'nullable|string',
-            'photo_annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -63,29 +51,14 @@ class OtherTrainingController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateOtherTrainingRequest $request, int $id): JsonResponse
     {
         $record = OtherTraining::find($id);
 
         if (!$record) {
             return $this->notFound('其他培训不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'sometimes|nullable|string|max:255',
-            'comment' => 'sometimes|nullable|string',
-            'object' => 'sometimes|nullable|string|max:255',
-            'number' => 'sometimes|nullable|integer',
-            'training_date' => 'sometimes|nullable|date',
-            'task_content' => 'sometimes|nullable|string',
-            'annex_url' => 'sometimes|nullable|string',
-            'summary_annex_url' => 'sometimes|nullable|string',
-            'sign_annex_url' => 'sometimes|nullable|string',
-            'material_annex_url' => 'sometimes|nullable|string',
-            'photo_annex_url' => 'sometimes|nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

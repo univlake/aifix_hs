@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\HygieneEvaluation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreHygieneEvaluationRequest;
+use App\Http\Requests\Api\V1\UpdateHygieneEvaluationRequest;
 
 class HygieneEvaluationController extends Controller
 {
@@ -39,18 +41,9 @@ class HygieneEvaluationController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreHygieneEvaluationRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'type' => 'nullable|string|max:255',
-            'skill_unit_id' => 'nullable|integer',
-            'skill_unit_kid_id' => 'nullable|integer',
-            'valid_period' => 'nullable|date',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -59,24 +52,14 @@ class HygieneEvaluationController extends Controller
         return $this->success($hygieneEvaluation->load(['skillUnit', 'skillUnitKid']));
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateHygieneEvaluationRequest $request, int $id): JsonResponse
     {
         $hygieneEvaluation = HygieneEvaluation::find($id);
 
         if (!$hygieneEvaluation) {
             return $this->notFound('职业卫生评价不存在');
         }
-
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'type' => 'sometimes|nullable|string|max:255',
-            'skill_unit_id' => 'sometimes|nullable|integer',
-            'skill_unit_kid_id' => 'sometimes|nullable|integer',
-            'valid_period' => 'sometimes|nullable|date',
-            'annex_url' => 'sometimes|nullable|string',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $hygieneEvaluation->update($data);
 

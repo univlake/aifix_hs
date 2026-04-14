@@ -9,6 +9,12 @@ use App\Models\ExpertInspectionUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreExpertInspectionsRequest;
+use App\Http\Requests\Api\V1\UpdateExpertInspectionsRequest;
+use App\Http\Requests\Api\V1\StoreExpertCompanyRequest;
+use App\Http\Requests\Api\V1\UpdateExpertCompanyRequest;
+use App\Http\Requests\Api\V1\StoreExpertInspectionUserRequest;
+use App\Http\Requests\Api\V1\UpdateExpertInspectionUserRequest;
 
 class ExpertInspectionsController extends Controller
 {
@@ -40,17 +46,9 @@ class ExpertInspectionsController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreExpertInspectionsRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'company_id' => 'required|integer',
-            'description' => 'nullable|string',
-            'comment' => 'nullable|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -59,23 +57,14 @@ class ExpertInspectionsController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateExpertInspectionsRequest $request, int $id): JsonResponse
     {
         $record = ExpertInspection::find($id);
 
         if (!$record) {
             return $this->notFound('专家检查不存在');
         }
-
-        $data = $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'company_id' => 'sometimes|required|integer',
-            'description' => 'sometimes|nullable|string',
-            'comment' => 'sometimes|nullable|string',
-            'start_date' => 'sometimes|nullable|date',
-            'end_date' => 'sometimes|nullable|date',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 
@@ -99,8 +88,6 @@ class ExpertInspectionsController extends Controller
 
     public function companies(Request $request): JsonResponse
     {
-        $request->validate(['expert_inspection_id' => 'required|integer']);
-
         $list = ExpertCompany::query()
             ->where('expert_inspection_id', $request->expert_inspection_id)
             ->with(['expertInspectionUsers'])
@@ -110,16 +97,9 @@ class ExpertInspectionsController extends Controller
         return $this->success($list);
     }
 
-    public function storeCompany(Request $request): JsonResponse
+    public function storeCompany(StoreExpertCompanyRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'expert_inspection_id' => 'required|integer',
-            'check_company_id' => 'required|integer',
-            'company_id' => 'required|integer',
-            'notify_company_time' => 'nullable|date',
-            'check_company_time' => 'nullable|date',
-            'status' => 'nullable|integer',
-        ]);
+        $data = $request->validated();
 
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
@@ -129,7 +109,7 @@ class ExpertInspectionsController extends Controller
         return $this->success($record);
     }
 
-    public function updateCompany(Request $request, int $id): JsonResponse
+    public function updateCompany(UpdateExpertCompanyRequest $request, int $id): JsonResponse
     {
         $record = ExpertCompany::find($id);
 
@@ -137,11 +117,7 @@ class ExpertInspectionsController extends Controller
             return $this->notFound('专家检查企业不存在');
         }
 
-        $data = $request->validate([
-            'notify_company_time' => 'sometimes|nullable|date',
-            'check_company_time' => 'sometimes|nullable|date',
-            'status' => 'sometimes|nullable|integer',
-        ]);
+        $data = $request->validated();
 
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
@@ -176,15 +152,9 @@ class ExpertInspectionsController extends Controller
         return $this->success($list);
     }
 
-    public function storeUser(Request $request): JsonResponse
+    public function storeUser(StoreExpertInspectionUserRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'expert_user_id' => 'required|integer',
-            'expert_company_id' => 'required|integer',
-            'company_id' => 'required|integer',
-            'status' => 'nullable|integer',
-            'comment' => 'nullable|string',
-        ]);
+        $data = $request->validated();
 
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
@@ -194,7 +164,7 @@ class ExpertInspectionsController extends Controller
         return $this->success($record);
     }
 
-    public function updateUser(Request $request, int $id): JsonResponse
+    public function updateUser(UpdateExpertInspectionUserRequest $request, int $id): JsonResponse
     {
         $record = ExpertInspectionUser::find($id);
 
@@ -202,10 +172,7 @@ class ExpertInspectionsController extends Controller
             return $this->notFound('专家用户不存在');
         }
 
-        $data = $request->validate([
-            'status' => 'sometimes|nullable|integer',
-            'comment' => 'sometimes|nullable|string',
-        ]);
+        $data = $request->validated();
 
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);

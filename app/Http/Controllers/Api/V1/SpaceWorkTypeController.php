@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\SpaceWorkType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreSpaceWorkTypeRequest;
+use App\Http\Requests\Api\V1\UpdateSpaceWorkTypeRequest;
 
 class SpaceWorkTypeController extends Controller
 {
@@ -24,12 +26,9 @@ class SpaceWorkTypeController extends Controller
     /**
      * 创建有限空间辨识类型
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreSpaceWorkTypeRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $type = SpaceWorkType::create($data);
 
@@ -39,18 +38,14 @@ class SpaceWorkTypeController extends Controller
     /**
      * 更新有限空间辨识类型
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateSpaceWorkTypeRequest $request, int $id): JsonResponse
     {
         $type = SpaceWorkType::find($id);
 
         if (!$type) {
             return $this->notFound('有限空间辨识类型不存在');
         }
-
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $type->update($data);
 

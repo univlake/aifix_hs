@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\RiskDistributionMap;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreRiskDistributionMapRequest;
+use App\Http\Requests\Api\V1\UpdateRiskDistributionMapRequest;
 
 class RiskDistributionMapController extends Controller
 {
@@ -20,13 +22,9 @@ class RiskDistributionMapController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreRiskDistributionMapRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'annex_url' => 'nullable|string',
-            'company_id' => 'required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -35,19 +33,14 @@ class RiskDistributionMapController extends Controller
         return $this->success($riskDistributionMap);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateRiskDistributionMapRequest $request, int $id): JsonResponse
     {
         $riskDistributionMap = RiskDistributionMap::find($id);
 
         if (!$riskDistributionMap) {
             return $this->notFound('风险分布图不存在');
         }
-
-        $data = $request->validate([
-            'annex_url' => 'sometimes|nullable|string',
-            'company_id' => 'sometimes|nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $riskDistributionMap->update($data);
 

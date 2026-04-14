@@ -8,6 +8,8 @@ use App\Models\EmergencyTeamKid;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreEmergencyTeamRequest;
+use App\Http\Requests\Api\V1\UpdateEmergencyTeamRequest;
 
 class EmergencyTeamController extends Controller
 {
@@ -41,16 +43,9 @@ class EmergencyTeamController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreEmergencyTeamRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'team_number' => 'nullable|string|max:255',
-            'save_user' => 'nullable|string|max:255',
-            'tel' => 'nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -78,22 +73,14 @@ class EmergencyTeamController extends Controller
         return $this->success($result);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateEmergencyTeamRequest $request, int $id): JsonResponse
     {
         $record = EmergencyTeam::find($id);
 
         if (!$record) {
             return $this->notFound('应急队伍不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'sometimes|required|string|max:255',
-            'team_number' => 'sometimes|nullable|string|max:255',
-            'save_user' => 'sometimes|nullable|string|max:255',
-            'tel' => 'sometimes|nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
 
         $result = DB::transaction(function () use ($request, $record, $data) {

@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\FireFacility;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreFireFacilityRequest;
+use App\Http\Requests\Api\V1\UpdateFireFacilityRequest;
 
 class FireFacilityController extends Controller
 {
@@ -42,19 +44,9 @@ class FireFacilityController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreFireFacilityRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'equipment_name' => 'nullable|string|max:255',
-            'utilized_location' => 'nullable|string|max:255',
-            'special_type' => 'nullable|string|max:255',
-            'use_time' => 'nullable|date',
-            'automation_type' => 'nullable|string|max:255',
-            'maintain_info' => 'nullable|string|max:255',
-            'comment' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -63,25 +55,14 @@ class FireFacilityController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateFireFacilityRequest $request, int $id): JsonResponse
     {
         $record = FireFacility::find($id);
 
         if (!$record) {
             return $this->notFound('消防设施不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'equipment_name' => 'sometimes|nullable|string|max:255',
-            'utilized_location' => 'sometimes|nullable|string|max:255',
-            'special_type' => 'sometimes|nullable|string|max:255',
-            'use_time' => 'sometimes|nullable|date',
-            'automation_type' => 'sometimes|nullable|string|max:255',
-            'maintain_info' => 'sometimes|nullable|string|max:255',
-            'comment' => 'sometimes|nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

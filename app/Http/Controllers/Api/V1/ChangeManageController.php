@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\ChangeManage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreChangeManageRequest;
+use App\Http\Requests\Api\V1\UpdateChangeManageRequest;
 
 class ChangeManageController extends Controller
 {
@@ -43,25 +45,9 @@ class ChangeManageController extends Controller
     /**
      * 创建变更管理
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreChangeManageRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'title' => 'nullable|string|max:255',
-            'department_name' => 'nullable|string|max:255',
-            'apply_date' => 'nullable|date',
-            'reason' => 'nullable|string',
-            'apply_leader_opinion' => 'nullable|string',
-            'apply_leader_opinion_date' => 'nullable|date',
-            'risk_analyze' => 'nullable|string',
-            'manage_leader_opinion' => 'nullable|string',
-            'manage_leader_opinion_date' => 'nullable|date',
-            'approve' => 'nullable|string',
-            'approve_date' => 'nullable|date',
-            'acceptance_info' => 'nullable|string',
-            'acceptance_info_date' => 'nullable|date',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -73,31 +59,14 @@ class ChangeManageController extends Controller
     /**
      * 更新变更管理
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateChangeManageRequest $request, int $id): JsonResponse
     {
         $record = ChangeManage::find($id);
 
         if (!$record) {
             return $this->notFound('变更管理不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'title' => 'nullable|string|max:255',
-            'department_name' => 'nullable|string|max:255',
-            'apply_date' => 'nullable|date',
-            'reason' => 'nullable|string',
-            'apply_leader_opinion' => 'nullable|string',
-            'apply_leader_opinion_date' => 'nullable|date',
-            'risk_analyze' => 'nullable|string',
-            'manage_leader_opinion' => 'nullable|string',
-            'manage_leader_opinion_date' => 'nullable|date',
-            'approve' => 'nullable|string',
-            'approve_date' => 'nullable|date',
-            'acceptance_info' => 'nullable|string',
-            'acceptance_info_date' => 'nullable|date',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

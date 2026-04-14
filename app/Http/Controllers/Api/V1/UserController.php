@@ -8,6 +8,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use App\Http\Requests\Api\V1\StoreUserRequest;
+use App\Http\Requests\Api\V1\UpdateUserRequest;
 
 class UserController extends Controller
 {
@@ -59,18 +61,9 @@ class UserController extends Controller
     /**
      * 创建用户
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreUserRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'username' => 'required|string|max:30|unique:users,username',
-            'password' => 'required|string|min:6',
-            'nickname' => 'required|string|max:100',
-            'company_id' => 'required|integer',
-            'phone' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'role' => 'nullable|string|exists:roles,name',
-        ]);
-
+        $data = $request->validated();
         $user = User::create([
             'username' => $data['username'],
             'password' => Hash::make($data['password']),
@@ -91,22 +84,14 @@ class UserController extends Controller
     /**
      * 更新用户
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateUserRequest $request, int $id): JsonResponse
     {
         $user = User::find($id);
 
         if (!$user) {
             return $this->notFound('用户不存在');
         }
-
-        $data = $request->validate([
-            'nickname' => 'sometimes|required|string|max:100',
-            'company_id' => 'sometimes|required|integer',
-            'phone' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'status' => 'nullable|integer|in:1,2',
-        ]);
-
+        $data = $request->validated();
         $user->update($data);
 
         return $this->success($user->fresh()->load('roles'));
@@ -123,10 +108,7 @@ class UserController extends Controller
             return $this->notFound('用户不存在');
         }
 
-        $data = $request->validate([
-            'role' => 'required|string|exists:roles,name',
-        ]);
-
+        $data =
         $user->syncRoles([$data['role']]);
 
         return $this->success($user->load('roles'));

@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\EliminationControlStaff;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreEliminationControlStaffRequest;
+use App\Http\Requests\Api\V1\UpdateEliminationControlStaffRequest;
 
 class EliminationControlStaffController extends Controller
 {
@@ -43,16 +45,9 @@ class EliminationControlStaffController extends Controller
     /**
      * 创建淘汰控制人员
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreEliminationControlStaffRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'nullable|string|max:255',
-            'cert_title' => 'nullable|string|max:255',
-            'cert_number' => 'nullable|string|max:255',
-            'valid_period' => 'nullable|date',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -64,22 +59,14 @@ class EliminationControlStaffController extends Controller
     /**
      * 更新淘汰控制人员
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateEliminationControlStaffRequest $request, int $id): JsonResponse
     {
         $record = EliminationControlStaff::find($id);
 
         if (!$record) {
             return $this->notFound('淘汰控制人员不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'nullable|string|max:255',
-            'cert_title' => 'nullable|string|max:255',
-            'cert_number' => 'nullable|string|max:255',
-            'valid_period' => 'nullable|date',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

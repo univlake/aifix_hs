@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\Building;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreBuildingRequest;
+use App\Http\Requests\Api\V1\UpdateBuildingRequest;
 
 class BuildingController extends Controller
 {
@@ -43,15 +45,9 @@ class BuildingController extends Controller
     /**
      * 创建建筑
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreBuildingRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'title' => 'required|string|max:255',
-            'area' => 'required|string|max:255',
-            'fire_class' => 'required|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -63,21 +59,14 @@ class BuildingController extends Controller
     /**
      * 更新建筑
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateBuildingRequest $request, int $id): JsonResponse
     {
         $building = Building::find($id);
 
         if (!$building) {
             return $this->notFound('建筑不存在');
         }
-
-        $data = $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'area' => 'sometimes|required|string|max:255',
-            'fire_class' => 'sometimes|required|string|max:255',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $building->update($data);
 

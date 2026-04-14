@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\AssessDetect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreAssessDetectRequest;
 
 class AssessDetectController extends Controller
 {
@@ -36,17 +37,9 @@ class AssessDetectController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreAssessDetectRequest $request): JsonResponse
     {
-        $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string',
-        ]);
-
-        $data = $request->only(
-            'name', 'assess_detect_type', 'skill_unit_id', 'skill_unit_kid_id',
-            'valid_period', 'annex_url', 'company_id'
-        );
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 

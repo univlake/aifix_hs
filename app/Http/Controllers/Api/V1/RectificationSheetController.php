@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\RectificationSheet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreRectificationSheetRequest;
+use App\Http\Requests\Api\V1\UpdateRectificationSheetRequest;
 
 class RectificationSheetController extends Controller
 {
@@ -37,15 +39,9 @@ class RectificationSheetController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreRectificationSheetRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'expert_inspection_id' => 'required|integer',
-            'check_company_id' => 'required|integer',
-            'sheet_name' => 'required|integer',
-            'path' => 'required|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
 
         $rectificationSheet = RectificationSheet::create($data);
@@ -53,21 +49,14 @@ class RectificationSheetController extends Controller
         return $this->success($rectificationSheet);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateRectificationSheetRequest $request, int $id): JsonResponse
     {
         $rectificationSheet = RectificationSheet::find($id);
 
         if (!$rectificationSheet) {
             return $this->notFound('整改单不存在');
         }
-
-        $data = $request->validate([
-            'expert_inspection_id' => 'sometimes|nullable|integer',
-            'check_company_id' => 'sometimes|nullable|integer',
-            'sheet_name' => 'sometimes|nullable|integer',
-            'path' => 'sometimes|nullable|string',
-        ]);
-
+        $data = $request->validated();
         $rectificationSheet->update($data);
 
         return $this->success($rectificationSheet->fresh());

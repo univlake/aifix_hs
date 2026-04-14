@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\ChecklistLibrary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreChecklistLibraryRequest;
+use App\Http\Requests\Api\V1\UpdateChecklistLibraryRequest;
 
 class ChecklistLibraryController extends Controller
 {
@@ -29,16 +31,9 @@ class ChecklistLibraryController extends Controller
     /**
      * 创建检查清单库
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreChecklistLibraryRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'status' => 'nullable|integer',
-            'preview_annex_url' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-            'company_id' => 'required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $type = ChecklistLibrary::create($data);
 
@@ -48,22 +43,14 @@ class ChecklistLibraryController extends Controller
     /**
      * 更新检查清单库
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateChecklistLibraryRequest $request, int $id): JsonResponse
     {
         $type = ChecklistLibrary::find($id);
 
         if (!$type) {
             return $this->notFound('检查清单库不存在');
         }
-
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'status' => 'nullable|integer',
-            'preview_annex_url' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-            'company_id' => 'required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $type->update($data);
 

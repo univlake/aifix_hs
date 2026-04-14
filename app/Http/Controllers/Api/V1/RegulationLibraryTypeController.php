@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\RegulationLibraryType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreRegulationLibraryTypeRequest;
+use App\Http\Requests\Api\V1\UpdateRegulationLibraryTypeRequest;
 
 class RegulationLibraryTypeController extends Controller
 {
@@ -24,12 +26,9 @@ class RegulationLibraryTypeController extends Controller
     /**
      * 创建法规类型
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreRegulationLibraryTypeRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $type = RegulationLibraryType::create($data);
 
@@ -39,18 +38,14 @@ class RegulationLibraryTypeController extends Controller
     /**
      * 更新法规类型
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateRegulationLibraryTypeRequest $request, int $id): JsonResponse
     {
         $type = RegulationLibraryType::find($id);
 
         if (!$type) {
             return $this->notFound('法规类型不存在');
         }
-
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $type->update($data);
 

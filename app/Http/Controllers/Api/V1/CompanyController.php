@@ -9,6 +9,7 @@ use App\Traits\ApiTree;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use App\Http\Requests\Api\V1\UpdateCompanyRequest;
 
 class CompanyController extends Controller
 {
@@ -82,7 +83,7 @@ class CompanyController extends Controller
     /**
      * 更新企业
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateCompanyRequest $request, int $id): JsonResponse
     {
         $company = Company::find($id);
 
@@ -91,35 +92,7 @@ class CompanyController extends Controller
         }
 
         Gate::authorize('update', $company);
-
-        $data = $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'enterprise_type_id' => 'nullable|integer',
-            'operational_type_id' => 'nullable|integer',
-            'area_id' => 'nullable|integer',
-            'address' => 'nullable|string',
-            'established' => 'nullable|date',
-            'credit_code' => 'nullable|string|max:255',
-            'business_scope' => 'nullable|string',
-            'company_introduction' => 'nullable|string',
-            'longitude' => 'nullable|numeric',
-            'dimension' => 'nullable|numeric',
-            'geographic_range' => 'nullable|string',
-            'acreage' => 'nullable|numeric',
-            'supervise_name' => 'nullable|string|max:255',
-            'supervise_tel' => 'nullable|string|max:255',
-            'supervise_fix' => 'nullable|string|max:255',
-            'supervise_email' => 'nullable|email|max:255',
-            'supervise_position' => 'nullable|string|max:255',
-            'status' => 'nullable|integer|in:0,1,2',
-            'is_produce' => 'nullable|integer|in:0,1',
-            'is_bloc' => 'nullable|integer|in:0,1',
-            'inherent_risk' => 'nullable|numeric',
-            'inherent_risk_grade' => 'nullable|string|max:255',
-            'float_risk' => 'nullable|numeric',
-            'float_risk_grade' => 'nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $company->update($data);
 
@@ -188,10 +161,6 @@ class CompanyController extends Controller
      */
     public function review(Request $request, int $id): JsonResponse
     {
-        $request->validate([
-            'status' => 'required|integer|in:1,2',
-        ]);
-
         $company = Company::find($id);
 
         if (!$company) {

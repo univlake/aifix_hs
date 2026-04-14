@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\HealthSystem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreHealthSystemRequest;
+use App\Http\Requests\Api\V1\UpdateHealthSystemRequest;
 
 class HealthSystemController extends Controller
 {
@@ -22,14 +24,9 @@ class HealthSystemController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreHealthSystemRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'certification_time' => 'nullable|date',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -38,20 +35,14 @@ class HealthSystemController extends Controller
         return $this->success($healthSystem);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateHealthSystemRequest $request, int $id): JsonResponse
     {
         $healthSystem = HealthSystem::find($id);
 
         if (!$healthSystem) {
             return $this->notFound('职业健康体系不存在');
         }
-
-        $data = $request->validate([
-            'certification_time' => 'sometimes|nullable|date',
-            'annex_url' => 'sometimes|nullable|string',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $healthSystem->update($data);
 

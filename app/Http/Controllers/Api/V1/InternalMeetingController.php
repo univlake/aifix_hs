@@ -8,6 +8,8 @@ use App\Models\InternalMeetingKid;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreInternalMeetingRequest;
+use App\Http\Requests\Api\V1\UpdateInternalMeetingRequest;
 
 class InternalMeetingController extends Controller
 {
@@ -41,23 +43,9 @@ class InternalMeetingController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreInternalMeetingRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'theme' => 'nullable|string|max:255',
-            'type' => 'nullable|string|max:255',
-            'meeting_date' => 'nullable|date',
-            'summary' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-            'notice_annex_url' => 'nullable|string',
-            'summary_annex_url' => 'nullable|string',
-            'sign_annex_url' => 'nullable|string',
-            'material_annex_url' => 'nullable|string',
-            'photo_annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -82,29 +70,14 @@ class InternalMeetingController extends Controller
         return $this->success($result);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateInternalMeetingRequest $request, int $id): JsonResponse
     {
         $record = InternalMeeting::find($id);
 
         if (!$record) {
             return $this->notFound('内部会议不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'sometimes|required|string|max:255',
-            'theme' => 'sometimes|nullable|string|max:255',
-            'type' => 'sometimes|nullable|string|max:255',
-            'meeting_date' => 'sometimes|nullable|date',
-            'summary' => 'sometimes|nullable|string',
-            'annex_url' => 'sometimes|nullable|string',
-            'notice_annex_url' => 'sometimes|nullable|string',
-            'summary_annex_url' => 'sometimes|nullable|string',
-            'sign_annex_url' => 'sometimes|nullable|string',
-            'material_annex_url' => 'sometimes|nullable|string',
-            'photo_annex_url' => 'sometimes|nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
 
         $result = DB::transaction(function () use ($request, $record, $data) {

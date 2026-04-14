@@ -7,6 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use App\Http\Requests\Api\V1\StoreRoleRequest;
+use App\Http\Requests\Api\V1\UpdateRoleRequest;
 
 class RoleController extends Controller
 {
@@ -39,14 +41,9 @@ class RoleController extends Controller
     /**
      * 创建角色
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreRoleRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:50|unique:roles,name',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:permissions,name',
-        ]);
-
+        $data = $request->validated();
         $role = Role::create([
             'name' => $data['name'],
             'guard_name' => 'api',
@@ -62,7 +59,7 @@ class RoleController extends Controller
     /**
      * 更新角色
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateRoleRequest $request, int $id): JsonResponse
     {
         $role = Role::find($id);
 
@@ -74,13 +71,7 @@ class RoleController extends Controller
         if ($role->name === 'super-admin') {
             return $this->failed('禁止修改超级管理员角色');
         }
-
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:50|unique:roles,name,' . $id,
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:permissions,name',
-        ]);
-
+        $data = $request->validated();
         if (isset($data['name'])) {
             $role->update(['name' => $data['name']]);
         }

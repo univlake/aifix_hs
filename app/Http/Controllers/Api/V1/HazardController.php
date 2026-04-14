@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\Hazard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreHazardRequest;
+use App\Http\Requests\Api\V1\UpdateHazardRequest;
 
 class HazardController extends Controller
 {
@@ -34,29 +36,22 @@ class HazardController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreHazardRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $hazard = Hazard::create($data);
 
         return $this->success($hazard);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateHazardRequest $request, int $id): JsonResponse
     {
         $hazard = Hazard::find($id);
 
         if (!$hazard) {
             return $this->notFound('危险有害因素不存在');
         }
-
-        $data = $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $hazard->update($data);
 
         return $this->success($hazard->fresh());

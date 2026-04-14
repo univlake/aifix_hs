@@ -9,6 +9,7 @@ use App\Models\MonthStatisticControl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreMonthStatisticsRequest;
 
 class MonthStatisticsController extends Controller
 {
@@ -40,12 +41,8 @@ class MonthStatisticsController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreMonthStatisticsRequest $request): JsonResponse
     {
-        $request->validate([
-            'company_id' => 'required|integer',
-        ]);
-
         // Check duplicate for current month
         $exists = MonthStatistic::query()
             ->where('company_id', $request->company_id)

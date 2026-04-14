@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Requests\Api\V1;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreRiskDistributionMapRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'annex_url' => 'nullable|string',
+            'company_id' => 'required|integer',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'company_id.required' => '不能为空',
+            'company_id.integer' => '必须是整数',
+        ];
+    }
+}

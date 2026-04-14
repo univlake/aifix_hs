@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\FireSafety;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreFireSafetyRequest;
+use App\Http\Requests\Api\V1\UpdateFireSafetyRequest;
 
 class FireSafetyController extends Controller
 {
@@ -39,18 +41,9 @@ class FireSafetyController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreFireSafetyRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'nullable|string|max:255',
-            'type' => 'nullable|string|max:255',
-            'skill_unit_id' => 'nullable|integer',
-            'skill_unit_kid_id' => 'nullable|integer',
-            'valid_period' => 'nullable|string|max:255',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -59,24 +52,14 @@ class FireSafetyController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateFireSafetyRequest $request, int $id): JsonResponse
     {
         $record = FireSafety::find($id);
 
         if (!$record) {
             return $this->notFound('消防管理不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'sometimes|nullable|string|max:255',
-            'type' => 'sometimes|nullable|string|max:255',
-            'skill_unit_id' => 'sometimes|nullable|integer',
-            'skill_unit_kid_id' => 'sometimes|nullable|integer',
-            'valid_period' => 'sometimes|nullable|string|max:255',
-            'annex_url' => 'sometimes|nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

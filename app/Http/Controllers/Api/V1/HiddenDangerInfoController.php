@@ -8,6 +8,8 @@ use App\Models\HiddenUploadAnnex;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreHiddenDangerInfoRequest;
+use App\Http\Requests\Api\V1\UpdateHiddenDangerInfoRequest;
 
 class HiddenDangerInfoController extends Controller
 {
@@ -44,36 +46,9 @@ class HiddenDangerInfoController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreHiddenDangerInfoRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'expert_inspection_id' => 'required|integer',
-            'expert_company_id' => 'required|integer',
-            'check_company_id' => 'nullable|integer',
-            'area' => 'required|string|max:255',
-            'session' => 'nullable|string|max:255',
-            'description' => 'required|string',
-            'hidden_type' => 'required|string|max:255',
-            'hidden_level' => 'required|string|max:255',
-            'legalises' => 'nullable|string',
-            'proposal' => 'nullable|string',
-            'correct_deadline' => 'nullable|date',
-            'invest_status' => 'nullable|integer',
-            'correct_status' => 'nullable|integer',
-            'correct_date' => 'nullable|date',
-            'review_description' => 'nullable|string',
-            'review_user_id' => 'nullable|integer',
-            'archive_user_id' => 'nullable|integer',
-            'comment' => 'nullable|string',
-            'company_id' => 'required|integer',
-            'hiddenExamineAnnex' => 'nullable|array',
-            'hiddenExamineAnnex.*.geolocation' => 'nullable|string',
-            'hiddenExamineAnnex.*.annex_url' => 'nullable|string',
-            'hiddenReviewAnnex' => 'nullable|array',
-            'hiddenReviewAnnex.*.geolocation' => 'nullable|string',
-            'hiddenReviewAnnex.*.annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -108,44 +83,14 @@ class HiddenDangerInfoController extends Controller
         return $this->success($result);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateHiddenDangerInfoRequest $request, int $id): JsonResponse
     {
         $hiddenDangerInfo = HiddenDangerInfo::find($id);
 
         if (!$hiddenDangerInfo) {
             return $this->notFound('隐患信息不存在');
         }
-
-        $data = $request->validate([
-            'expert_inspection_id' => 'sometimes|nullable|integer',
-            'expert_company_id' => 'sometimes|nullable|integer',
-            'check_company_id' => 'sometimes|nullable|integer',
-            'area' => 'sometimes|nullable|string|max:255',
-            'session' => 'sometimes|nullable|string|max:255',
-            'description' => 'sometimes|nullable|string',
-            'hidden_type' => 'sometimes|nullable|string|max:255',
-            'hidden_level' => 'sometimes|nullable|string|max:255',
-            'legalises' => 'sometimes|nullable|string',
-            'proposal' => 'sometimes|nullable|string',
-            'correct_deadline' => 'sometimes|nullable|date',
-            'invest_status' => 'sometimes|nullable|integer',
-            'zg_user_id' => 'sometimes|nullable|integer',
-            'correct_status' => 'sometimes|nullable|integer',
-            'correct_date' => 'sometimes|nullable|date',
-            'review_description' => 'sometimes|nullable|string',
-            'review_user_id' => 'sometimes|nullable|integer',
-            'review_time' => 'sometimes|nullable|date',
-            'archive_user_id' => 'sometimes|nullable|integer',
-            'comment' => 'sometimes|nullable|string',
-            'company_id' => 'sometimes|nullable|integer',
-            'hiddenExamineAnnex' => 'nullable|array',
-            'hiddenExamineAnnex.*.geolocation' => 'nullable|string',
-            'hiddenExamineAnnex.*.annex_url' => 'nullable|string',
-            'hiddenReviewAnnex' => 'nullable|array',
-            'hiddenReviewAnnex.*.geolocation' => 'nullable|string',
-            'hiddenReviewAnnex.*.annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
 
         if (!empty($data['review_description'])) {

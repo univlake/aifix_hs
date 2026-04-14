@@ -8,6 +8,7 @@ use App\Models\AccidentBulletinKid;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreAccidentBulletinsRequest;
 
 class AccidentBulletinsController extends Controller
 {
@@ -43,20 +44,11 @@ class AccidentBulletinsController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreAccidentBulletinsRequest $request): JsonResponse
     {
-        $request->validate([
-            'company_id' => 'required|integer',
-        ]);
-
         $data = DB::transaction(function () use ($request) {
-            $accidentBulletin = AccidentBulletin::create($request->only(
-                'type', 'direct_cause', 'indirect_cause', 'accident_level',
-                'department', 'happen_time', 'happen_area', 'content',
-                'degree_injury', 'direct_loss_property', 'gauge_loss_property',
-                'staff_die', 'staff_hurt', 'not_staff_die', 'not_staff_hurt',
-                'accident_report_url', 'accident_photo_url', 'company_id'
-            ));
+            $validated = $request->validated();
+            $accidentBulletin = AccidentBulletin::create($validated);
             $accidentBulletin->user_id = auth()->id() ?? 0;
             $accidentBulletin->last_user_id = auth()->id() ?? 0;
             $accidentBulletin->save();

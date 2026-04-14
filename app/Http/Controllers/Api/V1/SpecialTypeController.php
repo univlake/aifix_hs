@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\SpecialType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreSpecialTypeRequest;
+use App\Http\Requests\Api\V1\UpdateSpecialTypeRequest;
 
 class SpecialTypeController extends Controller
 {
@@ -24,12 +26,9 @@ class SpecialTypeController extends Controller
     /**
      * 创建设备类型
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreSpecialTypeRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $type = SpecialType::create($data);
 
@@ -39,18 +38,14 @@ class SpecialTypeController extends Controller
     /**
      * 更新设备类型
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateSpecialTypeRequest $request, int $id): JsonResponse
     {
         $type = SpecialType::find($id);
 
         if (!$type) {
             return $this->notFound('设备类型不存在');
         }
-
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $type->update($data);
 

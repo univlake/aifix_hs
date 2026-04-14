@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\FilingPermission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreFilingPermissionsRequest;
 
 class FilingPermissionsController extends Controller
 {
@@ -33,17 +34,9 @@ class FilingPermissionsController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreFilingPermissionsRequest $request): JsonResponse
     {
-        $request->validate([
-            'company_id' => 'required|integer',
-            'record_type_id' => 'required|integer',
-        ]);
-
-        $data = $request->only(
-            'record_type_id', 'issuing_department', 'filing_range',
-            'filing_time', 'valid_period', 'comment', 'annex_url', 'company_id'
-        );
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 

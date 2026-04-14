@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\TrainingClassType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreTrainingClassTypeRequest;
+use App\Http\Requests\Api\V1\UpdateTrainingClassTypeRequest;
 
 class TrainingClassTypeController extends Controller
 {
@@ -24,12 +26,9 @@ class TrainingClassTypeController extends Controller
     /**
      * 创建培训课类型
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreTrainingClassTypeRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'title' => 'nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $type = TrainingClassType::create($data);
 
@@ -39,18 +38,14 @@ class TrainingClassTypeController extends Controller
     /**
      * 更新培训课类型
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateTrainingClassTypeRequest $request, int $id): JsonResponse
     {
         $type = TrainingClassType::find($id);
 
         if (!$type) {
             return $this->notFound('培训课类型不存在');
         }
-
-        $data = $request->validate([
-            'title' => 'nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $type->update($data);
 

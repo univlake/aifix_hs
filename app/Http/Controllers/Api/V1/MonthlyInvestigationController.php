@@ -7,6 +7,8 @@ use App\Models\MonthlyInvestigation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreMonthlyInvestigationRequest;
+use App\Http\Requests\Api\V1\UpdateMonthlyInvestigationRequest;
 
 class MonthlyInvestigationController extends Controller
 {
@@ -39,38 +41,9 @@ class MonthlyInvestigationController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreMonthlyInvestigationRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'type' => 'nullable|string|max:255',
-            'is_fire_fighting' => 'nullable|integer',
-            'is_emergency' => 'nullable|integer',
-            'content' => 'nullable|string',
-            'inv_time' => 'nullable|date',
-            'inv_name' => 'nullable|string|max:255',
-            'level' => 'nullable|string|max:255',
-            'proposal' => 'nullable|string',
-            'legalbasis' => 'nullable|string',
-            'correct_date' => 'nullable|date',
-            'review_discription' => 'nullable|string',
-            'review_date' => 'nullable|date',
-            'review_content' => 'nullable|string',
-            'review_user' => 'nullable|string|max:255',
-            'correct_result' => 'nullable|string|max:255',
-            'is_govern' => 'nullable|integer',
-            'govern_title' => 'nullable|string|max:255',
-            'govern_supplies' => 'nullable|string|max:255',
-            'govern_user' => 'nullable|string|max:255',
-            'govern_date' => 'nullable|string|max:255',
-            'govern_text' => 'nullable|string|max:255',
-            'govern_money' => 'nullable|string|max:255',
-            'company_id' => 'required|integer',
-            'monthlyInvestigationReviews' => 'nullable|array',
-            'monthlyInvestigationReviews.*.annex_url' => 'nullable|string',
-            'monthlyInvestigationViews' => 'nullable|array',
-            'monthlyInvestigationViews.*.annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -106,44 +79,14 @@ class MonthlyInvestigationController extends Controller
         return $this->success($result);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateMonthlyInvestigationRequest $request, int $id): JsonResponse
     {
         $monthlyInvestigation = MonthlyInvestigation::find($id);
 
         if (!$monthlyInvestigation) {
             return $this->notFound('月度排查不存在');
         }
-
-        $data = $request->validate([
-            'type' => 'sometimes|nullable|string|max:255',
-            'is_fire_fighting' => 'sometimes|nullable|integer',
-            'is_emergency' => 'sometimes|nullable|integer',
-            'content' => 'sometimes|nullable|string',
-            'inv_time' => 'sometimes|nullable|date',
-            'inv_name' => 'sometimes|nullable|string|max:255',
-            'level' => 'sometimes|nullable|string|max:255',
-            'proposal' => 'sometimes|nullable|string',
-            'legalbasis' => 'sometimes|nullable|string',
-            'correct_date' => 'sometimes|nullable|date',
-            'review_discription' => 'sometimes|nullable|string',
-            'review_date' => 'sometimes|nullable|date',
-            'review_content' => 'sometimes|nullable|string',
-            'review_user' => 'sometimes|nullable|string|max:255',
-            'correct_result' => 'sometimes|nullable|string|max:255',
-            'is_govern' => 'sometimes|nullable|integer',
-            'govern_title' => 'sometimes|nullable|string|max:255',
-            'govern_supplies' => 'sometimes|nullable|string|max:255',
-            'govern_user' => 'sometimes|nullable|string|max:255',
-            'govern_date' => 'sometimes|nullable|string|max:255',
-            'govern_text' => 'sometimes|nullable|string|max:255',
-            'govern_money' => 'sometimes|nullable|string|max:255',
-            'company_id' => 'sometimes|nullable|integer',
-            'monthlyInvestigationReviews' => 'nullable|array',
-            'monthlyInvestigationReviews.*.annex_url' => 'nullable|string',
-            'monthlyInvestigationViews' => 'nullable|array',
-            'monthlyInvestigationViews.*.annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
 
         $reviews = $data['monthlyInvestigationReviews'] ?? null;

@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\Personnel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StorePersonnelRequest;
+use App\Http\Requests\Api\V1\UpdatePersonnelRequest;
 
 class PersonnelController extends Controller
 {
@@ -46,22 +48,9 @@ class PersonnelController extends Controller
     /**
      * 创建人员
      */
-    public function store(Request $request): JsonResponse
+    public function store(StorePersonnelRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'total_people' => 'nullable|integer|min:0',
-            'staff' => 'nullable|integer|min:0',
-            'service' => 'nullable|integer|min:0',
-            'manager' => 'nullable|integer|min:0',
-            'high_school_diploma' => 'nullable|integer|min:0',
-            'security_officer' => 'nullable|integer|min:0',
-            'safety_engineer' => 'nullable|integer|min:0',
-            'safety_engineering_major' => 'nullable|integer|min:0',
-            'fire_engineer' => 'nullable|integer|min:0',
-            'other' => 'nullable|integer|min:0',
-            'company_id' => 'required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $personnel = Personnel::create($data);
 
@@ -71,27 +60,14 @@ class PersonnelController extends Controller
     /**
      * 更新人员
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdatePersonnelRequest $request, int $id): JsonResponse
     {
         $personnel = Personnel::find($id);
 
         if (!$personnel) {
             return $this->notFound('人员信息不存在');
         }
-
-        $data = $request->validate([
-            'total_people' => 'nullable|integer|min:0',
-            'staff' => 'nullable|integer|min:0',
-            'service' => 'nullable|integer|min:0',
-            'manager' => 'nullable|integer|min:0',
-            'high_school_diploma' => 'nullable|integer|min:0',
-            'security_officer' => 'nullable|integer|min:0',
-            'safety_engineer' => 'nullable|integer|min:0',
-            'safety_engineering_major' => 'nullable|integer|min:0',
-            'fire_engineer' => 'nullable|integer|min:0',
-            'other' => 'nullable|integer|min:0',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $personnel->update($data);
 

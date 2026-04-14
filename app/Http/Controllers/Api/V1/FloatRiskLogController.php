@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\FloatRiskLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreFloatRiskLogRequest;
+use App\Http\Requests\Api\V1\UpdateFloatRiskLogRequest;
 
 class FloatRiskLogController extends Controller
 {
@@ -34,29 +36,9 @@ class FloatRiskLogController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreFloatRiskLogRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'internal_meeting_scale' => 'nullable|numeric',
-            'internal_training_scale' => 'nullable|numeric',
-            'accident_bulletin_scale' => 'nullable|numeric',
-            'accident_bulletin_severe_scale' => 'nullable|numeric',
-            'accident_report_url_scale' => 'nullable|numeric',
-            'emergency_team_scale' => 'nullable|numeric',
-            'emergency_drill_scale' => 'nullable|numeric',
-            'job_management_scale' => 'nullable|numeric',
-            'risk_source_scale' => 'nullable|numeric',
-            'monthly_investigation_scale' => 'nullable|numeric',
-            'three_together_over_scale' => 'nullable|numeric',
-            'unit_sum_number_scale' => 'nullable|numeric',
-            'evaluation_unit_scale' => 'nullable|numeric',
-            'evaluation_unit_school_scale' => 'nullable|numeric',
-            'health_checkup_people_scale' => 'nullable|numeric',
-            'health_checkup_scale' => 'nullable|numeric',
-            'health_report_scale' => 'nullable|numeric',
-            'company_id' => 'nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -65,35 +47,14 @@ class FloatRiskLogController extends Controller
         return $this->success($floatRiskLog);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateFloatRiskLogRequest $request, int $id): JsonResponse
     {
         $floatRiskLog = FloatRiskLog::find($id);
 
         if (!$floatRiskLog) {
             return $this->notFound('动态风险日志不存在');
         }
-
-        $data = $request->validate([
-            'internal_meeting_scale' => 'sometimes|nullable|numeric',
-            'internal_training_scale' => 'sometimes|nullable|numeric',
-            'accident_bulletin_scale' => 'sometimes|nullable|numeric',
-            'accident_bulletin_severe_scale' => 'sometimes|nullable|numeric',
-            'accident_report_url_scale' => 'sometimes|nullable|numeric',
-            'emergency_team_scale' => 'sometimes|nullable|numeric',
-            'emergency_drill_scale' => 'sometimes|nullable|numeric',
-            'job_management_scale' => 'sometimes|nullable|numeric',
-            'risk_source_scale' => 'sometimes|nullable|numeric',
-            'monthly_investigation_scale' => 'sometimes|nullable|numeric',
-            'three_together_over_scale' => 'sometimes|nullable|numeric',
-            'unit_sum_number_scale' => 'sometimes|nullable|numeric',
-            'evaluation_unit_scale' => 'sometimes|nullable|numeric',
-            'evaluation_unit_school_scale' => 'sometimes|nullable|numeric',
-            'health_checkup_people_scale' => 'sometimes|nullable|numeric',
-            'health_checkup_scale' => 'sometimes|nullable|numeric',
-            'health_report_scale' => 'sometimes|nullable|numeric',
-            'company_id' => 'sometimes|nullable|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $floatRiskLog->update($data);
 

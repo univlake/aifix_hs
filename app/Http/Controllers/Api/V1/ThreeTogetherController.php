@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\ThreeTogether;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreThreeTogetherRequest;
+use App\Http\Requests\Api\V1\UpdateThreeTogetherRequest;
 
 class ThreeTogetherController extends Controller
 {
@@ -39,25 +41,9 @@ class ThreeTogetherController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreThreeTogetherRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'nullable|string|max:255',
-            'three_together_type' => 'nullable|string|max:255',
-            'establish_time' => 'nullable|date',
-            'establish_section' => 'nullable|string|max:255',
-            'status' => 'nullable|string|max:255',
-            'design_unit_id' => 'nullable|integer',
-            'design_annex_url' => 'nullable|string',
-            'evaluation_unit_id' => 'nullable|integer',
-            'write_time' => 'nullable|date',
-            'construction_comment' => 'nullable|string',
-            'safety_requirements' => 'nullable|string',
-            'complete_comment' => 'nullable|string',
-            'acceptance' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -66,31 +52,14 @@ class ThreeTogetherController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateThreeTogetherRequest $request, int $id): JsonResponse
     {
         $record = ThreeTogether::find($id);
 
         if (!$record) {
             return $this->notFound('三同时管理不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'sometimes|nullable|string|max:255',
-            'three_together_type' => 'sometimes|nullable|string|max:255',
-            'establish_time' => 'sometimes|nullable|date',
-            'establish_section' => 'sometimes|nullable|string|max:255',
-            'status' => 'sometimes|nullable|string|max:255',
-            'design_unit_id' => 'sometimes|nullable|integer',
-            'design_annex_url' => 'sometimes|nullable|string',
-            'evaluation_unit_id' => 'sometimes|nullable|integer',
-            'write_time' => 'sometimes|nullable|date',
-            'construction_comment' => 'sometimes|nullable|string',
-            'safety_requirements' => 'sometimes|nullable|string',
-            'complete_comment' => 'sometimes|nullable|string',
-            'acceptance' => 'sometimes|nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

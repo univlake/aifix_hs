@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\SecurityInvestment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreSecurityInvestmentRequest;
+use App\Http\Requests\Api\V1\UpdateSecurityInvestmentRequest;
 
 class SecurityInvestmentController extends Controller
 {
@@ -38,18 +40,9 @@ class SecurityInvestmentController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreSecurityInvestmentRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'year' => 'nullable|string|max:255',
-            'type' => 'nullable|string|max:255',
-            'title' => 'nullable|string|max:255',
-            'content' => 'nullable|string',
-            'budget' => 'nullable|numeric',
-            'last_year_income' => 'nullable|numeric',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -58,24 +51,14 @@ class SecurityInvestmentController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateSecurityInvestmentRequest $request, int $id): JsonResponse
     {
         $record = SecurityInvestment::find($id);
 
         if (!$record) {
             return $this->notFound('安全投入计划不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'year' => 'sometimes|nullable|string|max:255',
-            'type' => 'sometimes|nullable|string|max:255',
-            'title' => 'sometimes|nullable|string|max:255',
-            'content' => 'sometimes|nullable|string',
-            'budget' => 'sometimes|nullable|numeric',
-            'last_year_income' => 'sometimes|nullable|numeric',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

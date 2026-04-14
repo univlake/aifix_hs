@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\HealthCheckup;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreHealthCheckupRequest;
+use App\Http\Requests\Api\V1\UpdateHealthCheckupRequest;
 
 class HealthCheckupController extends Controller
 {
@@ -38,19 +40,9 @@ class HealthCheckupController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreHealthCheckupRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'type' => 'required|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'number' => 'nullable|integer',
-            'checkup_date' => 'nullable|date',
-            'checkup_expiry' => 'nullable|string',
-            'measure' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -59,25 +51,14 @@ class HealthCheckupController extends Controller
         return $this->success($healthCheckup);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateHealthCheckupRequest $request, int $id): JsonResponse
     {
         $healthCheckup = HealthCheckup::find($id);
 
         if (!$healthCheckup) {
             return $this->notFound('职业健康体检不存在');
         }
-
-        $data = $request->validate([
-            'type' => 'sometimes|required|string|max:255',
-            'department' => 'sometimes|nullable|string|max:255',
-            'number' => 'sometimes|nullable|integer',
-            'checkup_date' => 'sometimes|nullable|date',
-            'checkup_expiry' => 'sometimes|nullable|string',
-            'measure' => 'sometimes|nullable|string',
-            'annex_url' => 'sometimes|nullable|string',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $healthCheckup->update($data);
 

@@ -8,6 +8,8 @@ use App\Models\NewNotifyScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Api\V1\StoreNewNotifyRequest;
+use App\Http\Requests\Api\V1\UpdateNewNotifyRequest;
 
 class NewNotifyController extends Controller
 {
@@ -41,16 +43,9 @@ class NewNotifyController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreNewNotifyRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'name' => 'required|string|max:255',
-            'alert_others' => 'nullable|string|max:255',
-            'comment' => 'nullable|string',
-            'annex_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -81,22 +76,14 @@ class NewNotifyController extends Controller
         return $this->success($result);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateNewNotifyRequest $request, int $id): JsonResponse
     {
         $record = NewNotify::find($id);
 
         if (!$record) {
             return $this->notFound('新通知不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'name' => 'sometimes|required|string|max:255',
-            'alert_others' => 'sometimes|nullable|string|max:255',
-            'comment' => 'sometimes|nullable|string',
-            'annex_url' => 'sometimes|nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
 
         $result = DB::transaction(function () use ($request, $record, $data) {

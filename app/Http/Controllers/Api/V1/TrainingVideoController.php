@@ -7,6 +7,8 @@ use App\Models\TrainingVideo;
 use App\Models\TrainingVideoLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreTrainingVideoRequest;
+use App\Http\Requests\Api\V1\UpdateTrainingVideoRequest;
 
 class TrainingVideoController extends Controller
 {
@@ -44,18 +46,9 @@ class TrainingVideoController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreTrainingVideoRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'title' => 'nullable|string|max:255',
-            'introduce' => 'nullable|string',
-            'thumb_url' => 'nullable|string',
-            'video_url' => 'nullable|string',
-            'duration' => 'nullable|string|max:255',
-            'lector' => 'nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -64,24 +57,14 @@ class TrainingVideoController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateTrainingVideoRequest $request, int $id): JsonResponse
     {
         $record = TrainingVideo::find($id);
 
         if (!$record) {
             return $this->notFound('培训视频不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'title' => 'sometimes|nullable|string|max:255',
-            'introduce' => 'sometimes|nullable|string',
-            'thumb_url' => 'sometimes|nullable|string',
-            'video_url' => 'sometimes|nullable|string',
-            'duration' => 'sometimes|nullable|string|max:255',
-            'lector' => 'sometimes|nullable|string|max:255',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

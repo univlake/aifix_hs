@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\FocusCompany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreFocusCompaniesRequest;
 
 class FocusCompaniesController extends Controller
 {
@@ -28,13 +29,9 @@ class FocusCompaniesController extends Controller
         return $this->success($list);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreFocusCompaniesRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'focus_id' => 'required|integer',
-            'company_id' => 'required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 

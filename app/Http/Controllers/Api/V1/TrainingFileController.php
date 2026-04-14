@@ -7,6 +7,8 @@ use App\Models\TrainingFile;
 use App\Models\TrainingFileLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreTrainingFileRequest;
+use App\Http\Requests\Api\V1\UpdateTrainingFileRequest;
 
 class TrainingFileController extends Controller
 {
@@ -44,14 +46,9 @@ class TrainingFileController extends Controller
         return $this->success($data->file_url);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreTrainingFileRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'company_id' => 'required|integer',
-            'title' => 'nullable|string|max:255',
-            'file_url' => 'nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -60,20 +57,14 @@ class TrainingFileController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateTrainingFileRequest $request, int $id): JsonResponse
     {
         $record = TrainingFile::find($id);
 
         if (!$record) {
             return $this->notFound('培训材料不存在');
         }
-
-        $data = $request->validate([
-            'company_id' => 'sometimes|required|integer',
-            'title' => 'sometimes|nullable|string|max:255',
-            'file_url' => 'sometimes|nullable|string',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 

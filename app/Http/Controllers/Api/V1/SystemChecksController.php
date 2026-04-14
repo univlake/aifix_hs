@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Controller;
 use App\Models\SystemCheck;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\StoreSystemChecksRequest;
+use App\Http\Requests\Api\V1\UpdateSystemChecksRequest;
 
 class SystemChecksController extends Controller
 {
@@ -39,19 +41,9 @@ class SystemChecksController extends Controller
         return $this->success($data);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreSystemChecksRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'number_v1' => 'nullable|numeric',
-            'number_v2' => 'nullable|numeric',
-            'number_v3' => 'nullable|numeric',
-            'number_v4' => 'nullable|numeric',
-            'number_v5' => 'nullable|numeric',
-            'number' => 'nullable|integer',
-            'year' => 'required|integer',
-            'company_id' => 'required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
 
@@ -60,25 +52,14 @@ class SystemChecksController extends Controller
         return $this->success($record);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateSystemChecksRequest $request, int $id): JsonResponse
     {
         $record = SystemCheck::find($id);
 
         if (!$record) {
             return $this->notFound('系统考核记录不存在');
         }
-
-        $data = $request->validate([
-            'number_v1' => 'sometimes|nullable|numeric',
-            'number_v2' => 'sometimes|nullable|numeric',
-            'number_v3' => 'sometimes|nullable|numeric',
-            'number_v4' => 'sometimes|nullable|numeric',
-            'number_v5' => 'sometimes|nullable|numeric',
-            'number' => 'sometimes|nullable|integer',
-            'year' => 'sometimes|required|integer',
-            'company_id' => 'sometimes|required|integer',
-        ]);
-
+        $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
 
