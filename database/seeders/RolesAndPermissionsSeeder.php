@@ -133,6 +133,219 @@ class RolesAndPermissionsSeeder extends Seeder
             'report-configs.create',
             'report-configs.update',
             'report-configs.delete',
+
+            // ── Phase 4: 安全台账 + 职业健康 ──────────────────────
+
+            // 特种设备
+            'special-equipment.list',
+            'special-equipment.create',
+            'special-equipment.update',
+            'special-equipment.delete',
+
+            // 特种设备人员
+            'special-equipment-staff.list',
+            'special-equipment-staff.create',
+            'special-equipment-staff.update',
+            'special-equipment-staff.delete',
+
+            // 危险化工设备
+            'dangerous-equipment.list',
+            'dangerous-equipment.create',
+            'dangerous-equipment.update',
+            'dangerous-equipment.delete',
+
+            // 危险化学品
+            'hazardous-chemicals.list',
+            'hazardous-chemicals.create',
+            'hazardous-chemicals.update',
+            'hazardous-chemicals.delete',
+
+            // 危险化工工艺
+            'hazardous-processes.list',
+            'hazardous-processes.create',
+            'hazardous-processes.update',
+            'hazardous-processes.delete',
+
+            // 重大危险源
+            'major-hazards.list',
+            'major-hazards.create',
+            'major-hazards.update',
+            'major-hazards.delete',
+
+            // 重点监管危险化工工艺
+            'major-hazardous-processes.list',
+            'major-hazardous-processes.create',
+            'major-hazardous-processes.update',
+            'major-hazardous-processes.delete',
+
+            // 有限空间作业
+            'space-works.list',
+            'space-works.create',
+            'space-works.update',
+            'space-works.delete',
+
+            // 职业危害清单
+            'occupational-hazards.list',
+            'occupational-hazards.create',
+            'occupational-hazards.update',
+            'occupational-hazards.delete',
+
+            // 职业健康体系 (无删除)
+            'health-systems.list',
+            'health-systems.create',
+            'health-systems.update',
+
+            // 健康档案
+            'health-files.list',
+            'health-files.create',
+            'health-files.update',
+            'health-files.delete',
+
+            // 职业病报告
+            'health-reports.list',
+            'health-reports.create',
+            'health-reports.update',
+            'health-reports.delete',
+
+            // 职业健康体检
+            'health-checkups.list',
+            'health-checkups.create',
+            'health-checkups.update',
+            'health-checkups.delete',
+
+            // 职业卫生评价
+            'hygiene-evaluations.list',
+            'hygiene-evaluations.create',
+            'hygiene-evaluations.update',
+            'hygiene-evaluations.delete',
+
+            // ── Phase 4.3+4.4: 消防 + 应急 + 培训 + 会议 + 通知 ──────────────────────
+
+            // 消防管理
+            'fire-safeties.list',
+            'fire-safeties.create',
+            'fire-safeties.update',
+            'fire-safeties.delete',
+
+            // 消防器材
+            'fire-equipment.list',
+            'fire-equipment.create',
+            'fire-equipment.update',
+            'fire-equipment.delete',
+
+            // 消防设施
+            'fire-facilities.list',
+            'fire-facilities.create',
+            'fire-facilities.update',
+            'fire-facilities.delete',
+
+            // 应急演练
+            'emergency-drills.list',
+            'emergency-drills.create',
+            'emergency-drills.update',
+            'emergency-drills.delete',
+
+            // 应急物资
+            'emergency-supplies.list',
+            'emergency-supplies.create',
+            'emergency-supplies.update',
+            'emergency-supplies.delete',
+
+            // 应急队伍
+            'emergency-teams.list',
+            'emergency-teams.create',
+            'emergency-teams.update',
+            'emergency-teams.delete',
+
+            // 三同时管理
+            'three-togethers.list',
+            'three-togethers.create',
+            'three-togethers.update',
+            'three-togethers.delete',
+
+            // 内部培训
+            'internal-trainings.list',
+            'internal-trainings.create',
+            'internal-trainings.update',
+            'internal-trainings.delete',
+
+            // 外部培训
+            'external-trainings.list',
+            'external-trainings.create',
+            'external-trainings.update',
+            'external-trainings.delete',
+
+            // 其他培训
+            'other-trainings.list',
+            'other-trainings.create',
+            'other-trainings.update',
+            'other-trainings.delete',
+
+            // 培训材料
+            'training-files.list',
+            'training-files.create',
+            'training-files.update',
+            'training-files.delete',
+
+            // 培训视频
+            'training-videos.list',
+            'training-videos.create',
+            'training-videos.update',
+            'training-videos.delete',
+
+            // 培训课程
+            'training-classes.list',
+            'training-classes.create',
+            'training-classes.update',
+            'training-classes.delete',
+
+            // 培训课程详情
+            'training-class-infos.list',
+            'training-class-infos.create',
+            'training-class-infos.update',
+            'training-class-infos.delete',
+
+            // 会议管理
+            'meetings.list',
+            'meetings.create',
+            'meetings.update',
+            'meetings.delete',
+
+            // 会议报名
+            'meeting-sign-ups.list',
+            'meeting-sign-ups.create',
+            'meeting-sign-ups.update',
+            'meeting-sign-ups.delete',
+
+            // 内部会议
+            'internal-meetings.list',
+            'internal-meetings.create',
+            'internal-meetings.update',
+            'internal-meetings.delete',
+
+            // 通知公告
+            'office-notifies.list',
+            'office-notifies.create',
+            'office-notifies.update',
+            'office-notifies.delete',
+
+            // 新通知
+            'new-notifies.list',
+            'new-notifies.create',
+            'new-notifies.update',
+            'new-notifies.delete',
+
+            // 安全投入计划
+            'security-investments.list',
+            'security-investments.create',
+            'security-investments.update',
+            'security-investments.delete',
+
+            // 经费执行情况
+            'funding-executions.list',
+            'funding-executions.create',
+            'funding-executions.update',
+            'funding-executions.delete',
         ];
 
         foreach ($permissions as $name) {
