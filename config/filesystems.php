@@ -60,6 +60,16 @@ return [
             'report' => false,
         ],
 
+        'oss' => [
+            'driver' => 'oss',
+            'access_key_id' => env('OSS_ACCESS_KEY_ID'),
+            'access_key_secret' => env('OSS_ACCESS_KEY_SECRET'),
+            'endpoint' => env('OSS_ENDPOINT', 'https://oss-cn-hangzhou.aliyuncs.com'),
+            'bucket' => env('OSS_BUCKET', 'anjk-hs'),
+            'url' => env('OSS_URL', 'https://anjk-hs.oss-cn-hangzhou.aliyuncs.com'),
+            'callback_url' => env('OSS_CALLBACK_URL', ''),
+        ],
+
     ],
 
     /*

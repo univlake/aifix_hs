@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\FilingPermissionsController;
+use App\Http\Controllers\Api\V1\UploadController;
+use App\Http\Controllers\Api\V1\UploadOssController;
 use App\Http\Controllers\Api\V1\BaseDataController;
 use App\Http\Controllers\Api\V1\BuildingController;
 use App\Http\Controllers\Api\V1\CertificateStatusController;
@@ -370,6 +373,32 @@ Route::prefix('v1')->group(function () {
         });
         Route::middleware('permission:change-manages.delete')->group(function () {
             Route::delete('/change-manages/{id}', [ChangeManageController::class, 'destroy']);
+        });
+
+        // ── 文件上传 ──────────────────────────────
+        Route::middleware('permission:upload.file')->group(function () {
+            Route::post('/upload', [UploadController::class, 'upload']);
+        });
+        Route::middleware('permission:upload.oss')->group(function () {
+            Route::get('/upload/oss-signature', [UploadOssController::class, 'getSignature']);
+        });
+        // OSS callback — no auth middleware, verified by signature
+        Route::post('/upload/oss-callback', [UploadOssController::class, 'callback']);
+
+        // ── 备案/许可管理 ──────────────────────────────
+        Route::middleware('permission:filing-permissions.list')->group(function () {
+            Route::get('/filing-permissions', [FilingPermissionsController::class, 'index']);
+            Route::get('/filing-permissions/{id}', [FilingPermissionsController::class, 'show']);
+        });
+        Route::middleware('permission:filing-permissions.create')->group(function () {
+            Route::post('/filing-permissions', [FilingPermissionsController::class, 'store']);
+        });
+        Route::middleware('permission:filing-permissions.update')->group(function () {
+            Route::put('/filing-permissions/{id}', [FilingPermissionsController::class, 'update']);
+            Route::patch('/filing-permissions/{id}', [FilingPermissionsController::class, 'update']);
+        });
+        Route::middleware('permission:filing-permissions.delete')->group(function () {
+            Route::delete('/filing-permissions/{id}', [FilingPermissionsController::class, 'destroy']);
         });
     });
 });

@@ -112,6 +112,16 @@ class RolesAndPermissionsSeeder extends Seeder
             'change-manages.update',
             'change-manages.delete',
 
+            // 文件上传
+            'upload.file',
+            'upload.oss',
+
+            // 备案/许可管理
+            'filing-permissions.list',
+            'filing-permissions.create',
+            'filing-permissions.update',
+            'filing-permissions.delete',
+
             // 检查清单库
             'checklist-libraries.list',
             'checklist-libraries.create',

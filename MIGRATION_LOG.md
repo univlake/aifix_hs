@@ -162,6 +162,49 @@
 
 ---
 
+## [阶段 2] 文件上传 + 备案许可 - 2026-04-14
+
+> 由 Claude Code 完成，OSS 未实际操作，仅提供 API。
+
+### 迁移文件
+
+| 新文件 | 说明 |
+|--------|------|
+| `app/Http/Controllers/Api/V1/UploadController.php` | 本地文件上传，存到 `public/uploads/` |
+| `app/Http/Controllers/Api/V1/UploadOssController.php` | OSS 直传签名 + 回调验证 |
+| `app/Models/FilingPermission.php` | 备案/许可 Model |
+| `app/Http/Controllers/Api/V1/FilingPermissionsController.php` | 备案/许可 CRUD |
+| `database/migrations/..._create_filing_permissions_table.php` | 备案/许可表 |
+
+### 重构变更
+- 旧项目 OSS 凭证硬编码在控制器 → 新项目移至 `.env` 环境变量
+- 旧项目 UploadController 直接操作 OSS → 新项目本地上传 + OSS 签名分离
+- OSS 回调验证保留签名验签逻辑，但移除了硬编码域名
+- 配置化: `config/filesystems.php` 新增 `oss` disk
+
+### 数据库变化
+- 新增 `filing_permissions` 表 (含 record_type_id, company_id 索引)
+
+### API 端点
+```
+POST   api/v1/upload                  本地文件上传 (permission:upload.file)
+GET    api/v1/upload/oss-signature    OSS 直传签名 (permission:upload.oss)
+POST   api/v1/upload/oss-callback     OSS 回调验证 (无 auth，签名校验)
+GET    api/v1/filing-permissions      备案/许可列表 (permission:filing-permissions.list)
+POST   api/v1/filing-permissions      创建 (permission:filing-permissions.create)
+PUT    api/v1/filing-permissions/{id} 更新 (permission:filing-permissions.update)
+DELETE api/v1/filing-permissions/{id} 删除 (permission:filing-permissions.delete)
+```
+
+### 权限新增 (6 个)
+- `upload.file`, `upload.oss`
+- `filing-permissions.list/create/update/delete`
+
+### 测试覆盖
+- 48 tests, 88 assertions — 全部通过 ✅
+
+---
+
 ## [阶段 3] 简单 CRUD 模块 (20+ 模块) - 2026-04-14
 
 > 由 2 个 Claude Code 子代理并行完成，~9 分钟。
