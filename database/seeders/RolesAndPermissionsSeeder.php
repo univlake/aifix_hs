@@ -401,6 +401,93 @@ class RolesAndPermissionsSeeder extends Seeder
             'monthly-investigations.create',
             'monthly-investigations.update',
             'monthly-investigations.delete',
+
+            // ── Phase 6: 事故快报 + 统计 + 集团管控 ──────────────────────
+
+            // 事故快报
+            'accident-bulletins.list',
+            'accident-bulletins.create',
+            'accident-bulletins.update',
+            'accident-bulletins.delete',
+
+            // 制度草案
+            'information-drafts.list',
+            'information-drafts.create',
+            'information-drafts.update',
+            'information-drafts.delete',
+
+            // 专家检查
+            'expert-inspections.list',
+            'expert-inspections.create',
+            'expert-inspections.update',
+            'expert-inspections.delete',
+
+            // 月度统计
+            'month-statistics.list',
+            'month-statistics.create',
+            'month-statistics.update',
+            'month-statistics.delete',
+
+            // 年度统计
+            'year-statistics.list',
+            'year-statistics.create',
+            'year-statistics.update',
+            'year-statistics.delete',
+
+            // 集团专家
+            'bloc-experts.list',
+            'bloc-experts.create',
+            'bloc-experts.delete',
+
+            // 集团风险
+            'bloc-risks.list',
+
+            // 集团通知
+            'bloc-notices.list',
+
+            // 集团事故快报
+            'bloc-accident-bulletins.list',
+
+            // 集团评论
+            'bloc-comments.list',
+
+            // 待办事项
+            'todos.list',
+
+            // 首页
+            'homes.list',
+
+            // 企业地图
+            'company-map.list',
+
+            // 企业报表
+            'enterprise-report.list',
+
+            // 在线检查
+            'online-inspection.list',
+
+            // 可见性统计
+            'visible.list',
+
+            // 重点监管企业
+            'focus-companies.list',
+            'focus-companies.create',
+            'focus-companies.delete',
+        
+            // ── 补充模块 ──────────────────────────────
+            'assess-detects.list',
+            'assess-detects.create',
+            'assess-detects.update',
+            'assess-detects.delete',
+
+            'regulation-libraries.list',
+            'regulation-libraries.create',
+            'regulation-libraries.update',
+            'regulation-libraries.delete',
+
+            'risks.portrait',
+            'company-map.view',
+            'rectification-sheet-count.view',
         ];
 
         foreach ($permissions as $name) {

@@ -98,6 +98,14 @@ class Company extends BaseModel
     }
 
     /**
+     * 重大危险源
+     */
+    public function majorHazards(): HasMany
+    {
+        return $this->hasMany(MajorHazard::class);
+    }
+
+    /**
      * 获取状态字符串
      */
     public function getStatusStrAttribute(): string
