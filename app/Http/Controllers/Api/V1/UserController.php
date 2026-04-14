@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreUserRequest;
+use App\Http\Requests\Api\V1\UpdateUserRequest;
+use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
-use App\Http\Requests\Api\V1\StoreUserRequest;
-use App\Http\Requests\Api\V1\UpdateUserRequest;
 
 class UserController extends Controller
 {
@@ -21,7 +21,7 @@ class UserController extends Controller
         $query = User::with('roles');
 
         if ($request->filled('username')) {
-            $query->where('username', 'like', '%' . $request->username . '%');
+            $query->where('username', 'like', '%'.$request->username.'%');
         }
 
         if ($request->filled('status')) {
@@ -41,7 +41,7 @@ class UserController extends Controller
             ->orderBy('id', 'desc')
             ->paginate($request->get('per_page', 15));
 
-        return $this->success($list);
+        return $this->success(UserResource::collection($list));
     }
 
     /**
@@ -51,11 +51,11 @@ class UserController extends Controller
     {
         $user = User::with(['roles.permissions', 'company:id,title'])->find($id);
 
-        if (!$user) {
+        if (! $user) {
             return $this->notFound('用户不存在');
         }
 
-        return $this->success($user);
+        return $this->success(new UserResource($user));
     }
 
     /**
@@ -78,7 +78,7 @@ class UserController extends Controller
         $roleName = $data['role'] ?? 'user';
         $user->assignRole($roleName);
 
-        return $this->success($user->load('roles'));
+        return $this->success(new UserResource($user->load('roles')));
     }
 
     /**
@@ -88,13 +88,13 @@ class UserController extends Controller
     {
         $user = User::find($id);
 
-        if (!$user) {
+        if (! $user) {
             return $this->notFound('用户不存在');
         }
         $data = $request->validated();
         $user->update($data);
 
-        return $this->success($user->fresh()->load('roles'));
+        return $this->success(new UserResource($user->fresh(['roles'])));
     }
 
     /**
@@ -104,14 +104,14 @@ class UserController extends Controller
     {
         $user = User::find($id);
 
-        if (!$user) {
+        if (! $user) {
             return $this->notFound('用户不存在');
         }
 
-        $data =
+        $data = $request->validate(['role' => 'required|string|exists:roles,name']);
         $user->syncRoles([$data['role']]);
 
-        return $this->success($user->load('roles'));
+        return $this->success(new UserResource($user->load('roles')));
     }
 
     /**
@@ -121,7 +121,7 @@ class UserController extends Controller
     {
         $user = User::find($id);
 
-        if (!$user) {
+        if (! $user) {
             return $this->notFound('用户不存在');
         }
 

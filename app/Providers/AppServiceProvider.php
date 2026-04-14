@@ -62,5 +62,13 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(5)->by($request->ip()),
             ];
         });
+
+        // Global API limiter: 120 req/min per authenticated user, or 30 req/min by IP for guests.
+        // Authenticated users get 4× the allowance of anonymous callers.
+        RateLimiter::for('api', function (Request $request) {
+            return $request->user()
+                ? Limit::perMinute(120)->by('user:'.$request->user()->id)
+                : Limit::perMinute(30)->by('ip:'.$request->ip());
+        });
     }
 }

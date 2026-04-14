@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreMonthlyInvestigationRequest;
+use App\Http\Requests\Api\V1\UpdateMonthlyInvestigationRequest;
 use App\Models\MonthlyInvestigation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreMonthlyInvestigationRequest;
-use App\Http\Requests\Api\V1\UpdateMonthlyInvestigationRequest;
 
 class MonthlyInvestigationController extends Controller
 {
@@ -34,7 +34,7 @@ class MonthlyInvestigationController extends Controller
     {
         $data = MonthlyInvestigation::with(['monthlyInvestigationReviews', 'monthlyInvestigationViews'])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('月度排查不存在');
         }
 
@@ -83,7 +83,7 @@ class MonthlyInvestigationController extends Controller
     {
         $monthlyInvestigation = MonthlyInvestigation::find($id);
 
-        if (!$monthlyInvestigation) {
+        if (! $monthlyInvestigation) {
             return $this->notFound('月度排查不存在');
         }
         $data = $request->validated();
@@ -122,14 +122,14 @@ class MonthlyInvestigationController extends Controller
             }
         });
 
-        return $this->success($monthlyInvestigation->fresh()->load(['monthlyInvestigationReviews', 'monthlyInvestigationViews']));
+        return $this->success($monthlyInvestigation->fresh(['monthlyInvestigationReviews', 'monthlyInvestigationViews']));
     }
 
     public function destroy(int $id): JsonResponse
     {
         $monthlyInvestigation = MonthlyInvestigation::find($id);
 
-        if (!$monthlyInvestigation) {
+        if (! $monthlyInvestigation) {
             return $this->notFound('月度排查不存在');
         }
 

@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
-use App\Models\ChemicalIngredient;
+use App\Http\Requests\Api\V1\StoreHazardousChemicalRequest;
+use App\Http\Requests\Api\V1\UpdateHazardousChemicalRequest;
 use App\Models\HazardousChemical;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreHazardousChemicalRequest;
-use App\Http\Requests\Api\V1\UpdateHazardousChemicalRequest;
 
 class HazardousChemicalController extends Controller
 {
@@ -22,7 +21,7 @@ class HazardousChemicalController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         if ($request->filled('is_supervision')) {
@@ -48,7 +47,7 @@ class HazardousChemicalController extends Controller
     {
         $data = HazardousChemical::with('chemicalIngredients')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('危险化学品不存在');
         }
 
@@ -86,7 +85,7 @@ class HazardousChemicalController extends Controller
     {
         $hazardousChemical = HazardousChemical::find($id);
 
-        if (!$hazardousChemical) {
+        if (! $hazardousChemical) {
             return $this->notFound('危险化学品不存在');
         }
         $data = $request->validated();
@@ -110,7 +109,7 @@ class HazardousChemicalController extends Controller
                 }
             }
 
-            return $hazardousChemical->fresh()->load('chemicalIngredients');
+            return $hazardousChemical->fresh(['chemicalIngredients']);
         });
 
         return $this->success($result);
@@ -120,7 +119,7 @@ class HazardousChemicalController extends Controller
     {
         $hazardousChemical = HazardousChemical::find($id);
 
-        if (!$hazardousChemical) {
+        if (! $hazardousChemical) {
             return $this->notFound('危险化学品不存在');
         }
 

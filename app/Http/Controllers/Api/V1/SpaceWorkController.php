@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreSpaceWorkRequest;
+use App\Http\Requests\Api\V1\UpdateSpaceWorkRequest;
 use App\Models\SpaceWork;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreSpaceWorkRequest;
-use App\Http\Requests\Api\V1\UpdateSpaceWorkRequest;
 
 class SpaceWorkController extends Controller
 {
@@ -30,7 +30,7 @@ class SpaceWorkController extends Controller
     {
         $data = SpaceWork::with('spaceWorkType')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('有限空间作业不存在');
         }
 
@@ -52,21 +52,21 @@ class SpaceWorkController extends Controller
     {
         $spaceWork = SpaceWork::find($id);
 
-        if (!$spaceWork) {
+        if (! $spaceWork) {
             return $this->notFound('有限空间作业不存在');
         }
         $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $spaceWork->update($data);
 
-        return $this->success($spaceWork->fresh()->load('spaceWorkType'));
+        return $this->success($spaceWork->fresh(['spaceWorkType']));
     }
 
     public function destroy(int $id): JsonResponse
     {
         $spaceWork = SpaceWork::find($id);
 
-        if (!$spaceWork) {
+        if (! $spaceWork) {
             return $this->notFound('有限空间作业不存在');
         }
 

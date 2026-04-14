@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreHygieneEvaluationRequest;
+use App\Http\Requests\Api\V1\UpdateHygieneEvaluationRequest;
 use App\Models\HygieneEvaluation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreHygieneEvaluationRequest;
-use App\Http\Requests\Api\V1\UpdateHygieneEvaluationRequest;
 
 class HygieneEvaluationController extends Controller
 {
@@ -20,7 +20,7 @@ class HygieneEvaluationController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->with(['skillUnit', 'skillUnitKid'])
@@ -34,7 +34,7 @@ class HygieneEvaluationController extends Controller
     {
         $data = HygieneEvaluation::with(['skillUnit', 'skillUnitKid'])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('职业卫生评价不存在');
         }
 
@@ -56,21 +56,21 @@ class HygieneEvaluationController extends Controller
     {
         $hygieneEvaluation = HygieneEvaluation::find($id);
 
-        if (!$hygieneEvaluation) {
+        if (! $hygieneEvaluation) {
             return $this->notFound('职业卫生评价不存在');
         }
         $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $hygieneEvaluation->update($data);
 
-        return $this->success($hygieneEvaluation->fresh()->load(['skillUnit', 'skillUnitKid']));
+        return $this->success($hygieneEvaluation->fresh(['skillUnit', 'skillUnitKid']));
     }
 
     public function destroy(int $id): JsonResponse
     {
         $hygieneEvaluation = HygieneEvaluation::find($id);
 
-        if (!$hygieneEvaluation) {
+        if (! $hygieneEvaluation) {
             return $this->notFound('职业卫生评价不存在');
         }
 

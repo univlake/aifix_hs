@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\StoreCompanyRequest;
+use App\Http\Requests\Api\V1\UpdateCompanyRequest;
 use App\Models\Company;
 use App\Traits\ApiTree;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use App\Http\Requests\Api\V1\UpdateCompanyRequest;
 
 class CompanyController extends Controller
 {
@@ -24,7 +24,7 @@ class CompanyController extends Controller
 
         // 搜索
         if ($request->filled('title')) {
-            $query->where('title', 'like', '%' . $request->title . '%');
+            $query->where('title', 'like', '%'.$request->title.'%');
         }
 
         if ($request->filled('status')) {
@@ -60,7 +60,7 @@ class CompanyController extends Controller
             ->with(['enterpriseType', 'operationalType', 'baseArea', 'users', 'pidName'])
             ->find($id);
 
-        if (!$company) {
+        if (! $company) {
             return $this->notFound('企业不存在');
         }
 
@@ -87,7 +87,7 @@ class CompanyController extends Controller
     {
         $company = Company::find($id);
 
-        if (!$company) {
+        if (! $company) {
             return $this->notFound('企业不存在');
         }
 
@@ -95,6 +95,13 @@ class CompanyController extends Controller
         $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $company->update($data);
+
+        // Flush hierarchy cache so downstream childId() / getCompanyId() calls
+        // reflect the new pid/status/is_produce values immediately.
+        Controller::flushCompanyHierarchyCache($company->id);
+        if ($company->pid) {
+            Controller::flushCompanyHierarchyCache($company->pid);
+        }
 
         return $this->success($company->fresh());
     }
@@ -106,13 +113,18 @@ class CompanyController extends Controller
     {
         $company = Company::find($id);
 
-        if (!$company) {
+        if (! $company) {
             return $this->notFound('企业不存在');
         }
 
         Gate::authorize('delete', $company);
 
         $company->delete();
+
+        Controller::flushCompanyHierarchyCache($company->id);
+        if ($company->pid) {
+            Controller::flushCompanyHierarchyCache($company->pid);
+        }
 
         return $this->message('删除成功');
     }
@@ -146,7 +158,7 @@ class CompanyController extends Controller
         $query = Company::query()->where('status', 0);
 
         if ($request->filled('title')) {
-            $query->where('title', 'like', '%' . $request->title . '%');
+            $query->where('title', 'like', '%'.$request->title.'%');
         }
 
         $list = $query->with(['enterpriseType', 'operationalType'])
@@ -163,7 +175,7 @@ class CompanyController extends Controller
     {
         $company = Company::find($id);
 
-        if (!$company) {
+        if (! $company) {
             return $this->notFound('企业不存在');
         }
 

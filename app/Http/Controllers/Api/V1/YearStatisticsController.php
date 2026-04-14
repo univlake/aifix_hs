@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreYearStatisticsRequest;
+use App\Http\Requests\Api\V1\UpdateYearStatisticsRequest;
 use App\Models\YearStatistic;
-use App\Models\YearStatisticKid;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreYearStatisticsRequest;
-use App\Http\Requests\Api\V1\UpdateYearStatisticsRequest;
 
 class YearStatisticsController extends Controller
 {
@@ -34,7 +33,7 @@ class YearStatisticsController extends Controller
             ->with(['yearStatisticKid'])
             ->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('年度统计不存在');
         }
 
@@ -75,7 +74,7 @@ class YearStatisticsController extends Controller
     {
         $yearStatistic = YearStatistic::find($id);
 
-        if (!$yearStatistic) {
+        if (! $yearStatistic) {
             return $this->notFound('年度统计不存在');
         }
         $data = $request->validated();
@@ -102,7 +101,7 @@ class YearStatisticsController extends Controller
                 }
             }
 
-            return $yearStatistic->fresh()->load('yearStatisticKid');
+            return $yearStatistic->fresh(['yearStatisticKid']);
         });
 
         return $this->success($result);
@@ -112,7 +111,7 @@ class YearStatisticsController extends Controller
     {
         $record = YearStatistic::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('年度统计不存在');
         }
 

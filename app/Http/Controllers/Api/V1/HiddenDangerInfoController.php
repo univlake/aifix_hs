@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreHiddenDangerInfoRequest;
+use App\Http\Requests\Api\V1\UpdateHiddenDangerInfoRequest;
 use App\Models\HiddenDangerInfo;
-use App\Models\HiddenUploadAnnex;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreHiddenDangerInfoRequest;
-use App\Http\Requests\Api\V1\UpdateHiddenDangerInfoRequest;
 
 class HiddenDangerInfoController extends Controller
 {
@@ -25,7 +24,7 @@ class HiddenDangerInfoController extends Controller
                 $q->where('expert_company_id', $request->expert_company_id);
             })
             ->when($request->filled('area'), function ($q) use ($request) {
-                $q->where('area', 'like', '%' . $request->area . '%');
+                $q->where('area', 'like', '%'.$request->area.'%');
             })
             ->with(['hiddenReviewAnnex', 'hiddenExamineAnnex'])
             ->orderByDesc('created_at');
@@ -39,7 +38,7 @@ class HiddenDangerInfoController extends Controller
     {
         $data = HiddenDangerInfo::with(['hiddenReviewAnnex', 'hiddenExamineAnnex'])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('隐患信息不存在');
         }
 
@@ -87,16 +86,16 @@ class HiddenDangerInfoController extends Controller
     {
         $hiddenDangerInfo = HiddenDangerInfo::find($id);
 
-        if (!$hiddenDangerInfo) {
+        if (! $hiddenDangerInfo) {
             return $this->notFound('隐患信息不存在');
         }
         $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
 
-        if (!empty($data['review_description'])) {
+        if (! empty($data['review_description'])) {
             $data['zg_user_id'] = auth()->id() ?? 0;
         }
-        if (!empty($data['review_user_id'])) {
+        if (! empty($data['review_user_id'])) {
             $data['review_time'] = now();
         }
 
@@ -132,14 +131,14 @@ class HiddenDangerInfoController extends Controller
             }
         });
 
-        return $this->success($hiddenDangerInfo->fresh()->load(['hiddenReviewAnnex', 'hiddenExamineAnnex']));
+        return $this->success($hiddenDangerInfo->fresh(['hiddenReviewAnnex', 'hiddenExamineAnnex']));
     }
 
     public function destroy(int $id): JsonResponse
     {
         $hiddenDangerInfo = HiddenDangerInfo::find($id);
 
-        if (!$hiddenDangerInfo) {
+        if (! $hiddenDangerInfo) {
             return $this->notFound('隐患信息不存在');
         }
 

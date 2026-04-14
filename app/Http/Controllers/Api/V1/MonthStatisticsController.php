@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreMonthStatisticsRequest;
 use App\Models\MonthStatistic;
-use App\Models\MonthStatisticAccident;
-use App\Models\MonthStatisticControl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreMonthStatisticsRequest;
 
 class MonthStatisticsController extends Controller
 {
@@ -34,7 +32,7 @@ class MonthStatisticsController extends Controller
             ->with(['monthStatisticAccident', 'monthStatisticControl'])
             ->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('月报不存在');
         }
 
@@ -122,7 +120,7 @@ class MonthStatisticsController extends Controller
     {
         $monthStatistic = MonthStatistic::find($id);
 
-        if (!$monthStatistic) {
+        if (! $monthStatistic) {
             return $this->notFound('月报不存在');
         }
 
@@ -189,7 +187,7 @@ class MonthStatisticsController extends Controller
                 }
             }
 
-            return $monthStatistic->fresh()->load(['monthStatisticAccident', 'monthStatisticControl']);
+            return $monthStatistic->fresh(['monthStatisticAccident', 'monthStatisticControl']);
         });
 
         return $this->success($data);
@@ -199,7 +197,7 @@ class MonthStatisticsController extends Controller
     {
         $record = MonthStatistic::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('月报不存在');
         }
 

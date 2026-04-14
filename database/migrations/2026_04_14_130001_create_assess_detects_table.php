@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('assess_detects', function (Blueprint $table) {
             $table->id();
             $table->string('name')->comment('名称');
-            $table->string('assess_detect_type')->comment('评价或检测类型');
-            $table->integer('skill_unit_id')->index()->comment('服务单位id');
-            $table->integer('skill_unit_kid_id')->index()->comment('资质id');
+            $table->string('assess_detect_type')->nullable()->comment('评价或检测类型');
+            $table->integer('skill_unit_id')->nullable()->index()->comment('服务单位id');
+            $table->integer('skill_unit_kid_id')->nullable()->index()->comment('资质id');
             $table->date('valid_period')->nullable()->comment('有效期');
             $table->text('annex_url')->nullable()->comment('附件路径');
             $table->integer('company_id')->index()->comment('企业id');

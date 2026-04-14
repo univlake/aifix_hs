@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StorePersonnelRequest;
+use App\Http\Requests\Api\V1\UpdatePersonnelRequest;
+use App\Http\Resources\Api\V1\PersonnelResource;
 use App\Models\Personnel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StorePersonnelRequest;
-use App\Http\Requests\Api\V1\UpdatePersonnelRequest;
 
 class PersonnelController extends Controller
 {
@@ -38,11 +39,11 @@ class PersonnelController extends Controller
             ->with('company:id,title')
             ->find($id);
 
-        if (!$personnel) {
+        if (! $personnel) {
             return $this->notFound('人员信息不存在');
         }
 
-        return $this->success($personnel);
+        return $this->success(new PersonnelResource($personnel));
     }
 
     /**
@@ -64,14 +65,14 @@ class PersonnelController extends Controller
     {
         $personnel = Personnel::find($id);
 
-        if (!$personnel) {
+        if (! $personnel) {
             return $this->notFound('人员信息不存在');
         }
         $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $personnel->update($data);
 
-        return $this->success($personnel->fresh());
+        return $this->success(new PersonnelResource($personnel->fresh()));
     }
 
     /**
@@ -81,7 +82,7 @@ class PersonnelController extends Controller
     {
         $personnel = Personnel::find($id);
 
-        if (!$personnel) {
+        if (! $personnel) {
             return $this->notFound('人员信息不存在');
         }
 

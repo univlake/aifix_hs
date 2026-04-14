@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreAccidentBulletinsRequest;
 use App\Models\AccidentBulletin;
-use App\Models\AccidentBulletinKid;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreAccidentBulletinsRequest;
 
 class AccidentBulletinsController extends Controller
 {
@@ -22,10 +21,10 @@ class AccidentBulletinsController extends Controller
             ->where('company_id', $request->company_id)
             ->with(['accidentBulletinKids'])
             ->when($request->accident_level, function ($query) use ($request) {
-                $query->where('accident_level', 'like', '%' . $request->accident_level . '%');
+                $query->where('accident_level', 'like', '%'.$request->accident_level.'%');
             })
             ->when($request->type, function ($query) use ($request) {
-                $query->where('type', 'like', '%' . $request->type . '%');
+                $query->where('type', 'like', '%'.$request->type.'%');
             })
             ->orderByDesc('id')
             ->paginate($request->get('per_page', 15));
@@ -37,7 +36,7 @@ class AccidentBulletinsController extends Controller
     {
         $data = AccidentBulletin::query()->with(['accidentBulletinKids'])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('事故快报不存在');
         }
 
@@ -81,7 +80,7 @@ class AccidentBulletinsController extends Controller
     {
         $accidentBulletin = AccidentBulletin::find($id);
 
-        if (!$accidentBulletin) {
+        if (! $accidentBulletin) {
             return $this->notFound('事故快报不存在');
         }
 
@@ -117,7 +116,7 @@ class AccidentBulletinsController extends Controller
                 }
             }
 
-            return $accidentBulletin->fresh()->load('accidentBulletinKids');
+            return $accidentBulletin->fresh(['accidentBulletinKids']);
         });
 
         return $this->success($data);
@@ -127,7 +126,7 @@ class AccidentBulletinsController extends Controller
     {
         $record = AccidentBulletin::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('事故快报不存在');
         }
 

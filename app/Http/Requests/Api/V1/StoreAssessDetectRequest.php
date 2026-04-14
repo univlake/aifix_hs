@@ -16,6 +16,7 @@ class StoreAssessDetectRequest extends FormRequest
         return [
             'company_id' => 'required|integer',
             'name' => 'required|string',
+            'assess_detect_type' => 'nullable|string',
         ];
     }
 

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreMajorHazardRequest;
+use App\Http\Requests\Api\V1\UpdateMajorHazardRequest;
 use App\Models\MajorHazard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreMajorHazardRequest;
-use App\Http\Requests\Api\V1\UpdateMajorHazardRequest;
 
 class MajorHazardController extends Controller
 {
@@ -31,7 +31,7 @@ class MajorHazardController extends Controller
     {
         $data = MajorHazard::with('majorConstitutes')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('重大危险源不存在');
         }
 
@@ -69,7 +69,7 @@ class MajorHazardController extends Controller
     {
         $majorHazard = MajorHazard::find($id);
 
-        if (!$majorHazard) {
+        if (! $majorHazard) {
             return $this->notFound('重大危险源不存在');
         }
         $data = $request->validated();
@@ -93,7 +93,7 @@ class MajorHazardController extends Controller
                 }
             }
 
-            return $majorHazard->fresh()->load('majorConstitutes');
+            return $majorHazard->fresh(['majorConstitutes']);
         });
 
         return $this->success($result);
@@ -103,7 +103,7 @@ class MajorHazardController extends Controller
     {
         $majorHazard = MajorHazard::find($id);
 
-        if (!$majorHazard) {
+        if (! $majorHazard) {
             return $this->notFound('重大危险源不存在');
         }
 

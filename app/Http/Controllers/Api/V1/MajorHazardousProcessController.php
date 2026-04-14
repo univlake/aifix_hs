@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreMajorHazardousProcessRequest;
+use App\Http\Requests\Api\V1\UpdateMajorHazardousProcessRequest;
 use App\Models\MajorHazardousProcess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreMajorHazardousProcessRequest;
-use App\Http\Requests\Api\V1\UpdateMajorHazardousProcessRequest;
 
 class MajorHazardousProcessController extends Controller
 {
@@ -30,7 +30,7 @@ class MajorHazardousProcessController extends Controller
     {
         $data = MajorHazardousProcess::with(['dangerousCraftType', 'hazardousChemical', 'dangerousEquipment'])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('重点监管危险化工工艺不存在');
         }
 
@@ -52,21 +52,21 @@ class MajorHazardousProcessController extends Controller
     {
         $majorHazardousProcess = MajorHazardousProcess::find($id);
 
-        if (!$majorHazardousProcess) {
+        if (! $majorHazardousProcess) {
             return $this->notFound('重点监管危险化工工艺不存在');
         }
         $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $majorHazardousProcess->update($data);
 
-        return $this->success($majorHazardousProcess->fresh()->load(['dangerousCraftType', 'hazardousChemical', 'dangerousEquipment']));
+        return $this->success($majorHazardousProcess->fresh(['dangerousCraftType', 'hazardousChemical', 'dangerousEquipment']));
     }
 
     public function destroy(int $id): JsonResponse
     {
         $majorHazardousProcess = MajorHazardousProcess::find($id);
 
-        if (!$majorHazardousProcess) {
+        if (! $majorHazardousProcess) {
             return $this->notFound('重点监管危险化工工艺不存在');
         }
 
