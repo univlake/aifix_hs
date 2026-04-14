@@ -162,6 +162,82 @@
 
 ---
 
+## [阶段 3] 简单 CRUD 模块 (20+ 模块) - 2026-04-14
+
+> 由 2 个 Claude Code 子代理并行完成，~9 分钟。
+
+### 批次 3.1: 字典/类型表 (9 模块)
+
+| 模块 | Model | Migration | Controller | 路由数 |
+|------|-------|-----------|------------|--------|
+| DangerousCraftType | `title` | `dangerous_craft_types` | CRUD | 5 |
+| ProcessType | `title` | `process_types` | CRUD | 5 |
+| SpecialType | `title` | `special_types` | CRUD | 5 |
+| SpaceWorkType | `title` | `space_work_types` | CRUD | 5 |
+| SafetyManagementType | `title`, `is_cert` | `safety_management_types` | CRUD | 5 |
+| RegulationLibraryType | `title` | `regulation_library_types` | CRUD | 5 |
+| TrainingClassType | `title`, `user_id`, `last_user_id` | `training_class_types` | CRUD | 5 |
+| ChecklistLibrary | `title`, `status`, `preview_annex_url`, `annex_url`, `company_id` | `checklist_libraries` | CRUD + company_id 过滤 | 4 |
+| ReportConfig | `config_day`, `type`, `company_id` | `report_configs` | CRUD + company_id 过滤 | 4 |
+
+### 批次 3.2: 业务 CRUD (11 模块)
+
+| 模块 | 关键字段 | 关系 | 特殊逻辑 |
+|------|---------|------|---------|
+| Building | title, area, fire_class, company_id | — | 标准 CRUD |
+| JobManagement | department, content, type, special_type... | belongsTo EvaluationUnit | eager loading, 多条件过滤 |
+| SafetyArchitecture | thumbnail_url, annex_url, company_id | — | 仅 index/store/update, company_id unique |
+| ProductionStandardization | grade, get_time, valid_period, company_id | — | 仅 index/store/update, company_id unique |
+| SafetyManagement | name, safety_management_type_id, tel... | belongsTo SafetyManagementType + Company | eager loading |
+| CertificateStatus | name, type, should/already/no_obtain_people | — | type 过滤 (默认=1) |
+| EliminationControlStaff | name, cert_title, cert_number, valid_period | — | 标准 CRUD |
+| SkillUnit + SkillUnitKid | name, serving_type, qualification... | hasMany SkillUnitKid | DB::transaction, 级联删除 |
+| DesignUnit | name, qualification_name, contact... | — | name 模糊搜索 |
+| EvaluationUnit | name, is_qualification, qualification_name... | — | name 模糊搜索 |
+| ChangeManage | title, department_name, apply_date, reason... | — | 审批流程字段 |
+
+### 重构变更
+- 旧项目 `Validator::make()` → 新项目 `$request->validate()` 内联验证
+- 旧项目 `http\Exception` 异常处理 → 新项目标准 try/catch
+- 旧项目无类型提示 → 新项目添加 `JsonResponse` 返回类型
+- SafetyArchitecture/ProductionStandardization: index 返回单条 (first) 而非分页
+
+### 数据库变化
+- 新增 21 个 migration 文件
+- 所有 `company_id` 字段添加索引
+- 所有 `user_id`/`last_user_id` 字段添加索引
+- 外键字段添加索引: `safety_management_type_id`, `skill_unit_id`, `evaluation_unit_id`
+
+### API 端点 (新增 ~100 个路由)
+```
+api/v1/dangerous-craft-types    CRUD
+api/v1/process-types            CRUD
+api/v1/special-types            CRUD
+api/v1/space-work-types         CRUD
+api/v1/safety-management-types  CRUD
+api/v1/regulation-library-types CRUD
+api/v1/training-class-types     CRUD
+api/v1/checklist-libraries      CRUD (company_id)
+api/v1/report-configs           CRUD (company_id)
+api/v1/buildings                CRUD (company_id)
+api/v1/job-management           CRUD (company_id + filters)
+api/v1/safety-architectures     index/store/update (company_id unique)
+api/v1/production-standardizations index/store/update (company_id unique)
+api/v1/safety-management        CRUD (company_id + eager load)
+api/v1/certificate-statuses     CRUD (company_id + type)
+api/v1/elimination-control-staff CRUD (company_id)
+api/v1/skill-units              CRUD (company_id + kids cascade)
+api/v1/design-units             CRUD (company_id + name search)
+api/v1/evaluation-units         CRUD (company_id + name search)
+api/v1/change-manages           CRUD (company_id)
+```
+
+### 测试覆盖
+- 48 tests, 88 assertions — 全部通过 ✅
+- Phase 3 模块暂无独立测试 (简单 CRUD，后续按需补充)
+
+---
+
 <!-- 示例格式:
 
 ## [阶段1 批次1.2] 企业管理 - 2026-04-13

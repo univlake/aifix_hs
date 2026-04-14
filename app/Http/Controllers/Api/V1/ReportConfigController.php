@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Api\Controller;
+use App\Models\ReportConfig;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class ReportConfigController extends Controller
+{
+    /**
+     * 报表配置列表
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = ReportConfig::query();
+
+        if ($request->filled('company_id')) {
+            $query->where('company_id', $request->company_id);
+        }
+
+        $list = $query->orderBy('id', 'desc')
+            ->paginate($request->get('per_page', 15));
+
+        return $this->success($list);
+    }
+
+    /**
+     * 创建报表配置
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'config_day' => 'nullable|string|max:255',
+            'type' => 'nullable|integer',
+            'company_id' => 'required|integer',
+        ]);
+
+        $data['user_id'] = auth()->id() ?? 0;
+        $type = ReportConfig::create($data);
+
+        return $this->success($type);
+    }
+
+    /**
+     * 更新报表配置
+     */
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $type = ReportConfig::find($id);
+
+        if (!$type) {
+            return $this->notFound('报表配置不存在');
+        }
+
+        $data = $request->validate([
+            'config_day' => 'nullable|string|max:255',
+            'type' => 'nullable|integer',
+            'company_id' => 'required|integer',
+        ]);
+
+        $data['last_user_id'] = auth()->id() ?? 0;
+        $type->update($data);
+
+        return $this->success($type->fresh());
+    }
+
+    /**
+     * 删除报表配置
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        $type = ReportConfig::find($id);
+
+        if (!$type) {
+            return $this->notFound('报表配置不存在');
+        }
+
+        $type->delete();
+
+        return $this->message('删除成功');
+    }
+}
