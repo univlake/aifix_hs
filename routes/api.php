@@ -26,8 +26,8 @@ Route::prefix('v1')->group(function () {
     // Public (auth) routes — includes its own throttle middleware
     require base_path('routes/api/auth.php');
 
-    // All other routes require authentication + global rate limiting
-    Route::middleware(['auth:api', 'throttle:api'])->group(function () {
+    // All other routes require authentication + scope validation + global rate limiting
+    Route::middleware(['auth:api', 'scope', 'throttle:api'])->group(function () {
         require base_path('routes/api/companies.php');
         require base_path('routes/api/base-data.php');
         require base_path('routes/api/safety-records.php');

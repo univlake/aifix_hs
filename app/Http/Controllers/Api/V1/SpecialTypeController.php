@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreSpecialTypeRequest;
+use App\Http\Requests\Api\V1\UpdateSpecialTypeRequest;
 use App\Models\SpecialType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreSpecialTypeRequest;
-use App\Http\Requests\Api\V1\UpdateSpecialTypeRequest;
 
 class SpecialTypeController extends Controller
 {
@@ -17,7 +17,7 @@ class SpecialTypeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $list = SpecialType::query()
-            ->orderBy('id', 'desc')
+            ->orderBy('id', 'asc')
             ->paginate($request->get('per_page', 15));
 
         return $this->success($list);
@@ -42,7 +42,7 @@ class SpecialTypeController extends Controller
     {
         $type = SpecialType::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('设备类型不存在');
         }
         $data = $request->validated();
@@ -59,7 +59,7 @@ class SpecialTypeController extends Controller
     {
         $type = SpecialType::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('设备类型不存在');
         }
 

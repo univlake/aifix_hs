@@ -1,9 +1,13 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CompanyController;
 use Illuminate\Support\Facades\Route;
 
-// ── 认证 (无需登录) ─────────────────────────────────────────────
+// ── 公开接口 (无需登录) ──────────────────────────────────────────
+Route::get('/public-key', [AuthController::class, 'publicKey']);
+Route::get('/companies-public', [CompanyController::class, 'publicList']);
+
 Route::middleware('throttle:login')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);

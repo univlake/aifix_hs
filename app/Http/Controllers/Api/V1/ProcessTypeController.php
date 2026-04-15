@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreProcessTypeRequest;
+use App\Http\Requests\Api\V1\UpdateProcessTypeRequest;
 use App\Models\ProcessType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreProcessTypeRequest;
-use App\Http\Requests\Api\V1\UpdateProcessTypeRequest;
 
 class ProcessTypeController extends Controller
 {
@@ -17,7 +17,7 @@ class ProcessTypeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $list = ProcessType::query()
-            ->orderBy('id', 'desc')
+            ->orderBy('id', 'asc')
             ->paginate($request->get('per_page', 15));
 
         return $this->success($list);
@@ -42,7 +42,7 @@ class ProcessTypeController extends Controller
     {
         $type = ProcessType::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('工艺名称类型不存在');
         }
         $data = $request->validated();
@@ -59,7 +59,7 @@ class ProcessTypeController extends Controller
     {
         $type = ProcessType::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('工艺名称类型不存在');
         }
 

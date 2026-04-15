@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\RsaService;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -18,7 +19,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(RsaService::class, fn () => new RsaService(
+            privateKey: config('rsa.private_key'),
+            publicKey: config('rsa.public_key'),
+        ));
     }
 
     /**

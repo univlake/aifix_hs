@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class CompanyGroup extends BaseModel
 {
@@ -22,5 +23,15 @@ class CompanyGroup extends BaseModel
             'user_id' => 'integer',
             'last_user_id' => 'integer',
         ];
+    }
+
+    public function kidCompanies(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Company::class,
+            'company_group_kids',
+            'company_group_id',
+            'company_id',
+        )->select(['companies.id', 'companies.title', 'companies.status']);
     }
 }

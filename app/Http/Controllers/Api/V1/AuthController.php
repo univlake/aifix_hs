@@ -6,20 +6,38 @@ use App\Enums\UserType;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\LoginRequest;
 use App\Models\User;
+use App\Services\RsaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly RsaService $rsa) {}
+
+    /**
+     * 返回 RSA 公钥，供前端加密密码使用
+     */
+    public function publicKey(): JsonResponse
+    {
+        return $this->success(['public_key' => $this->rsa->publicKey()]);
+    }
+
     /**
      * 登录
      */
     public function login(LoginRequest $request): JsonResponse
     {
+        try {
+            $plainPassword = $this->rsa->decrypt($request->password);
+        } catch (RuntimeException $e) {
+            return $this->failed($e->getMessage(), 422);
+        }
+
         $user = User::query()->where('username', $request->username)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($plainPassword, $user->password)) {
             return $this->failed('用户名或密码错误', 401);
         }
 
@@ -30,7 +48,6 @@ class AuthController extends Controller
         $tokenResult = $user->createToken('admin');
         $token = $tokenResult->accessToken;
 
-        // 更新登录次数
         $user->increment('login_times');
 
         return $this->success([
@@ -47,16 +64,32 @@ class AuthController extends Controller
     {
         $request->validate([
             'username' => 'required|string|max:30|unique:users,username',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => 'required|string',
+            'password_confirmation' => 'required|string',
             'nickname' => 'required|string|max:100',
             'company_id' => 'required|integer',
             'phone' => 'nullable|string|max:255|unique:users,phone',
             'email' => 'nullable|email|max:255|unique:users,email',
         ]);
 
+        try {
+            $plainPassword = $this->rsa->decrypt($request->password);
+            $plainPasswordConfirmation = $this->rsa->decrypt($request->password_confirmation);
+        } catch (RuntimeException $e) {
+            return $this->failed($e->getMessage(), 422);
+        }
+
+        if ($plainPassword !== $plainPasswordConfirmation) {
+            return $this->failed('两次密码输入不一致', 422);
+        }
+
+        if (mb_strlen($plainPassword) < 6) {
+            return $this->failed('密码至少 6 位', 422);
+        }
+
         $user = User::create([
             'username' => $request->username,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($plainPassword),
             'nickname' => $request->nickname,
             'company_id' => $request->company_id,
             'phone' => $request->phone,
@@ -64,7 +97,6 @@ class AuthController extends Controller
             'status' => UserType::Enable->value,
         ]);
 
-        // 默认分配普通用户角色
         $user->assignRole('user');
 
         $tokenResult = $user->createToken('admin');
@@ -120,7 +152,7 @@ class AuthController extends Controller
 
         $user = $request->user();
 
-        if (!Hash::check($request->old_password, $user->password)) {
+        if (! Hash::check($request->old_password, $user->password)) {
             return $this->failed('原密码错误');
         }
 

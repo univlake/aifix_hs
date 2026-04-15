@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\BaseDataController;
 use App\Http\Controllers\Api\V1\CompanyController;
+use App\Http\Controllers\Api\V1\CompanyGroupController;
 use App\Http\Controllers\Api\V1\PermissionController;
 use App\Http\Controllers\Api\V1\PersonnelController;
 use App\Http\Controllers\Api\V1\RoleController;
@@ -47,10 +48,7 @@ Route::middleware('permission:personnels.delete')->group(function () {
 
 // ── 基础数据 ─────────────────────────────────────────────────────
 Route::middleware('permission:base-data.view')->group(function () {
-    Route::get('/enterprise-types', [BaseDataController::class, 'enterpriseTypes']);
-    Route::get('/operational-types', [BaseDataController::class, 'operationalTypes']);
     Route::get('/base-areas', [BaseDataController::class, 'baseAreas']);
-    Route::get('/record-types', [BaseDataController::class, 'recordTypes']);
 });
 
 // ── 用户管理 ─────────────────────────────────────────────────────
@@ -86,6 +84,21 @@ Route::middleware('permission:roles.update')->group(function () {
 });
 Route::middleware('permission:roles.delete')->group(function () {
     Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
+});
+
+// ── 企业分组 ─────────────────────────────────────────────────────
+Route::middleware('permission:companies.list')->group(function () {
+    Route::get('/company-groups', [CompanyGroupController::class, 'index']);
+});
+Route::middleware('permission:companies.create')->group(function () {
+    Route::post('/company-groups', [CompanyGroupController::class, 'store']);
+});
+Route::middleware('permission:companies.update')->group(function () {
+    Route::put('/company-groups/{id}', [CompanyGroupController::class, 'update']);
+    Route::post('/company-groups/{id}/sync-kids', [CompanyGroupController::class, 'syncKids']);
+});
+Route::middleware('permission:companies.delete')->group(function () {
+    Route::delete('/company-groups/{id}', [CompanyGroupController::class, 'destroy']);
 });
 
 // ── 权限查看 ─────────────────────────────────────────────────────

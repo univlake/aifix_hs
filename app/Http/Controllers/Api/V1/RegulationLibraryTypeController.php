@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreRegulationLibraryTypeRequest;
+use App\Http\Requests\Api\V1\UpdateRegulationLibraryTypeRequest;
 use App\Models\RegulationLibraryType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreRegulationLibraryTypeRequest;
-use App\Http\Requests\Api\V1\UpdateRegulationLibraryTypeRequest;
 
 class RegulationLibraryTypeController extends Controller
 {
@@ -17,7 +17,7 @@ class RegulationLibraryTypeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $list = RegulationLibraryType::query()
-            ->orderBy('id', 'desc')
+            ->orderBy('id', 'asc')
             ->paginate($request->get('per_page', 15));
 
         return $this->success($list);
@@ -42,7 +42,7 @@ class RegulationLibraryTypeController extends Controller
     {
         $type = RegulationLibraryType::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('法规类型不存在');
         }
         $data = $request->validated();
@@ -59,7 +59,7 @@ class RegulationLibraryTypeController extends Controller
     {
         $type = RegulationLibraryType::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('法规类型不存在');
         }
 

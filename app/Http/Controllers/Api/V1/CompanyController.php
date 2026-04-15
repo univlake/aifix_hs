@@ -16,6 +16,20 @@ class CompanyController extends Controller
     use ApiTree;
 
     /**
+     * 公开企业列表 — 注册时选择所属企业用，无需认证
+     * 仅返回 id + title，不暴露其他字段
+     */
+    public function publicList(): JsonResponse
+    {
+        $companies = Company::query()
+            ->where('status', 1)
+            ->orderBy('id')
+            ->get(['id', 'title']);
+
+        return $this->success($companies);
+    }
+
+    /**
      * 企业列表
      */
     public function index(Request $request): JsonResponse

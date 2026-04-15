@@ -5,7 +5,217 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Inter', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+
+    /* Blue tech palette */
+    --color-background: #070d1f;
+    --color-foreground: #e2e8f0;
+    --color-card: #0d1530;
+    --color-card-foreground: #e2e8f0;
+    --color-popover: #0d1530;
+    --color-popover-foreground: #e2e8f0;
+    --color-primary: #3b82f6;
+    --color-primary-foreground: #ffffff;
+    --color-secondary: #1e3a5f;
+    --color-secondary-foreground: #93c5fd;
+    --color-muted: #0f1e3d;
+    --color-muted-foreground: #64748b;
+    --color-accent: #1e3a5f;
+    --color-accent-foreground: #93c5fd;
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #ffffff;
+    --color-border: #1e3a5f;
+    --color-input: #0f1e3d;
+    --color-ring: #3b82f6;
+    --color-sidebar-background: #060c1a;
+    --color-sidebar-foreground: #cbd5e1;
+    --color-sidebar-primary: #3b82f6;
+    --color-sidebar-primary-foreground: #ffffff;
+    --color-sidebar-accent: #0f1e3d;
+    --color-sidebar-accent-foreground: #93c5fd;
+    --color-sidebar-border: #1e3a5f;
+    --color-sidebar-ring: #3b82f6;
+
+    --radius: 0.5rem;
+}
+
+/* CSS variables for runtime use */
+:root {
+    --background: 220 50% 8%;
+    --foreground: 213 31% 91%;
+    --card: 220 50% 11%;
+    --card-foreground: 213 31% 91%;
+    --popover: 220 50% 11%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 213 94% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 68% 25%;
+    --secondary-foreground: 214 68% 80%;
+    --muted: 220 50% 14%;
+    --muted-foreground: 215 20% 45%;
+    --accent: 214 68% 25%;
+    --accent-foreground: 214 68% 80%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 68% 25%;
+    --input: 220 50% 14%;
+    --ring: 213 94% 60%;
+    --radius: 0.5rem;
+}
+
+body {
+    background-color: #070d1f;
+    color: #e2e8f0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #0d1530;
+}
+::-webkit-scrollbar-thumb {
+    background: #1e3a5f;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #3b82f6;
+}
+
+/* Grid background pattern */
+.bg-grid {
+    background-image:
+        linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+}
+
+/* Glow effects */
+.glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 60px rgba(59, 130, 246, 0.15);
+}
+.glow-text {
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+}
+
+/* Animated gradient text */
+.gradient-text {
+    background: linear-gradient(135deg, #60a5fa, #a78bfa, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Glassmorphism card */
+.glass {
+    background: rgba(13, 21, 48, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Scan line animation */
+@keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-scan {
+    animation: scan 8s linear infinite;
+}
+.animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+.animate-fade-in-up-delay-1 {
+    animation: fadeInUp 0.6s ease-out 0.1s forwards;
+    opacity: 0;
+}
+.animate-fade-in-up-delay-2 {
+    animation: fadeInUp 0.6s ease-out 0.2s forwards;
+    opacity: 0;
+}
+.animate-fade-in-up-delay-3 {
+    animation: fadeInUp 0.6s ease-out 0.3s forwards;
+    opacity: 0;
+}
+.animate-fade-in-up-delay-4 {
+    animation: fadeInUp 0.6s ease-out 0.4s forwards;
+    opacity: 0;
+}
+
+/* ── Leaflet / Geoman overrides ─────────────────────────────── */
+.leaflet-container {
+    background: #0d1530;
+    font-family: inherit;
+}
+.leaflet-control-zoom a,
+.leaflet-bar a {
+    background-color: #0d1530 !important;
+    border-color: #1e3a5f !important;
+    color: #94a3b8 !important;
+}
+.leaflet-control-zoom a:hover,
+.leaflet-bar a:hover {
+    background-color: #1a2d4f !important;
+    color: #e2e8f0 !important;
+}
+.leaflet-control-attribution {
+    background: rgba(7, 13, 31, 0.7) !important;
+    color: #475569 !important;
+    font-size: 10px !important;
+}
+.leaflet-control-attribution a {
+    color: #475569 !important;
+}
+/* Geoman toolbar */
+.leaflet-pm-toolbar .leaflet-pm-icon-button,
+.leaflet-pm-toolbar button {
+    background-color: #0d1530 !important;
+    border-color: #1e3a5f !important;
+    color: #94a3b8 !important;
+}
+.leaflet-pm-toolbar button:hover {
+    background-color: #1a2d4f !important;
+    color: #e2e8f0 !important;
+}
+.leaflet-pm-toolbar .button-container.active button {
+    background-color: #1d4ed8 !important;
+    color: #ffffff !important;
+}
+/* Geoman tooltip */
+.leaflet-pm-tooltip {
+    background: #0d1530 !important;
+    border-color: #1e3a5f !important;
+    color: #94a3b8 !important;
+    border-radius: 6px !important;
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\BuildingController;
 use App\Http\Controllers\Api\V1\CertificateStatusController;
 use App\Http\Controllers\Api\V1\ChangeManageController;
+use App\Http\Controllers\Api\V1\ConstructionUnitController;
 use App\Http\Controllers\Api\V1\DesignUnitController;
 use App\Http\Controllers\Api\V1\EliminationControlStaffController;
 use App\Http\Controllers\Api\V1\EvaluationUnitController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Api\V1\ProductionStandardizationController;
 use App\Http\Controllers\Api\V1\SafetyArchitectureController;
 use App\Http\Controllers\Api\V1\SafetyManagementController;
 use App\Http\Controllers\Api\V1\SkillUnitController;
+use App\Http\Controllers\Api\V1\TechnicalServiceUnitController;
 use App\Http\Controllers\Api\V1\UploadController;
 use App\Http\Controllers\Api\V1\UploadOssController;
 use Illuminate\Support\Facades\Route;
@@ -208,4 +210,36 @@ Route::middleware('permission:filing-permissions.update')->group(function () {
 });
 Route::middleware('permission:filing-permissions.delete')->group(function () {
     Route::delete('/filing-permissions/{id}', [FilingPermissionsController::class, 'destroy']);
+});
+
+// ── 施工单位 ─────────────────────────────────────────────────────
+Route::middleware('permission:construction-units.list')->group(function () {
+    Route::get('/construction-units', [ConstructionUnitController::class, 'index']);
+    Route::get('/construction-units/{id}', [ConstructionUnitController::class, 'show']);
+});
+Route::middleware('permission:construction-units.create')->group(function () {
+    Route::post('/construction-units', [ConstructionUnitController::class, 'store']);
+});
+Route::middleware('permission:construction-units.update')->group(function () {
+    Route::put('/construction-units/{id}', [ConstructionUnitController::class, 'update']);
+    Route::patch('/construction-units/{id}', [ConstructionUnitController::class, 'update']);
+});
+Route::middleware('permission:construction-units.delete')->group(function () {
+    Route::delete('/construction-units/{id}', [ConstructionUnitController::class, 'destroy']);
+});
+
+// ── 技术服务单位 ─────────────────────────────────────────────────────
+Route::middleware('permission:technical-service-units.list')->group(function () {
+    Route::get('/technical-service-units', [TechnicalServiceUnitController::class, 'index']);
+    Route::get('/technical-service-units/{id}', [TechnicalServiceUnitController::class, 'show']);
+});
+Route::middleware('permission:technical-service-units.create')->group(function () {
+    Route::post('/technical-service-units', [TechnicalServiceUnitController::class, 'store']);
+});
+Route::middleware('permission:technical-service-units.update')->group(function () {
+    Route::put('/technical-service-units/{id}', [TechnicalServiceUnitController::class, 'update']);
+    Route::patch('/technical-service-units/{id}', [TechnicalServiceUnitController::class, 'update']);
+});
+Route::middleware('permission:technical-service-units.delete')->group(function () {
+    Route::delete('/technical-service-units/{id}', [TechnicalServiceUnitController::class, 'destroy']);
 });

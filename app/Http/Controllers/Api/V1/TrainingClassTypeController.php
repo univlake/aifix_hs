@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreTrainingClassTypeRequest;
+use App\Http\Requests\Api\V1\UpdateTrainingClassTypeRequest;
 use App\Models\TrainingClassType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreTrainingClassTypeRequest;
-use App\Http\Requests\Api\V1\UpdateTrainingClassTypeRequest;
 
 class TrainingClassTypeController extends Controller
 {
@@ -17,7 +17,7 @@ class TrainingClassTypeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $list = TrainingClassType::query()
-            ->orderBy('id', 'desc')
+            ->orderBy('id', 'asc')
             ->paginate($request->get('per_page', 15));
 
         return $this->success($list);
@@ -42,7 +42,7 @@ class TrainingClassTypeController extends Controller
     {
         $type = TrainingClassType::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('培训课类型不存在');
         }
         $data = $request->validated();
@@ -59,7 +59,7 @@ class TrainingClassTypeController extends Controller
     {
         $type = TrainingClassType::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('培训课类型不存在');
         }
 

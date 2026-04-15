@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreSpaceWorkTypeRequest;
+use App\Http\Requests\Api\V1\UpdateSpaceWorkTypeRequest;
 use App\Models\SpaceWorkType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreSpaceWorkTypeRequest;
-use App\Http\Requests\Api\V1\UpdateSpaceWorkTypeRequest;
 
 class SpaceWorkTypeController extends Controller
 {
@@ -17,7 +17,7 @@ class SpaceWorkTypeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $list = SpaceWorkType::query()
-            ->orderBy('id', 'desc')
+            ->orderBy('id', 'asc')
             ->paginate($request->get('per_page', 15));
 
         return $this->success($list);
@@ -42,7 +42,7 @@ class SpaceWorkTypeController extends Controller
     {
         $type = SpaceWorkType::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('有限空间辨识类型不存在');
         }
         $data = $request->validated();
@@ -59,7 +59,7 @@ class SpaceWorkTypeController extends Controller
     {
         $type = SpaceWorkType::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('有限空间辨识类型不存在');
         }
 
