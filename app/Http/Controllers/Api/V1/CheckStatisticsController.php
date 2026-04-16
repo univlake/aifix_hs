@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
-use App\Models\DailyCheck;
-use App\Models\DoubleCheck;
-use App\Models\SystemCheck;
-use App\Models\NormCheck;
 use App\Models\AccidentCheck;
 use App\Models\AddPoint;
+use App\Models\Company;
+use App\Models\DailyCheck;
+use App\Models\DoubleCheck;
+use App\Models\MonthlyInvestigation;
+use App\Models\NormCheck;
+use App\Models\SpecialEquipment;
+use App\Models\SpecialEquipmentStaff;
+use App\Models\SystemCheck;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -79,5 +83,66 @@ class CheckStatisticsController extends Controller
                 2
             ),
         ]);
+    }
+
+    /**
+     * Return alert counts for a company and all its subordinates:
+     * - expired personnel certificates
+     * - expired special equipment
+     * - unrevised hazards (MonthlyInvestigation where correct_result != '已整改')
+     */
+    public function alerts(Request $request): JsonResponse
+    {
+        $request->validate(['company_id' => 'required|integer']);
+
+        $companyId = (int) $request->company_id;
+
+        // Collect all descendant company IDs including the given company
+        $ids = $this->allDescendantIds($companyId);
+
+        $today = now()->toDateString();
+
+        $expiredStaff = SpecialEquipmentStaff::query()
+            ->whereIn('company_id', $ids)
+            ->where('valid_period', '<', $today)
+            ->count();
+
+        $expiredEquipment = SpecialEquipment::query()
+            ->whereIn('company_id', $ids)
+            ->where('valid_period', '<', $today)
+            ->count();
+
+        $unrevisedHazards = MonthlyInvestigation::query()
+            ->whereIn('company_id', $ids)
+            ->where('correct_result', '!=', '已整改')
+            ->count();
+
+        return $this->success([
+            'expired_staff_certs' => $expiredStaff,
+            'expired_equipment' => $expiredEquipment,
+            'unrevised_hazards' => $unrevisedHazards,
+        ]);
+    }
+
+    /**
+     * Return IDs of the given company plus all its descendants.
+     *
+     * @return int[]
+     */
+    private function allDescendantIds(int $companyId): array
+    {
+        $ids = [$companyId];
+        $this->collectChildIds($companyId, $ids);
+
+        return $ids;
+    }
+
+    private function collectChildIds(int $parentId, array &$ids): void
+    {
+        $children = Company::query()->where('pid', $parentId)->pluck('id');
+        foreach ($children as $childId) {
+            $ids[] = $childId;
+            $this->collectChildIds($childId, $ids);
+        }
     }
 }

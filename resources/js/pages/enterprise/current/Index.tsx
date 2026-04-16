@@ -57,6 +57,8 @@ interface Company {
     operational_type_id?: number | string;
     enterprise_type?: { title: string };
     operational_type?: { title: string };
+    inherent_risk?: string | number;
+    float_risk?: string | number;
 }
 
 type EditForm = Omit<Company, 'id' | 'status_str' | 'enterprise_type' | 'operational_type'>;
@@ -84,19 +86,27 @@ export default function CurrentEnterprise() {
 
     useEffect(() => {
         if (!activeCompany?.id) return;
+        setLoading(true);
+        setError('');
 
-        // Load company data and type options in parallel
+        // Load company data independently from type options (types may be 403 for some users)
+        api.get(`/companies/${activeCompany.id}`)
+            .then((res) => {
+                setCompany(res.data.data);
+                setForm(res.data.data);
+            })
+            .catch(() => setError('加载企业信息失败'))
+            .finally(() => setLoading(false));
+
+        // Type options are best-effort; failure is silently ignored
+        // API returns paginated: { data: { data: [...], current_page, ... } }
         Promise.all([
-            api.get(`/companies/${activeCompany.id}`),
-            api.get('/enterprise-types'),
-            api.get('/operational-types'),
-        ]).then(([companyRes, etRes, otRes]) => {
-            setCompany(companyRes.data.data);
-            setForm(companyRes.data.data);
-            setEnterpriseTypes(etRes.data.data ?? etRes.data);
-            setOperationalTypes(otRes.data.data ?? otRes.data);
-        }).catch(() => setError('加载企业信息失败'))
-          .finally(() => setLoading(false));
+            api.get('/enterprise-types').catch(() => null),
+            api.get('/operational-types').catch(() => null),
+        ]).then(([etRes, otRes]) => {
+            if (etRes) setEnterpriseTypes(etRes.data.data?.data ?? etRes.data.data ?? []);
+            if (otRes) setOperationalTypes(otRes.data.data?.data ?? otRes.data.data ?? []);
+        });
     }, [activeCompany?.id]);
 
     const setField = (key: keyof EditForm, value: string | number) =>
@@ -397,19 +407,12 @@ export default function CurrentEnterprise() {
 
                         {/* Risk */}
                         <InfoCard title="风险等级" icon={AlertTriangle} accent="amber">
+                            <p className="mb-3 text-[11px] text-slate-600">风险值由系统自动计算，不可手动修改</p>
                             <div className="space-y-3">
-                                <EditableField label="固有风险分值"
-                                    value={editMode ? String(form.inherent_risk ?? '') : String(company.inherent_risk_grade ?? '')}
-                                    editing={editMode} onChange={(v) => setField('inherent_risk', v)} />
-                                <EditableField label="固有风险等级"
-                                    value={editMode ? (form.inherent_risk_grade ?? '') : (company.inherent_risk_grade ?? '')}
-                                    editing={editMode} onChange={(v) => setField('inherent_risk_grade', v)} />
-                                <EditableField label="浮动风险分值"
-                                    value={editMode ? String(form.float_risk ?? '') : String(company.float_risk_grade ?? '')}
-                                    editing={editMode} onChange={(v) => setField('float_risk', v)} />
-                                <EditableField label="浮动风险等级"
-                                    value={editMode ? (form.float_risk_grade ?? '') : (company.float_risk_grade ?? '')}
-                                    editing={editMode} onChange={(v) => setField('float_risk_grade', v)} />
+                                <ReadonlyField label="固有风险分值" value={String(company.inherent_risk ?? '未计算')} />
+                                <ReadonlyField label="固有风险等级" value={company.inherent_risk_grade ?? '未计算'} />
+                                <ReadonlyField label="浮动风险分值" value={String(company.float_risk ?? '未计算')} />
+                                <ReadonlyField label="浮动风险等级" value={company.float_risk_grade ?? '未计算'} />
                             </div>
                         </InfoCard>
                     </div>

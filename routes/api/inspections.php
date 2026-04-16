@@ -177,3 +177,6 @@ Route::middleware('permission:add-points.delete')->group(function () {
 Route::middleware('permission:check-statistics.list')->group(function () {
     Route::get('/check-statistics', [CheckStatisticsController::class, 'index']);
 });
+
+// 巡检预警统计（无额外权限限制，监控看板通用）
+Route::get('/inspection-alerts', [CheckStatisticsController::class, 'alerts']);

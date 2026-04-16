@@ -8,26 +8,38 @@ trait ApiTree
 {
     public function ascTree(mixed $data): array
     {
-        static $arr = [];
+        $arr = [];
+        $this->collectDescendantIds($data, $arr);
+
+        return $arr;
+    }
+
+    private function collectDescendantIds(mixed $data, array &$arr): void
+    {
         $arr[] = $data->id;
         foreach ($data->companies as $value) {
-            if (!empty($value['companies'])) {
-                $this->ascTree($value);
+            if (! empty($value['companies'])) {
+                $this->collectDescendantIds($value, $arr);
             } else {
                 $arr[] = $value['id'];
             }
         }
-        return $arr;
     }
 
     public function descTree(int $companyId): array
     {
-        static $arr = [];
+        $arr = [];
+        $this->collectAncestorIds($companyId, $arr);
+
+        return $arr;
+    }
+
+    private function collectAncestorIds(int $companyId, array &$arr): void
+    {
         $pid = Company::query()->where('id', $companyId)->value('pid');
         $arr[] = $pid;
         if ($pid != 0) {
-            $this->descTree($pid);
+            $this->collectAncestorIds($pid, $arr);
         }
-        return $arr;
     }
 }
