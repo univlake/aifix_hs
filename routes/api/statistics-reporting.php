@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\OnlineInspectionController;
 use App\Http\Controllers\Api\V1\RectificationSheetCountController;
 use App\Http\Controllers\Api\V1\RegulationLibraryController;
 use App\Http\Controllers\Api\V1\RisksController;
+use App\Http\Controllers\Api\V1\SpecialEquipmentStatisticsController;
 use App\Http\Controllers\Api\V1\TodosController;
 use App\Http\Controllers\Api\V1\VisibleController;
 use App\Http\Controllers\Api\V1\YearStatisticsController;
@@ -233,3 +234,6 @@ Route::middleware('permission:company-map.view')->group(function () {
 Route::middleware('permission:rectification-sheet-count.view')->group(function () {
     Route::get('/rectification-sheet-count', [RectificationSheetCountController::class, 'getStatistics']);
 });
+
+// ── 特种设备数据统计 ─────────────────────────────────────────────────────
+Route::get('/special-equipment-statistics', [SpecialEquipmentStatisticsController::class, 'index']);
