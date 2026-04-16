@@ -1,12 +1,13 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { DataTable } from '@/components/data-table/DataTable';
 import { useScope } from '@/contexts/ScopeContext';
 import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, FileText, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
+import { OssUploadField } from '@/components/shared/OssUploadField';
 import type { ApiResponse } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -456,7 +457,7 @@ function renderFormField(
             );
         case 'file':
             return (
-                <FileUploadField
+                <OssUploadField
                     value={(value as string) ?? ''}
                     onChange={(url) => updateForm(field.key, url)}
                 />
@@ -464,98 +465,6 @@ function renderFormField(
         default:
             return null;
     }
-}
-
-// ── File upload field ─────────────────────────────────────────────
-
-interface UploadResponse {
-    url: string;
-    filename: string;
-    contenttype: string;
-}
-
-function FileUploadField({ value, onChange }: { value: string; onChange: (url: string) => void }) {
-    const [uploading, setUploading] = useState(false);
-    const [uploadError, setUploadError] = useState('');
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    const isImage = value ? /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(value) : false;
-    const filename = value ? decodeURIComponent(value.split('/').pop() ?? '') : '';
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploading(true);
-        setUploadError('');
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const { data: res } = await api.post<ApiResponse<UploadResponse>>('/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-            onChange(res.data.url);
-        } catch (err: any) {
-            setUploadError(err.response?.data?.message ?? '上传失败，请重试');
-        } finally {
-            setUploading(false);
-            if (inputRef.current) inputRef.current.value = '';
-        }
-    };
-
-    return (
-        <div className="space-y-2">
-            <div className="flex items-center gap-2">
-                <button
-                    type="button"
-                    onClick={() => inputRef.current?.click()}
-                    disabled={uploading}
-                    className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                    {uploading ? '上传中...' : value ? '重新上传' : '选择文件'}
-                </button>
-                {value && (
-                    <button
-                        type="button"
-                        onClick={() => onChange('')}
-                        className="text-xs text-slate-600 transition-colors hover:text-red-400"
-                    >
-                        移除
-                    </button>
-                )}
-            </div>
-
-            <input ref={inputRef} type="file" onChange={handleFileChange} className="hidden" />
-
-            {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
-
-            {value && isImage && (
-                <a href={value} target="_blank" rel="noopener noreferrer" className="block">
-                    <img
-                        src={value}
-                        alt="预览"
-                        className="h-24 w-24 rounded-lg border border-blue-900/30 object-cover transition-opacity hover:opacity-80"
-                    />
-                </a>
-            )}
-
-            {value && !isImage && (
-                <a
-                    href={value}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-blue-400 transition-colors hover:text-blue-300"
-                >
-                    <FileText className="h-3.5 w-3.5 shrink-0" />
-                    <span className="max-w-xs truncate">{filename || '查看文件'}</span>
-                    <ExternalLink className="h-3 w-3 shrink-0" />
-                </a>
-            )}
-        </div>
-    );
 }
 
 // ── Modal ─────────────────────────────────────────────────────────

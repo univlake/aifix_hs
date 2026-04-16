@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\DesignUnitController;
 use App\Http\Controllers\Api\V1\EliminationControlStaffController;
 use App\Http\Controllers\Api\V1\EvaluationUnitController;
 use App\Http\Controllers\Api\V1\FilingPermissionsController;
+use App\Http\Controllers\Api\V1\FireControlRoomPersonnelController;
 use App\Http\Controllers\Api\V1\JobManagementController;
 use App\Http\Controllers\Api\V1\ProductionStandardizationController;
 use App\Http\Controllers\Api\V1\SafetyArchitectureController;
@@ -104,6 +105,22 @@ Route::middleware('permission:certificate-statuses.update')->group(function () {
 });
 Route::middleware('permission:certificate-statuses.delete')->group(function () {
     Route::delete('/certificate-statuses/{id}', [CertificateStatusController::class, 'destroy']);
+});
+
+// ── 消防控制室人员 ──────────────────────────────────────────────────
+Route::middleware('permission:fire-control-room-personnels.list')->group(function () {
+    Route::get('/fire-control-room-personnels', [FireControlRoomPersonnelController::class, 'index']);
+    Route::get('/fire-control-room-personnels/{id}', [FireControlRoomPersonnelController::class, 'show']);
+});
+Route::middleware('permission:fire-control-room-personnels.create')->group(function () {
+    Route::post('/fire-control-room-personnels', [FireControlRoomPersonnelController::class, 'store']);
+});
+Route::middleware('permission:fire-control-room-personnels.update')->group(function () {
+    Route::put('/fire-control-room-personnels/{id}', [FireControlRoomPersonnelController::class, 'update']);
+    Route::patch('/fire-control-room-personnels/{id}', [FireControlRoomPersonnelController::class, 'update']);
+});
+Route::middleware('permission:fire-control-room-personnels.delete')->group(function () {
+    Route::delete('/fire-control-room-personnels/{id}', [FireControlRoomPersonnelController::class, 'destroy']);
 });
 
 // ── 淘汰控制人员 ─────────────────────────────────────────────────────

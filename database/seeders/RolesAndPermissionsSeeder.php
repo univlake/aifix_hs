@@ -82,6 +82,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'certificate-statuses.update',
             'certificate-statuses.delete',
 
+            // 消防控制室人员
+            'fire-control-room-personnels.list',
+            'fire-control-room-personnels.create',
+            'fire-control-room-personnels.update',
+            'fire-control-room-personnels.delete',
+
             // 淘汰控制人员
             'elimination-control-staff.list',
             'elimination-control-staff.create',
