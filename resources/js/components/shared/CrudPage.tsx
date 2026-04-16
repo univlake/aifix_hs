@@ -1,11 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Head } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { DataTable } from '@/components/data-table/DataTable';
 import { useScope } from '@/contexts/ScopeContext';
 import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, FileText, ExternalLink } from 'lucide-react';
 import api from '@/lib/api';
 import type { ApiResponse } from '@/types/models';
 
@@ -14,7 +14,7 @@ import type { ApiResponse } from '@/types/models';
 export interface FormField {
     key: string;
     label: string;
-    type: 'text' | 'number' | 'textarea' | 'select' | 'switch' | 'date';
+    type: 'text' | 'number' | 'textarea' | 'select' | 'switch' | 'date' | 'file';
     required?: boolean;
     placeholder?: string;
     options?: { value: string; label: string }[];
@@ -39,6 +39,8 @@ export interface CrudPageConfig {
     searchField?: string;
     searchPlaceholder?: string;
     idKey?: string;
+    /** Row field used as the label in the delete confirmation dialog. Defaults to 'title'. */
+    labelKey?: string;
 }
 
 interface PaginatedResponse<T> {
@@ -60,6 +62,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         searchField,
         searchPlaceholder,
         idKey = 'id',
+        labelKey = 'title',
     } = config;
 
     const { activeCompany } = useScope();
@@ -212,7 +215,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                 <ActionButton
                     onClick={() => {
                         setDeleteId(row.original[idKey] as number);
-                        setDeleteLabel(String(row.original['title'] ?? row.original[idKey] ?? ''));
+                        setDeleteLabel(String(row.original[labelKey] ?? row.original[idKey] ?? ''));
                     }}
                     variant="delete"
                     title="删除"
@@ -278,31 +281,33 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                     </button>
                 </div>
 
-                <div className="space-y-4 p-6">
-                    {formError && (
-                        <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
-                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                            {formError}
-                        </div>
-                    )}
-                    <div className={cn(
-                        'grid gap-4',
-                        formFields.some((f) => f.colSpan === 2) ? 'md:grid-cols-2' : 'grid-cols-1',
-                    )}>
-                        {formFields.map((field) => (
-                            <div
-                                key={field.key}
-                                className={field.colSpan === 2 ? 'md:col-span-2' : ''}
-                            >
-                                <label className="mb-1.5 block text-xs font-medium text-slate-500 uppercase tracking-wide">
-                                    {field.label}
-                                    {field.required && (
-                                        <span className="ml-1 text-blue-500">*</span>
-                                    )}
-                                </label>
-                                {renderFormField(field, form, updateForm, dynamicOptions)}
+                <div className="flex-1 overflow-y-auto">
+                    <div className="space-y-4 p-6">
+                        {formError && (
+                            <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
+                                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                {formError}
                             </div>
-                        ))}
+                        )}
+                        <div className={cn(
+                            'grid gap-4',
+                            formFields.some((f) => f.colSpan === 2) ? 'md:grid-cols-2' : 'grid-cols-1',
+                        )}>
+                            {formFields.map((field) => (
+                                <div
+                                    key={field.key}
+                                    className={field.colSpan === 2 ? 'md:col-span-2' : ''}
+                                >
+                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
+                                        {field.label}
+                                        {field.required && (
+                                            <span className="ml-1 text-blue-500">*</span>
+                                        )}
+                                    </label>
+                                    {renderFormField(field, form, updateForm, dynamicOptions)}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -449,9 +454,108 @@ function renderFormField(
                     />
                 </button>
             );
+        case 'file':
+            return (
+                <FileUploadField
+                    value={(value as string) ?? ''}
+                    onChange={(url) => updateForm(field.key, url)}
+                />
+            );
         default:
             return null;
     }
+}
+
+// ── File upload field ─────────────────────────────────────────────
+
+interface UploadResponse {
+    url: string;
+    filename: string;
+    contenttype: string;
+}
+
+function FileUploadField({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const isImage = value ? /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(value) : false;
+    const filename = value ? decodeURIComponent(value.split('/').pop() ?? '') : '';
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        setUploadError('');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const { data: res } = await api.post<ApiResponse<UploadResponse>>('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            onChange(res.data.url);
+        } catch (err: any) {
+            setUploadError(err.response?.data?.message ?? '上传失败，请重试');
+        } finally {
+            setUploading(false);
+            if (inputRef.current) inputRef.current.value = '';
+        }
+    };
+
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center gap-2">
+                <button
+                    type="button"
+                    onClick={() => inputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                    {uploading ? '上传中...' : value ? '重新上传' : '选择文件'}
+                </button>
+                {value && (
+                    <button
+                        type="button"
+                        onClick={() => onChange('')}
+                        className="text-xs text-slate-600 transition-colors hover:text-red-400"
+                    >
+                        移除
+                    </button>
+                )}
+            </div>
+
+            <input ref={inputRef} type="file" onChange={handleFileChange} className="hidden" />
+
+            {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
+
+            {value && isImage && (
+                <a href={value} target="_blank" rel="noopener noreferrer" className="block">
+                    <img
+                        src={value}
+                        alt="预览"
+                        className="h-24 w-24 rounded-lg border border-blue-900/30 object-cover transition-opacity hover:opacity-80"
+                    />
+                </a>
+            )}
+
+            {value && !isImage && (
+                <a
+                    href={value}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-blue-400 transition-colors hover:text-blue-300"
+                >
+                    <FileText className="h-3.5 w-3.5 shrink-0" />
+                    <span className="max-w-xs truncate">{filename || '查看文件'}</span>
+                    <ExternalLink className="h-3 w-3 shrink-0" />
+                </a>
+            )}
+        </div>
+    );
 }
 
 // ── Modal ─────────────────────────────────────────────────────────
@@ -475,7 +579,7 @@ function Modal({
                 onClick={onClose}
             />
             {/* Panel */}
-            <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
+            <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
                 {children}
             </div>
         </div>

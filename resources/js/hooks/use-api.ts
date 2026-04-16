@@ -36,6 +36,20 @@ export function useApiList<T = Record<string, unknown>>({
     const [params, setParams] = useState<Record<string, unknown>>(defaultParams);
     const abortRef = useRef<AbortController | null>(null);
 
+    // When defaultParams changes after mount (e.g. activeCompany loads asynchronously),
+    // sync the new params and immediately re-fetch with them.
+    const defaultParamsKey = JSON.stringify(defaultParams);
+    const isFirstParamsRun = useRef(true);
+    useEffect(() => {
+        if (isFirstParamsRun.current) {
+            isFirstParamsRun.current = false;
+            return;
+        }
+        const newParams = JSON.parse(defaultParamsKey) as Record<string, unknown>;
+        setParams(newParams);
+        fetchList(1, newParams);
+    }, [defaultParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const fetchList = useCallback(
         async (p = page, extraParams: Record<string, unknown> = {}) => {
             abortRef.current?.abort();
