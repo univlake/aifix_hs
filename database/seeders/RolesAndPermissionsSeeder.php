@@ -5,12 +5,13 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // ── 权限定义 ──────────────────────────────────────────
         $permissions = [
@@ -69,6 +70,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'production-standardizations.list',
             'production-standardizations.create',
             'production-standardizations.update',
+
+            // 职业健康安全管理体系
+            'occupational-health-safeties.list',
+            'occupational-health-safeties.create',
+            'occupational-health-safeties.update',
 
             // 安全管理人员
             'safety-management.list',
@@ -479,7 +485,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'focus-companies.list',
             'focus-companies.create',
             'focus-companies.delete',
-        
+
             // ── 补充模块 ──────────────────────────────
             'assess-detects.list',
             'assess-detects.create',

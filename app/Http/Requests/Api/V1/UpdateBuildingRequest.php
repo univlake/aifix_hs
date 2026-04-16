@@ -15,8 +15,9 @@ class UpdateBuildingRequest extends FormRequest
     {
         return [
             'title' => 'sometimes|required|string|max:255',
-            'area' => 'sometimes|required|string|max:255',
-            'fire_class' => 'sometimes|required|string|max:255',
+            'structure' => 'sometimes|nullable|string|max:255',
+            'area' => 'sometimes|nullable|string|max:255',
+            'fire_class' => 'sometimes|nullable|string|max:255',
             'company_id' => 'sometimes|required|integer',
         ];
     }

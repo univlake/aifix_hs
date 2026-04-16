@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\EvaluationUnitController;
 use App\Http\Controllers\Api\V1\FilingPermissionsController;
 use App\Http\Controllers\Api\V1\FireControlRoomPersonnelController;
 use App\Http\Controllers\Api\V1\JobManagementController;
+use App\Http\Controllers\Api\V1\OccupationalHealthSafetyController;
 use App\Http\Controllers\Api\V1\ProductionStandardizationController;
 use App\Http\Controllers\Api\V1\SafetyArchitectureController;
 use App\Http\Controllers\Api\V1\SafetyManagementController;
@@ -73,6 +74,18 @@ Route::middleware('permission:production-standardizations.create')->group(functi
 Route::middleware('permission:production-standardizations.update')->group(function () {
     Route::put('/production-standardizations/{id}', [ProductionStandardizationController::class, 'update']);
     Route::patch('/production-standardizations/{id}', [ProductionStandardizationController::class, 'update']);
+});
+
+// ── 职业健康安全管理体系 ──────────────────────────────────────────────────
+Route::middleware('permission:occupational-health-safeties.list')->group(function () {
+    Route::get('/occupational-health-safeties', [OccupationalHealthSafetyController::class, 'index']);
+});
+Route::middleware('permission:occupational-health-safeties.create')->group(function () {
+    Route::post('/occupational-health-safeties', [OccupationalHealthSafetyController::class, 'store']);
+});
+Route::middleware('permission:occupational-health-safeties.update')->group(function () {
+    Route::put('/occupational-health-safeties/{id}', [OccupationalHealthSafetyController::class, 'update']);
+    Route::patch('/occupational-health-safeties/{id}', [OccupationalHealthSafetyController::class, 'update']);
 });
 
 // ── 安全管理人员 ─────────────────────────────────────────────────────

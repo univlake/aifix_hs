@@ -6,6 +6,7 @@ class Building extends BaseModel
 {
     protected $fillable = [
         'title',
+        'structure',
         'area',
         'fire_class',
         'company_id',

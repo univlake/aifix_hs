@@ -92,11 +92,16 @@ export default function PersonnelsIndex() {
 
 function EmploymentStatsSection({ companyId }: { companyId: number | undefined }) {
     const [stats, setStats] = useState<PersonnelStats>(EMPTY_STATS);
+    const [savedStats, setSavedStats] = useState<PersonnelStats>(EMPTY_STATS);
     const [recordId, setRecordId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [editMode, setEditMode] = useState(false);
     const [error, setError] = useState('');
+
+    const isNew = !recordId;
+    const isEditing = isNew || editMode;
 
     useEffect(() => {
         if (!companyId) return;
@@ -107,6 +112,7 @@ function EmploymentStatsSection({ companyId }: { companyId: number | undefined }
             const first = res.data?.data?.[0];
             if (first) {
                 setStats(first);
+                setSavedStats(first);
                 setRecordId((first as any).id ?? null);
             }
         }).catch(() => {}).finally(() => setLoading(false));
@@ -124,13 +130,21 @@ function EmploymentStatsSection({ companyId }: { companyId: number | undefined }
                 const { data: res } = await api.post<ApiResponse<{ id: number }>>('/personnels', payload);
                 setRecordId((res.data as any).id);
             }
+            setSavedStats(stats);
             setSaved(true);
+            setEditMode(false);
             setTimeout(() => setSaved(false), 2500);
         } catch (err: any) {
             setError(err.response?.data?.message ?? '保存失败，请重试');
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleCancel = () => {
+        setStats(savedStats);
+        setEditMode(false);
+        setError('');
     };
 
     const num = (key: keyof PersonnelStats) => (
@@ -140,13 +154,38 @@ function EmploymentStatsSection({ companyId }: { companyId: number | undefined }
         />
     );
 
+    const val = (key: keyof PersonnelStats) => (
+        <ReadonlyStatValue value={stats[key] as number} />
+    );
+
+    const actionButtons = isEditing ? (
+        <div className="flex items-center gap-2">
+            {!isNew && (
+                <button
+                    onClick={handleCancel}
+                    disabled={saving}
+                    className="rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200 disabled:pointer-events-none disabled:opacity-50"
+                >
+                    取消
+                </button>
+            )}
+            <SaveButton saving={saving} saved={saved} disabled={loading} onClick={handleSave} />
+        </div>
+    ) : (
+        <button
+            onClick={() => { setEditMode(true); setError(''); }}
+            className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200"
+        >
+            <Pencil className="h-3 w-3" />
+            编辑
+        </button>
+    );
+
     return (
         <SectionCard
             title="基本用工 & 专业人员信息"
             icon={<Users className="h-4 w-4" />}
-            action={
-                <SaveButton saving={saving} saved={saved} disabled={loading} onClick={handleSave} />
-            }
+            action={!loading ? actionButtons : undefined}
         >
             {error && <ErrorBanner>{error}</ErrorBanner>}
             {loading ? <LoadingRow /> : (
@@ -157,11 +196,11 @@ function EmploymentStatsSection({ companyId }: { companyId: number | undefined }
                             基本用工信息
                         </p>
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                            <StatField label="从业人员总数" field={num('total_people')} />
-                            <StatField label="合同制员工" field={num('staff')} />
-                            <StatField label="劳务派遣人员" field={num('service')} />
-                            <StatField label="管理人员" field={num('manager')} />
-                            <StatField label="高中及以上学历" field={num('high_school_diploma')} />
+                            <StatField label="从业人员总数" field={isEditing ? num('total_people') : val('total_people')} />
+                            <StatField label="合同制员工" field={isEditing ? num('staff') : val('staff')} />
+                            <StatField label="劳务派遣人员" field={isEditing ? num('service') : val('service')} />
+                            <StatField label="管理人员" field={isEditing ? num('manager') : val('manager')} />
+                            <StatField label="高中及以上学历" field={isEditing ? num('high_school_diploma') : val('high_school_diploma')} />
                         </div>
                     </div>
 
@@ -173,11 +212,11 @@ function EmploymentStatsSection({ companyId }: { companyId: number | undefined }
                             专业人员信息
                         </p>
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                            <StatField label="注册安全工程师" field={num('safety_engineer')} />
-                            <StatField label="安全工程专业人员" field={num('safety_engineering_major')} />
-                            <StatField label="注册消防工程师" field={num('fire_engineer')} />
-                            <StatField label="安全管理人员" field={num('security_officer')} />
-                            <StatField label="其他人员" field={num('other')} />
+                            <StatField label="注册安全工程师" field={isEditing ? num('safety_engineer') : val('safety_engineer')} />
+                            <StatField label="安全工程专业人员" field={isEditing ? num('safety_engineering_major') : val('safety_engineering_major')} />
+                            <StatField label="注册消防工程师" field={isEditing ? num('fire_engineer') : val('fire_engineer')} />
+                            <StatField label="安全管理人员" field={isEditing ? num('security_officer') : val('security_officer')} />
+                            <StatField label="其他人员" field={isEditing ? num('other') : val('other')} />
                         </div>
                     </div>
                 </div>
@@ -766,6 +805,14 @@ function NumberInput({ value, onChange }: { value: number; onChange: (v: number)
             onChange={(e) => onChange(Number(e.target.value) || 0)}
             className={inputClass}
         />
+    );
+}
+
+function ReadonlyStatValue({ value }: { value: number }) {
+    return (
+        <div className="rounded-lg bg-[#070d1f]/60 px-3 py-2">
+            <span className="text-sm font-medium text-slate-200">{value}</span>
+        </div>
     );
 }
 

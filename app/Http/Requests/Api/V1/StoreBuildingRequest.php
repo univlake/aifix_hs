@@ -16,8 +16,9 @@ class StoreBuildingRequest extends FormRequest
         return [
             'company_id' => 'required|integer',
             'title' => 'required|string|max:255',
-            'area' => 'required|string|max:255',
-            'fire_class' => 'required|string|max:255',
+            'structure' => 'nullable|string|max:255',
+            'area' => 'nullable|string|max:255',
+            'fire_class' => 'nullable|string|max:255',
         ];
     }
 
