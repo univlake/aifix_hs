@@ -125,6 +125,7 @@ Route::group([], function () {
     // ── 风险管理（生产端）─────────────────────────────────────
     Route::inertia('/risk/safety-assessment', 'risk/safety-assessment/Index');
     Route::inertia('/risk/expert-inspection', 'risk/expert-inspection/Index');
+    Route::inertia('/risk/risk-warning', 'risk/risk-warning/Index');
 
     // ── 第三方管理 ────────────────────────────────────────────
     Route::inertia('/third-party/design-units', 'third-party/design-units/Index');
