@@ -90,6 +90,8 @@ Route::group([], function () {
     Route::inertia('/training/training-videos', 'training/training-videos/Index');
     Route::inertia('/training/internal-trainings', 'training/internal-trainings/Index');
     Route::inertia('/training/external-trainings', 'training/external-trainings/Index');
+    Route::inertia('/training/other-trainings', 'training/other-trainings/Index');
+    Route::inertia('/training/education', 'training/education/Index');
 
     // ── 会议管理 ──────────────────────────────────────────────
     Route::inertia('/meeting/meetings', 'meeting/meetings/Index');

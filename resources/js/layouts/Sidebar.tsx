@@ -180,7 +180,7 @@ const navSections: NavSection[] = [
                 children: [
                     { title: '会议', href: '/meeting/meetings', upstream: true },
                     { title: '内部会议', href: '/meeting/internal-meetings' },
-                    { title: '教育培训', href: '/training/training-classes' },
+                    { title: '教育培训', href: '/training/education' },
                 ],
             },
         ],
