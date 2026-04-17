@@ -59,9 +59,28 @@ class CompanyPolicy
 
     /**
      * 审核企业
+     * 只有待审企业的直属上级或祖父级企业用户才可操作
      */
-    public function review(User $user): bool
+    public function review(User $user, Company $company): bool
     {
-        return $user->hasPermissionTo('companies.review', 'api');
+        if (! $user->hasPermissionTo('companies.review', 'api')) {
+            return false;
+        }
+
+        if ($user->hasRole('super-admin', 'api')) {
+            return true;
+        }
+
+        $userCompanyId = $user->company_id;
+
+        // Direct parent
+        if ($company->pid === $userCompanyId) {
+            return true;
+        }
+
+        // Grandparent: load the parent and check its own pid
+        $parent = $company->pidName ?? Company::find($company->pid);
+
+        return $parent && $parent->pid === $userCompanyId;
     }
 }

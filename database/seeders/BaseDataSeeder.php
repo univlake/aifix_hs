@@ -33,16 +33,30 @@ class BaseDataSeeder extends Seeder
         }
 
         $safetyManagementTypes = [
-            ['title' => '主要负责人', 'is_cert' => 1],
-            ['title' => '安全生产管理人员', 'is_cert' => 1],
-            ['title' => '特种作业人员', 'is_cert' => 1],
-            ['title' => '其他从业人员', 'is_cert' => 0],
+            ['title' => '安全负责人', 'is_cert' => 1],
+            ['title' => '安管员', 'is_cert' => 1],
+            ['title' => '生产管理', 'is_cert' => 1],
+            ['title' => '设备管理', 'is_cert' => 1],
+            ['title' => '质量管理', 'is_cert' => 1],
+            ['title' => '人事管理', 'is_cert' => 1],
+            ['title' => '其他管理', 'is_cert' => 0],
         ];
 
         foreach ($safetyManagementTypes as $type) {
             DB::table('safety_management_types')->insertOrIgnore([
                 'title' => $type['title'],
                 'is_cert' => $type['is_cert'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        // 替换后的证件类型数组
+        $recordTypes = ['安全生产许可证', '危化品安全使用许可证', '危化品登记证', '危化品使用备案', '重大危险源备案', '易制毒生产备案', '应急预案备案有效', '职业健康备案'];
+
+        foreach ($recordTypes as $title) {
+            DB::table('record_types')->insertOrIgnore([
+                'title' => $title,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);

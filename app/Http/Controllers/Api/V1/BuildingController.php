@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreBuildingRequest;
+use App\Http\Requests\Api\V1\UpdateBuildingRequest;
 use App\Models\Building;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreBuildingRequest;
-use App\Http\Requests\Api\V1\UpdateBuildingRequest;
 
 class BuildingController extends Controller
 {
@@ -35,7 +35,7 @@ class BuildingController extends Controller
     {
         $building = Building::find($id);
 
-        if (!$building) {
+        if (! $building) {
             return $this->notFound('建筑不存在');
         }
 
@@ -47,6 +47,10 @@ class BuildingController extends Controller
      */
     public function store(StoreBuildingRequest $request): JsonResponse
     {
+        if ($this->isGroupAccount()) {
+            return $this->failed('集团账号不允许创建数据', 403);
+        }
+
         $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
@@ -61,9 +65,13 @@ class BuildingController extends Controller
      */
     public function update(UpdateBuildingRequest $request, int $id): JsonResponse
     {
+        if ($this->isGroupAccount()) {
+            return $this->failed('集团账号不允许修改数据', 403);
+        }
+
         $building = Building::find($id);
 
-        if (!$building) {
+        if (! $building) {
             return $this->notFound('建筑不存在');
         }
         $data = $request->validated();
@@ -78,14 +86,23 @@ class BuildingController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
+        if ($this->isGroupAccount()) {
+            return $this->failed('集团账号不允许删除数据', 403);
+        }
+
         $building = Building::find($id);
 
-        if (!$building) {
+        if (! $building) {
             return $this->notFound('建筑不存在');
         }
 
         $building->delete();
 
         return $this->message('删除成功');
+    }
+
+    private function isGroupAccount(): bool
+    {
+        return (bool) auth()->user()?->company?->is_bloc;
     }
 }

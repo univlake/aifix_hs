@@ -166,13 +166,27 @@ class CompanyController extends Controller
 
     /**
      * 审核列表
+     * 仅返回当前用户所属企业为直属上级或祖父级的待审企业
      */
     public function reviewList(Request $request): JsonResponse
     {
+        $user = auth()->user();
+        $userCompanyId = $user->company_id;
+
         $query = Company::query()->where('status', 0);
 
         if ($request->filled('title')) {
             $query->where('title', 'like', '%'.$request->title.'%');
+        }
+
+        // Super-admin sees all; everyone else is restricted to their hierarchy chain.
+        if (! $user->hasRole('super-admin', 'api')) {
+            $query->where(function ($q) use ($userCompanyId) {
+                // Direct parent: pending company's pid matches the user's company
+                $q->where('pid', $userCompanyId)
+                    // Grandparent: pending company's parent's pid matches the user's company
+                    ->orWhereHas('pidName', fn ($q2) => $q2->where('pid', $userCompanyId));
+            });
         }
 
         $list = $query->with(['enterpriseType', 'operationalType'])

@@ -317,13 +317,16 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
                         <div className="space-y-4">
                             <div>
                                 <FieldLabel required>达标等级</FieldLabel>
-                                <input
-                                    type="text"
+                                <select
                                     value={form.grade}
                                     onChange={(e) => set('grade', e.target.value)}
-                                    placeholder="如：一级、二级、三级"
-                                    className={inputCls}
-                                />
+                                    className={cn(inputCls, 'cursor-pointer appearance-none')}
+                                >
+                                    <option value="" disabled className="bg-[#0d1530]">请选择等级</option>
+                                    <option value="一级" className="bg-[#0d1530]">一级</option>
+                                    <option value="二级" className="bg-[#0d1530]">二级</option>
+                                    <option value="三级" className="bg-[#0d1530]">三级</option>
+                                </select>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>

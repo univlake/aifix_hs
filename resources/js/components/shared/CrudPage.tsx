@@ -66,8 +66,9 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         labelKey = 'title',
     } = config;
 
-    const { activeCompany } = useScope();
+    const { activeCompany, isSubordinate } = useScope();
     const companyId = activeCompany?.id;
+    const readOnly = isSubordinate;
 
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<Record<string, unknown>>({
@@ -200,32 +201,34 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         },
     }));
 
-    tableColumns.push({
-        id: 'actions',
-        header: '操作',
-        size: 88,
-        cell: ({ row }) => (
-            <div className="flex items-center gap-0.5">
-                <ActionButton
-                    onClick={() => openEdit(row.original)}
-                    variant="edit"
-                    title="编辑"
-                >
-                    <Pencil className="h-3.5 w-3.5" />
-                </ActionButton>
-                <ActionButton
-                    onClick={() => {
-                        setDeleteId(row.original[idKey] as number);
-                        setDeleteLabel(String(row.original[labelKey] ?? row.original[idKey] ?? ''));
-                    }}
-                    variant="delete"
-                    title="删除"
-                >
-                    <Trash2 className="h-3.5 w-3.5" />
-                </ActionButton>
-            </div>
-        ),
-    });
+    if (!readOnly) {
+        tableColumns.push({
+            id: 'actions',
+            header: '操作',
+            size: 88,
+            cell: ({ row }) => (
+                <div className="flex items-center gap-0.5">
+                    <ActionButton
+                        onClick={() => openEdit(row.original)}
+                        variant="edit"
+                        title="编辑"
+                    >
+                        <Pencil className="h-3.5 w-3.5" />
+                    </ActionButton>
+                    <ActionButton
+                        onClick={() => {
+                            setDeleteId(row.original[idKey] as number);
+                            setDeleteLabel(String(row.original[labelKey] ?? row.original[idKey] ?? ''));
+                        }}
+                        variant="delete"
+                        title="删除"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" />
+                    </ActionButton>
+                </div>
+            ),
+        });
+    }
 
     return (
         <>
@@ -243,13 +246,15 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                         </p>
                     </div>
                 </div>
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95"
-                >
-                    <Plus className="h-4 w-4" />
-                    新增{title}
-                </button>
+                {!readOnly && (
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95"
+                    >
+                        <Plus className="h-4 w-4" />
+                        新增{title}
+                    </button>
+                )}
             </div>
 
             <DataTable
