@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Head } from '@inertiajs/react';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
@@ -7,7 +7,7 @@ import api from '@/lib/api';
 import type { ApiResponse, PaginatedData } from '@/types/models';
 import {
     Loader2, Save, Plus, Pencil, Trash2, X, AlertTriangle,
-    Users, ShieldCheck, Flame, HardHat,
+    Users, ShieldCheck, Flame, HardHat, Download, Upload,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -425,6 +425,16 @@ function StaffSubModulesSection({
     activeTab: SubTab;
     onTabChange: (tab: SubTab) => void;
 }) {
+    const [safetyMgmtTypes, setSafetyMgmtTypes] = useState<SelectOption[]>([]);
+
+    useEffect(() => {
+        api.get<ApiResponse<{ data: { id: number; title: string }[] }>>('/safety-management-types')
+            .then(({ data: res }) => {
+                setSafetyMgmtTypes((res.data?.data ?? []).map((t) => ({ value: t.id, label: t.title })));
+            })
+            .catch(() => {});
+    }, []);
+
     const tabs: { id: SubTab; label: string; icon: React.ReactNode }[] = [
         { id: 'safety-mgmt', label: '安全管理人员', icon: <ShieldCheck className="h-3.5 w-3.5" /> },
         { id: 'special-op', label: '特种作业及设备操作人员', icon: <HardHat className="h-3.5 w-3.5" /> },
@@ -458,12 +468,23 @@ function StaffSubModulesSection({
                     companyId={companyId}
                     columns={[
                         { key: 'name', header: '姓名' },
+                        {
+                            key: 'safety_management_type_id',
+                            header: '人员类型',
+                            valueGetter: (row) => (row.safety_management_type as any)?.title,
+                        },
                         { key: 'cert_title', header: '证书名称' },
                         { key: 'cert_number', header: '证书编号' },
                         { key: 'valid_period', header: '有效期', format: (v) => v ? String(v).slice(0, 10) : '' },
                     ]}
                     formFields={[
                         { key: 'name', label: '姓名', required: true },
+                        {
+                            key: 'safety_management_type_id',
+                            label: '人员类型',
+                            type: 'select',
+                            options: safetyMgmtTypes,
+                        },
                         { key: 'tel', label: '联系电话' },
                         { key: 'cert_title', label: '证书名称' },
                         { key: 'cert_number', label: '证书编号' },
@@ -519,13 +540,20 @@ interface TableColumn {
     key: string;
     header: string;
     format?: (value: unknown) => string;
+    valueGetter?: (row: Record<string, unknown>) => unknown;
+}
+
+interface SelectOption {
+    value: number;
+    label: string;
 }
 
 interface FormFieldDef {
     key: string;
     label: string;
     required?: boolean;
-    type?: 'text' | 'date' | 'number';
+    type?: 'text' | 'date' | 'number' | 'select';
+    options?: SelectOption[];
 }
 
 function StaffTable({
@@ -551,6 +579,9 @@ function StaffTable({
     const [error, setError] = useState('');
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteName, setDeleteName] = useState('');
+    const [importing, setImporting] = useState(false);
+    const [importError, setImportError] = useState('');
+    const importInputRef = useRef<HTMLInputElement>(null);
 
     const initForm = () => {
         const f: Record<string, string> = {};
@@ -568,7 +599,10 @@ function StaffTable({
     const openEdit = (row: Record<string, unknown>) => {
         setEditingId(row.id as number);
         const f: Record<string, string> = {};
-        formFields.forEach((f2) => { f[f2.key] = String(row[f2.key] ?? ''); });
+        formFields.forEach((f2) => {
+            const raw = row[f2.key] ?? '';
+            f[f2.key] = f2.type === 'date' && raw ? String(raw).slice(0, 10) : String(raw);
+        });
         setForm(f);
         setError('');
         setDialogOpen(true);
@@ -606,18 +640,87 @@ function StaffTable({
         reload();
     };
 
+    const handleDownloadTemplate = async () => {
+        try {
+            const response = await api.get(`${endpoint}/template`, { responseType: 'blob' });
+            const url = window.URL.createObjectURL(response.data);
+            const link = document.createElement('a');
+            link.href = url;
+            const disposition = response.headers['content-disposition'] ?? '';
+            const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+            const filename = match ? decodeURIComponent(match[1].replace(/['"]/g, '')) : '导入模板.xlsx';
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch {
+            // silently ignore download errors
+        }
+    };
+
+    const handleImportFile = async (file: File) => {
+        if (!companyId || !file) return;
+        setImporting(true);
+        setImportError('');
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('company_id', String(companyId));
+            await api.post(`${endpoint}/import`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            reload();
+        } catch (err: any) {
+            setImportError(err.response?.data?.message ?? '导入失败，请重试');
+        } finally {
+            setImporting(false);
+            if (importInputRef.current) {
+                importInputRef.current.value = '';
+            }
+        }
+    };
+
     return (
         <div>
             <div className="mb-3 flex items-center justify-between">
                 <p className="text-xs text-slate-600">共 <span className="text-slate-400">{total}</span> 条记录</p>
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-600/25"
-                >
-                    <Plus className="h-3.5 w-3.5" />
-                    新增
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleDownloadTemplate}
+                        className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-xs font-medium text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                    >
+                        <Download className="h-3.5 w-3.5" />
+                        下载模板
+                    </button>
+                    <button
+                        onClick={() => importInputRef.current?.click()}
+                        disabled={importing}
+                        className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-xs font-medium text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                        {importing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                        {importing ? '导入中...' : '导入'}
+                    </button>
+                    <input
+                        ref={importInputRef}
+                        type="file"
+                        accept=".xlsx,.xls"
+                        className="hidden"
+                        onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) { handleImportFile(file); }
+                        }}
+                    />
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-600/25"
+                    >
+                        <Plus className="h-3.5 w-3.5" />
+                        新增
+                    </button>
+                </div>
             </div>
+            {importError && <div className="mb-3"><ErrorBanner>{importError}</ErrorBanner></div>}
 
             {loading ? (
                 <LoadingRow />
@@ -644,8 +747,8 @@ function StaffTable({
                                     {columns.map((col) => (
                                         <td key={col.key} className="px-4 py-3 text-slate-300">
                                             {col.format
-                                                ? col.format(row[col.key]) || <Dash />
-                                                : row[col.key] != null ? String(row[col.key]) : <Dash />}
+                                                ? col.format(col.valueGetter ? col.valueGetter(row) : row[col.key]) || <Dash />
+                                                : (() => { const v = col.valueGetter ? col.valueGetter(row) : row[col.key]; return v != null ? String(v) : <Dash />; })()}
                                         </td>
                                     ))}
                                     <td className="px-4 py-3">
@@ -691,12 +794,25 @@ function StaffTable({
                             {error && <ErrorBanner>{error}</ErrorBanner>}
                             {formFields.map((field) => (
                                 <ModalField key={field.key} label={field.label} required={field.required}>
-                                    <input
-                                        type={field.type ?? 'text'}
-                                        value={form[field.key] ?? ''}
-                                        onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
-                                        className={inputClass}
-                                    />
+                                    {field.type === 'select' ? (
+                                        <select
+                                            value={form[field.key] ?? ''}
+                                            onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
+                                            className={inputClass}
+                                        >
+                                            <option value="">请选择</option>
+                                            {field.options?.map((opt) => (
+                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <input
+                                            type={field.type ?? 'text'}
+                                            value={form[field.key] ?? ''}
+                                            onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
+                                            className={inputClass}
+                                        />
+                                    )}
                                 </ModalField>
                             ))}
                         </div>

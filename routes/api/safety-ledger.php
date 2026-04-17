@@ -27,6 +27,10 @@ Route::middleware('permission:special-equipment.delete')->group(function () {
 });
 
 // ── 特种设备人员 ─────────────────────────────────────────────────────
+Route::middleware('permission:special-equipment-staff.create')->group(function () {
+    Route::get('/special-equipment-staff/template', [SpecialEquipmentStaffController::class, 'template']);
+    Route::post('/special-equipment-staff/import', [SpecialEquipmentStaffController::class, 'import']);
+});
 Route::middleware('permission:special-equipment-staff.list')->group(function () {
     Route::get('/special-equipment-staff', [SpecialEquipmentStaffController::class, 'index']);
     Route::get('/special-equipment-staff/{id}', [SpecialEquipmentStaffController::class, 'show']);

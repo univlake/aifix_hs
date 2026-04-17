@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exports\StaffTemplateExport;
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreEliminationControlStaffRequest;
+use App\Http\Requests\Api\V1\UpdateEliminationControlStaffRequest;
+use App\Imports\StaffImport;
 use App\Models\EliminationControlStaff;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreEliminationControlStaffRequest;
-use App\Http\Requests\Api\V1\UpdateEliminationControlStaffRequest;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class EliminationControlStaffController extends Controller
 {
@@ -35,7 +39,7 @@ class EliminationControlStaffController extends Controller
     {
         $record = EliminationControlStaff::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('淘汰控制人员不存在');
         }
 
@@ -63,7 +67,7 @@ class EliminationControlStaffController extends Controller
     {
         $record = EliminationControlStaff::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('淘汰控制人员不存在');
         }
         $data = $request->validated();
@@ -80,12 +84,45 @@ class EliminationControlStaffController extends Controller
     {
         $record = EliminationControlStaff::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('淘汰控制人员不存在');
         }
 
         $record->delete();
 
         return $this->message('删除成功');
+    }
+
+    /**
+     * 下载导入模板
+     */
+    public function template(): BinaryFileResponse
+    {
+        $export = new StaffTemplateExport(
+            headings: ['姓名*', '证书名称', '证书编号', '有效期(YYYY-MM-DD)'],
+            examples: [['张三', '消防控制室操作证', 'XF2024001', '2030-12-31']],
+        );
+
+        return Excel::download($export, '消防控制室人员导入模板.xlsx');
+    }
+
+    /**
+     * 导入消防控制室人员
+     */
+    public function import(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+            'company_id' => 'required|integer',
+        ]);
+
+        Excel::import(new StaffImport(
+            modelClass: EliminationControlStaff::class,
+            companyId: (int) $request->company_id,
+            columnMap: [0 => 'name', 1 => 'cert_title', 2 => 'cert_number', 3 => 'valid_period'],
+            userId: auth()->id() ?? 0,
+        ), $request->file('file'));
+
+        return $this->message('导入成功');
     }
 }
