@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreRiskDistributionMapRequest;
+use App\Http\Requests\Api\V1\UpdateRiskDistributionMapRequest;
 use App\Models\RiskDistributionMap;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreRiskDistributionMapRequest;
-use App\Http\Requests\Api\V1\UpdateRiskDistributionMapRequest;
 
 class RiskDistributionMapController extends Controller
 {
@@ -17,6 +17,10 @@ class RiskDistributionMapController extends Controller
 
         if ($request->filled('company_id')) {
             $data = RiskDistributionMap::where('company_id', $request->company_id)->first();
+        }
+
+        if ($data && $data->annex_url) {
+            $data->signed_annex_url = $this->signOssUrl($data->annex_url);
         }
 
         return $this->success($data);
@@ -37,7 +41,7 @@ class RiskDistributionMapController extends Controller
     {
         $riskDistributionMap = RiskDistributionMap::find($id);
 
-        if (!$riskDistributionMap) {
+        if (! $riskDistributionMap) {
             return $this->notFound('风险分布图不存在');
         }
         $data = $request->validated();

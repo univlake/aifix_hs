@@ -72,6 +72,46 @@ class BaseDataSeeder extends Seeder
             ]);
         }
 
+        $dangerousCraftTypes = ['光气及光气化工艺', '电解工艺', '氯化工艺', '硝化工艺', '合成氨工艺', '裂解(裂化)工艺', '氟化工艺', '加氢工艺', '重氮化工艺', '氧化工艺', '过氧化工艺', '氨基化工艺', '磺化工艺', '聚合工艺', '烷基化工艺', '新型煤化工艺', '电石生产工艺', '偶氮化工艺'];
+
+        foreach ($dangerousCraftTypes as $title) {
+            DB::table('dangerous_craft_types')->insertOrIgnore([
+                'title' => $title,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        $processTypes = ['高温高压（压力大于等于0.1Mpa，温度高于及等于100度）', '铸造工艺', '冲剪工艺', '吊装', '焊接', '压力容器操作', '喷涂工艺', '产生可燃爆粉尘的工艺', '产生有毒有害物质的工艺', '使用甲乙类危险化学品的工艺', '涉及涉氨制冷工艺', '其他'];
+
+        foreach ($processTypes as $title) {
+            DB::table('process_types')->insertOrIgnore([
+                'title' => $title,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        $spaceWorkTypes = ['坑', '沟', '槽', '池', '井', '管道', '罐', '箱', '炉', '室', '仓(斗)', '塔(釜)', '其他', '反应器', '锅筒'];
+
+        foreach ($spaceWorkTypes as $title) {
+            DB::table('space_work_types')->insertOrIgnore([
+                'title' => $title,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        $hazards = ['易燃易爆气体或者其蒸汽', '有毒气体或者其蒸汽', '缺氧或富氧', '坍塌', '机械伤害', '酸碱腐蚀性化学品或者其蒸汽', '易挥发的危险化学品', '通风不良', '交叉作业', '高热高湿', '物体打击', '高处坠落', '触电', '灼烫'];
+
+        foreach ($hazards as $title) {
+            DB::table('hazards')->insertOrIgnore([
+                'title' => $title,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
         // Super administrator account (bound to company id=4)
         $superAdmin = User::firstOrCreate(
             ['username' => 'admin'],

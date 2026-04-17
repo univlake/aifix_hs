@@ -1,21 +1,203 @@
-import { CrudPage } from '@/components/shared/CrudPage';
-import type { CrudPageConfig } from '@/components/shared/CrudPage';
+import { useState, useEffect, useCallback } from 'react';
+import { Head } from '@inertiajs/react';
+import { useScope } from '@/contexts/ScopeContext';
+import { OssUploadField } from '@/components/shared/OssUploadField';
+import api from '@/lib/api';
+import type { ApiResponse } from '@/types/models';
+import { Loader2, ImageIcon, Save, Pencil, X, Upload } from 'lucide-react';
 
-const config: CrudPageConfig = {
-    title: '危险源管理',
-    endpoint: '/hazards',
-    columns: [
-        { key: 'id', header: 'ID', width: 80 },
-        { key: 'title', header: '标题' },
-    ],
-    formFields: [
-        { key: 'title', label: '标题', type: 'text', required: true },
-        { key: 'content', label: '内容', type: 'textarea' },
-    ],
-    searchField: 'title',
-    searchPlaceholder: '搜索危险源...',
-};
+interface RiskDistributionMap {
+    id: number;
+    annex_url: string | null;
+    signed_annex_url?: string | null;
+    company_id: number;
+}
 
-export default function HazardsIndex() {
-    return <CrudPage config={config} />;
+export default function RiskSourceIndex() {
+    const { activeCompany } = useScope();
+    const companyId = activeCompany?.id;
+
+    const [record, setRecord] = useState<RiskDistributionMap | null>(null);
+    const [annexUrl, setAnnexUrl] = useState('');
+    const [displayUrl, setDisplayUrl] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [error, setError] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+
+    const fetchRecord = useCallback(async () => {
+        if (!companyId) return;
+        setLoading(true);
+        setError('');
+        try {
+            const { data: res } = await api.get<ApiResponse<RiskDistributionMap | null>>('/risk-distribution-maps', {
+                params: { company_id: companyId },
+            });
+            const rec = res.data;
+            setRecord(rec ?? null);
+            setAnnexUrl(rec?.annex_url ?? '');
+            setDisplayUrl(rec?.signed_annex_url ?? rec?.annex_url ?? '');
+            setIsEditing(false);
+        } catch (err: any) {
+            setError(err.response?.data?.message ?? '加载失败');
+        } finally {
+            setLoading(false);
+        }
+    }, [companyId]);
+
+    useEffect(() => {
+        fetchRecord();
+    }, [fetchRecord]);
+
+    const handleSave = async () => {
+        if (!companyId) return;
+        setSaving(true);
+        setError('');
+        try {
+            const payload = { annex_url: annexUrl, company_id: companyId };
+            if (record?.id) {
+                await api.put(`/risk-distribution-maps/${record.id}`, payload);
+            } else {
+                await api.post<ApiResponse<RiskDistributionMap>>('/risk-distribution-maps', payload);
+            }
+            setSaved(true);
+            setIsEditing(false);
+            await fetchRecord();
+            setTimeout(() => setSaved(false), 2500);
+        } catch (err: any) {
+            setError(err.response?.data?.message ?? '保存失败，请重试');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setAnnexUrl(record?.annex_url ?? '');
+        setError('');
+        setIsEditing(false);
+    };
+
+    const hasRecord = record !== null && !!record.annex_url;
+    const isViewMode = hasRecord && !isEditing;
+    const isUploadMode = !hasRecord || isEditing;
+
+    const isImage = (url: string) => /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(url);
+
+    return (
+        <>
+            <Head title="风险源管理" />
+
+            <div className="mb-6 flex items-start justify-between">
+                <div>
+                    <h1 className="text-xl font-bold text-slate-100">风险源管理</h1>
+                    <p className="mt-0.5 text-xs text-slate-600">上传并管理企业风险分布图</p>
+                </div>
+
+                {!loading && (
+                    <div className="flex items-center gap-2">
+                        {isEditing && (
+                            <button
+                                onClick={handleCancelEdit}
+                                disabled={saving}
+                                className="flex items-center gap-2 rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:pointer-events-none disabled:opacity-50"
+                            >
+                                <X className="h-4 w-4" />
+                                取消
+                            </button>
+                        )}
+
+                        {isViewMode ? (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25"
+                            >
+                                <Pencil className="h-4 w-4" />
+                                编辑
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 disabled:pointer-events-none disabled:opacity-50"
+                            >
+                                {saving ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : isEditing ? (
+                                    <Save className="h-4 w-4" />
+                                ) : (
+                                    <Upload className="h-4 w-4" />
+                                )}
+                                {saving ? '保存中...' : saved ? '已保存 ✓' : isEditing ? '保存' : '上传并保存'}
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {error && (
+                <div className="mb-4 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
+                    {error}
+                </div>
+            )}
+
+            {loading ? (
+                <div className="flex h-64 items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-slate-600" />
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {isUploadMode && (
+                        <div className="rounded-xl border border-blue-900/30 bg-[#0d1530] p-4">
+                            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                                {isEditing ? '替换风险分布图文件' : '风险分布图文件'}
+                            </p>
+                            <OssUploadField
+                                value={annexUrl}
+                                onChange={(url) => { setAnnexUrl(url); setDisplayUrl(url); }}
+                                accept="image/*,.pdf"
+                                dir="risk-distribution-maps/"
+                                displayValue={displayUrl}
+                            />
+                        </div>
+                    )}
+
+                    {displayUrl ? (
+                        isImage(displayUrl) ? (
+                            <div className="overflow-hidden rounded-xl border border-blue-900/30 bg-[#070d1f]">
+                                <div className="border-b border-blue-900/20 px-4 py-2.5">
+                                    <p className="text-xs text-slate-500">风险分布图预览</p>
+                                </div>
+                                <div className="p-4">
+                                    <img
+                                        src={displayUrl}
+                                        alt="风险分布图"
+                                        className="w-full rounded-lg object-contain"
+                                        style={{ maxHeight: '80vh' }}
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center rounded-xl border border-blue-900/30 bg-[#070d1f] p-12">
+                                <a
+                                    href={displayUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col items-center gap-3 text-blue-400 transition-colors hover:text-blue-300"
+                                >
+                                    <ImageIcon className="h-10 w-10 opacity-60" />
+                                    <span className="text-sm">点击查看文件</span>
+                                </a>
+                            </div>
+                        )
+                    ) : (
+                        <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-blue-900/40 bg-[#070d1f]">
+                            <ImageIcon className="h-10 w-10 text-slate-700" />
+                            <p className="text-sm text-slate-600">暂无风险分布图，请上传图片或 PDF 文件</p>
+                        </div>
+                    )}
+                </div>
+            )}
+        </>
+    );
 }
