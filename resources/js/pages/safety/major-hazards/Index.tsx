@@ -36,8 +36,9 @@ interface MajorHazard {
 
 // ── Constants ─────────────────────────────────────────────────────
 
-const LEVEL_OPTIONS = ['一级', '二级', '三级', '四级'];
-const SIL_OPTIONS   = ['SIL 1', 'SIL 2', 'SIL 3', 'SIL 4'];
+const LEVEL_OPTIONS  = ['一级', '二级', '三级', '四级'];
+const SIL_OPTIONS    = ['SIL 1', 'SIL 2', 'SIL 3', 'SIL 4'];
+const DETECT_PARAMS  = ['液位', '温度', '压力', '气体泄漏'];
 
 const levelColor: Record<string, string> = {
     '一级': 'border-red-500/25 bg-red-600/10 text-red-400',
@@ -121,7 +122,7 @@ export default function MajorHazardsIndex() {
             const payload = {
                 ...form,
                 company_id: companyId,
-                constitutes: constitutes.filter((c) => c.name.trim() || c.hazardous_chemical_id),
+                constitutes: constitutes.filter((c) => c.hazardous_chemical_id),
             };
             if (editingId) {
                 await crud.update(editingId, payload as Record<string, unknown>);
@@ -196,8 +197,18 @@ export default function MajorHazardsIndex() {
         },
         {
             accessorKey: 'detect_parameter',
-            header: '监测参数',
-            cell: ({ row }: any) => row.original.detect_parameter || <span className="text-slate-700">—</span>,
+            header: '检测远传参数',
+            cell: ({ row }: any) => {
+                const val = row.original.detect_parameter as string | null;
+                if (!val) return <span className="text-slate-700">—</span>;
+                return (
+                    <div className="flex flex-wrap gap-1">
+                        {val.split(',').filter(Boolean).map((p) => (
+                            <span key={p} className="rounded-md border border-blue-900/40 bg-blue-600/8 px-1.5 py-0.5 text-[10px] text-blue-400">{p}</span>
+                        ))}
+                    </div>
+                );
+            },
         },
         {
             id: 'actions',
@@ -302,8 +313,29 @@ export default function MajorHazardsIndex() {
                                     placeholder="请选择 SIL 等级"
                                 />
                             </Field>
-                            <Field label="监测参数">
-                                <Input value={form.detect_parameter ?? ''} onChange={(v) => setField('detect_parameter', v)} placeholder="温度/压力/液位等" />
+                            <Field label="检测远传参数">
+                                <div className="flex flex-wrap gap-2">
+                                    {DETECT_PARAMS.map((p) => {
+                                        const selected = (form.detect_parameter ?? '').split(',').filter(Boolean).includes(p);
+                                        const toggle = () => {
+                                            const current = (form.detect_parameter ?? '').split(',').filter(Boolean);
+                                            const next = selected ? current.filter((x) => x !== p) : [...current, p];
+                                            setField('detect_parameter', next.join(','));
+                                        };
+                                        return (
+                                            <button key={p} type="button" onClick={toggle}
+                                                className={cn(
+                                                    'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
+                                                    selected
+                                                        ? 'border-blue-500/40 bg-blue-600/15 text-blue-300'
+                                                        : 'border-blue-900/30 bg-transparent text-slate-600 hover:border-blue-900/50 hover:text-slate-400',
+                                                )}>
+                                                <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', selected ? 'bg-blue-400' : 'bg-slate-700')} />
+                                                {p}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </Field>
                         </div>
                     </FormSection>
@@ -312,22 +344,19 @@ export default function MajorHazardsIndex() {
                     <FormSection title="主要构成">
                         <div className="space-y-2">
                             {constitutes.map((c, idx) => (
-                                <div key={idx} className="grid grid-cols-[1fr_1fr_100px_32px] gap-2 items-center">
-                                    <Input
-                                        value={c.name}
-                                        onChange={(v) => {
-                                            const n = [...constitutes]; n[idx].name = v; setConstitutes(n);
-                                        }}
-                                        placeholder="物质名称"
-                                    />
+                                <div key={idx} className="grid grid-cols-[1fr_120px_32px] gap-2 items-center">
                                     <select
                                         value={c.hazardous_chemical_id}
                                         onChange={(e) => {
-                                            const n = [...constitutes]; n[idx].hazardous_chemical_id = e.target.value; setConstitutes(n);
+                                            const n = [...constitutes];
+                                            n[idx].hazardous_chemical_id = e.target.value;
+                                            const ch = chemicals.find((x) => String(x.id) === e.target.value);
+                                            n[idx].name = ch?.name ?? '';
+                                            setConstitutes(n);
                                         }}
                                         className="w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 cursor-pointer appearance-none"
                                     >
-                                        <option value="" className="bg-[#0d1530]">关联危险化学品（可选）</option>
+                                        <option value="" className="bg-[#0d1530]">选择危险化学品</option>
                                         {chemicals.map((ch) => (
                                             <option key={ch.id} value={String(ch.id)} className="bg-[#0d1530]">{ch.name}</option>
                                         ))}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { DataTable } from '@/components/data-table/DataTable';
@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import {
     Plus, Pencil, Trash2, X, AlertTriangle, Loader2, FlaskConical,
 } from 'lucide-react';
-import api from '@/lib/api';
+import { OssUploadField } from '@/components/shared/OssUploadField';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -290,8 +290,13 @@ export default function HazardousChemicalsIndex() {
                             <Field label="存储位置">
                                 <Input value={form.position ?? ''} onChange={(v) => setField('position', v)} placeholder="存储地点/罐区/仓库编号" />
                             </Field>
-                            <Field label="MSDS 文件编号" colSpan={2}>
-                                <Input value={form.msds ?? ''} onChange={(v) => setField('msds', v)} placeholder="安全数据表编号或链接" />
+                            <Field label="MSDS 附件" colSpan={2}>
+                                <OssUploadField
+                                    value={form.msds ?? ''}
+                                    onChange={(v) => setField('msds', v)}
+                                    dir="hazardous-chemicals/msds"
+                                    accept=".pdf,.doc,.docx,.xlsx,.xls,.jpg,.jpeg,.png"
+                                />
                             </Field>
                         </div>
                     </FormSection>
@@ -305,12 +310,14 @@ export default function HazardousChemicalsIndex() {
                             <Field label="年使用量单位">
                                 <SelectInput value={form.year_use_unit ?? ''} onChange={(v) => setField('year_use_unit', v)} options={YEAR_USE_UNITS} placeholder="单位" />
                             </Field>
+                            <div />
+                            <Field label="最大存储量">
+                                <Input value={form.storage ?? ''} onChange={(v) => setField('storage', v)} placeholder="数值" />
+                            </Field>
                             <Field label="最大存储量单位">
                                 <SelectInput value={form.storage_unit ?? ''} onChange={(v) => setField('storage_unit', v)} options={STORAGE_UNITS} placeholder="单位" />
                             </Field>
-                            <Field label="储存方式" colSpan={3}>
-                                <Input value={form.storage ?? ''} onChange={(v) => setField('storage', v)} placeholder="储存条件描述" />
-                            </Field>
+                            <div />
                             <Field label="操作温度">
                                 <Input value={form.temperature ?? ''} onChange={(v) => setField('temperature', v)} placeholder="如 25°C" />
                             </Field>
@@ -348,8 +355,8 @@ export default function HazardousChemicalsIndex() {
                         </div>
                     </FormSection>
 
-                    {/* 主要成分 */}
-                    <FormSection title="主要成分">
+                    {/* 主要成分 — only shown for mixtures */}
+                    {!!form.is_mixing && <FormSection title="主要成分">
                         <div className="space-y-2">
                             {ingredients.map((ing, idx) => (
                                 <div key={idx} className="grid grid-cols-[1fr_100px_120px_32px] gap-2 items-center">
@@ -382,7 +389,7 @@ export default function HazardousChemicalsIndex() {
                                 <Plus className="h-3.5 w-3.5" />添加成分
                             </button>
                         </div>
-                    </FormSection>
+                    </FormSection>}
                 </div>
                 <ModalFooter
                     onCancel={() => setDialogOpen(false)}
