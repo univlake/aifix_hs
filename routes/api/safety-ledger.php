@@ -53,8 +53,15 @@ Route::middleware('permission:special-equipment-staff.delete')->group(function (
     Route::delete('/special-equipment-staff/{id}', [SpecialEquipmentStaffController::class, 'destroy']);
 });
 
-// ── 危险化工设备 ─────────────────────────────────────────────────────
+// ── 主要危险设备 ─────────────────────────────────────────────────────
+// Static routes must come before {id} wildcard
+Route::middleware('permission:dangerous-equipment.create')->group(function () {
+    Route::get('/dangerous-equipment/template', [DangerousEquipmentController::class, 'template']);
+    Route::post('/dangerous-equipment/import', [DangerousEquipmentController::class, 'import']);
+    Route::post('/dangerous-equipment/copy', [DangerousEquipmentController::class, 'copy']);
+});
 Route::middleware('permission:dangerous-equipment.list')->group(function () {
+    Route::get('/dangerous-equipment/export', [DangerousEquipmentController::class, 'export']);
     Route::get('/dangerous-equipment', [DangerousEquipmentController::class, 'index']);
     Route::get('/dangerous-equipment/{id}', [DangerousEquipmentController::class, 'show']);
 });
