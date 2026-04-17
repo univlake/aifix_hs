@@ -11,7 +11,14 @@ use App\Http\Controllers\Api\V1\SpecialEquipmentStaffController;
 use Illuminate\Support\Facades\Route;
 
 // ── 特种设备 ─────────────────────────────────────────────────────
+// Static routes must come before {id} wildcard
+Route::middleware('permission:special-equipment.create')->group(function () {
+    Route::get('/special-equipment/template', [SpecialEquipmentController::class, 'template']);
+    Route::post('/special-equipment/import', [SpecialEquipmentController::class, 'import']);
+    Route::post('/special-equipment/copy', [SpecialEquipmentController::class, 'copy']);
+});
 Route::middleware('permission:special-equipment.list')->group(function () {
+    Route::get('/special-equipment/export', [SpecialEquipmentController::class, 'export']);
     Route::get('/special-equipment', [SpecialEquipmentController::class, 'index']);
     Route::get('/special-equipment/{id}', [SpecialEquipmentController::class, 'show']);
 });

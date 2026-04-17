@@ -62,6 +62,16 @@ class BaseDataSeeder extends Seeder
             ]);
         }
 
+        $specialTypes = ['锅炉', '压力容器(含气瓶)', '压力管道', '电梯', '起重机械', '(厂)场内专用车辆'];
+
+        foreach ($specialTypes as $title) {
+            DB::table('special_types')->insertOrIgnore([
+                'title' => $title,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
         // Super administrator account (bound to company id=4)
         $superAdmin = User::firstOrCreate(
             ['username' => 'admin'],
