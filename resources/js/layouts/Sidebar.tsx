@@ -146,7 +146,7 @@ const navSections: NavSection[] = [
                 children: [
                     { title: '重点监管危险工艺', href: '/process/key-hazardous' },
                     { title: '较危险工艺', href: '/process/hazardous' },
-                    { title: '有限空间辨识', href: '/process/confined-space' },
+                    { title: '有限空间辨识', href: '/space-work/space-works' },
                 ],
             },
         ],
@@ -161,7 +161,7 @@ const navSections: NavSection[] = [
                 children: [
                     { title: '风险源管理', href: '/risk/hazards' },
                     { title: '隐患管理', href: '/risk/hidden-danger' },
-                    { title: '作业管理', href: '/space-work/space-works' },
+                    { title: '作业管理', href: '/safety/job-management' },
                     { title: '三同时管理', href: '/space-work/three-togethers' },
                     { title: '安全评估检查', href: '/risk/safety-assessment' },
                     { title: '风险监测预警', href: '/risk/risk-warning' },

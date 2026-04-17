@@ -51,7 +51,7 @@ Route::group([], function () {
 
     // ── 企业管理 ──────────────────────────────────────────────
     Route::inertia('/safety/buildings', 'safety/buildings/Index');
-    Route::inertia('/safety/job-management', 'safety/job-management/Index');
+    Route::inertia('/safety/job-management', 'space-work/space-works/Index');
     Route::inertia('/safety/personnels', 'safety/personnels/Index');
     Route::inertia('/safety/special-equipment', 'safety/special-equipment/Index');
     Route::inertia('/safety/hazardous-chemicals', 'safety/hazardous-chemicals/Index');
@@ -108,7 +108,7 @@ Route::group([], function () {
     Route::inertia('/regulation/libraries', 'regulation/libraries/Index');
 
     // ── 空间作业 ──────────────────────────────────────────────
-    Route::inertia('/space-work/space-works', 'space-work/space-works/Index');
+    Route::inertia('/space-work/space-works', 'process/confined-space/Index');
     Route::inertia('/space-work/three-togethers', 'space-work/three-togethers/Index');
 
     // ── 安全档案 ──────────────────────────────────────────────
@@ -122,7 +122,6 @@ Route::group([], function () {
     // ── 工艺信息 ──────────────────────────────────────────────
     Route::inertia('/process/key-hazardous', 'process/key-hazardous/Index');
     Route::inertia('/process/hazardous', 'process/hazardous/Index');
-    Route::inertia('/process/confined-space', 'process/confined-space/Index');
 
     // ── 风险管理（生产端）─────────────────────────────────────
     Route::inertia('/risk/safety-assessment', 'risk/safety-assessment/Index');
