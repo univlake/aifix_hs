@@ -61,15 +61,18 @@ interface OssUploadFieldProps {
     onChange: (url: string) => void;
     dir?: string;
     accept?: string;
+    /** Signed/proxied URL to use for the preview thumbnail instead of `value`. */
+    displayValue?: string;
 }
 
-export function OssUploadField({ value, onChange, dir, accept }: OssUploadFieldProps) {
+export function OssUploadField({ value, onChange, dir, accept, displayValue }: OssUploadFieldProps) {
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const isImage = value ? /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(value) : false;
-    const filename = value ? decodeURIComponent(value.split('/').pop() ?? '') : '';
+    const previewUrl = displayValue || value;
+    const isImage = previewUrl ? /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(previewUrl) : false;
+    const filename = value ? decodeURIComponent(value.split('/').pop()?.split('?')[0] ?? '') : '';
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -117,19 +120,19 @@ export function OssUploadField({ value, onChange, dir, accept }: OssUploadFieldP
 
             {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
 
-            {value && isImage && (
-                <a href={value} target="_blank" rel="noopener noreferrer" className="block">
+            {previewUrl && isImage && (
+                <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="block">
                     <img
-                        src={value}
+                        src={previewUrl}
                         alt="预览"
                         className="h-24 w-24 rounded-lg border border-blue-900/30 object-cover transition-opacity hover:opacity-80"
                     />
                 </a>
             )}
 
-            {value && !isImage && (
+            {previewUrl && !isImage && (
                 <a
-                    href={value}
+                    href={previewUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-xs text-blue-400 transition-colors hover:text-blue-300"

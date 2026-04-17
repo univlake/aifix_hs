@@ -4,11 +4,12 @@ import { useScope } from '@/contexts/ScopeContext';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import api from '@/lib/api';
 import type { ApiResponse } from '@/types/models';
-import { Loader2, ImageIcon, Save } from 'lucide-react';
+import { Loader2, ImageIcon, Save, Pencil, X, Upload } from 'lucide-react';
 
 interface SafetyArchitecture {
     id: number;
     annex_url: string | null;
+    signed_annex_url?: string | null;
     thumbnail_url: string | null;
     company_id: number;
 }
@@ -19,10 +20,12 @@ export default function OrgStructureIndex() {
 
     const [record, setRecord] = useState<SafetyArchitecture | null>(null);
     const [annexUrl, setAnnexUrl] = useState('');
+    const [displayUrl, setDisplayUrl] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
 
     const fetchRecord = useCallback(async () => {
         if (!companyId) return;
@@ -35,6 +38,8 @@ export default function OrgStructureIndex() {
             const rec = res.data;
             setRecord(rec ?? null);
             setAnnexUrl(rec?.annex_url ?? '');
+            setDisplayUrl(rec?.signed_annex_url ?? rec?.annex_url ?? '');
+            setIsEditing(false);
         } catch (err: any) {
             setError(err.response?.data?.message ?? '加载失败');
         } finally {
@@ -55,10 +60,11 @@ export default function OrgStructureIndex() {
             if (record?.id) {
                 await api.put(`/safety-architectures/${record.id}`, payload);
             } else {
-                const { data: res } = await api.post<ApiResponse<SafetyArchitecture>>('/safety-architectures', payload);
-                setRecord(res.data);
+                await api.post<ApiResponse<SafetyArchitecture>>('/safety-architectures', payload);
             }
             setSaved(true);
+            setIsEditing(false);
+            await fetchRecord();
             setTimeout(() => setSaved(false), 2500);
         } catch (err: any) {
             setError(err.response?.data?.message ?? '保存失败，请重试');
@@ -66,6 +72,18 @@ export default function OrgStructureIndex() {
             setSaving(false);
         }
     };
+
+    const handleCancelEdit = () => {
+        setAnnexUrl(record?.annex_url ?? '');
+        setError('');
+        setIsEditing(false);
+    };
+
+    const hasRecord = record !== null && !!record.annex_url;
+    const isViewMode = hasRecord && !isEditing;
+    const isUploadMode = !hasRecord || isEditing;
+
+    const isImage = (url: string) => /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(url);
 
     return (
         <>
@@ -76,14 +94,48 @@ export default function OrgStructureIndex() {
                     <h1 className="text-xl font-bold text-slate-100">安全生产组织架构</h1>
                     <p className="mt-0.5 text-xs text-slate-600">上传并管理企业安全生产组织架构图</p>
                 </div>
-                <button
-                    onClick={handleSave}
-                    disabled={saving || loading}
-                    className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 disabled:pointer-events-none disabled:opacity-50"
-                >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    {saving ? '保存中...' : saved ? '已保存 ✓' : '保存'}
-                </button>
+
+                {!loading && (
+                    <div className="flex items-center gap-2">
+                        {isEditing && (
+                            <button
+                                onClick={handleCancelEdit}
+                                disabled={saving}
+                                className="flex items-center gap-2 rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:pointer-events-none disabled:opacity-50"
+                            >
+                                <X className="h-4 w-4" />
+                                取消
+                            </button>
+                        )}
+
+                        {isViewMode ? (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25"
+                            >
+                                <Pencil className="h-4 w-4" />
+                                编辑
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 disabled:pointer-events-none disabled:opacity-50"
+                            >
+                                {saving ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : saved ? (
+                                    <Save className="h-4 w-4" />
+                                ) : isEditing ? (
+                                    <Save className="h-4 w-4" />
+                                ) : (
+                                    <Upload className="h-4 w-4" />
+                                )}
+                                {saving ? '保存中...' : saved ? '已保存 ✓' : isEditing ? '保存' : '上传并保存'}
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {error && (
@@ -98,29 +150,32 @@ export default function OrgStructureIndex() {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {/* Upload control */}
-                    <div className="rounded-xl border border-blue-900/30 bg-[#0d1530] p-4">
-                        <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-                            架构图文件
-                        </p>
-                        <OssUploadField
-                            value={annexUrl}
-                            onChange={setAnnexUrl}
-                            accept="image/*,.pdf"
-                            dir="safety-architecture/"
-                        />
-                    </div>
+                    {/* Upload control — shown when no record yet, or when editing */}
+                    {isUploadMode && (
+                        <div className="rounded-xl border border-blue-900/30 bg-[#0d1530] p-4">
+                            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                                {isEditing ? '替换架构图文件' : '架构图文件'}
+                            </p>
+                            <OssUploadField
+                                value={annexUrl}
+                                onChange={(url) => { setAnnexUrl(url); setDisplayUrl(url); }}
+                                accept="image/*,.pdf"
+                                dir="safety-architecture/"
+                                displayValue={displayUrl}
+                            />
+                        </div>
+                    )}
 
-                    {/* Full-size image preview */}
-                    {annexUrl ? (
-                        /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(annexUrl) ? (
+                    {/* Preview — always shown when a URL exists */}
+                    {displayUrl ? (
+                        isImage(displayUrl) ? (
                             <div className="overflow-hidden rounded-xl border border-blue-900/30 bg-[#070d1f]">
                                 <div className="border-b border-blue-900/20 px-4 py-2.5">
                                     <p className="text-xs text-slate-500">架构图预览</p>
                                 </div>
                                 <div className="p-4">
                                     <img
-                                        src={annexUrl}
+                                        src={displayUrl}
                                         alt="安全生产组织架构图"
                                         className="w-full rounded-lg object-contain"
                                         style={{ maxHeight: '80vh' }}
@@ -130,7 +185,7 @@ export default function OrgStructureIndex() {
                         ) : (
                             <div className="flex items-center justify-center rounded-xl border border-blue-900/30 bg-[#070d1f] p-12">
                                 <a
-                                    href={annexUrl}
+                                    href={displayUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex flex-col items-center gap-3 text-blue-400 transition-colors hover:text-blue-300"

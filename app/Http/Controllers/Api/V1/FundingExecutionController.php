@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
-use App\Models\FundingExecution;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use App\Http\Requests\Api\V1\StoreFundingExecutionRequest;
 use App\Http\Requests\Api\V1\UpdateFundingExecutionRequest;
+use App\Models\FundingExecution;
+use App\Models\SecurityInvestment;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class FundingExecutionController extends Controller
 {
@@ -19,9 +20,36 @@ class FundingExecutionController extends Controller
             $query->where('company_id', $request->company_id);
         }
 
+        if ($request->filled('year')) {
+            $query->where('year', $request->year);
+        }
+
         $list = $query->with('security_investment')
             ->orderBy('id', 'desc')
             ->paginate($request->get('per_page', 15));
+
+        // Compute proportion = execution budget / annual total investment × 100%
+        // Aggregate once per unique year to avoid N+1 queries.
+        if ($request->filled('company_id') && $list->isNotEmpty()) {
+            $companyId = (int) $request->company_id;
+            $years = $list->pluck('year')->unique()->filter()->values();
+
+            $annualTotals = SecurityInvestment::where('company_id', $companyId)
+                ->whereIn('year', $years)
+                ->selectRaw('year, SUM(budget) as total')
+                ->groupBy('year')
+                ->pluck('total', 'year')
+                ->all();
+
+            $list->through(function ($item) use ($annualTotals) {
+                $total = (float) ($annualTotals[$item->year] ?? 0);
+                $item->proportion = $total > 0
+                    ? round((float) $item->budget / $total * 100, 2).'%'
+                    : '0%';
+
+                return $item;
+            });
+        }
 
         return $this->success($list);
     }
@@ -30,7 +58,7 @@ class FundingExecutionController extends Controller
     {
         $data = FundingExecution::with('security_investment')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('经费执行情况不存在');
         }
 
@@ -52,7 +80,7 @@ class FundingExecutionController extends Controller
     {
         $record = FundingExecution::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('经费执行情况不存在');
         }
         $data = $request->validated();
@@ -66,7 +94,7 @@ class FundingExecutionController extends Controller
     {
         $record = FundingExecution::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('经费执行情况不存在');
         }
 

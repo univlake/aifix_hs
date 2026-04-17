@@ -59,6 +59,26 @@ class Controller extends BaseController
     }
 
     /**
+     * Generate a pre-signed Alibaba Cloud OSS URL valid for $ttl seconds.
+     * Uses OSS V1 HMAC-SHA1 signing — no SDK required.
+     */
+    protected function signOssUrl(string $url, int $ttl = 3600): string
+    {
+        $config = config('filesystems.disks.oss');
+        $bucket = $config['bucket'];
+        $id = $config['access_key_id'];
+        $secret = $config['access_key_secret'];
+        $host = rtrim($config['url'], '/');
+
+        $objectKey = ltrim(parse_url($url, PHP_URL_PATH), '/');
+        $expires = time() + $ttl;
+        $stringToSign = "GET\n\n\n{$expires}\n/{$bucket}/{$objectKey}";
+        $signature = urlencode(base64_encode(hash_hmac('sha1', $stringToSign, $secret, true)));
+
+        return "{$host}/{$objectKey}?OSSAccessKeyId={$id}&Expires={$expires}&Signature={$signature}";
+    }
+
+    /**
      * Recursively collect descendant IDs.
      * This private method does the actual DB work — caching is handled by the public callers.
      *

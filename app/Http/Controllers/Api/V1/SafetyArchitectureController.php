@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreSafetyArchitectureRequest;
+use App\Http\Requests\Api\V1\UpdateSafetyArchitectureRequest;
 use App\Models\SafetyArchitecture;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreSafetyArchitectureRequest;
-use App\Http\Requests\Api\V1\UpdateSafetyArchitectureRequest;
 
 class SafetyArchitectureController extends Controller
 {
@@ -19,6 +19,10 @@ class SafetyArchitectureController extends Controller
         $record = SafetyArchitecture::query()
             ->where('company_id', $request->get('company_id'))
             ->first();
+
+        if ($record && $record->annex_url) {
+            $record->signed_annex_url = $this->signOssUrl($record->annex_url);
+        }
 
         return $this->success($record);
     }
@@ -44,7 +48,7 @@ class SafetyArchitectureController extends Controller
     {
         $record = SafetyArchitecture::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('安全架构不存在');
         }
         $data = $request->validated();
