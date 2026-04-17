@@ -14,8 +14,8 @@ class StoreHiddenDangerInfoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'expert_inspection_id' => 'required|integer',
-            'expert_company_id' => 'required|integer',
+            'expert_inspection_id' => 'nullable|integer',
+            'expert_company_id' => 'nullable|integer',
             'check_company_id' => 'nullable|integer',
             'area' => 'required|string|max:255',
             'session' => 'nullable|string|max:255',

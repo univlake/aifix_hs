@@ -14,18 +14,14 @@ class HiddenDangerInfoController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $request->validate([
-            'expert_inspection_id' => 'required',
-        ]);
-
         $query = HiddenDangerInfo::query()
-            ->where('expert_inspection_id', $request->expert_inspection_id)
-            ->when($request->filled('expert_company_id'), function ($q) use ($request) {
-                $q->where('expert_company_id', $request->expert_company_id);
-            })
-            ->when($request->filled('area'), function ($q) use ($request) {
-                $q->where('area', 'like', '%'.$request->area.'%');
-            })
+            ->when($request->filled('expert_inspection_id'), fn ($q) => $q->where('expert_inspection_id', $request->expert_inspection_id))
+            ->when($request->filled('company_id'), fn ($q) => $q->where('company_id', $request->company_id))
+            ->when($request->filled('expert_company_id'), fn ($q) => $q->where('expert_company_id', $request->expert_company_id))
+            ->when($request->filled('area'), fn ($q) => $q->where('area', 'like', '%'.$request->area.'%'))
+            ->when($request->filled('hidden_level'), fn ($q) => $q->where('hidden_level', $request->hidden_level))
+            ->when($request->filled('correct_status'), fn ($q) => $q->where('correct_status', $request->correct_status))
+            ->when($request->filled('hidden_type'), fn ($q) => $q->where('hidden_type', $request->hidden_type))
             ->with(['hiddenReviewAnnex', 'hiddenExamineAnnex'])
             ->orderByDesc('created_at');
 
