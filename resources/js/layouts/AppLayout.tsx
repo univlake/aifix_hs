@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { useAuth } from '@/hooks/use-auth';
 import { ScopeProvider, useScope } from '@/contexts/ScopeContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { Shield, ArrowLeft } from 'lucide-react';
@@ -11,6 +12,14 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
+    return (
+        <ThemeProvider>
+            <AppLayoutInner>{children}</AppLayoutInner>
+        </ThemeProvider>
+    );
+}
+
+function AppLayoutInner({ children }: AppLayoutProps) {
     const { isLoading, isAuthenticated } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(true);
 

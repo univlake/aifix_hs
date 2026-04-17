@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { useAuth } from '@/hooks/use-auth';
+import { useTheme, type ThemeMode } from '@/contexts/ThemeContext';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -9,7 +10,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Menu, LogOut, User, Key, ChevronDown } from 'lucide-react';
+import { Menu, LogOut, User, Key, ChevronDown, Sun, Moon, Monitor } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface HeaderProps {
     onMenuClick: () => void;
@@ -32,6 +34,9 @@ export function Header({ onMenuClick }: HeaderProps) {
             </button>
 
             <div className="flex-1" />
+
+            {/* Theme toggle */}
+            <ThemeToggle />
 
             {/* User menu */}
             <DropdownMenu>
@@ -86,5 +91,37 @@ export function Header({ onMenuClick }: HeaderProps) {
                 </DropdownMenuContent>
             </DropdownMenu>
         </header>
+    );
+}
+
+// ── Theme toggle ─────────────────────────────────────────────────
+
+const THEME_OPTIONS: { mode: ThemeMode; icon: React.ReactNode; label: string }[] = [
+    { mode: 'light',  icon: <Sun className="h-3.5 w-3.5" />,     label: '白天模式' },
+    { mode: 'auto',   icon: <Monitor className="h-3.5 w-3.5" />, label: '跟随系统' },
+    { mode: 'dark',   icon: <Moon className="h-3.5 w-3.5" />,    label: '暗黑模式' },
+];
+
+function ThemeToggle() {
+    const { mode, setMode } = useTheme();
+
+    return (
+        <div className="flex items-center rounded-lg border border-blue-900/40 bg-[#0a1428] p-0.5">
+            {THEME_OPTIONS.map((opt) => (
+                <button
+                    key={opt.mode}
+                    onClick={() => setMode(opt.mode)}
+                    title={opt.label}
+                    className={cn(
+                        'flex h-7 w-7 items-center justify-center rounded-md transition-colors',
+                        mode === opt.mode
+                            ? 'bg-blue-600/30 text-blue-300'
+                            : 'text-slate-600 hover:text-slate-400',
+                    )}
+                >
+                    {opt.icon}
+                </button>
+            ))}
+        </div>
     );
 }
