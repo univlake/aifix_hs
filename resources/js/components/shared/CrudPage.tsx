@@ -436,78 +436,23 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
 
             {/* Page header */}
             <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div>
-                        <h1 className="text-xl font-bold text-slate-100">{title}</h1>
-                        <p className="mt-0.5 text-xs text-slate-600">
-                            共{' '}
-                            <span className="font-medium text-slate-400">{total}</span>{' '}
-                            条记录
-                        </p>
-                    </div>
+                <div>
+                    <h1 className="text-xl font-bold text-slate-100">{title}</h1>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                        共{' '}
+                        <span className="font-medium text-slate-400">{total}</span>{' '}
+                        条记录
+                    </p>
                 </div>
-                <div className="flex items-center gap-2">
-                    {copyMsg && (
-                        <span className="text-xs text-blue-400">{copyMsg}</span>
-                    )}
-                    {copyEndpoint && !readOnly && selectedIds.size > 0 && (
-                        <button
-                            onClick={handleCopy}
-                            disabled={copyLoading}
-                            className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-600/10 px-3 py-2 text-xs font-medium text-emerald-400 hover:bg-emerald-600/20 disabled:opacity-50 disabled:pointer-events-none"
-                        >
-                            {copyLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
-                            复制已选 ({selectedIds.size})
-                        </button>
-                    )}
-                    {templateEndpoint && (
-                        <button
-                            onClick={handleTemplate}
-                            className="flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-400 transition-all hover:border-slate-600 hover:text-slate-200"
-                        >
-                            <FileDown className="h-3.5 w-3.5" />
-                            下载模板
-                        </button>
-                    )}
-                    {importEndpoint && !readOnly && (
-                        <>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".xlsx,.xls"
-                                className="hidden"
-                                onChange={handleImportFile}
-                            />
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={importLoading}
-                                className="flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-400 transition-all hover:border-slate-600 hover:text-slate-200 disabled:opacity-50"
-                            >
-                                {importLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                                导入
-                            </button>
-                        </>
-                    )}
-                    {exportEndpoint && (
-                        <button
-                            onClick={handleExport}
-                            disabled={exportLoading}
-                            className="flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-400 transition-all hover:border-slate-600 hover:text-slate-200 disabled:opacity-50"
-                        >
-                            {exportLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                            导出
-                        </button>
-                    )}
-                    {!readOnly && (
-                        <button
-                            onClick={openCreate}
-                            className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95"
-                        >
-                            <Plus className="h-4 w-4" />
-                            新增{title}
-                        </button>
-                    )}
-                </div>
+                {!readOnly && (
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95"
+                    >
+                        <Plus className="h-4 w-4" />
+                        新增{title}
+                    </button>
+                )}
             </div>
 
             {/* Import row errors */}
@@ -538,6 +483,53 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                 onSearchChange={searchField ? handleSearch : undefined}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+                toolbar={(copyEndpoint || templateEndpoint || importEndpoint || exportEndpoint) ? (
+                    <div className="flex items-center gap-2">
+                        {copyMsg && <span className="text-xs text-blue-400">{copyMsg}</span>}
+                        {copyEndpoint && !readOnly && selectedIds.size > 0 && (
+                            <button
+                                onClick={handleCopy}
+                                disabled={copyLoading}
+                                className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-600/10 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-600/20 disabled:opacity-50 disabled:pointer-events-none"
+                            >
+                                {copyLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
+                                复制已选 ({selectedIds.size})
+                            </button>
+                        )}
+                        {templateEndpoint && (
+                            <button
+                                onClick={handleTemplate}
+                                className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                            >
+                                <FileDown className="h-3.5 w-3.5" />
+                                下载模板
+                            </button>
+                        )}
+                        {importEndpoint && !readOnly && (
+                            <>
+                                <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportFile} />
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={importLoading}
+                                    className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:opacity-50 disabled:pointer-events-none"
+                                >
+                                    {importLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                                    导入
+                                </button>
+                            </>
+                        )}
+                        {exportEndpoint && (
+                            <button
+                                onClick={handleExport}
+                                disabled={exportLoading}
+                                className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:opacity-50 disabled:pointer-events-none"
+                            >
+                                {exportLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                                导出
+                            </button>
+                        )}
+                    </div>
+                ) : undefined}
             />
 
             {/* Create / Edit modal */}
