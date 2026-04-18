@@ -3,103 +3,142 @@ import { Head } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { DataTable } from '@/components/data-table/DataTable';
-import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from '@/components/ui/dialog';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, KeyRound, ShieldCheck } from 'lucide-react';
 import api from '@/lib/api';
 import type { ApiResponse, User, Role } from '@/types/models';
+
+// ── Types ─────────────────────────────────────────────────────────
+
+interface Company { id: number; title: string }
+
+type DialogMode = 'create' | 'edit' | 'password' | null;
+
+const SYSTEM_ROLES = ['super-admin', 'admin', 'reviewer', 'user'];
+
+// ── Page ──────────────────────────────────────────────────────────
 
 export default function UsersIndex() {
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<User>({ endpoint: '/users' });
     const crud = useApiCrud('/users');
-    const [searchUsername, setSearchUsername] = useState('');
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null);
+
+    const [dialogMode, setDialogMode] = useState<DialogMode>(null);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [deleteLabel, setDeleteLabel] = useState('');
     const [formLoading, setFormLoading] = useState(false);
+    const [formError, setFormError] = useState('');
+
+    const [filters, setFilters] = useState({ username: '', status: '', role: '' });
     const [roles, setRoles] = useState<Role[]>([]);
-    const [companies, setCompanies] = useState<{ id: number; title: string }[]>([]);
+    const [companies, setCompanies] = useState<Company[]>([]);
 
     const [form, setForm] = useState({
-        username: '',
-        password: '',
-        nickname: '',
-        company_id: '',
-        phone: '',
-        email: '',
-        role: 'user',
-        status: '1',
+        username: '', password: '', nickname: '',
+        company_id: '', phone: '', email: '', role: 'user', status: '1',
     });
+    const [pwForm, setPwForm] = useState({ password: '', confirm: '' });
 
     useEffect(() => {
-        api.get<ApiResponse<Role[]>>('/roles').then((res) => setRoles(res.data.data)).catch(() => {});
-        api.get<ApiResponse<{ data: { id: number; title: string }[] }>>('/companies', { params: { per_page: 100 } })
-            .then((res) => setCompanies(res.data.data.data ?? []))
-            .catch(() => {});
+        api.get<ApiResponse<Role[]>>('/roles').then((r) => setRoles(r.data.data ?? [])).catch(() => {});
+        api.get<ApiResponse<{ data: Company[] }>>('/companies', { params: { per_page: 200 } })
+            .then((r) => setCompanies(r.data.data?.data ?? [])).catch(() => {});
     }, []);
 
-    const handleSearch = useCallback((val: string) => {
-        setSearchUsername(val);
-        search({ username: val || undefined });
+    const applyFilters = useCallback((next: typeof filters) => {
+        search({
+            username: next.username || undefined,
+            status: next.status || undefined,
+            role: next.role || undefined,
+        });
     }, [search]);
 
+    const updateFilter = (key: keyof typeof filters, value: string) => {
+        const next = { ...filters, [key]: value };
+        setFilters(next);
+        applyFilters(next);
+    };
+
     const openCreate = () => {
-        setEditingId(null);
+        setFormError('');
         setForm({ username: '', password: '', nickname: '', company_id: '', phone: '', email: '', role: 'user', status: '1' });
-        setDialogOpen(true);
+        setEditingUser(null);
+        setDialogMode('create');
     };
 
     const openEdit = (user: User) => {
-        setEditingId(user.id);
+        setFormError('');
         setForm({
             username: user.username,
             password: '',
-            nickname: user.nickname,
+            nickname: user.nickname ?? '',
             company_id: user.company_id ? String(user.company_id) : '',
             phone: user.phone ?? '',
             email: user.email ?? '',
             role: user.roles?.[0]?.name ?? 'user',
-            status: String(user.status),
+            status: String(user.status ?? 1),
         });
-        setDialogOpen(true);
+        setEditingUser(user);
+        setDialogMode('edit');
+    };
+
+    const openPassword = (user: User) => {
+        setFormError('');
+        setPwForm({ password: '', confirm: '' });
+        setEditingUser(user);
+        setDialogMode('password');
     };
 
     const handleSubmit = async () => {
         setFormLoading(true);
+        setFormError('');
         try {
-            const payload: Record<string, unknown> = {
-                ...form,
-                company_id: form.company_id ? Number(form.company_id) : null,
-                status: Number(form.status),
-            };
-            if (editingId && !form.password) delete payload.password;
-            if (editingId) {
-                await crud.update(editingId, payload);
-            } else {
-                await crud.create(payload);
+            if (dialogMode === 'create') {
+                await crud.create({
+                    username: form.username,
+                    password: form.password,
+                    nickname: form.nickname,
+                    company_id: form.company_id ? Number(form.company_id) : null,
+                    phone: form.phone || null,
+                    email: form.email || null,
+                    role: form.role,
+                });
+            } else if (dialogMode === 'edit' && editingUser) {
+                await crud.update(editingUser.id, {
+                    nickname: form.nickname,
+                    company_id: form.company_id ? Number(form.company_id) : null,
+                    phone: form.phone || null,
+                    email: form.email || null,
+                    status: Number(form.status),
+                });
+                const prevRole = editingUser.roles?.[0]?.name ?? 'user';
+                if (form.role !== prevRole) {
+                    await api.put(`/users/${editingUser.id}/role`, { role: form.role });
+                }
             }
-            setDialogOpen(false);
+            setDialogMode(null);
             reload();
-        } catch (err: any) {
-            alert(err.response?.data?.message ?? '操作失败');
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            setFormError(e.response?.data?.message ?? '操作失败，请重试');
+        } finally {
+            setFormLoading(false);
+        }
+    };
+
+    const handlePassword = async () => {
+        if (!editingUser) return;
+        if (pwForm.password.length < 6) { setFormError('密码不少于6位'); return; }
+        if (pwForm.password !== pwForm.confirm) { setFormError('两次密码不一致'); return; }
+        setFormLoading(true);
+        setFormError('');
+        try {
+            await api.put(`/users/${editingUser.id}/password`, { password: pwForm.password });
+            setDialogMode(null);
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            setFormError(e.response?.data?.message ?? '密码重置失败');
         } finally {
             setFormLoading(false);
         }
@@ -109,69 +148,109 @@ export default function UsersIndex() {
         if (!deleteId) return;
         await crud.remove(deleteId);
         setDeleteId(null);
+        setDeleteLabel('');
         reload();
     };
 
+    const setF = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+    // ── Table columns ──────────────────────────────────────────────
+
     const columns: ColumnDef<User>[] = [
         { accessorKey: 'id', header: 'ID', size: 60 },
-        { accessorKey: 'username', header: '用户名' },
-        { accessorKey: 'nickname', header: '昵称' },
+        { accessorKey: 'username', header: '用户名', size: 140 },
+        { accessorKey: 'nickname', header: '昵称', size: 120 },
         {
-            id: 'company',
-            header: '所属企业',
-            cell: ({ row }) => row.original.company?.title ?? '—',
+            id: 'company', header: '所属企业',
+            cell: ({ row }) => row.original.company?.title
+                ? <span className="text-slate-300">{row.original.company.title}</span>
+                : <span className="text-slate-700">—</span>,
         },
         {
-            id: 'role',
-            header: '角色',
-            cell: ({ row }) => (
-                <div className="flex gap-1 flex-wrap">
-                    {row.original.roles?.map((r) => (
-                        <Badge key={r.id} variant="outline">{r.name}</Badge>
-                    )) ?? '—'}
-                </div>
-            ),
+            id: 'role', header: '角色', size: 130,
+            cell: ({ row }) => {
+                const role = row.original.roles?.[0];
+                if (!role) return <span className="text-slate-700">—</span>;
+                const isSystem = SYSTEM_ROLES.includes(role.name);
+                return (
+                    <span className={cn(
+                        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+                        isSystem ? 'bg-amber-600/15 text-amber-300' : 'bg-blue-600/15 text-blue-300',
+                    )}>
+                        {isSystem && <ShieldCheck className="h-3 w-3" />}
+                        {role.name}
+                    </span>
+                );
+            },
         },
         {
-            id: 'status',
-            header: '状态',
+            id: 'status', header: '状态', size: 80,
             cell: ({ row }) => (
-                <Badge variant={row.original.status === 1 ? 'default' : 'destructive'}>
+                <span className={cn(
+                    'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                    row.original.status === 1 ? 'bg-green-600/15 text-green-300' : 'bg-red-600/15 text-red-400',
+                )}>
                     {row.original.status === 1 ? '启用' : '禁用'}
-                </Badge>
+                </span>
             ),
         },
-        { accessorKey: 'phone', header: '手机号' },
+        { accessorKey: 'phone', header: '手机号', size: 130 },
         {
-            id: 'actions',
-            header: '操作',
+            id: 'actions', header: '操作', size: 100,
             cell: ({ row }) => (
-                <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(row.original)}>
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteId(row.original.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                <div className="flex items-center gap-0.5">
+                    <ActionBtn onClick={() => openEdit(row.original)} title="编辑" variant="edit">
+                        <Pencil className="h-3.5 w-3.5" />
+                    </ActionBtn>
+                    <ActionBtn onClick={() => openPassword(row.original)} title="重置密码" variant="edit">
+                        <KeyRound className="h-3.5 w-3.5" />
+                    </ActionBtn>
+                    <ActionBtn onClick={() => { setDeleteId(row.original.id); setDeleteLabel(row.original.username); }} title="删除" variant="delete">
+                        <Trash2 className="h-3.5 w-3.5" />
+                    </ActionBtn>
                 </div>
             ),
         },
     ];
 
-    const updateForm = (k: string, v: string | null) => setForm((f) => ({ ...f, [k]: v ?? '' }));
+    // ── Filter toolbar ─────────────────────────────────────────────
+
+    const filterToolbar = (
+        <div className="flex items-center gap-2">
+            <select
+                value={filters.status}
+                onChange={(e) => updateFilter('status', e.target.value)}
+                className={selectClass}
+            >
+                <option value="">全部状态</option>
+                <option value="1">启用</option>
+                <option value="2">禁用</option>
+            </select>
+            <select
+                value={filters.role}
+                onChange={(e) => updateFilter('role', e.target.value)}
+                className={selectClass}
+            >
+                <option value="">全部角色</option>
+                {roles.map((r) => (
+                    <option key={r.id} value={r.name}>{r.name}</option>
+                ))}
+            </select>
+        </div>
+    );
 
     return (
         <>
-            <Head title="用户管理" />
+            <Head title="账号管理" />
+
             <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">用户管理</h1>
-                    <p className="text-muted-foreground text-sm">共 {total} 个用户</p>
+                    <h1 className="text-xl font-bold text-slate-100">账号管理</h1>
+                    <p className="mt-0.5 text-xs text-slate-600">共 <span className="font-medium text-slate-400">{total}</span> 个用户</p>
                 </div>
-                <Button onClick={openCreate}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    新增用户
-                </Button>
+                <button onClick={openCreate} className={primaryBtn}>
+                    <Plus className="h-4 w-4" />新增用户
+                </button>
             </div>
 
             <DataTable
@@ -179,94 +258,174 @@ export default function UsersIndex() {
                 data={data}
                 isLoading={loading}
                 searchPlaceholder="搜索用户名..."
-                searchValue={searchUsername}
-                onSearchChange={handleSearch}
+                searchValue={filters.username}
+                onSearchChange={(v) => updateFilter('username', v)}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+                toolbar={filterToolbar}
             />
 
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>{editingId ? '编辑用户' : '新增用户'}</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>用户名 *</Label>
-                                <Input value={form.username} onChange={(e) => updateForm('username', e.target.value)} disabled={!!editingId} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>昵称 *</Label>
-                                <Input value={form.nickname} onChange={(e) => updateForm('nickname', e.target.value)} />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>{editingId ? '新密码（留空不修改）' : '密码 *'}</Label>
-                            <Input type="password" value={form.password} onChange={(e) => updateForm('password', e.target.value)} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>所属企业</Label>
-                                <Select value={form.company_id ?? ''} onValueChange={(v) => updateForm('company_id', v)}>
-                                    <SelectTrigger><SelectValue placeholder="选择企业" /></SelectTrigger>
-                                    <SelectContent>
-                                        {companies.map((c) => (
-                                            <SelectItem key={c.id} value={String(c.id)}>{c.title}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>角色</Label>
-                                <Select value={form.role ?? ''} onValueChange={(v) => updateForm('role', v)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        {roles.map((r) => (
-                                            <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>手机号</Label>
-                                <Input value={form.phone} onChange={(e) => updateForm('phone', e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>邮箱</Label>
-                                <Input type="email" value={form.email} onChange={(e) => updateForm('email', e.target.value)} />
-                            </div>
-                        </div>
-                        {editingId && (
-                            <div className="space-y-2">
-                                <Label>状态</Label>
-                                <Select value={form.status ?? ''} onValueChange={(v) => updateForm('status', v)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="1">启用</SelectItem>
-                                        <SelectItem value="0">禁用</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
+            {/* Create / Edit modal */}
+            <Modal open={dialogMode === 'create' || dialogMode === 'edit'} onClose={() => setDialogMode(null)}>
+                <ModalHeader
+                    title={dialogMode === 'create' ? '新增用户' : '编辑用户'}
+                    onClose={() => setDialogMode(null)}
+                />
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                    {formError && <ErrorAlert message={formError} />}
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="用户名" required>
+                            <input className={inputClass} value={form.username} onChange={(e) => setF('username', e.target.value)} disabled={dialogMode === 'edit'} placeholder="登录账号" />
+                        </Field>
+                        <Field label="昵称" required>
+                            <input className={inputClass} value={form.nickname} onChange={(e) => setF('nickname', e.target.value)} placeholder="显示名称" />
+                        </Field>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
-                        <Button onClick={handleSubmit} disabled={formLoading}>{formLoading ? '保存中...' : '保存'}</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    {dialogMode === 'create' && (
+                        <Field label="密码" required>
+                            <input type="password" className={inputClass} value={form.password} onChange={(e) => setF('password', e.target.value)} placeholder="至少6位" />
+                        </Field>
+                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="所属企业">
+                            <select className={inputClass} value={form.company_id} onChange={(e) => setF('company_id', e.target.value)}>
+                                <option value="">请选择企业</option>
+                                {companies.map((c) => <option key={c.id} value={String(c.id)}>{c.title}</option>)}
+                            </select>
+                        </Field>
+                        <Field label="角色">
+                            <select className={inputClass} value={form.role} onChange={(e) => setF('role', e.target.value)}>
+                                {roles.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+                            </select>
+                        </Field>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="手机号">
+                            <input className={inputClass} value={form.phone} onChange={(e) => setF('phone', e.target.value)} placeholder="选填" />
+                        </Field>
+                        <Field label="邮箱">
+                            <input type="email" className={inputClass} value={form.email} onChange={(e) => setF('email', e.target.value)} placeholder="选填" />
+                        </Field>
+                    </div>
+                    {dialogMode === 'edit' && (
+                        <Field label="状态">
+                            <select className={inputClass} value={form.status} onChange={(e) => setF('status', e.target.value)}>
+                                <option value="1">启用</option>
+                                <option value="2">禁用</option>
+                            </select>
+                        </Field>
+                    )}
+                </div>
+                <ModalFooter onCancel={() => setDialogMode(null)} onConfirm={handleSubmit} loading={formLoading} />
+            </Modal>
 
-            <ConfirmDialog
-                open={!!deleteId}
-                onOpenChange={(open) => !open && setDeleteId(null)}
-                title="删除用户"
-                description="确定要删除该用户吗？此操作不可撤销。"
-                onConfirm={handleDelete}
-                loading={crud.loading}
-            />
+            {/* Reset password modal */}
+            <Modal open={dialogMode === 'password'} onClose={() => setDialogMode(null)}>
+                <ModalHeader title={`重置密码 — ${editingUser?.username}`} onClose={() => setDialogMode(null)} />
+                <div className="flex-1 p-6 space-y-4">
+                    {formError && <ErrorAlert message={formError} />}
+                    <Field label="新密码" required>
+                        <input type="password" className={inputClass} value={pwForm.password} onChange={(e) => setPwForm((f) => ({ ...f, password: e.target.value }))} placeholder="至少6位" />
+                    </Field>
+                    <Field label="确认密码" required>
+                        <input type="password" className={inputClass} value={pwForm.confirm} onChange={(e) => setPwForm((f) => ({ ...f, confirm: e.target.value }))} placeholder="再次输入密码" />
+                    </Field>
+                </div>
+                <ModalFooter onCancel={() => setDialogMode(null)} onConfirm={handlePassword} loading={formLoading} confirmLabel="重置密码" />
+            </Modal>
+
+            {/* Delete confirm */}
+            <Modal open={!!deleteId} onClose={() => { setDeleteId(null); setDeleteLabel(''); }}>
+                <div className="p-6">
+                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
+                        <Trash2 className="h-5 w-5 text-red-400" />
+                    </div>
+                    <h2 className="mb-1 text-base font-semibold text-slate-100">删除用户</h2>
+                    <p className="text-sm text-slate-500">
+                        确定要删除用户 &ldquo;<span className="font-medium text-slate-300">{deleteLabel}</span>&rdquo; 吗？此操作不可撤销。
+                    </p>
+                </div>
+                <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
+                    <button onClick={() => { setDeleteId(null); setDeleteLabel(''); }} className={ghostBtn}>取消</button>
+                    <button onClick={handleDelete} disabled={crud.loading} className={dangerBtn}>
+                        {crud.loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        {crud.loading ? '删除中...' : '确认删除'}
+                    </button>
+                </div>
+            </Modal>
         </>
+    );
+}
+
+// ── Shared primitives ─────────────────────────────────────────────
+
+const inputClass = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
+const selectClass = 'h-9 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 pr-8 text-xs text-slate-400 outline-none transition-colors focus:border-blue-500/60 appearance-none cursor-pointer';
+const primaryBtn = 'flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95';
+const ghostBtn = 'rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200';
+const dangerBtn = 'flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-600/25 hover:text-red-300 disabled:pointer-events-none disabled:opacity-50';
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+    return (
+        <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
+                {label}{required && <span className="ml-1 text-blue-500">*</span>}
+            </label>
+            {children}
+        </div>
+    );
+}
+
+function ErrorAlert({ message }: { message: string }) {
+    return (
+        <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />{message}
+        </div>
+    );
+}
+
+function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+    if (!open) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
+                {children}
+            </div>
+        </div>
+    );
+}
+
+function ModalHeader({ title, onClose }: { title: string; onClose: () => void }) {
+    return (
+        <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
+            <h2 className="text-base font-semibold text-slate-100">{title}</h2>
+            <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-white/5 hover:text-slate-300">
+                <X className="h-4 w-4" />
+            </button>
+        </div>
+    );
+}
+
+function ModalFooter({ onCancel, onConfirm, loading, confirmLabel = '保存' }: { onCancel: () => void; onConfirm: () => void; loading: boolean; confirmLabel?: string }) {
+    return (
+        <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
+            <button onClick={onCancel} className={ghostBtn}>取消</button>
+            <button onClick={onConfirm} disabled={loading} className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:bg-blue-600/30 hover:text-blue-200 disabled:pointer-events-none disabled:opacity-50">
+                {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {loading ? '保存中...' : confirmLabel}
+            </button>
+        </div>
+    );
+}
+
+function ActionBtn({ children, onClick, title, variant }: { children: React.ReactNode; onClick: () => void; title: string; variant: 'edit' | 'delete' }) {
+    return (
+        <button onClick={onClick} title={title} className={cn(
+            'flex h-7 w-7 items-center justify-center rounded-md transition-colors',
+            variant === 'edit' ? 'text-slate-600 hover:bg-blue-600/10 hover:text-blue-400' : 'text-slate-600 hover:bg-red-600/10 hover:text-red-400',
+        )}>
+            {children}
+        </button>
     );
 }

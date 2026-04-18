@@ -41,7 +41,7 @@ class UserController extends Controller
             ->orderBy('id', 'desc')
             ->paginate($request->get('per_page', 15));
 
-        return $this->success(UserResource::collection($list));
+        return $this->success($list->through(fn (User $user) => (new UserResource($user))->resolve(request())));
     }
 
     /**

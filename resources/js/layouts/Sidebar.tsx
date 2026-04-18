@@ -300,7 +300,7 @@ const navSections: NavSection[] = [
     {
         mode: 'produce',
         items: [
-            { title: '账号管理', href: '/account', icon: UserCircle },
+            { title: '账号管理', href: '/system/users', icon: UserCircle },
         ],
     },
 
@@ -445,7 +445,7 @@ const navSections: NavSection[] = [
         label: '系统管理',
         mode: 'bloc',
         items: [
-            { title: '用户管理', href: '/system/users', icon: Users },
+            { title: '账号管理', href: '/system/users', icon: UserCircle },
             { title: '角色管理', href: '/system/roles', icon: Shield },
             { title: '权限管理', href: '/system/permissions', icon: Settings },
             {
@@ -461,12 +461,6 @@ const navSections: NavSection[] = [
                     { title: '安全管理人员类型', href: '/system/safety-management-types' },
                 ],
             },
-        ],
-    },
-    {
-        mode: 'bloc',
-        items: [
-            { title: '账号管理', href: '/account', icon: UserCircle },
         ],
     },
 ];
