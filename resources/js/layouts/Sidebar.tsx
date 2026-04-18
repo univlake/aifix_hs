@@ -163,7 +163,7 @@ const navSections: NavSection[] = [
                     { title: '隐患管理', href: '/risk/hidden-danger' },
                     { title: '作业管理', href: '/safety/job-management' },
                     { title: '三同时管理', href: '/space-work/three-togethers' },
-                    { title: '安全评估检查', href: '/risk/safety-assessment' },
+                    { title: '安全评价与检测', href: '/risk/safety-assessment' },
                     { title: '风险监测预警', href: '/risk/risk-warning' },
                     { title: '专家检查', href: '/risk/expert-inspection', upstream: true },
                 ],
