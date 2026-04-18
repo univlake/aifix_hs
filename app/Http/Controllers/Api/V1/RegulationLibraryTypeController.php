@@ -17,8 +17,10 @@ class RegulationLibraryTypeController extends Controller
     public function index(Request $request): JsonResponse
     {
         $list = RegulationLibraryType::query()
+            ->when($request->filled('pid'), fn ($q) => $q->where('pid', $request->pid))
+            ->orderBy('sort', 'asc')
             ->orderBy('id', 'asc')
-            ->paginate($request->get('per_page', 15));
+            ->paginate($request->get('per_page', 200));
 
         return $this->success($list);
     }

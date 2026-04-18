@@ -276,7 +276,7 @@ const navSections: NavSection[] = [
                 title: '知识管理',
                 icon: Library,
                 children: [
-                    { title: '法规库', href: '/regulation/libraries' },
+                    { title: '法律法规库', href: '/regulation/libraries' },
                     { title: '检查表库', href: '/knowledge/checklists' },
                 ],
             },

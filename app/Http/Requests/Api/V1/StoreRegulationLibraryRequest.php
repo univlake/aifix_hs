@@ -14,16 +14,21 @@ class StoreRegulationLibraryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'company_id' => 'required|integer',
-            'title' => 'required|string',
+            'title' => 'required|string|max:255',
+            'regulation_library_type_id' => 'nullable|integer',
+            'established_date' => 'nullable|date',
+            'effective_date' => 'nullable|date',
+            'promulgating_department' => 'nullable|string|max:255',
+            'standard_encoding' => 'nullable|string|max:255',
+            'identify_date' => 'nullable|date',
+            'status' => 'nullable|string|max:50',
+            'annex_url' => 'nullable|string',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'company_id.required' => '不能为空',
-            'company_id.integer' => '必须是整数',
             'title.required' => '不能为空',
             'title.string' => '必须是字符串',
         ];

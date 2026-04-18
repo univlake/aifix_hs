@@ -143,6 +143,9 @@ Route::group([], function () {
     // ── 事故应急 ──────────────────────────────────────────────
     Route::inertia('/accident/report', 'accident/report/Index');
     Route::inertia('/accident/emergency', 'accident/emergency/Index');
+    Route::inertia('/accident/emergency/teams', 'accident/emergency/teams/Index');
+    Route::inertia('/accident/emergency/supplies', 'accident/emergency/supplies/Index');
+    Route::inertia('/accident/emergency/drill', 'accident/emergency/drill/Index');
 
     // ── 任务管理（生产端）────────────────────────────────────
     Route::inertia('/tasks/notices', 'tasks/notices/Index');

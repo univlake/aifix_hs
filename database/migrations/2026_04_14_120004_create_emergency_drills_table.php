@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('drill_number')->comment('演练编号')->nullable();
             $table->string('drill_type')->comment('演练类型')->nullable();
             $table->string('drill_form')->comment('演练形式')->nullable();
-            $table->string('drill_plan')->comment('演练方案')->nullable();
             $table->string('drill_kind')->comment('演练种类')->nullable();
             $table->text('event')->comment('事件')->nullable();
             $table->text('annex_url')->comment('附件路径')->nullable();

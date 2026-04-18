@@ -3,24 +3,30 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreRegulationLibraryRequest;
 use App\Models\RegulationLibrary;
+use App\Models\RegulationLibraryType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreRegulationLibraryRequest;
 
 class RegulationLibraryController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $request->validate(['company_id' => 'required|integer']);
-
         $list = RegulationLibrary::query()
-            ->where('company_id', $request->company_id)
             ->when($request->title, function ($query) use ($request) {
-                $query->where('title', 'like', '%' . $request->title . '%');
+                $query->where('title', 'like', '%'.$request->title.'%');
             })
-            ->when($request->regulation_library_type_id, function ($query) use ($request) {
+            ->when($request->filled('regulation_library_type_id'), function ($query) use ($request) {
                 $query->where('regulation_library_type_id', $request->regulation_library_type_id);
+            })
+            ->when(! $request->filled('regulation_library_type_id') && $request->filled('type_parent_id'), function ($query) use ($request) {
+                $childIds = RegulationLibraryType::where('pid', $request->type_parent_id)->pluck('id');
+                if ($childIds->isEmpty()) {
+                    $query->where('regulation_library_type_id', $request->type_parent_id);
+                } else {
+                    $query->whereIn('regulation_library_type_id', $childIds);
+                }
             })
             ->with('regulationType')
             ->orderBy('id', 'desc')
@@ -33,7 +39,7 @@ class RegulationLibraryController extends Controller
     {
         $data = RegulationLibrary::query()->with('regulationType')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('法规库信息不存在');
         }
 
@@ -45,6 +51,7 @@ class RegulationLibraryController extends Controller
         $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
         $data['last_user_id'] = auth()->id() ?? 0;
+        $data['company_id'] = $data['company_id'] ?? 0;
 
         $regulationLibrary = RegulationLibrary::create($data);
 
@@ -55,7 +62,7 @@ class RegulationLibraryController extends Controller
     {
         $regulationLibrary = RegulationLibrary::find($id);
 
-        if (!$regulationLibrary) {
+        if (! $regulationLibrary) {
             return $this->notFound('法规库信息不存在');
         }
 
@@ -75,7 +82,7 @@ class RegulationLibraryController extends Controller
     {
         $regulationLibrary = RegulationLibrary::find($id);
 
-        if (!$regulationLibrary) {
+        if (! $regulationLibrary) {
             return $this->notFound('法规库信息不存在');
         }
 

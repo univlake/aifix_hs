@@ -51,15 +51,16 @@ export function useApiList<T = Record<string, unknown>>({
     }, [defaultParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const fetchList = useCallback(
-        async (p = page, extraParams: Record<string, unknown> = {}) => {
+        async (p = page, overrideParams?: Record<string, unknown>) => {
             abortRef.current?.abort();
             const controller = new AbortController();
             abortRef.current = controller;
 
+            const effectiveParams = overrideParams !== undefined ? overrideParams : params;
             setState((s) => ({ ...s, loading: true, error: null }));
             try {
                 const { data: res } = await api.get<ApiResponse<PaginatedData<T>>>(endpoint, {
-                    params: { per_page: defaultPerPage, page: p, ...params, ...extraParams },
+                    params: { per_page: defaultPerPage, page: p, ...effectiveParams },
                     signal: controller.signal,
                 });
                 const meta = res.data;
@@ -92,12 +93,13 @@ export function useApiList<T = Record<string, unknown>>({
     const reload = useCallback(() => fetchList(page), [fetchList, page]);
     const goToPage = useCallback((p: number) => setPage(p), []);
     const search = useCallback(
-        (extraParams: Record<string, unknown>) => {
-            setParams((prev) => ({ ...prev, ...extraParams }));
+        (searchParams: Record<string, unknown>) => {
+            const newParams = { ...defaultParams, ...searchParams };
+            setParams(newParams);
             setPage(1);
-            fetchList(1, extraParams);
+            fetchList(1, newParams);
         },
-        [fetchList],
+        [fetchList, defaultParams],
     );
 
     return {

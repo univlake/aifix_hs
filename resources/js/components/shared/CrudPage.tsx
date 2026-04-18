@@ -12,10 +12,16 @@ import type { ApiResponse } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
 
+export interface SubField {
+    key: string;
+    label: string;
+    placeholder?: string;
+}
+
 export interface FormField {
     key: string;
     label: string;
-    type: 'text' | 'number' | 'textarea' | 'select' | 'switch' | 'date' | 'file';
+    type: 'text' | 'number' | 'textarea' | 'select' | 'switch' | 'date' | 'file' | 'sub-table';
     required?: boolean;
     placeholder?: string;
     options?: { value: string; label: string }[];
@@ -30,6 +36,8 @@ export interface FormField {
     dependsOnDataKey?: string;
     colSpan?: 1 | 2;
     visibleWhen?: (form: Record<string, unknown>) => boolean;
+    /** Columns for 'sub-table' type repeatable rows */
+    subFields?: SubField[];
 }
 
 export interface CrudColumn {
@@ -53,6 +61,23 @@ export interface CrudPageConfig {
     exportEndpoint?: string;
     templateEndpoint?: string;
     copyEndpoint?: string;
+    /** When false, omit company_id from list queries (shared/global data). Default true. */
+    companyScoped?: boolean;
+    /** Extra filter dropdowns shown beside the search bar */
+    filterFields?: Array<{
+        key: string;
+        placeholder: string;
+        options?: { value: string; label: string }[];
+        optionsEndpoint?: string;
+        optionsLabelKey?: string;
+        optionsValueKey?: string;
+        /** Static params to send when loading options (e.g. { pid: 0 } to load only top-level) */
+        optionsParams?: Record<string, unknown>;
+        /** Key of another filterField whose value this filter depends on */
+        dependsOnKey?: string;
+        /** Query param name to pass the parent value as (default: same as dependsOnKey) */
+        dependsOnParam?: string;
+    }>;
 }
 
 interface PaginatedResponse<T> {
@@ -79,6 +104,8 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         exportEndpoint,
         templateEndpoint,
         copyEndpoint,
+        companyScoped = true,
+        filterFields = [],
     } = config;
 
     const { activeCompany, isSubordinate } = useScope();
@@ -88,7 +115,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<Record<string, unknown>>({
             endpoint,
-            defaultParams: companyId ? { company_id: companyId } : {},
+            defaultParams: companyScoped && companyId ? { company_id: companyId } : {},
         });
     const crud = useApiCrud(endpoint);
 
@@ -107,6 +134,8 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [copyLoading, setCopyLoading] = useState(false);
     const [copyMsg, setCopyMsg] = useState('');
+    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Load dynamic select options (scoped to current company)
@@ -167,10 +196,82 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formFields, ...formFields.filter((f) => f.dependsOnField).map((f) => form[f.dependsOnField!])]);
 
+    // Load options for static filter dropdowns (no dependsOnKey)
+    useEffect(() => {
+        filterFields.forEach((field) => {
+            if (field.optionsEndpoint && !field.options && !field.dependsOnKey) {
+                const lKey = field.optionsLabelKey ?? 'title';
+                const vKey = field.optionsValueKey ?? 'id';
+                api.get<ApiResponse<PaginatedResponse<Record<string, unknown>>>>(field.optionsEndpoint, {
+                    params: { per_page: 200, ...(field.optionsParams ?? {}) },
+                })
+                    .then((res) => {
+                        const items = res.data.data?.data ?? [];
+                        setFilterOptions((prev) => ({
+                            ...prev,
+                            [field.key]: items.map((item) => ({
+                                value: String(item[vKey]),
+                                label: String(item[lKey]),
+                            })),
+                        }));
+                    })
+                    .catch(() => {});
+            }
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filterFields]);
+
+    // Load options for cascading filter dropdowns when parent value changes
+    useEffect(() => {
+        filterFields.forEach((field) => {
+            if (!field.dependsOnKey || !field.optionsEndpoint || field.options) return;
+            const parentValue = filterValues[field.dependsOnKey];
+            if (!parentValue) {
+                setFilterOptions((prev) => ({ ...prev, [field.key]: [] }));
+                return;
+            }
+            const lKey = field.optionsLabelKey ?? 'title';
+            const vKey = field.optionsValueKey ?? 'id';
+            const paramName = field.dependsOnParam ?? field.dependsOnKey;
+            api.get<ApiResponse<PaginatedResponse<Record<string, unknown>>>>(field.optionsEndpoint, {
+                params: { per_page: 200, [paramName]: parentValue },
+            })
+                .then((res) => {
+                    const items = res.data.data?.data ?? [];
+                    setFilterOptions((prev) => ({
+                        ...prev,
+                        [field.key]: items.map((item) => ({
+                            value: String(item[vKey]),
+                            label: String(item[lKey]),
+                        })),
+                    }));
+                })
+                .catch(() => {
+                    setFilterOptions((prev) => ({ ...prev, [field.key]: [] }));
+                });
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filterFields, ...filterFields.filter((f) => f.dependsOnKey).map((f) => filterValues[f.dependsOnKey!])]);
+
+    const handleFilterChange = (key: string, value: string) => {
+        const next = { ...filterValues, [key]: value };
+        // Clear any child filters that depend on this key
+        filterFields.forEach((f) => {
+            if (f.dependsOnKey === key) next[f.key] = '';
+        });
+        setFilterValues(next);
+        const params: Record<string, unknown> = {};
+        if (searchField && searchValue) params[searchField] = searchValue;
+        Object.entries(next).forEach(([k, v]) => { if (v) params[k] = v; });
+        search(params);
+    };
+
     const initForm = useCallback(() => {
         const f: Record<string, unknown> = {};
         formFields.forEach((field) => {
-            f[field.key] = field.type === 'switch' ? 0 : '';
+            if (field.type === 'sub-table') f[field.key] = [];
+            else if (field.type === 'switch') f[field.key] = 0;
+            else f[field.key] = '';
         });
         return f;
     }, [formFields]);
@@ -286,9 +387,13 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     const handleSearch = useCallback(
         (val: string) => {
             setSearchValue(val);
-            if (searchField) search({ [searchField]: val || undefined });
+            const params: Record<string, unknown> = {};
+            if (searchField) params[searchField] = val || undefined;
+            Object.entries(filterValues).forEach(([k, v]) => { if (v) params[k] = v; });
+            search(params);
         },
-        [search, searchField],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [search, searchField, filterValues],
     );
 
     const openCreate = () => {
@@ -303,7 +408,15 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         setFormError('');
         const f: Record<string, unknown> = {};
         formFields.forEach((field) => {
-            f[field.key] = row[field.key] ?? (field.type === 'switch' ? 0 : '');
+            if (field.type === 'sub-table') {
+                f[field.key] = Array.isArray(row[field.key]) ? row[field.key] : [];
+                return;
+            }
+            let val = row[field.key] ?? (field.type === 'switch' ? 0 : '');
+            if (field.type === 'date' && typeof val === 'string' && val.length > 10) {
+                val = val.slice(0, 10);
+            }
+            f[field.key] = val;
         });
         setForm(f);
         setDialogOpen(true);
@@ -323,6 +436,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                     payload[field.key] = null;
                     return;
                 }
+                if (field.type === 'sub-table') return;
                 if (field.type === 'number' && payload[field.key] !== '') {
                     payload[field.key] = Number(payload[field.key]);
                 }
@@ -483,8 +597,25 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                 onSearchChange={searchField ? handleSearch : undefined}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
-                toolbar={(copyEndpoint || templateEndpoint || importEndpoint || exportEndpoint) ? (
+                toolbar={(filterFields.length > 0 || copyEndpoint || templateEndpoint || importEndpoint || exportEndpoint) ? (
                     <div className="flex items-center gap-2">
+                        {filterFields.map((ff) => {
+                            if (ff.dependsOnKey && !filterValues[ff.dependsOnKey]) return null;
+                            const opts = ff.options ?? filterOptions[ff.key] ?? [];
+                            return (
+                                <select
+                                    key={ff.key}
+                                    value={filterValues[ff.key] ?? ''}
+                                    onChange={(e) => handleFilterChange(ff.key, e.target.value)}
+                                    className="h-9 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 text-sm text-slate-300 outline-none transition-colors focus:border-blue-500/60 appearance-none cursor-pointer"
+                                >
+                                    <option value="" className="bg-[#0d1530]">{ff.placeholder}</option>
+                                    {opts.map((o) => (
+                                        <option key={o.value} value={o.value} className="bg-[#0d1530]">{o.label}</option>
+                                    ))}
+                                </select>
+                            );
+                        })}
                         {copyMsg && <span className="text-xs text-blue-400">{copyMsg}</span>}
                         {copyEndpoint && !readOnly && selectedIds.size > 0 && (
                             <button
@@ -734,6 +865,69 @@ function renderFormField(
                     onChange={(url) => updateForm(field.key, url)}
                 />
             );
+        case 'sub-table': {
+            const rows = (value as Record<string, unknown>[]) ?? [];
+            const cols = field.subFields ?? [];
+            const addRow = () => {
+                const empty: Record<string, unknown> = {};
+                cols.forEach((c) => { empty[c.key] = ''; });
+                updateForm(field.key, [...rows, empty]);
+            };
+            const removeRow = (idx: number) =>
+                updateForm(field.key, rows.filter((_, i) => i !== idx));
+            const updateCell = (idx: number, colKey: string, val: string) =>
+                updateForm(field.key, rows.map((r, i) => i === idx ? { ...r, [colKey]: val } : r));
+            return (
+                <div className="rounded-lg border border-blue-900/30 overflow-hidden">
+                    {rows.length > 0 && (
+                        <table className="w-full text-xs">
+                            <thead>
+                                <tr className="border-b border-blue-900/30 bg-[#070d1f]">
+                                    {cols.map((c) => (
+                                        <th key={c.key} className="px-3 py-2 text-left font-medium uppercase tracking-wide text-slate-500">{c.label}</th>
+                                    ))}
+                                    <th className="w-8 px-2 py-2" />
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map((row, idx) => (
+                                    <tr key={idx} className="border-b border-blue-900/20 last:border-0">
+                                        {cols.map((c) => (
+                                            <td key={c.key} className="px-2 py-1.5">
+                                                <input
+                                                    type="text"
+                                                    value={String(row[c.key] ?? '')}
+                                                    onChange={(e) => updateCell(idx, c.key, e.target.value)}
+                                                    placeholder={c.placeholder}
+                                                    className="w-full rounded border border-blue-900/30 bg-transparent px-2 py-1 text-slate-200 placeholder-slate-700 outline-none focus:border-blue-500/60"
+                                                />
+                                            </td>
+                                        ))}
+                                        <td className="px-2 py-1.5 text-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => removeRow(idx)}
+                                                className="text-slate-600 hover:text-red-400"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                    <button
+                        type="button"
+                        onClick={addRow}
+                        className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
+                    >
+                        <Plus className="h-3 w-3" />
+                        添加成员
+                    </button>
+                </div>
+            );
+        }
         default:
             return null;
     }

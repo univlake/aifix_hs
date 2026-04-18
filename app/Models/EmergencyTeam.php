@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
+
 class EmergencyTeam extends BaseModel
 {
     protected $fillable = [
@@ -13,6 +15,13 @@ class EmergencyTeam extends BaseModel
         'user_id',
         'last_user_id',
     ];
+
+    protected $appends = ['kids'];
+
+    public function getKidsAttribute(): Collection
+    {
+        return $this->emergencyTeamKid;
+    }
 
     public function emergencyTeamKid()
     {
