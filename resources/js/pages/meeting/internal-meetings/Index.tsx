@@ -2,12 +2,8 @@ import { CrudPage } from '@/components/shared/CrudPage';
 import type { CrudPageConfig } from '@/components/shared/CrudPage';
 
 const MEETING_TYPES = [
-    { value: '安全例会', label: '安全例会' },
-    { value: '班前班后会', label: '班前班后会' },
-    { value: '安全专题会', label: '安全专题会' },
-    { value: '隐患整改会', label: '隐患整改会' },
-    { value: '应急专题会', label: '应急专题会' },
-    { value: '其他', label: '其他' },
+    { value: 'fire', label: '消防会议' },
+    { value: 'safety', label: '安全会议' },
 ];
 
 const config: CrudPageConfig = {

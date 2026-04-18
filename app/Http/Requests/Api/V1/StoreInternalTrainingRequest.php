@@ -20,7 +20,7 @@ class StoreInternalTrainingRequest extends FormRequest
             'object' => 'nullable|string|max:255',
             'number' => 'nullable|integer',
             'training_date' => 'nullable|date',
-            'training_type' => 'nullable|string|max:255',
+            'training_type' => 'required|in:新员工培训,消防培训,安全培训',
             'happening' => 'nullable|string',
             'annex_url' => 'nullable|string',
             'summary_annex_url' => 'nullable|string',

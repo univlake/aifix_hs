@@ -20,7 +20,7 @@ class UpdateInternalTrainingRequest extends FormRequest
             'object' => 'sometimes|nullable|string|max:255',
             'number' => 'sometimes|nullable|integer',
             'training_date' => 'sometimes|nullable|date',
-            'training_type' => 'sometimes|nullable|string|max:255',
+            'training_type' => 'sometimes|required|in:新员工培训,消防培训,安全培训',
             'happening' => 'sometimes|nullable|string',
             'annex_url' => 'sometimes|nullable|string',
             'summary_annex_url' => 'sometimes|nullable|string',

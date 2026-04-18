@@ -17,7 +17,7 @@ class UpdateInternalMeetingRequest extends FormRequest
             'company_id' => 'sometimes|required|integer',
             'name' => 'sometimes|required|string|max:255',
             'theme' => 'sometimes|nullable|string|max:255',
-            'type' => 'sometimes|nullable|string|max:255',
+            'type' => 'sometimes|nullable|in:fire,safety',
             'meeting_date' => 'sometimes|nullable|date',
             'summary' => 'sometimes|nullable|string',
             'annex_url' => 'sometimes|nullable|string',
@@ -38,7 +38,7 @@ class UpdateInternalMeetingRequest extends FormRequest
             'name.string' => '必须是字符串',
             'name.max' => '不能超过255个字符',
             'theme.max' => '不能超过255个字符',
-            'type.max' => '不能超过255个字符',
+            'type.in' => '会议类型必须是 fire 或 safety',
         ];
     }
 }
