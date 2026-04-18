@@ -203,7 +203,7 @@ Route::middleware('permission:focus-companies.delete')->group(function () {
     Route::delete('/focus-companies/{id}', [FocusCompaniesController::class, 'destroy']);
 });
 
-// ── 法规库 ─────────────────────────────────────────────────────
+// ── 法律法规库 ─────────────────────────────────────────────────────
 Route::middleware('permission:regulation-libraries.list')->group(function () {
     Route::get('/regulation-libraries', [RegulationLibraryController::class, 'index']);
     Route::get('/regulation-libraries/{id}', [RegulationLibraryController::class, 'show']);

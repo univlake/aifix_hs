@@ -28,7 +28,7 @@ const quickLinks = [
     { title: '日常检查', href: '/inspection/daily-checks' },
     { title: '应急演练', href: '/emergency/emergency-drills' },
     { title: '月度统计', href: '/statistics/month-statistics' },
-    { title: '法规库', href: '/regulation/libraries' },
+    { title: '法律法规库', href: '/regulation/libraries' },
 ];
 
 export default function Dashboard() {

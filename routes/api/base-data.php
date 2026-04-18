@@ -28,6 +28,7 @@ Route::middleware('permission:base-data.view')->group(function () {
     Route::get('/regulation-library-types', [RegulationLibraryTypeController::class, 'index']);
     Route::get('/training-class-types', [TrainingClassTypeController::class, 'index']);
     Route::get('/checklist-libraries', [ChecklistLibraryController::class, 'index']);
+    Route::get('/checklist-libraries/export', [ChecklistLibraryController::class, 'export']);
     Route::get('/report-configs', [ReportConfigController::class, 'index']);
 });
 

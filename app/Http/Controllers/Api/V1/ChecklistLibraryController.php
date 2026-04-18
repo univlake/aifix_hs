@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exports\ChecklistLibraryExport;
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreChecklistLibraryRequest;
+use App\Http\Requests\Api\V1\UpdateChecklistLibraryRequest;
 use App\Models\ChecklistLibrary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreChecklistLibraryRequest;
-use App\Http\Requests\Api\V1\UpdateChecklistLibraryRequest;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ChecklistLibraryController extends Controller
 {
@@ -22,10 +25,22 @@ class ChecklistLibraryController extends Controller
             $query->where('company_id', $request->company_id);
         }
 
+        if ($request->filled('title')) {
+            $query->where('title', 'like', '%'.$request->title.'%');
+        }
+
         $list = $query->orderBy('id', 'desc')
             ->paginate($request->get('per_page', 15));
 
         return $this->success($list);
+    }
+
+    public function export(Request $request): BinaryFileResponse
+    {
+        $companyId = (int) $request->get('company_id', 0);
+        $title = $request->get('title');
+
+        return Excel::download(new ChecklistLibraryExport($companyId, $title), '检查表库.xlsx');
     }
 
     /**
@@ -47,7 +62,7 @@ class ChecklistLibraryController extends Controller
     {
         $type = ChecklistLibrary::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('检查清单库不存在');
         }
         $data = $request->validated();
@@ -64,7 +79,7 @@ class ChecklistLibraryController extends Controller
     {
         $type = ChecklistLibrary::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('检查清单库不存在');
         }
 

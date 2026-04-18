@@ -104,7 +104,7 @@ Route::group([], function () {
     Route::inertia('/statistics/expert-inspections', 'statistics/expert-inspections/Index');
     Route::inertia('/statistics/accident-bulletins', 'statistics/accident-bulletins/Index');
 
-    // ── 法规库 ────────────────────────────────────────────────
+    // ── 法律法规库 ────────────────────────────────────────────────
     Route::inertia('/regulation/libraries', 'regulation/libraries/Index');
 
     // ── 空间作业 ──────────────────────────────────────────────

@@ -1110,7 +1110,7 @@ Authorization: Bearer {access_token}
 |------|------|------|
 | GET/HEAD | `api/v1/todos-list-table` | 列表 |
 
-## 法规库
+## 法律法规库
 
 ### regulation-libraries
 

@@ -8,7 +8,7 @@ describe('RegulationLibrary API', function () {
             [$user, $company] = createAdminWithCompany();
             RegulationLibrary::create([
                 'company_id' => $company->id,
-                'title' => '法规库A',
+                'title' => '法律法规库A',
             ]);
 
             $response = $this->actingAs($user, 'api')

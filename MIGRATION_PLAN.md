@@ -171,7 +171,7 @@ Building, CertificateStatus, DangerousCraftType, EnterpriseType, OperationalType
 - [ ] DesignUnitsController (设计单位)
 - [ ] EvaluationUnitsController (评价单位)
 - [ ] ChangeManagesController (变更管理)
-- [ ] RegulationLibrariesController (法规库)
+- [ ] RegulationLibrariesController (法律法规库)
 - [ ] 对比日志: 迁移清单
 
 **产出**: 20+ 简单模块可用，进度条快速推进
