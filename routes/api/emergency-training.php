@@ -46,6 +46,7 @@ Route::middleware('permission:fire-equipment.list')->group(function () {
 });
 Route::middleware('permission:fire-equipment.create')->group(function () {
     Route::post('/fire-equipment', [FireEquipmentController::class, 'store']);
+    Route::post('/fire-equipment/copy', [FireEquipmentController::class, 'copy']);
 });
 Route::middleware('permission:fire-equipment.update')->group(function () {
     Route::put('/fire-equipment/{id}', [FireEquipmentController::class, 'update']);
@@ -62,6 +63,7 @@ Route::middleware('permission:fire-facilities.list')->group(function () {
 });
 Route::middleware('permission:fire-facilities.create')->group(function () {
     Route::post('/fire-facilities', [FireFacilityController::class, 'store']);
+    Route::post('/fire-facilities/copy', [FireFacilityController::class, 'copy']);
 });
 Route::middleware('permission:fire-facilities.update')->group(function () {
     Route::put('/fire-facilities/{id}', [FireFacilityController::class, 'update']);

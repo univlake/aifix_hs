@@ -474,9 +474,17 @@ function NavLink({ item, depth = 0 }: { item: NavItem; depth?: number }) {
         : false;
     const Icon = item.icon;
     const pl = depth === 0 ? 'pl-3' : 'pl-8';
+    const linkRef = useRef<HTMLAnchorElement>(null);
+
+    useEffect(() => {
+        if (isActive && linkRef.current) {
+            linkRef.current.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+        }
+    }, []);
 
     return (
         <Link
+            ref={linkRef}
             href={item.href!}
             className={cn(
                 'group relative flex items-center gap-2.5 rounded-lg py-2 pr-3 text-sm transition-colors',

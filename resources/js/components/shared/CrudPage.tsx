@@ -5,7 +5,7 @@ import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { DataTable } from '@/components/data-table/DataTable';
 import { useScope } from '@/contexts/ScopeContext';
 import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, Download, FileDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, Download, FileDown, Copy } from 'lucide-react';
 import api from '@/lib/api';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import type { ApiResponse } from '@/types/models';
@@ -52,6 +52,7 @@ export interface CrudPageConfig {
     importEndpoint?: string;
     exportEndpoint?: string;
     templateEndpoint?: string;
+    copyEndpoint?: string;
 }
 
 interface PaginatedResponse<T> {
@@ -77,6 +78,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         importEndpoint,
         exportEndpoint,
         templateEndpoint,
+        copyEndpoint,
     } = config;
 
     const { activeCompany, isSubordinate } = useScope();
@@ -102,6 +104,9 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     const [importLoading, setImportLoading] = useState(false);
     const [importError, setImportError] = useState<{ row: number; errors: string[] }[]>([]);
     const [exportLoading, setExportLoading] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [copyLoading, setCopyLoading] = useState(false);
+    const [copyMsg, setCopyMsg] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Load dynamic select options (scoped to current company)
@@ -235,6 +240,49 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         }
     };
 
+    const handleCopy = async () => {
+        if (!copyEndpoint || !selectedIds.size) return;
+        setCopyLoading(true);
+        try {
+            await api.post(copyEndpoint, { ids: Array.from(selectedIds) });
+            setSelectedIds(new Set());
+            reload();
+            setCopyMsg(`已复制 ${selectedIds.size} 条记录`);
+            setTimeout(() => setCopyMsg(''), 3000);
+        } catch (err: any) {
+            setCopyMsg(err.response?.data?.message ?? '复制失败');
+            setTimeout(() => setCopyMsg(''), 3000);
+        } finally {
+            setCopyLoading(false);
+        }
+    };
+
+    const toggleRow = (id: number) =>
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+
+    const allPageSelected = data.length > 0 && data.every((r) => selectedIds.has(r[idKey] as number));
+    const somePageSelected = data.some((r) => selectedIds.has(r[idKey] as number));
+
+    const toggleAll = () => {
+        if (allPageSelected) {
+            setSelectedIds((prev) => {
+                const next = new Set(prev);
+                data.forEach((r) => next.delete(r[idKey] as number));
+                return next;
+            });
+        } else {
+            setSelectedIds((prev) => {
+                const next = new Set(prev);
+                data.forEach((r) => next.add(r[idKey] as number));
+                return next;
+            });
+        }
+    };
+
     const handleSearch = useCallback(
         (val: string) => {
             setSearchValue(val);
@@ -316,17 +364,42 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     });
 
     // Build table columns
-    const tableColumns: ColumnDef<Record<string, unknown>>[] = colDefs.map((col) => ({
-        accessorKey: col.key,
-        header: col.header,
-        size: col.width,
-        cell: ({ row }: { row: { original: Record<string, unknown> } }) => {
-            if (col.render) return col.render(row.original[col.key], row.original);
-            const val = row.original[col.key];
-            if (val === null || val === undefined) return <span className="text-slate-700">—</span>;
-            return String(val);
-        },
-    }));
+    const checkboxColumn: ColumnDef<Record<string, unknown>> = {
+        id: 'select',
+        size: 40,
+        header: () => (
+            <input
+                type="checkbox"
+                checked={allPageSelected}
+                ref={(el) => { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
+                onChange={toggleAll}
+                className="h-3.5 w-3.5 rounded border-blue-900/60 bg-[#070d1f] accent-blue-500"
+            />
+        ),
+        cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
+            <input
+                type="checkbox"
+                checked={selectedIds.has(row.original[idKey] as number)}
+                onChange={() => toggleRow(row.original[idKey] as number)}
+                className="h-3.5 w-3.5 rounded border-blue-900/60 bg-[#070d1f] accent-blue-500"
+            />
+        ),
+    };
+
+    const tableColumns: ColumnDef<Record<string, unknown>>[] = [
+        ...(copyEndpoint && !readOnly ? [checkboxColumn] : []),
+        ...colDefs.map((col) => ({
+            accessorKey: col.key,
+            header: col.header,
+            size: col.width,
+            cell: ({ row }: { row: { original: Record<string, unknown> } }) => {
+                if (col.render) return col.render(row.original[col.key], row.original);
+                const val = row.original[col.key];
+                if (val === null || val === undefined) return <span className="text-slate-700">—</span>;
+                return String(val);
+            },
+        })),
+    ];
 
     if (!readOnly) {
         tableColumns.push({
@@ -374,6 +447,19 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    {copyMsg && (
+                        <span className="text-xs text-blue-400">{copyMsg}</span>
+                    )}
+                    {copyEndpoint && !readOnly && selectedIds.size > 0 && (
+                        <button
+                            onClick={handleCopy}
+                            disabled={copyLoading}
+                            className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-600/10 px-3 py-2 text-xs font-medium text-emerald-400 hover:bg-emerald-600/20 disabled:opacity-50 disabled:pointer-events-none"
+                        >
+                            {copyLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
+                            复制已选 ({selectedIds.size})
+                        </button>
+                    )}
                     {templateEndpoint && (
                         <button
                             onClick={handleTemplate}

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreFireEquipmentRequest;
+use App\Http\Requests\Api\V1\UpdateFireEquipmentRequest;
 use App\Models\FireEquipment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreFireEquipmentRequest;
-use App\Http\Requests\Api\V1\UpdateFireEquipmentRequest;
 
 class FireEquipmentController extends Controller
 {
@@ -20,11 +20,11 @@ class FireEquipmentController extends Controller
         }
 
         if ($request->filled('equipment_name')) {
-            $query->where('equipment_name', 'like', '%' . $request->equipment_name . '%');
+            $query->where('equipment_name', 'like', '%'.$request->equipment_name.'%');
         }
 
         if ($request->filled('special_type')) {
-            $query->where('special_type', 'like', '%' . $request->special_type . '%');
+            $query->where('special_type', 'like', '%'.$request->special_type.'%');
         }
 
         $list = $query->orderBy('id', 'desc')
@@ -37,7 +37,7 @@ class FireEquipmentController extends Controller
     {
         $data = FireEquipment::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('消防器材不存在');
         }
 
@@ -59,7 +59,7 @@ class FireEquipmentController extends Controller
     {
         $record = FireEquipment::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('消防器材不存在');
         }
         $data = $request->validated();
@@ -73,12 +73,40 @@ class FireEquipmentController extends Controller
     {
         $record = FireEquipment::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('消防器材不存在');
         }
 
         $record->delete();
 
         return $this->message('删除成功');
+    }
+
+    public function copy(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $originals = FireEquipment::whereIn('id', $request->ids)->get();
+
+        if ($originals->isEmpty()) {
+            return $this->notFound('未找到指定记录');
+        }
+
+        $newIds = [];
+        foreach ($originals as $original) {
+            $data = $original->only([
+                'equipment_name', 'utilized_location', 'special_type',
+                'use_time', 'automation_type', 'maintain_info', 'comment', 'company_id',
+            ]);
+            $data['user_id'] = auth()->id() ?? 0;
+            $data['last_user_id'] = auth()->id() ?? 0;
+
+            $newIds[] = FireEquipment::create($data)->id;
+        }
+
+        return $this->success(['ids' => $newIds, 'count' => count($newIds)]);
     }
 }
