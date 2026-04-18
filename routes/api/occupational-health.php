@@ -12,9 +12,12 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('permission:occupational-hazards.list')->group(function () {
     Route::get('/occupational-hazards', [OccupationalHazardController::class, 'index']);
     Route::get('/occupational-hazards/{id}', [OccupationalHazardController::class, 'show']);
+    Route::get('/occupational-hazards-export', [OccupationalHazardController::class, 'export']);
+    Route::get('/occupational-hazards-template', [OccupationalHazardController::class, 'template']);
 });
 Route::middleware('permission:occupational-hazards.create')->group(function () {
     Route::post('/occupational-hazards', [OccupationalHazardController::class, 'store']);
+    Route::post('/occupational-hazards-import', [OccupationalHazardController::class, 'import']);
 });
 Route::middleware('permission:occupational-hazards.update')->group(function () {
     Route::put('/occupational-hazards/{id}', [OccupationalHazardController::class, 'update']);
@@ -40,9 +43,12 @@ Route::middleware('permission:health-systems.update')->group(function () {
 Route::middleware('permission:health-files.list')->group(function () {
     Route::get('/health-files', [HealthFileController::class, 'index']);
     Route::get('/health-files/{id}', [HealthFileController::class, 'show']);
+    Route::get('/health-files-export', [HealthFileController::class, 'export']);
+    Route::get('/health-files-template', [HealthFileController::class, 'template']);
 });
 Route::middleware('permission:health-files.create')->group(function () {
     Route::post('/health-files', [HealthFileController::class, 'store']);
+    Route::post('/health-files-import', [HealthFileController::class, 'import']);
 });
 Route::middleware('permission:health-files.update')->group(function () {
     Route::put('/health-files/{id}', [HealthFileController::class, 'update']);

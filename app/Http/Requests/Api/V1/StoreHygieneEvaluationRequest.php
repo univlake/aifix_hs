@@ -16,7 +16,7 @@ class StoreHygieneEvaluationRequest extends FormRequest
         return [
             'company_id' => 'required|integer',
             'name' => 'required|string|max:255',
-            'type' => 'nullable|string|max:255',
+            'type' => 'nullable|in:职业危害现状评价,职业卫生检测',
             'skill_unit_id' => 'nullable|integer',
             'skill_unit_kid_id' => 'nullable|integer',
             'valid_period' => 'nullable|date',

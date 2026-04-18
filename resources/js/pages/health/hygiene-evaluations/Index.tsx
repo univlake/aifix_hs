@@ -1,20 +1,88 @@
 import { CrudPage } from '@/components/shared/CrudPage';
 import type { CrudPageConfig } from '@/components/shared/CrudPage';
 
+const EVAL_TYPES = [
+    { value: '职业危害现状评价', label: '职业危害现状评价' },
+    { value: '职业卫生检测', label: '职业卫生检测' },
+];
+
 const config: CrudPageConfig = {
-    title: '卫生评价',
+    title: '职业卫生评价与检测',
     endpoint: '/hygiene-evaluations',
+    labelKey: 'name',
     columns: [
-        { key: 'id', header: 'ID', width: 80 },
-        { key: 'title', header: '标题' },
+        { key: 'name', header: '评价名称' },
+        { key: 'type', header: '评价或检测类型', width: 150 },
+        {
+            key: 'skill_unit_id',
+            header: '检测机构',
+            width: 160,
+            render: (_, row) => {
+                const unit = row.skill_unit as { name?: string } | null;
+                return unit?.name ? String(unit.name) : <span className="text-slate-700">—</span>;
+            },
+        },
+        {
+            key: 'skill_unit_kid_id',
+            header: '资质证书',
+            width: 160,
+            render: (_, row) => {
+                const kid = row.skill_unit_kid as { qualification_name?: string } | null;
+                return kid?.qualification_name ? String(kid.qualification_name) : <span className="text-slate-700">—</span>;
+            },
+        },
+        {
+            key: 'valid_period',
+            header: '有效期',
+            width: 120,
+            render: (val) => (val ? String(val).slice(0, 10) : <span className="text-slate-700">—</span>),
+        },
+        {
+            key: 'annex_url',
+            header: '附件',
+            width: 70,
+            render: (val) =>
+                val ? (
+                    <a
+                        href={String(val)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded-md border border-blue-500/20 bg-blue-600/10 px-1.5 py-0.5 text-xs font-medium text-blue-400 hover:text-blue-300"
+                    >
+                        查看
+                    </a>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
+        },
     ],
     formFields: [
-        { key: 'title', label: '标题', type: 'text', required: true },
-        { key: 'content', label: '内容', type: 'textarea' },
-        { key: 'company_id', label: '所属企业', type: 'select', optionsEndpoint: '/companies' },
+        { key: 'name', label: '评价名称', type: 'text', required: true, colSpan: 2 },
+        { key: 'type', label: '评价或检测类型', type: 'select', options: EVAL_TYPES, placeholder: '请选择类型' },
+        {
+            key: 'skill_unit_id',
+            label: '检测机构',
+            type: 'select',
+            optionsEndpoint: '/skill-units',
+            optionsLabelKey: 'name',
+            optionsValueKey: 'id',
+        },
+        {
+            key: 'skill_unit_kid_id',
+            label: '资质证书',
+            type: 'select',
+            dependsOnField: 'skill_unit_id',
+            dependsOnEndpoint: '/skill-units/{value}',
+            dependsOnDataKey: 'kids',
+            optionsLabelKey: 'qualification_name',
+            optionsValueKey: 'id',
+            placeholder: '请先选择检测机构',
+        },
+        { key: 'valid_period', label: '有效期', type: 'date' },
+        { key: 'annex_url', label: '附件', type: 'file', colSpan: 2 },
     ],
-    searchField: 'title',
-    searchPlaceholder: '搜索卫生评价...',
+    searchField: 'name',
+    searchPlaceholder: '搜索评价名称...',
 };
 
 export default function HygieneEvaluationsIndex() {

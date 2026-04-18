@@ -15,7 +15,7 @@ class UpdateHygieneEvaluationRequest extends FormRequest
     {
         return [
             'name' => 'sometimes|required|string|max:255',
-            'type' => 'sometimes|nullable|string|max:255',
+            'type' => 'sometimes|nullable|in:职业危害现状评价,职业卫生检测',
             'skill_unit_id' => 'sometimes|nullable|integer',
             'skill_unit_kid_id' => 'sometimes|nullable|integer',
             'valid_period' => 'sometimes|nullable|date',

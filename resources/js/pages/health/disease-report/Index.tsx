@@ -2,10 +2,15 @@ import { CrudPage } from '@/components/shared/CrudPage';
 import type { CrudPageConfig } from '@/components/shared/CrudPage';
 
 const DISEASE_TYPES = [
-    { value: '尘肺病', label: '尘肺病' },
+    { value: '职业性尘肺病及其他呼吸系统疾病', label: '职业性尘肺病及其他呼吸系统疾病' },
+    { value: '职业性皮肤病', label: '职业性皮肤病' },
+    { value: '职业性眼病', label: '职业性眼病' },
+    { value: '职业性耳鼻喉口腔疾病', label: '职业性耳鼻喉口腔疾病' },
     { value: '职业性化学中毒', label: '职业性化学中毒' },
-    { value: '职业性噪声聋', label: '职业性噪声聋' },
+    { value: '物理因素所致职业病', label: '物理因素所致职业病' },
     { value: '职业性放射性疾病', label: '职业性放射性疾病' },
+    { value: '职业性传染病', label: '职业性传染病' },
+    { value: '职业性肿瘤', label: '职业性肿瘤' },
     { value: '其他职业病', label: '其他职业病' },
 ];
 
@@ -18,7 +23,7 @@ const config: CrudPageConfig = {
         {
             key: 'type',
             header: '职业病类型',
-            width: 160,
+            width: 200,
             render: (value) => value
                 ? <span className="rounded-md border border-violet-900/40 bg-violet-600/8 px-2 py-0.5 text-xs text-violet-400">{value as string}</span>
                 : <span className="text-slate-700">—</span>,
@@ -49,7 +54,7 @@ const config: CrudPageConfig = {
         { key: 'is_true', label: '已确诊', type: 'switch' },
         { key: 'mechanism', label: '诊断机构', type: 'text' },
         { key: 'identify_date', label: '确诊日期', type: 'date' },
-        { key: 'annex_url', label: '附件链接', type: 'text', colSpan: 2 },
+        { key: 'annex_url', label: '职业病鉴定报告', type: 'file', colSpan: 2 },
     ],
     searchField: 'name',
     searchPlaceholder: '搜索患者姓名...',

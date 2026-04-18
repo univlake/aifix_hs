@@ -1,11 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Head } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { DataTable } from '@/components/data-table/DataTable';
 import { useScope } from '@/contexts/ScopeContext';
 import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, Download, FileDown } from 'lucide-react';
 import api from '@/lib/api';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import type { ApiResponse } from '@/types/models';
@@ -22,7 +22,14 @@ export interface FormField {
     optionsEndpoint?: string;
     optionsLabelKey?: string;
     optionsValueKey?: string;
+    /** Key of another field whose value this select depends on */
+    dependsOnField?: string;
+    /** Endpoint template for cascading options, e.g. '/skill-units/{value}' */
+    dependsOnEndpoint?: string;
+    /** Key inside response data to extract the options array, e.g. 'kids' */
+    dependsOnDataKey?: string;
     colSpan?: 1 | 2;
+    visibleWhen?: (form: Record<string, unknown>) => boolean;
 }
 
 export interface CrudColumn {
@@ -42,6 +49,9 @@ export interface CrudPageConfig {
     idKey?: string;
     /** Row field used as the label in the delete confirmation dialog. Defaults to 'title'. */
     labelKey?: string;
+    importEndpoint?: string;
+    exportEndpoint?: string;
+    templateEndpoint?: string;
 }
 
 interface PaginatedResponse<T> {
@@ -64,6 +74,9 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         searchPlaceholder,
         idKey = 'id',
         labelKey = 'title',
+        importEndpoint,
+        exportEndpoint,
+        templateEndpoint,
     } = config;
 
     const { activeCompany, isSubordinate } = useScope();
@@ -86,16 +99,20 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     const [formError, setFormError] = useState('');
     const [form, setForm] = useState<Record<string, unknown>>({});
     const [dynamicOptions, setDynamicOptions] = useState<Record<string, { value: string; label: string }[]>>({});
+    const [importLoading, setImportLoading] = useState(false);
+    const [importError, setImportError] = useState<{ row: number; errors: string[] }[]>([]);
+    const [exportLoading, setExportLoading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Load dynamic select options
+    // Load dynamic select options (scoped to current company)
     useEffect(() => {
         formFields.forEach((field) => {
-            if (field.type === 'select' && field.optionsEndpoint && !field.options) {
+            if (field.type === 'select' && field.optionsEndpoint && !field.options && !field.dependsOnField) {
                 const labelKey = field.optionsLabelKey ?? 'title';
                 const valueKey = field.optionsValueKey ?? 'id';
-                api.get<ApiResponse<PaginatedResponse<Record<string, unknown>>>>(field.optionsEndpoint, {
-                    params: { per_page: 200 },
-                })
+                const params: Record<string, unknown> = { per_page: 200 };
+                if (companyId) params.company_id = companyId;
+                api.get<ApiResponse<PaginatedResponse<Record<string, unknown>>>>(field.optionsEndpoint, { params })
                     .then((res) => {
                         const items = res.data.data?.data ?? [];
                         setDynamicOptions((prev) => ({
@@ -109,7 +126,41 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                     .catch(() => {});
             }
         });
-    }, [formFields]);
+    }, [formFields, companyId]);
+
+    // Load cascading options when a dependsOnField value changes
+    useEffect(() => {
+        formFields.forEach((field) => {
+            if (!field.dependsOnField || !field.dependsOnEndpoint) return;
+            const parentValue = form[field.dependsOnField];
+            if (!parentValue) {
+                setDynamicOptions((prev) => ({ ...prev, [field.key]: [] }));
+                return;
+            }
+            const endpoint = field.dependsOnEndpoint.replace('{value}', String(parentValue));
+            const labelKey = field.optionsLabelKey ?? 'title';
+            const valueKey = field.optionsValueKey ?? 'id';
+            const dataKey = field.dependsOnDataKey;
+            api.get<ApiResponse<Record<string, unknown>>>(endpoint)
+                .then((res) => {
+                    const raw = res.data.data;
+                    const items: Record<string, unknown>[] = dataKey
+                        ? ((raw?.[dataKey] as Record<string, unknown>[]) ?? [])
+                        : Array.isArray(raw) ? raw : [];
+                    setDynamicOptions((prev) => ({
+                        ...prev,
+                        [field.key]: items.map((item) => ({
+                            value: String(item[valueKey]),
+                            label: String(item[labelKey]),
+                        })),
+                    }));
+                })
+                .catch(() => {
+                    setDynamicOptions((prev) => ({ ...prev, [field.key]: [] }));
+                });
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formFields, ...formFields.filter((f) => f.dependsOnField).map((f) => form[f.dependsOnField!])]);
 
     const initForm = useCallback(() => {
         const f: Record<string, unknown> = {};
@@ -118,6 +169,71 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         });
         return f;
     }, [formFields]);
+
+    const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !importEndpoint || !companyId) return;
+        e.target.value = '';
+        setImportLoading(true);
+        setImportError([]);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('company_id', String(companyId));
+            await api.post(importEndpoint, fd, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            reload();
+        } catch (err: any) {
+            const rowErrors = err.response?.data?.data?.row_errors;
+            if (rowErrors) {
+                setImportError(rowErrors);
+            } else {
+                setImportError([{ row: 0, errors: [err.response?.data?.message ?? '导入失败'] }]);
+            }
+        } finally {
+            setImportLoading(false);
+        }
+    };
+
+    const handleExport = async () => {
+        if (!exportEndpoint || !companyId) return;
+        setExportLoading(true);
+        try {
+            const res = await api.get(exportEndpoint, {
+                params: { company_id: companyId },
+                responseType: 'blob',
+            });
+            const url = URL.createObjectURL(res.data as Blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title}导出.xlsx`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch {
+            // silent — browser will show nothing
+        } finally {
+            setExportLoading(false);
+        }
+    };
+
+    const handleTemplate = async () => {
+        if (!templateEndpoint || !companyId) return;
+        try {
+            const res = await api.get(templateEndpoint, {
+                params: { company_id: companyId },
+                responseType: 'blob',
+            });
+            const url = URL.createObjectURL(res.data as Blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title}导入模板.xlsx`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch {
+            // silent
+        }
+    };
 
     const handleSearch = useCallback(
         (val: string) => {
@@ -155,6 +271,10 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                 payload['company_id'] = companyId;
             }
             formFields.forEach((field) => {
+                if (field.visibleWhen && !field.visibleWhen(form)) {
+                    payload[field.key] = null;
+                    return;
+                }
                 if (field.type === 'number' && payload[field.key] !== '') {
                     payload[field.key] = Number(payload[field.key]);
                 }
@@ -186,7 +306,14 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         reload();
     };
 
-    const updateForm = (key: string, value: unknown) => setForm((f) => ({ ...f, [key]: value }));
+    const updateForm = (key: string, value: unknown) => setForm((f) => {
+        const next = { ...f, [key]: value };
+        // Clear any child field that depends on this key
+        formFields.forEach((field) => {
+            if (field.dependsOnField === key) next[field.key] = '';
+        });
+        return next;
+    });
 
     // Build table columns
     const tableColumns: ColumnDef<Record<string, unknown>>[] = colDefs.map((col) => ({
@@ -246,16 +373,75 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                         </p>
                     </div>
                 </div>
-                {!readOnly && (
-                    <button
-                        onClick={openCreate}
-                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95"
-                    >
-                        <Plus className="h-4 w-4" />
-                        新增{title}
-                    </button>
-                )}
+                <div className="flex items-center gap-2">
+                    {templateEndpoint && (
+                        <button
+                            onClick={handleTemplate}
+                            className="flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-400 transition-all hover:border-slate-600 hover:text-slate-200"
+                        >
+                            <FileDown className="h-3.5 w-3.5" />
+                            下载模板
+                        </button>
+                    )}
+                    {importEndpoint && !readOnly && (
+                        <>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".xlsx,.xls"
+                                className="hidden"
+                                onChange={handleImportFile}
+                            />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={importLoading}
+                                className="flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-400 transition-all hover:border-slate-600 hover:text-slate-200 disabled:opacity-50"
+                            >
+                                {importLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                                导入
+                            </button>
+                        </>
+                    )}
+                    {exportEndpoint && (
+                        <button
+                            onClick={handleExport}
+                            disabled={exportLoading}
+                            className="flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-800/50 px-3 py-2 text-xs font-medium text-slate-400 transition-all hover:border-slate-600 hover:text-slate-200 disabled:opacity-50"
+                        >
+                            {exportLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                            导出
+                        </button>
+                    )}
+                    {!readOnly && (
+                        <button
+                            onClick={openCreate}
+                            className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95"
+                        >
+                            <Plus className="h-4 w-4" />
+                            新增{title}
+                        </button>
+                    )}
+                </div>
             </div>
+
+            {/* Import row errors */}
+            {importError.length > 0 && (
+                <div className="mb-4 rounded-lg border border-red-500/20 bg-red-600/8 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs font-medium text-red-400">导入失败，请修正以下行后重新导入：</p>
+                        <button onClick={() => setImportError([])} className="text-red-600 hover:text-red-400">
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                    <ul className="space-y-0.5 text-xs text-red-400/80">
+                        {importError.map((e, i) => (
+                            <li key={i}>
+                                {e.row > 0 ? `第 ${e.row} 行：` : ''}{e.errors.join('；')}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             <DataTable
                 columns={tableColumns}
@@ -299,20 +485,23 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                             'grid gap-4',
                             formFields.some((f) => f.colSpan === 2) ? 'md:grid-cols-2' : 'grid-cols-1',
                         )}>
-                            {formFields.map((field) => (
-                                <div
-                                    key={field.key}
-                                    className={field.colSpan === 2 ? 'md:col-span-2' : ''}
-                                >
-                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
-                                        {field.label}
-                                        {field.required && (
-                                            <span className="ml-1 text-blue-500">*</span>
-                                        )}
-                                    </label>
-                                    {renderFormField(field, form, updateForm, dynamicOptions)}
-                                </div>
-                            ))}
+                            {formFields.map((field) => {
+                                if (field.visibleWhen && !field.visibleWhen(form)) return null;
+                                return (
+                                    <div
+                                        key={field.key}
+                                        className={field.colSpan === 2 ? 'md:col-span-2' : ''}
+                                    >
+                                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
+                                            {field.label}
+                                            {field.required && (
+                                                <span className="ml-1 text-blue-500">*</span>
+                                            )}
+                                        </label>
+                                        {renderFormField(field, form, updateForm, dynamicOptions)}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

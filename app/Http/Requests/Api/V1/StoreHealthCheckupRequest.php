@@ -15,7 +15,7 @@ class StoreHealthCheckupRequest extends FormRequest
     {
         return [
             'company_id' => 'required|integer',
-            'type' => 'required|string|max:255',
+            'type' => 'required|in:岗前,岗中,岗后',
             'department' => 'nullable|string|max:255',
             'number' => 'nullable|integer',
             'checkup_date' => 'nullable|date',
@@ -31,8 +31,7 @@ class StoreHealthCheckupRequest extends FormRequest
             'company_id.required' => '不能为空',
             'company_id.integer' => '必须是整数',
             'type.required' => '不能为空',
-            'type.string' => '必须是字符串',
-            'type.max' => '不能超过255个字符',
+            'type.in' => '检查类型必须是岗前、岗中或岗后',
             'department.max' => '不能超过255个字符',
         ];
     }

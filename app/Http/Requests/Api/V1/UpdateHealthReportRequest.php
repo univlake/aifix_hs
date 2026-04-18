@@ -17,7 +17,7 @@ class UpdateHealthReportRequest extends FormRequest
             'find_date' => 'sometimes|nullable|date',
             'name' => 'sometimes|required|string|max:255',
             'post' => 'sometimes|nullable|string|max:255',
-            'type' => 'sometimes|nullable|string|max:255',
+            'type' => 'sometimes|nullable|in:职业性尘肺病及其他呼吸系统疾病,职业性皮肤病,职业性眼病,职业性耳鼻喉口腔疾病,职业性化学中毒,物理因素所致职业病,职业性放射性疾病,职业性传染病,职业性肿瘤,其他职业病',
             'is_true' => 'sometimes|nullable|integer',
             'mechanism' => 'sometimes|nullable|string|max:255',
             'identify_date' => 'sometimes|nullable|date',
