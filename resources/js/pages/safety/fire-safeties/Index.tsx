@@ -10,6 +10,7 @@ const config: CrudPageConfig = {
     title: '消防安全',
     endpoint: '/fire-safeties',
     labelKey: 'name',
+    enableDetail: true,
     columns: [
         { key: 'name', header: '名称' },
         {

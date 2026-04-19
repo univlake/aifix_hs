@@ -10,6 +10,7 @@ const config: CrudPageConfig = {
     title: '职业卫生评价与检测',
     endpoint: '/hygiene-evaluations',
     labelKey: 'name',
+    enableDetail: true,
     columns: [
         { key: 'name', header: '评价名称' },
         { key: 'type', header: '评价或检测类型', width: 150 },

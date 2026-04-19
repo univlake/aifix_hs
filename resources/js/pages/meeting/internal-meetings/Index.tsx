@@ -10,6 +10,7 @@ const config: CrudPageConfig = {
     title: '内部会议',
     endpoint: '/internal-meetings',
     labelKey: 'name',
+    enableDetail: true,
     columns: [
         { key: 'id', header: 'ID', width: 60 },
         { key: 'name', header: '会议名称' },

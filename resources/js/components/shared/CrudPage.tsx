@@ -1,12 +1,12 @@
 import { Head } from '@inertiajs/react';
 import type {ColumnDef} from '@tanstack/react-table';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, Download, FileDown, Copy } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, Download, FileDown, Copy, Eye } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { OssVideoUploadField } from '@/components/shared/OssVideoUploadField';
 import { useScope } from '@/contexts/ScopeContext';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { useApiItem, useApiList, useApiCrud } from '@/hooks/use-api';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -83,6 +83,10 @@ export interface CrudPageConfig {
         /** Query param name to pass the parent value as (default: same as dependsOnKey) */
         dependsOnParam?: string;
     }>;
+    /** Enable a read-only detail modal using the form fields as the display schema. */
+    enableDetail?: boolean;
+    /** Override the title shown in the detail modal header. */
+    detailTitle?: string;
 }
 
 interface PaginatedResponse<T> {
@@ -113,6 +117,8 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         extraParams,
         forceReadOnly,
         filterFields = [],
+        enableDetail = false,
+        detailTitle,
     } = config;
 
     const { activeCompany, isSubordinate, rootCompany } = useScope();
@@ -129,6 +135,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
             },
         });
     const crud = useApiCrud(endpoint);
+    const detailItem = useApiItem<Record<string, unknown>>({ endpoint });
 
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -147,6 +154,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     const [copyMsg, setCopyMsg] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
     const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
+    const [detailOpen, setDetailOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Load dynamic select options (scoped to current company)
@@ -501,6 +509,11 @@ params[k] = v;
         setDialogOpen(true);
     };
 
+    const openDetail = async (row: Record<string, unknown>) => {
+        setDetailOpen(true);
+        await detailItem.fetch(row[idKey] as number | string);
+    };
+
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
@@ -628,33 +641,46 @@ return <span className="text-slate-700">—</span>;
         tableColumns.push({
             id: 'actions',
             header: '操作',
-            size: 88,
+            size: enableDetail ? 156 : 88,
             cell: ({ row }) => {
                 const rowCompanyId = row.original.company_id as number | undefined;
                 const canEditRow = !isSubordinate
                     || rowCompanyId === undefined
                     || rowCompanyId === rootCompany?.id;
-                if (!canEditRow) { return null; }
 
                 return (
                     <div className="flex items-center gap-0.5">
-                        <ActionButton
-                            onClick={() => openEdit(row.original)}
-                            variant="edit"
-                            title="编辑"
-                        >
-                            <Pencil className="h-3.5 w-3.5" />
-                        </ActionButton>
-                        <ActionButton
-                            onClick={() => {
-                                setDeleteId(row.original[idKey] as number);
-                                setDeleteLabel(String(row.original[labelKey] ?? row.original[idKey] ?? ''));
-                            }}
-                            variant="delete"
-                            title="删除"
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </ActionButton>
+                        {enableDetail && (
+                            <button
+                                onClick={() => void openDetail(row.original)}
+                                className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                                title="详情"
+                            >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span>详情</span>
+                            </button>
+                        )}
+                        {canEditRow && (
+                            <>
+                                <ActionButton
+                                    onClick={() => openEdit(row.original)}
+                                    variant="edit"
+                                    title="编辑"
+                                >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                </ActionButton>
+                                <ActionButton
+                                    onClick={() => {
+                                        setDeleteId(row.original[idKey] as number);
+                                        setDeleteLabel(String(row.original[labelKey] ?? row.original[idKey] ?? ''));
+                                    }}
+                                    variant="delete"
+                                    title="删除"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </ActionButton>
+                            </>
+                        )}
                     </div>
                 );
             },
@@ -856,6 +882,64 @@ return null;
                     </button>
                 </div>
             </Modal>
+
+            {detailOpen && (
+                <div className="fixed inset-0 z-50 flex">
+                    <div className="flex-1 bg-black/50" onClick={() => setDetailOpen(false)} />
+                    <div className="flex h-full w-full max-w-xl flex-col overflow-hidden border-l border-blue-900/40 bg-[#070d1f] shadow-2xl">
+                        <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
+                            <div>
+                                <h2 className="text-base font-semibold text-slate-100">
+                                    {detailTitle ?? `${title}详情`}
+                                </h2>
+                                <p className="mt-0.5 text-xs text-slate-600">
+                                    仅展示记录信息
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setDetailOpen(false)}
+                                className="rounded-lg p-1.5 text-slate-500 hover:text-slate-300"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {detailItem.loading && (
+                                <div className="flex h-40 items-center justify-center">
+                                    <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+                                </div>
+                            )}
+
+                            {!detailItem.loading && detailItem.error && (
+                                <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
+                                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                    {detailItem.error}
+                                </div>
+                            )}
+
+                            {!detailItem.loading && !detailItem.error && detailItem.data && (
+                                <div className={cn(
+                                    'grid gap-4',
+                                    formFields.some((f) => f.colSpan === 2) ? 'md:grid-cols-2' : 'grid-cols-1',
+                                )}>
+                                    {formFields.map((field) => (
+                                        <div
+                                            key={field.key}
+                                            className={field.colSpan === 2 ? 'md:col-span-2' : ''}
+                                        >
+                                            <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+                                                {field.label}
+                                            </p>
+                                            {renderDetailField(field, detailItem.data)}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Delete confirm modal */}
             <Modal open={!!deleteId} onClose={() => {
@@ -1070,6 +1154,70 @@ function renderFormField(
         default:
             return null;
     }
+}
+
+function renderDetailField(field: FormField, row: Record<string, unknown>) {
+    const value = row[field.key];
+
+    if (value === null || value === undefined || value === '') {
+        return <p className="text-sm text-slate-600">—</p>;
+    }
+
+    if (field.type === 'textarea') {
+        return <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-300">{String(value)}</p>;
+    }
+
+    if (field.type === 'switch') {
+        return <p className="text-sm text-slate-300">{Number(value) === 1 ? '是' : '否'}</p>;
+    }
+
+    if (field.type === 'file' || field.type === 'video') {
+        return (
+            <a
+                href={String(value)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center rounded-md border border-blue-500/20 bg-blue-600/10 px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300"
+            >
+                查看附件
+            </a>
+        );
+    }
+
+    if (field.type === 'date') {
+        return <p className="text-sm text-slate-300">{String(value).slice(0, 10)}</p>;
+    }
+
+    if (field.type === 'select' && field.options) {
+        const selectedOption = field.options.find((option) => option.value === String(value));
+
+        return <p className="text-sm text-slate-300">{selectedOption?.label ?? String(value)}</p>;
+    }
+
+    if (field.type === 'sub-table' && Array.isArray(value)) {
+        if (value.length === 0) {
+            return <p className="text-sm text-slate-600">—</p>;
+        }
+
+        return (
+            <div className="space-y-2">
+                {value.map((item, index) => (
+                    <div key={index} className="rounded-lg border border-blue-900/30 bg-[#070d1f] p-3">
+                        {field.subFields?.map((subField) => (
+                            <div key={subField.key} className="flex gap-2 text-sm">
+                                <span className="text-slate-500">{subField.label}:</span>
+                                <span className="text-slate-300">
+                                    {item?.[subField.key] ? String(item[subField.key]) : '—'}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    return <p className="text-sm text-slate-300">{String(value)}</p>;
 }
 
 // ── Modal ─────────────────────────────────────────────────────────

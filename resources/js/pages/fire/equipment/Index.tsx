@@ -19,6 +19,7 @@ const AUTOMATION_OPTIONS = [
 const config: CrudPageConfig = {
     title: '消防器材',
     endpoint: '/fire-equipment',
+    enableDetail: true,
     columns: [
         { key: 'equipment_name', header: '器材名称' },
         { key: 'special_type', header: '器材类型', width: 200 },

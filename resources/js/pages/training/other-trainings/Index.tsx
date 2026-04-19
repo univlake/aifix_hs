@@ -5,6 +5,7 @@ const config: CrudPageConfig = {
     title: '第三方培训',
     endpoint: '/other-trainings',
     labelKey: 'name',
+    enableDetail: true,
     columns: [
         { key: 'id', header: 'ID', width: 60 },
         { key: 'name', header: '培训名称' },

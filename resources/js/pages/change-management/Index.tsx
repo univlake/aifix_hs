@@ -7,6 +7,7 @@ const config: CrudPageConfig = {
     labelKey: 'title',
     searchField: 'title',
     searchPlaceholder: '搜索变更标题...',
+    enableDetail: true,
     columns: [
         { key: 'id', header: 'ID', width: 60 },
         { key: 'title', header: '变更标题' },

@@ -4,6 +4,7 @@ import type { CrudPageConfig } from '@/components/shared/CrudPage';
 const config: CrudPageConfig = {
     title: '职业健康档案',
     endpoint: '/health-files',
+    enableDetail: true,
     columns: [
         { key: 'name', header: '姓名' },
         { key: 'number', header: '工号', width: 100 },

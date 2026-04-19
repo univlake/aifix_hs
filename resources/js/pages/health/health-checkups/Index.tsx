@@ -10,6 +10,7 @@ const CHECKUP_TYPES = [
 const config: CrudPageConfig = {
     title: '职业健康检查',
     endpoint: '/health-checkups',
+    enableDetail: true,
     columns: [
         {
             key: 'type',

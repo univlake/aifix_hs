@@ -7,6 +7,7 @@ const config: CrudPageConfig = {
     labelKey: 'name',
     searchField: 'name',
     searchPlaceholder: '搜索培训名称...',
+    enableDetail: true,
     columns: [
         { key: 'name', header: '培训名称' },
         { key: 'training_unit', header: '培训单位', width: 160 },

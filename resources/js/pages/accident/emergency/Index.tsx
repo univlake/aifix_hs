@@ -7,6 +7,7 @@ const teamsConfig: CrudPageConfig = {
     title: '应急队伍',
     endpoint: '/emergency-teams',
     labelKey: 'name',
+    enableDetail: true,
     columns: [
         {
             key: 'name',
@@ -49,6 +50,7 @@ const suppliesConfig: CrudPageConfig = {
     title: '应急物资',
     endpoint: '/emergency-supplies',
     labelKey: 'name',
+    enableDetail: true,
     columns: [
         { key: 'name', header: '物资名称' },
         { key: 'number', header: '数量', width: 100 },
@@ -80,6 +82,7 @@ const drillConfig: CrudPageConfig = {
     title: '应急演练',
     endpoint: '/emergency-drills',
     labelKey: 'name',
+    enableDetail: true,
     columns: [
         { key: 'name', header: '演练名称' },
         {

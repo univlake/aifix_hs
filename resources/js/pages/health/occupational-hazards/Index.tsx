@@ -17,6 +17,7 @@ const HAZARD_TYPES = [
 const config: CrudPageConfig = {
     title: '职业病危害因素',
     endpoint: '/occupational-hazards',
+    enableDetail: true,
     columns: [
         { key: 'name', header: '作业场所' },
         {

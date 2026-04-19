@@ -17,6 +17,7 @@ const DISEASE_TYPES = [
 const config: CrudPageConfig = {
     title: '职业病报告',
     endpoint: '/health-reports',
+    enableDetail: true,
     columns: [
         { key: 'name', header: '患者姓名' },
         { key: 'post', header: '岗位', width: 120 },

@@ -34,6 +34,7 @@ export const accidentReportConfig: CrudPageConfig = {
     title: '事故上报',
     endpoint: '/accident-bulletins',
     labelKey: 'content',
+    enableDetail: true,
     filterFields: [
         { key: 'type', placeholder: '全部事故类型', options: TYPE_OPTIONS },
         { key: 'accident_level', placeholder: '全部事故等级', options: ACCIDENT_LEVEL_OPTIONS },

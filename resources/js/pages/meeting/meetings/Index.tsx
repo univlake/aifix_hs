@@ -4,6 +4,7 @@ import type { CrudPageConfig } from '@/components/shared/CrudPage';
 const config: CrudPageConfig = {
     title: '会议管理',
     endpoint: '/meetings',
+    enableDetail: true,
     columns: [
         { key: 'id', header: 'ID', width: 60 },
         { key: 'title', header: '标题' },

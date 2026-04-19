@@ -9,6 +9,7 @@ const internalConfig: CrudPageConfig = {
     labelKey: 'name',
     searchField: 'name',
     searchPlaceholder: '搜索培训名称...',
+    enableDetail: true,
     columns: [
         {
             key: 'name',
@@ -80,6 +81,7 @@ const externalConfig: CrudPageConfig = {
     labelKey: 'name',
     searchField: 'name',
     searchPlaceholder: '搜索培训名称...',
+    enableDetail: true,
     columns: [
         {
             key: 'name',
@@ -140,6 +142,7 @@ const otherConfig: CrudPageConfig = {
     labelKey: 'name',
     searchField: 'name',
     searchPlaceholder: '搜索第三方培训...',
+    enableDetail: true,
     columns: [
         {
             key: 'name',
