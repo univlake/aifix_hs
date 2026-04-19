@@ -65,31 +65,31 @@
     --radius: 0.5rem;
 
     /* Surface tokens — dark defaults */
-    --surface-base:    #070d1f;
+    --surface-base: #070d1f;
     --surface-sidebar: #060c1a;
-    --surface-card:    #0d1530;
-    --surface-input:   #070d1f;
+    --surface-card: #0d1530;
+    --surface-input: #070d1f;
     --surface-input-2: #0a1428;
-    --surface-muted:   #0f1e3d;
-    --text-base:       #e2e8f0;
-    --text-secondary:  #94a3b8;
-    --text-muted:      #64748b;
-    --border-subtle:   rgba(30, 58, 95, 0.5);
+    --surface-muted: #0f1e3d;
+    --text-base: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border-subtle: rgba(30, 58, 95, 0.5);
     color-scheme: dark;
 }
 
 html.light {
-    /* Surface tokens — sky blue light theme */
-    --surface-base:    #f5f7fa;   /* warm off-white */
-    --surface-sidebar: #eaf1f8;   /* soft blue-gray */
-    --surface-card:    #fafbfc;   /* off-white cards */
-    --surface-input:   #f5f7fa;
-    --surface-input-2: #eaf1f8;
-    --surface-muted:   #dde8f0;
-    --text-base:       #0f172a;   /* slate-900 */
-    --text-secondary:  #334155;   /* slate-700 */
-    --text-muted:      #64748b;   /* slate-500 */
-    --border-subtle:   rgba(125, 211, 252, 0.7);  /* sky-300 */
+    /* Surface tokens — cool minimal tech light theme */
+    --surface-base: #eef3f8;
+    --surface-sidebar: #e6edf5;
+    --surface-card: #f8fbfe;
+    --surface-input: #f4f8fc;
+    --surface-input-2: #eaf0f7;
+    --surface-muted: #dde7f1;
+    --text-base: #0f172a;
+    --text-secondary: #243447;
+    --text-muted: #5f7288;
+    --border-subtle: rgba(73, 107, 142, 0.22);
     color-scheme: light;
 }
 
@@ -99,9 +99,9 @@ body {
 }
 
 /* ── Readability: date/time pickers inherit color-scheme ───────── */
-input[type="date"],
-input[type="time"],
-input[type="datetime-local"] {
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'] {
     color-scheme: inherit;
 }
 
@@ -111,62 +111,112 @@ input[type="datetime-local"] {
     opacity: 1;
 }
 html.light ::placeholder {
-    color: #94a3b8; /* slate-400 — readable on light bg */
+    color: #7f92a8;
     opacity: 1;
 }
 
 /* ── Light mode: structural backgrounds ────────────────────────── */
-html.light .bg-\[\#070d1f\]    { background-color: var(--surface-base) !important; }
-html.light .bg-\[\#070d1f\]\/60 { background-color: #e8eef4 !important; }   /* table header row */
-html.light .bg-\[\#060c1a\]    { background-color: var(--surface-sidebar) !important; }
-html.light .bg-\[\#0d1530\]    { background-color: var(--surface-card) !important; }
-html.light .bg-\[\#0a1428\]    { background-color: var(--surface-input-2) !important; }
-html.light .bg-\[\#0f1e3d\]    { background-color: var(--surface-muted) !important; }
+html.light .bg-\[\#070d1f\] {
+    background-color: var(--surface-base) !important;
+}
+html.light .bg-\[\#070d1f\]\/60 {
+    background-color: #e3ebf3 !important;
+}
+html.light .bg-\[\#060c1a\] {
+    background-color: var(--surface-sidebar) !important;
+}
+html.light .bg-\[\#0d1530\] {
+    background-color: var(--surface-card) !important;
+}
+html.light .bg-\[\#0a1428\] {
+    background-color: var(--surface-input-2) !important;
+}
+html.light .bg-\[\#0f1e3d\] {
+    background-color: var(--surface-muted) !important;
+}
 
 /* ── Light mode: text — remap light-on-dark Tailwind classes ───── */
-html.light .text-slate-100 { color: #0f172a !important; }
-html.light .text-slate-200 { color: #1e293b !important; }
-html.light .text-slate-300 { color: #334155 !important; }
-html.light .text-slate-400 { color: #475569 !important; }
-html.light .text-slate-500 { color: #64748b !important; }
-html.light .text-slate-600 { color: #475569 !important; }
-html.light .text-slate-700 { color: #334155 !important; }
+html.light .text-slate-100 {
+    color: #0f172a !important;
+}
+html.light .text-slate-200 {
+    color: #1b2a3a !important;
+}
+html.light .text-slate-300 {
+    color: #31465d !important;
+}
+html.light .text-slate-400 {
+    color: #50657d !important;
+}
+html.light .text-slate-500 {
+    color: #688099 !important;
+}
+html.light .text-slate-600 {
+    color: #50657d !important;
+}
+html.light .text-slate-700 {
+    color: #31465d !important;
+}
 
-/* Blue accent text: darken for light backgrounds */
-html.light .text-blue-300  { color: #0369a1 !important; }  /* sky-700 */
-html.light .text-blue-400  { color: #0284c7 !important; }  /* sky-600 */
+/* Blue accent text: cleaner cyan-blue for light backgrounds */
+html.light .text-blue-300 {
+    color: #0f5f8f !important;
+}
+html.light .text-blue-400 {
+    color: #1672a8 !important;
+}
 
-/* ── Light mode: borders → sky palette ─────────────────────────── */
-html.light .border-blue-900\/10 { border-color: rgba(186, 230, 253, 0.4) !important; }
-html.light .border-blue-900\/15 { border-color: rgba(186, 230, 253, 0.5) !important; }
-html.light .border-blue-900\/20 { border-color: rgba(125, 211, 252, 0.5) !important; }
-html.light .border-blue-900\/30 { border-color: rgba(125, 211, 252, 0.7) !important; }
-html.light .border-blue-900\/40 { border-color: rgba(14,  165, 233, 0.3) !important; }
-html.light .border-blue-900\/50 { border-color: rgba(14,  165, 233, 0.4) !important; }
+/* ── Light mode: borders → restrained steel-blue palette ───────── */
+html.light .border-blue-900\/10 {
+    border-color: rgba(148, 169, 190, 0.22) !important;
+}
+html.light .border-blue-900\/15 {
+    border-color: rgba(133, 156, 181, 0.26) !important;
+}
+html.light .border-blue-900\/20 {
+    border-color: rgba(118, 145, 172, 0.3) !important;
+}
+html.light .border-blue-900\/30 {
+    border-color: rgba(99, 131, 164, 0.38) !important;
+}
+html.light .border-blue-900\/40 {
+    border-color: rgba(70, 104, 140, 0.32) !important;
+}
+html.light .border-blue-900\/50 {
+    border-color: rgba(54, 87, 121, 0.38) !important;
+}
 
 /* ── Light mode: table ──────────────────────────────────────────── */
 html.light thead tr {
-    background-color: #e8eef4 !important;  /* muted blue-gray */
-    border-bottom-color: #d0dce8 !important;
+    background-color: #e3ebf3 !important;
+    border-bottom-color: #cfdbe7 !important;
 }
 html.light thead th {
-    color: #0369a1 !important;  /* sky-700 */
+    color: #2a5a7d !important;
 }
 html.light tbody tr {
-    border-bottom-color: rgba(186, 230, 253, 0.6) !important;
+    border-bottom-color: rgba(159, 177, 196, 0.34) !important;
 }
 html.light tbody tr:nth-child(even) {
-    background-color: rgba(224, 242, 254, 0.4);  /* sky-100 at 40% */
+    background-color: rgba(224, 232, 241, 0.52);
 }
 html.light tbody tr:hover {
-    background-color: rgba(14, 165, 233, 0.07) !important;
+    background-color: rgba(84, 126, 169, 0.08) !important;
 }
-html.light tbody td { color: #1e293b; }
+html.light tbody td {
+    color: #1e293b;
+}
 
 /* ── Light mode: scrollbar ─────────────────────────────────────── */
-html.light ::-webkit-scrollbar-track { background: #e0f2fe; }
-html.light ::-webkit-scrollbar-thumb { background: #7dd3fc; }
-html.light ::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
+html.light ::-webkit-scrollbar-track {
+    background: #dde6ef;
+}
+html.light ::-webkit-scrollbar-thumb {
+    background: #95a9bf;
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+    background: #6b89a7;
+}
 
 /* Scrollbar */
 ::-webkit-scrollbar {
@@ -193,7 +243,9 @@ html.light ::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
 
 /* Glow effects */
 .glow-blue {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 60px rgba(59, 130, 246, 0.15);
+    box-shadow:
+        0 0 20px rgba(59, 130, 246, 0.4),
+        0 0 60px rgba(59, 130, 246, 0.15);
 }
 .glow-text {
     text-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
@@ -217,18 +269,32 @@ html.light ::-webkit-scrollbar-thumb:hover { background: #0ea5e9; }
 
 /* Scan line animation */
 @keyframes scan {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(100vh); }
+    0% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(100vh);
+    }
 }
 
 @keyframes pulse-glow {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 1;
+    }
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 @keyframes fadeInUp {
