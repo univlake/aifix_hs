@@ -147,6 +147,7 @@ Route::middleware('permission:bloc-notices.list')->group(function () {
 // ── 集团事故快报 ─────────────────────────────────────────────────────
 Route::middleware('permission:bloc-accident-bulletins.list')->group(function () {
     Route::get('/bloc-accident-bulletins', [BlocAccidentBulletinsController::class, 'index']);
+    Route::get('/bloc-accident-bulletins/annual-stats', [BlocAccidentBulletinsController::class, 'annualStats']);
 });
 
 // ── 集团评论/公告 ─────────────────────────────────────────────────────
