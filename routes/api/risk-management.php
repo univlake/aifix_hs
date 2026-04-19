@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AssessDetectController;
+use App\Http\Controllers\Api\V1\BlocMonthlyInvestigationsController;
 use App\Http\Controllers\Api\V1\FloatRiskLogController;
 use App\Http\Controllers\Api\V1\HazardController;
 use App\Http\Controllers\Api\V1\HiddenDangerInfoController;
@@ -140,6 +141,7 @@ Route::middleware('permission:risk-distribution-maps.update')->group(function ()
 Route::middleware('permission:monthly-investigations.list')->group(function () {
     Route::get('/monthly-investigations', [MonthlyInvestigationController::class, 'index']);
     Route::get('/monthly-investigations/{id}', [MonthlyInvestigationController::class, 'show']);
+    Route::get('/bloc-monthly-investigations', [BlocMonthlyInvestigationsController::class, 'index']);
 });
 Route::middleware('permission:monthly-investigations.create')->group(function () {
     Route::post('/monthly-investigations', [MonthlyInvestigationController::class, 'store']);

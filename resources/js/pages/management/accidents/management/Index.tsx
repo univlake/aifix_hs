@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { Activity, List, Loader2, ChevronLeft, ChevronRight, X, Pencil } from 'lucide-react';
+import { Activity, List, Loader2, ChevronLeft, ChevronRight, X, Pencil, Trash2, Eye } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
 import { useAuth } from '@/hooks/use-auth';
@@ -17,6 +17,7 @@ interface AnnualStat {
 
 interface AccidentRow {
     id: number;
+    company_id: number;
     user_id: number | null;
     happen_time: string | null;
     type: string | null;
@@ -294,14 +295,26 @@ const FIELD_LABELS: Record<string, string> = {
 
 type EditForm = Omit<AccidentFull, 'id' | 'user_id' | 'company'>;
 
+function toEditForm(detail: AccidentFull): EditForm {
+    const { id, user_id, company, ...rest } = detail;
+
+    void id;
+    void user_id;
+    void company;
+
+    return rest;
+}
+
 function DetailPanel({
     id,
-    currentUserId,
+    userCompanyId,
+    initialEditing = false,
     onClose,
     onSaved,
 }: {
     id: number;
-    currentUserId: number | null;
+    userCompanyId: number | null;
+    initialEditing?: boolean;
     onClose: () => void;
     onSaved: () => void;
 }) {
@@ -317,22 +330,33 @@ function DetailPanel({
         api.get<ApiResponse<AccidentFull>>(`/accident-bulletins/${id}`)
             .then((res) => {
                 setDetail(res.data.data);
+
+                if (initialEditing && userCompanyId !== null && res.data.data.company_id === userCompanyId) {
+                    setForm(toEditForm(res.data.data));
+                    setEditing(true);
+                }
             })
             .catch(() => setError('加载失败'))
             .finally(() => setLoading(false));
-    }, [id]);
+    }, [id, initialEditing, userCompanyId]);
 
     const startEdit = () => {
-        if (!detail) { return; }
-        const { id: _id, user_id: _uid, company: _co, ...rest } = detail;
-        setForm(rest);
+        if (!detail) {
+            return;
+        }
+
+        setForm(toEditForm(detail));
         setEditing(true);
     };
 
     const handleSave = async () => {
-        if (!form) { return; }
+        if (!form) {
+            return;
+        }
+
         setSaving(true);
         setError('');
+
         try {
             await api.put(`/accident-bulletins/${id}`, form);
             onSaved();
@@ -353,7 +377,10 @@ function DetailPanel({
 
     const setKid = (idx: number, key: keyof KidRow, value: string) => {
         setForm((prev) => {
-            if (!prev) { return prev; }
+            if (!prev) {
+                return prev;
+            }
+
             const kids = prev.kids.map((k, i) => i === idx ? { ...k, [key]: value } : k);
 
             return { ...prev, kids };
@@ -362,7 +389,10 @@ function DetailPanel({
 
     const addKid = () => {
         setForm((prev) => {
-            if (!prev) { return prev; }
+            if (!prev) {
+                return prev;
+            }
+
             const blank: KidRow = { name: '', sex: '', age: '', department: '', work_type: '', work_age: '', education_level: '', degree_injury: '', days_off: '' };
 
             return { ...prev, kids: [...prev.kids, blank] };
@@ -371,13 +401,15 @@ function DetailPanel({
 
     const removeKid = (idx: number) => {
         setForm((prev) => {
-            if (!prev) { return prev; }
+            if (!prev) {
+                return prev;
+            }
 
             return { ...prev, kids: prev.kids.filter((_, i) => i !== idx) };
         });
     };
 
-    const canEdit = currentUserId !== null && detail?.user_id === currentUserId;
+    const canEdit = userCompanyId !== null && detail?.company_id === userCompanyId;
 
     return (
         <div className="fixed inset-0 z-50 flex">
@@ -671,7 +703,8 @@ function LevelBadge({ level }: { level: string | null }) {
 // ── Accident List ──────────────────────────────────────────────────
 
 function AccidentList({ companyId }: { companyId: number | undefined }) {
-    const { user } = useAuth();
+    const { user, company } = useAuth();
+    const currentUserCompanyId = user?.company_id ?? company?.id ?? null;
     const [rows, setRows] = useState<AccidentRow[]>([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
@@ -681,14 +714,20 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
     const [filterLevel, setFilterLevel] = useState('');
     const [filterYear, setFilterYear] = useState('');
     const [detailId, setDetailId] = useState<number | null>(null);
+    const [editId, setEditId] = useState<number | null>(null);
+    const [deleteRow, setDeleteRow] = useState<AccidentRow | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     const currentYear = new Date().getFullYear();
     const yearOptions = Array.from({ length: 8 }, (_, i) => String(currentYear - i));
 
     const fetchRows = async (p: number, type: string, level: string, year: string) => {
-        if (!companyId) { return; }
+        if (!companyId) {
+            return;
+        }
 
         setLoading(true);
+
         try {
             const res = await api.get<ApiResponse<PaginatedData<AccidentRow>>>(
                 '/bloc-accident-bulletins',
@@ -720,6 +759,22 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
     const handlePage = (p: number) => {
         setPage(p);
         fetchRows(p, filterType, filterLevel, filterYear);
+    };
+
+    const handleDelete = async () => {
+        if (!deleteRow) {
+            return;
+        }
+
+        setDeleting(true);
+
+        try {
+            await api.delete(`/accident-bulletins/${deleteRow.id}`);
+            setDeleteRow(null);
+            fetchRows(page, filterType, filterLevel, filterYear);
+        } finally {
+            setDeleting(false);
+        }
     };
 
     return (
@@ -766,7 +821,7 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-blue-900/30 bg-[#070d1f]">
-                            {['企业名称', '发生时间', '事故类型', '事故等级', '伤亡程度', '死亡', '受伤', '发生地点', ''].map((h, i) => (
+                            {['企业名称', '发生时间', '事故类型', '事故等级', '伤亡程度', '死亡', '受伤', '发生地点', '操作'].map((h, i) => (
                                 <th key={i} className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                                     {h}
                                 </th>
@@ -787,7 +842,10 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
                                 </td>
                             </tr>
                         ) : (
-                            rows.map((row) => (
+                            rows.map((row) => {
+                                const canManage = currentUserCompanyId !== null && Number(row.company_id) === Number(currentUserCompanyId);
+
+                                return (
                                 <tr
                                     key={row.id}
                                     className="border-b border-blue-900/20 last:border-0 transition-colors hover:bg-white/[0.02]"
@@ -817,15 +875,37 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
                                         {row.happen_area ?? <span className="text-slate-700">—</span>}
                                     </td>
                                     <td className="px-4 py-2.5">
-                                        <button
-                                            onClick={() => setDetailId(row.id)}
-                                            className="text-xs text-blue-400 hover:text-blue-300 whitespace-nowrap"
-                                        >
-                                            查看详情
-                                        </button>
+                                        <div className="flex items-center gap-0.5 whitespace-nowrap">
+                                            <button
+                                                onClick={() => setDetailId(row.id)}
+                                                className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 hover:bg-blue-600/10 hover:text-blue-300"
+                                            >
+                                                <Eye className="h-3.5 w-3.5" />
+                                                详情
+                                            </button>
+                                            {canManage && (
+                                                <>
+                                                    <button
+                                                        onClick={() => setEditId(row.id)}
+                                                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                                                        title="编辑"
+                                                    >
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDeleteRow(row)}
+                                                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                                                        title="删除"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
-                            ))
+                                );
+                            })
                         )}
                     </tbody>
                 </table>
@@ -858,10 +938,51 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
             {detailId !== null && (
                 <DetailPanel
                     id={detailId}
-                    currentUserId={user?.id ?? null}
+                    userCompanyId={currentUserCompanyId}
                     onClose={() => setDetailId(null)}
                     onSaved={() => fetchRows(page, filterType, filterLevel, filterYear)}
                 />
+            )}
+
+            {editId !== null && (
+                <DetailPanel
+                    id={editId}
+                    userCompanyId={currentUserCompanyId}
+                    initialEditing
+                    onClose={() => setEditId(null)}
+                    onSaved={() => {
+                        setEditId(null);
+                        fetchRows(page, filterType, filterLevel, filterYear);
+                    }}
+                />
+            )}
+
+            {deleteRow !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60" onClick={() => setDeleteRow(null)} />
+                    <div className="relative w-full max-w-md rounded-2xl border border-blue-900/40 bg-[#070d1f] p-6 shadow-2xl">
+                        <h3 className="text-base font-semibold text-slate-100">删除事故记录</h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-400">
+                            确认删除这条事故记录吗？删除后将无法恢复。
+                        </p>
+                        <div className="mt-5 flex items-center justify-end gap-3">
+                            <button
+                                onClick={() => setDeleteRow(null)}
+                                className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                            >
+                                取消
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={deleting}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                            >
+                                {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                确认删除
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
@@ -882,7 +1003,9 @@ export default function AccidentManagementIndex() {
     const prevCompanyId = useRef<number | undefined>(undefined);
 
     useEffect(() => {
-        if (!companyId || companyId === prevCompanyId.current) { return; }
+        if (!companyId || companyId === prevCompanyId.current) {
+            return;
+        }
 
         prevCompanyId.current = companyId;
         setChartLoading(true);

@@ -370,3 +370,12 @@ Key config options in `config/activitylog.php`:
 - `actions.clean_log`: Action class for cleaning old activities
 
 </laravel-boost-guidelines>
+
+
+<claude-mem-context>
+# Memory Context
+
+# [aifix_hs] recent context, 2026-04-19 10:11pm GMT+8
+
+No previous sessions found.
+</claude-mem-context>

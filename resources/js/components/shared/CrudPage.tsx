@@ -115,9 +115,10 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         filterFields = [],
     } = config;
 
-    const { activeCompany, isSubordinate } = useScope();
+    const { activeCompany, isSubordinate, rootCompany } = useScope();
     const companyId = activeCompany?.id;
-    const readOnly = isSubordinate || (forceReadOnly ?? false);
+    const globalReadOnly = forceReadOnly ?? false;
+    const readOnly = globalReadOnly;
 
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<Record<string, unknown>>({
@@ -623,32 +624,40 @@ return <span className="text-slate-700">—</span>;
         })),
     ];
 
-    if (!readOnly) {
+    if (!globalReadOnly) {
         tableColumns.push({
             id: 'actions',
             header: '操作',
             size: 88,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-0.5">
-                    <ActionButton
-                        onClick={() => openEdit(row.original)}
-                        variant="edit"
-                        title="编辑"
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                    </ActionButton>
-                    <ActionButton
-                        onClick={() => {
-                            setDeleteId(row.original[idKey] as number);
-                            setDeleteLabel(String(row.original[labelKey] ?? row.original[idKey] ?? ''));
-                        }}
-                        variant="delete"
-                        title="删除"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </ActionButton>
-                </div>
-            ),
+            cell: ({ row }) => {
+                const rowCompanyId = row.original.company_id as number | undefined;
+                const canEditRow = !isSubordinate
+                    || rowCompanyId === undefined
+                    || rowCompanyId === rootCompany?.id;
+                if (!canEditRow) { return null; }
+
+                return (
+                    <div className="flex items-center gap-0.5">
+                        <ActionButton
+                            onClick={() => openEdit(row.original)}
+                            variant="edit"
+                            title="编辑"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </ActionButton>
+                        <ActionButton
+                            onClick={() => {
+                                setDeleteId(row.original[idKey] as number);
+                                setDeleteLabel(String(row.original[labelKey] ?? row.original[idKey] ?? ''));
+                            }}
+                            variant="delete"
+                            title="删除"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </ActionButton>
+                    </div>
+                );
+            },
         });
     }
 
@@ -666,7 +675,7 @@ return <span className="text-slate-700">—</span>;
                         条记录
                     </p>
                 </div>
-                {!readOnly && (
+                {!isSubordinate && !globalReadOnly && (
                     <button
                         onClick={openCreate}
                         className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95"

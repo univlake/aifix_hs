@@ -32,6 +32,11 @@ class MonthlyInvestigation extends BaseModel
         'last_user_id',
     ];
 
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
     public function monthlyInvestigationReviews()
     {
         return $this->hasMany(MonthlyInvestigationReview::class);
