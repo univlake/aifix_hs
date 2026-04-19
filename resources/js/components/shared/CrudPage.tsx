@@ -51,7 +51,7 @@ export interface CrudPageConfig {
     title: string;
     endpoint: string;
     columns: CrudColumn[];
-    formFields: FormField[];
+    formFields?: FormField[];
     searchField?: string;
     searchPlaceholder?: string;
     idKey?: string;
@@ -63,6 +63,10 @@ export interface CrudPageConfig {
     copyEndpoint?: string;
     /** When false, omit company_id from list queries (shared/global data). Default true. */
     companyScoped?: boolean;
+    /** Extra static params always merged into the list query (e.g. parent_company_id). */
+    extraParams?: Record<string, unknown>;
+    /** Force read-only regardless of isSubordinate (hides all create/edit/delete UI). */
+    forceReadOnly?: boolean;
     /** Extra filter dropdowns shown beside the search bar */
     filterFields?: Array<{
         key: string;
@@ -95,7 +99,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         title,
         endpoint,
         columns: colDefs,
-        formFields,
+        formFields = [],
         searchField,
         searchPlaceholder,
         idKey = 'id',
@@ -105,17 +109,22 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         templateEndpoint,
         copyEndpoint,
         companyScoped = true,
+        extraParams,
+        forceReadOnly,
         filterFields = [],
     } = config;
 
     const { activeCompany, isSubordinate } = useScope();
     const companyId = activeCompany?.id;
-    const readOnly = isSubordinate;
+    const readOnly = isSubordinate || (forceReadOnly ?? false);
 
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<Record<string, unknown>>({
             endpoint,
-            defaultParams: companyScoped && companyId ? { company_id: companyId } : {},
+            defaultParams: {
+                ...(companyScoped && companyId ? { company_id: companyId } : {}),
+                ...(extraParams ?? {}),
+            },
         });
     const crud = useApiCrud(endpoint);
 

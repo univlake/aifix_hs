@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
-use App\Models\TrainingFile;
-use App\Models\TrainingFileLog;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use App\Http\Requests\Api\V1\StoreTrainingFileRequest;
 use App\Http\Requests\Api\V1\UpdateTrainingFileRequest;
+use App\Models\TrainingFile;
+use App\Models\TrainingFileLog;
+use App\Services\OssService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TrainingFileController extends Controller
 {
@@ -17,7 +18,15 @@ class TrainingFileController extends Controller
         $query = TrainingFile::query();
 
         if ($request->filled('company_id')) {
-            $query->where('company_id', $request->company_id);
+            $ids = [$request->company_id];
+            if ($request->filled('parent_company_id') && (int) $request->parent_company_id > 0) {
+                $ids[] = (int) $request->parent_company_id;
+            }
+            $query->whereIn('company_id', $ids);
+        }
+
+        if ($request->filled('title')) {
+            $query->where('title', 'like', '%'.$request->title.'%');
         }
 
         $list = $query->orderBy('id', 'desc')
@@ -30,7 +39,7 @@ class TrainingFileController extends Controller
     {
         $data = TrainingFile::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('培训材料不存在');
         }
 
@@ -43,7 +52,7 @@ class TrainingFileController extends Controller
             'last_user_id' => auth()->id() ?? 0,
         ]);
 
-        return $this->success($data->file_url);
+        return $this->success(OssService::signUrl($data->file_url ?? ''));
     }
 
     public function store(StoreTrainingFileRequest $request): JsonResponse
@@ -61,7 +70,7 @@ class TrainingFileController extends Controller
     {
         $record = TrainingFile::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('培训材料不存在');
         }
         $data = $request->validated();
@@ -75,7 +84,7 @@ class TrainingFileController extends Controller
     {
         $record = TrainingFile::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('培训材料不存在');
         }
 

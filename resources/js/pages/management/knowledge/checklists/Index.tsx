@@ -1,6 +1,6 @@
 import { CrudPage } from '@/components/shared/CrudPage';
 import type { CrudPageConfig } from '@/components/shared/CrudPage';
-import { Download } from 'lucide-react';
+import { OssDownloadLink } from '@/components/shared/OssDownloadLink';
 
 const config: CrudPageConfig = {
     title: '检查表库',
@@ -41,7 +41,7 @@ const config: CrudPageConfig = {
             header: '预览',
             width: 70,
             render: (val) => val
-                ? <a href={String(val)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center rounded-md border border-slate-700/50 bg-slate-700/20 px-1.5 py-0.5 text-xs text-slate-400 hover:text-slate-200">预览</a>
+                ? <OssDownloadLink url={String(val)} label="预览" className="inline-flex items-center gap-1 rounded-md border border-slate-700/50 bg-slate-700/20 px-1.5 py-0.5 text-xs text-slate-400 hover:text-slate-200 disabled:opacity-50" />
                 : <span className="text-slate-700">—</span>,
         },
         {
@@ -49,18 +49,7 @@ const config: CrudPageConfig = {
             header: '下载',
             width: 80,
             render: (val) => val
-                ? (
-                    <a
-                        href={String(val)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download
-                        className="inline-flex items-center gap-1 rounded-md border border-blue-500/20 bg-blue-600/10 px-1.5 py-0.5 text-xs font-medium text-blue-400 hover:text-blue-300"
-                    >
-                        <Download className="h-3 w-3" />
-                        下载
-                    </a>
-                )
+                ? <OssDownloadLink url={String(val)} label="下载" />
                 : <span className="text-slate-700">—</span>,
         },
     ],

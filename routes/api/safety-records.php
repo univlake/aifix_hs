@@ -230,6 +230,8 @@ Route::middleware('permission:upload.file')->group(function () {
 Route::middleware('permission:upload.oss')->group(function () {
     Route::get('/upload/oss-signature', [UploadOssController::class, 'getSignature']);
 });
+// Generate a pre-signed URL for a private OSS object (no extra permission needed)
+Route::get('/upload/oss-sign', [UploadOssController::class, 'signedUrl']);
 // OSS callback — no auth middleware, verified by signature
 Route::post('/upload/oss-callback', [UploadOssController::class, 'callback']);
 

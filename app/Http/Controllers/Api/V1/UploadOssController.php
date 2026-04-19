@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Services\OssService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -63,18 +64,26 @@ class UploadOssController extends Controller
         $authorization = base64_decode($authorizationBase64);
         $body = file_get_contents('php://input');
         $path = $request->getPathInfo();
-        $authStr = urldecode($path) . "\n" . $body;
+        $authStr = urldecode($path)."\n".$body;
 
         $status = openssl_verify($authStr, $authorization, $pubKey, OPENSSL_ALGO_MD5);
 
         if ($status === 1) {
             $data = $request->all();
+
             return $this->success([
                 'file_url' => $data['filename'] ?? '',
             ]);
         }
 
         return $this->failed('签名验证失败', 403);
+    }
+
+    public function signedUrl(Request $request): JsonResponse
+    {
+        $url = $request->get('url', '');
+
+        return $this->success(OssService::signUrl($url));
     }
 
     private function gmtIso8601(int $time): string
