@@ -452,12 +452,12 @@ el.indeterminate = somePageSelected && !allPageSelected;
     columns.push({
         id: 'actions',
         header: '操作',
-        size: readOnly ? 76 : 144,
+        size: readOnly ? 96 : 164,
         cell: ({ row }) => (
             <div className="flex items-center gap-0.5">
                 <button
                     onClick={() => setDetailItem(row.original)}
-                    className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                    className="flex h-8 min-w-[64px] items-center justify-center gap-1 rounded-md px-3 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
                 >
                     <Eye className="h-3.5 w-3.5" />
                     <span>详情</span>
