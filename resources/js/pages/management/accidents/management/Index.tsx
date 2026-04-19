@@ -1,9 +1,11 @@
 import { Head } from '@inertiajs/react';
-import { Activity, List, Loader2, ChevronLeft, ChevronRight, X, Pencil, Trash2, Eye } from 'lucide-react';
+import { Activity, List, Loader2, ChevronLeft, ChevronRight, X, Pencil, Trash2, Eye, AlertTriangle, Plus } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useAuth } from '@/hooks/use-auth';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 import type { ApiResponse, PaginatedData } from '@/types/models';
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -305,111 +307,41 @@ function toEditForm(detail: AccidentFull): EditForm {
     return rest;
 }
 
+function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+    if (!open) {
+        return null;
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
+                {children}
+            </div>
+        </div>
+    );
+}
+
 function DetailPanel({
     id,
-    userCompanyId,
-    initialEditing = false,
     onClose,
-    onSaved,
 }: {
     id: number;
-    userCompanyId: number | null;
-    initialEditing?: boolean;
     onClose: () => void;
-    onSaved: () => void;
 }) {
     const [detail, setDetail] = useState<AccidentFull | null>(null);
     const [loading, setLoading] = useState(true);
-    const [editing, setEditing] = useState(false);
-    const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-    const [form, setForm] = useState<EditForm | null>(null);
 
     useEffect(() => {
-        setLoading(true);
+        queueMicrotask(() => setLoading(true));
         api.get<ApiResponse<AccidentFull>>(`/accident-bulletins/${id}`)
             .then((res) => {
                 setDetail(res.data.data);
-
-                if (initialEditing && userCompanyId !== null && res.data.data.company_id === userCompanyId) {
-                    setForm(toEditForm(res.data.data));
-                    setEditing(true);
-                }
             })
             .catch(() => setError('加载失败'))
             .finally(() => setLoading(false));
-    }, [id, initialEditing, userCompanyId]);
-
-    const startEdit = () => {
-        if (!detail) {
-            return;
-        }
-
-        setForm(toEditForm(detail));
-        setEditing(true);
-    };
-
-    const handleSave = async () => {
-        if (!form) {
-            return;
-        }
-
-        setSaving(true);
-        setError('');
-
-        try {
-            await api.put(`/accident-bulletins/${id}`, form);
-            onSaved();
-            setEditing(false);
-            const res = await api.get<ApiResponse<AccidentFull>>(`/accident-bulletins/${id}`);
-            setDetail(res.data.data);
-        } catch (e: unknown) {
-            const err = e as { response?: { data?: { message?: string } } };
-            setError(err?.response?.data?.message ?? '保存失败');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const setField = (key: keyof EditForm, value: unknown) => {
-        setForm((prev) => prev ? { ...prev, [key]: value } : prev);
-    };
-
-    const setKid = (idx: number, key: keyof KidRow, value: string) => {
-        setForm((prev) => {
-            if (!prev) {
-                return prev;
-            }
-
-            const kids = prev.kids.map((k, i) => i === idx ? { ...k, [key]: value } : k);
-
-            return { ...prev, kids };
-        });
-    };
-
-    const addKid = () => {
-        setForm((prev) => {
-            if (!prev) {
-                return prev;
-            }
-
-            const blank: KidRow = { name: '', sex: '', age: '', department: '', work_type: '', work_age: '', education_level: '', degree_injury: '', days_off: '' };
-
-            return { ...prev, kids: [...prev.kids, blank] };
-        });
-    };
-
-    const removeKid = (idx: number) => {
-        setForm((prev) => {
-            if (!prev) {
-                return prev;
-            }
-
-            return { ...prev, kids: prev.kids.filter((_, i) => i !== idx) };
-        });
-    };
-
-    const canEdit = userCompanyId !== null && detail?.company_id === userCompanyId;
+    }, [id]);
 
     return (
         <div className="fixed inset-0 z-50 flex">
@@ -420,23 +352,10 @@ function DetailPanel({
             <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden border-l border-blue-900/40 bg-[#070d1f] shadow-2xl">
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
-                    <h2 className="text-base font-semibold text-slate-100">
-                        {editing ? '编辑事故记录' : '事故详情'}
-                    </h2>
-                    <div className="flex items-center gap-2">
-                        {!editing && canEdit && (
-                            <button
-                                onClick={startEdit}
-                                className="flex items-center gap-1.5 rounded-lg border border-blue-700/50 bg-blue-600/10 px-3 py-1.5 text-xs text-blue-400 hover:bg-blue-600/20 transition-colors"
-                            >
-                                <Pencil className="h-3.5 w-3.5" />
-                                编辑
-                            </button>
-                        )}
-                        <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-slate-300">
-                            <X className="h-5 w-5" />
-                        </button>
-                    </div>
+                    <h2 className="text-base font-semibold text-slate-100">事故详情</h2>
+                    <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-slate-300">
+                        <X className="h-5 w-5" />
+                    </button>
                 </div>
 
                 {/* Body */}
@@ -451,7 +370,7 @@ function DetailPanel({
                         <p className="text-sm text-red-400">{error}</p>
                     )}
 
-                    {!loading && detail && !editing && (
+                    {!loading && detail && (
                         <div className="space-y-5">
                             {/* Basic info grid */}
                             <div className="grid grid-cols-2 gap-x-6 gap-y-3">
@@ -541,141 +460,284 @@ function DetailPanel({
                             )}
                         </div>
                     )}
+                </div>
+            </div>
+        </div>
+    );
+}
 
-                    {!loading && editing && form && (
-                        <div className="space-y-4">
-                            {/* Select fields */}
+function EditAccidentModal({
+    id,
+    open,
+    onClose,
+    onSaved,
+}: {
+    id: number;
+    open: boolean;
+    onClose: () => void;
+    onSaved: () => void;
+}) {
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+    const [form, setForm] = useState<EditForm | null>(null);
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+        api.get<ApiResponse<AccidentFull>>(`/accident-bulletins/${id}`)
+            .then((res) => setForm(toEditForm(res.data.data)))
+            .catch(() => setError('加载失败'))
+            .finally(() => setLoading(false));
+    }, [id, open]);
+
+    const setField = (key: keyof EditForm, value: unknown) => {
+        setForm((prev) => prev ? { ...prev, [key]: value } : prev);
+    };
+
+    const setKid = (idx: number, key: keyof KidRow, value: string) => {
+        setForm((prev) => {
+            if (!prev) {
+                return prev;
+            }
+
+            const kids = prev.kids.map((k, i) => i === idx ? { ...k, [key]: value } : k);
+
+            return { ...prev, kids };
+        });
+    };
+
+    const addKid = () => {
+        setForm((prev) => {
+            if (!prev) {
+                return prev;
+            }
+
+            const blank: KidRow = { name: '', sex: '', age: '', department: '', work_type: '', work_age: '', education_level: '', degree_injury: '', days_off: '' };
+
+            return { ...prev, kids: [...prev.kids, blank] };
+        });
+    };
+
+    const removeKid = (idx: number) => {
+        setForm((prev) => {
+            if (!prev) {
+                return prev;
+            }
+
+            return { ...prev, kids: prev.kids.filter((_, i) => i !== idx) };
+        });
+    };
+
+    const handleSave = async () => {
+        if (!form) {
+            return;
+        }
+
+        setSaving(true);
+        setError('');
+
+        try {
+            await api.put(`/accident-bulletins/${id}`, form);
+            onSaved();
+            onClose();
+        } catch (e: unknown) {
+            const err = e as { response?: { data?: { message?: string } } };
+            setError(err?.response?.data?.message ?? '保存失败');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <Modal open={open} onClose={onClose}>
+            <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
+                <div>
+                    <h2 className="text-base font-semibold text-slate-100">编辑事故记录</h2>
+                    <p className="mt-0.5 text-xs text-slate-600">修改现有记录信息</p>
+                </div>
+                <button
+                    onClick={onClose}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-white/5 hover:text-slate-300"
+                >
+                    <X className="h-4 w-4" />
+                </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+                <div className="space-y-4 p-6">
+                    {error && (
+                        <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                            {error}
+                        </div>
+                    )}
+
+                    {loading && (
+                        <div className="flex h-40 items-center justify-center">
+                            <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                        </div>
+                    )}
+
+                    {!loading && form && (
+                        <div className="grid gap-4 md:grid-cols-2">
                             {([
-                                ['type', '事故类型', TYPE_OPTIONS],
-                                ['accident_level', '事故等级', LEVEL_OPTIONS],
-                                ['degree_injury', '伤亡程度', DEGREE_INJURY_OPTIONS],
-                                ['direct_cause', '直接原因', DIRECT_CAUSE_OPTIONS],
-                                ['indirect_cause', '间接原因', INDIRECT_CAUSE_OPTIONS],
-                            ] as [keyof EditForm, string, string[]][]).map(([key, label, opts]) => (
-                                <div key={key}>
-                                    <label className="mb-1 block text-xs text-slate-500">{label}</label>
-                                    <select
-                                        value={(form[key] as string) ?? ''}
-                                        onChange={(e) => setField(key, e.target.value || null)}
-                                        className="w-full rounded-lg border border-blue-900/40 bg-[#0a1020] px-3 py-2 text-sm text-slate-300 outline-none appearance-none"
-                                    >
-                                        <option value="">请选择</option>
-                                        {opts.map((o) => <option key={o} value={o}>{o}</option>)}
-                                    </select>
-                                </div>
-                            ))}
+                                ['type', '事故类型', 'select', false],
+                                ['accident_level', '事故等级', 'select', false],
+                                ['happen_time', '发生时间', 'date', false],
+                                ['department', '发生部门', 'text', false],
+                                ['happen_area', '发生地点', 'text', true],
+                                ['degree_injury', '伤亡程度', 'select', false],
+                                ['direct_cause', '直接原因', 'select', false],
+                                ['indirect_cause', '间接原因', 'select', true],
+                                ['staff_die', '员工死亡人数', 'number', false],
+                                ['staff_hurt', '员工受伤人数', 'number', false],
+                                ['not_staff_die', '非员工死亡人数', 'number', false],
+                                ['not_staff_hurt', '非员工受伤人数', 'number', false],
+                                ['direct_loss_property', '直接经济损失 (万元)', 'text', false],
+                                ['gauge_loss_property', '间接经济损失 (万元)', 'text', false],
+                            ] as [keyof EditForm, string, string, boolean][]).map(([key, label, type, colSpan]) => {
+                                const inputClass = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
+                                const selectOptions = key === 'type'
+                                    ? TYPE_OPTIONS
+                                    : key === 'accident_level'
+                                        ? LEVEL_OPTIONS
+                                        : key === 'degree_injury'
+                                            ? DEGREE_INJURY_OPTIONS
+                                            : key === 'direct_cause'
+                                                ? DIRECT_CAUSE_OPTIONS
+                                                : INDIRECT_CAUSE_OPTIONS;
 
-                            {/* Text / date fields */}
-                            {([
-                                ['happen_time', '发生时间', 'date'],
-                                ['department', '发生部门', 'text'],
-                                ['happen_area', '发生地点', 'text'],
-                                ['staff_die', '员工死亡人数', 'number'],
-                                ['staff_hurt', '员工受伤人数', 'number'],
-                                ['not_staff_die', '非员工死亡人数', 'number'],
-                                ['not_staff_hurt', '非员工受伤人数', 'number'],
-                                ['direct_loss_property', '直接经济损失(万元)', 'text'],
-                                ['gauge_loss_property', '间接经济损失(万元)', 'text'],
-                            ] as [keyof EditForm, string, string][]).map(([key, label, type]) => (
-                                <div key={key}>
-                                    <label className="mb-1 block text-xs text-slate-500">{label}</label>
-                                    <input
-                                        type={type}
-                                        value={(form[key] as string | number) ?? ''}
-                                        onChange={(e) => setField(key, type === 'number' ? Number(e.target.value) : e.target.value)}
-                                        className="w-full rounded-lg border border-blue-900/40 bg-[#0a1020] px-3 py-2 text-sm text-slate-300 outline-none"
-                                    />
-                                </div>
-                            ))}
+                                return (
+                                    <div key={key} className={colSpan ? 'md:col-span-2' : ''}>
+                                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">{label}</label>
+                                        {type === 'select' ? (
+                                            <select
+                                                value={String(form[key] ?? '')}
+                                                onChange={(e) => setField(key, e.target.value || null)}
+                                                className={cn(inputClass, 'cursor-pointer appearance-none')}
+                                            >
+                                                <option value="" disabled className="bg-[#0d1530]">请选择</option>
+                                                {selectOptions.map((option) => (
+                                                    <option key={option} value={option} className="bg-[#0d1530]">
+                                                        {option}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <input
+                                                type={type}
+                                                value={(form[key] as string | number) ?? ''}
+                                                onChange={(e) => setField(key, type === 'number' ? e.target.value : e.target.value)}
+                                                className={cn(inputClass, type === 'date' ? 'cursor-pointer' : '')}
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
 
-                            {/* Textarea */}
-                            <div>
-                                <label className="mb-1 block text-xs text-slate-500">事故经过</label>
+                            <div className="md:col-span-2">
+                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">事故经过</label>
                                 <textarea
-                                    rows={4}
                                     value={form.content ?? ''}
                                     onChange={(e) => setField('content', e.target.value)}
-                                    className="w-full rounded-lg border border-blue-900/40 bg-[#0a1020] px-3 py-2 text-sm text-slate-300 outline-none resize-y"
+                                    rows={3}
+                                    className="w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 resize-none"
                                 />
                             </div>
 
-                            {/* Kids sub-table edit */}
-                            <div>
-                                <div className="mb-2 flex items-center justify-between">
-                                    <p className="text-xs font-medium text-slate-500">伤亡人员明细</p>
+                            <div className="md:col-span-2">
+                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">事故报告附件</label>
+                                <OssUploadField
+                                    value={form.accident_report_url ?? ''}
+                                    onChange={(url) => setField('accident_report_url', url)}
+                                />
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">现场照片</label>
+                                <OssUploadField
+                                    value={form.accident_photo_url ?? ''}
+                                    onChange={(url) => setField('accident_photo_url', url)}
+                                />
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">伤亡人员明细</label>
+                                <div className="overflow-x-auto rounded-lg border border-blue-900/30">
+                                    {form.kids.length > 0 && (
+                                        <table className="min-w-max w-full text-xs">
+                                            <thead>
+                                                <tr className="border-b border-blue-900/30 bg-[#070d1f]">
+                                                    {['姓名', '性别', '年龄', '部门', '工种', '工龄', '文化程度', '伤害程度', '误工天数'].map((header) => (
+                                                        <th key={header} className="px-3 py-2 text-left font-medium uppercase tracking-wide text-slate-500">{header}</th>
+                                                    ))}
+                                                    <th className="w-8 px-2 py-2" />
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {form.kids.map((kid, idx) => (
+                                                    <tr key={idx} className="border-b border-blue-900/20 last:border-0">
+                                                        {(['name', 'sex', 'age', 'department', 'work_type', 'work_age', 'education_level', 'degree_injury', 'days_off'] as (keyof KidRow)[]).map((field) => (
+                                                            <td key={field} className="px-2 py-1.5">
+                                                                <input
+                                                                    type="text"
+                                                                    value={String(kid[field] ?? '')}
+                                                                    onChange={(e) => setKid(idx, field, e.target.value)}
+                                                                    className="w-full rounded border border-blue-900/30 bg-transparent px-2 py-1 text-slate-200 placeholder-slate-700 outline-none focus:border-blue-500/60"
+                                                                />
+                                                            </td>
+                                                        ))}
+                                                        <td className="px-2 py-1.5 text-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeKid(idx)}
+                                                                className="text-slate-600 hover:text-red-400"
+                                                            >
+                                                                <X className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={addKid}
-                                        className="text-xs text-blue-400 hover:text-blue-300"
+                                        className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
                                     >
-                                        + 添加
+                                        <Plus className="h-3 w-3" />
+                                        添加成员
                                     </button>
                                 </div>
-                                {form.kids.map((kid, idx) => (
-                                    <div key={idx} className="mb-3 rounded-lg border border-blue-900/30 bg-[#0a1020] p-3">
-                                        <div className="mb-2 flex items-center justify-between">
-                                            <span className="text-xs text-slate-600">第 {idx + 1} 人</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeKid(idx)}
-                                                className="text-xs text-red-500 hover:text-red-400"
-                                            >
-                                                删除
-                                            </button>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {([
-                                                ['name', '姓名'],
-                                                ['sex', '性别'],
-                                                ['age', '年龄'],
-                                                ['department', '部门'],
-                                                ['work_type', '工种'],
-                                                ['work_age', '工龄'],
-                                                ['education_level', '文化程度'],
-                                                ['degree_injury', '伤害程度'],
-                                                ['days_off', '误工天数'],
-                                            ] as [keyof KidRow, string][]).map(([f, lbl]) => (
-                                                <div key={f}>
-                                                    <label className="mb-0.5 block text-xs text-slate-600">{lbl}</label>
-                                                    <input
-                                                        type="text"
-                                                        value={(kid[f] as string) ?? ''}
-                                                        onChange={(e) => setKid(idx, f, e.target.value)}
-                                                        className="w-full rounded border border-blue-900/40 bg-[#070d1f] px-2 py-1.5 text-xs text-slate-300 outline-none"
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
                             </div>
-
-                            {error && <p className="text-sm text-red-400">{error}</p>}
                         </div>
                     )}
                 </div>
-
-                {/* Footer (edit mode) */}
-                {editing && (
-                    <div className="flex items-center justify-end gap-3 border-t border-blue-900/30 px-6 py-4">
-                        <button
-                            onClick={() => setEditing(false)}
-                            className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
-                        >
-                            取消
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                        >
-                            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                            保存
-                        </button>
-                    </div>
-                )}
             </div>
-        </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
+                <button
+                    onClick={onClose}
+                    className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200"
+                >
+                    取消
+                </button>
+                <button
+                    onClick={handleSave}
+                    disabled={saving || loading}
+                    className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:bg-blue-600/30 hover:text-blue-200 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                        {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {saving ? '保存中...' : '保存'}
+                </button>
+            </div>
+        </Modal>
     );
 }
 
@@ -938,20 +1000,16 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
             {detailId !== null && (
                 <DetailPanel
                     id={detailId}
-                    userCompanyId={currentUserCompanyId}
                     onClose={() => setDetailId(null)}
-                    onSaved={() => fetchRows(page, filterType, filterLevel, filterYear)}
                 />
             )}
 
             {editId !== null && (
-                <DetailPanel
+                <EditAccidentModal
                     id={editId}
-                    userCompanyId={currentUserCompanyId}
-                    initialEditing
+                    open={editId !== null}
                     onClose={() => setEditId(null)}
                     onSaved={() => {
-                        setEditId(null);
                         fetchRows(page, filterType, filterLevel, filterYear);
                     }}
                 />
@@ -1008,7 +1066,7 @@ export default function AccidentManagementIndex() {
         }
 
         prevCompanyId.current = companyId;
-        setChartLoading(true);
+        queueMicrotask(() => setChartLoading(true));
         api.get<ApiResponse<AnnualStat[]>>('/bloc-accident-bulletins/annual-stats', {
             params: { company_id: companyId },
         })
