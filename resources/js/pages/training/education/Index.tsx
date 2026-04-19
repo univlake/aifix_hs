@@ -1,7 +1,7 @@
+import { BookOpen, Globe, ClipboardList } from 'lucide-react';
 import { useState } from 'react';
 import { CrudPage } from '@/components/shared/CrudPage';
 import type { CrudPageConfig } from '@/components/shared/CrudPage';
-import { BookOpen, Globe, ClipboardList } from 'lucide-react';
 
 const internalConfig: CrudPageConfig = {
     title: '内部培训',
@@ -218,6 +218,7 @@ export default function EducationIndex() {
             <div className="-mx-6 -mt-6 mb-6 flex items-center gap-0.5 border-b border-slate-800/80 px-6">
                 {TABS.map((tab) => {
                     const Icon = tab.icon;
+
                     return (
                         <button
                             key={tab.key}

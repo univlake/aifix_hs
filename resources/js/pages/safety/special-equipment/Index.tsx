@@ -1,16 +1,17 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
-import { DataTable } from '@/components/data-table/DataTable';
-import { useScope } from '@/contexts/ScopeContext';
-import { cn } from '@/lib/utils';
-import api from '@/lib/api';
-import type { ApiResponse } from '@/types/models';
+import type {ColumnDef} from '@tanstack/react-table';
 import {
     Plus, Pencil, Trash2, X, AlertTriangle, Loader2,
-    Download, Upload, FileDown, Copy,
+    Download, Upload, FileDown, Copy, Eye,
 } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
+import api from '@/lib/api';
+import { cn } from '@/lib/utils';
+import type { ApiResponse } from '@/types/models';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -75,12 +76,16 @@ const inputCls =
 // ── ValidPeriodCell ────────────────────────────────────────────────
 
 function ValidPeriodCell({ value }: { value: unknown }) {
-    if (!value) return <span className="text-slate-700">—</span>;
+    if (!value) {
+return <span className="text-slate-700">—</span>;
+}
+
     const date = new Date(value as string);
     const now = new Date();
     const daysLeft = Math.ceil((date.getTime() - now.getTime()) / 86400000);
     const expired = daysLeft < 0;
     const nearExpiry = daysLeft >= 0 && daysLeft <= 30;
+
     return (
         <span className={cn(
             'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium',
@@ -100,7 +105,10 @@ function ValidPeriodCell({ value }: { value: unknown }) {
 // ── Modal ──────────────────────────────────────────────────────────
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -132,6 +140,7 @@ export default function SpecialEquipmentIndex() {
     // Dialog state
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<SpecialEquipmentRow | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteLabel, setDeleteLabel] = useState('');
     const [formLoading, setFormLoading] = useState(false);
@@ -198,6 +207,7 @@ export default function SpecialEquipmentIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const typeId = form.special_type_id !== '' ? Number(form.special_type_id) : null;
             const specConfig = typeId ? (SPEC_CONFIGS[typeId] ?? []) : [];
@@ -220,13 +230,16 @@ export default function SpecialEquipmentIndex() {
                 payload[key] = usedSpecKeys.has(key) ? (form[key] || null) : null;
             });
 
-            if (!editingId) payload.company_id = companyId;
+            if (!editingId) {
+payload.company_id = companyId;
+}
 
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -237,7 +250,10 @@ export default function SpecialEquipmentIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteId) {
+return;
+}
+
         await crud.remove(deleteId);
         setDeleteId(null);
         setDeleteLabel('');
@@ -258,8 +274,13 @@ export default function SpecialEquipmentIndex() {
 
     const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !companyId) return;
+
+        if (!file || !companyId) {
+return;
+}
+
         setImporting(true);
+
         try {
             const fd = new FormData();
             fd.append('file', file);
@@ -271,13 +292,20 @@ export default function SpecialEquipmentIndex() {
             flashMsg(err.response?.data?.message ?? '导入失败');
         } finally {
             setImporting(false);
-            if (importRef.current) importRef.current.value = '';
+
+            if (importRef.current) {
+importRef.current.value = '';
+}
         }
     };
 
     const handleExport = async () => {
-        if (!companyId) return;
+        if (!companyId) {
+return;
+}
+
         setExporting(true);
+
         try {
             const response = await api.get('/special-equipment/export', {
                 params: { company_id: companyId, equipment_name: searchValue || undefined },
@@ -295,8 +323,12 @@ export default function SpecialEquipmentIndex() {
     };
 
     const handleCopy = async () => {
-        if (!selectedIds.size) return;
+        if (!selectedIds.size) {
+return;
+}
+
         setCopying(true);
+
         try {
             const { data: res } = await api.post<ApiResponse<{ ids: number[]; count: number }>>('/special-equipment/copy', {
                 ids: Array.from(selectedIds),
@@ -333,7 +365,13 @@ export default function SpecialEquipmentIndex() {
     const toggleRow = (id: number) =>
         setSelectedIds((prev) => {
             const next = new Set(prev);
-            if (next.has(id)) next.delete(id); else next.add(id);
+
+            if (next.has(id)) {
+next.delete(id);
+} else {
+next.add(id);
+}
+
             return next;
         });
 
@@ -345,12 +383,14 @@ export default function SpecialEquipmentIndex() {
             setSelectedIds((prev) => {
                 const next = new Set(prev);
                 data.forEach((r) => next.delete(r.id));
+
                 return next;
             });
         } else {
             setSelectedIds((prev) => {
                 const next = new Set(prev);
                 data.forEach((r) => next.add(r.id));
+
                 return next;
             });
         }
@@ -365,7 +405,11 @@ export default function SpecialEquipmentIndex() {
                 <input
                     type="checkbox"
                     checked={allPageSelected}
-                    ref={(el) => { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
+                    ref={(el) => {
+ if (el) {
+el.indeterminate = somePageSelected && !allPageSelected;
+} 
+}}
                     onChange={toggleAll}
                     className="h-3.5 w-3.5 rounded border-blue-900/60 bg-[#070d1f] accent-blue-500"
                 />
@@ -387,6 +431,7 @@ export default function SpecialEquipmentIndex() {
             size: 120,
             cell: ({ row }) => {
                 const t = row.original.special_type?.title;
+
                 return t
                     ? <span className="rounded-md border border-blue-900/40 bg-blue-600/8 px-2 py-0.5 text-xs text-blue-400">{t}</span>
                     : <span className="text-slate-700">—</span>;
@@ -404,34 +449,48 @@ export default function SpecialEquipmentIndex() {
         { accessorKey: 'inspect_unit', header: '检验单位', size: 150, cell: ({ row }) => row.original.inspect_unit ?? <span className="text-slate-700">—</span> },
     ];
 
-    if (!readOnly) {
-        columns.push({
-            id: 'actions',
-            header: '操作',
-            size: 88,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => openEdit(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        onClick={() => { setDeleteId(row.original.id); setDeleteLabel(row.original.equipment_name ?? ''); }}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                </div>
-            ),
-        });
-    }
+    columns.push({
+        id: 'actions',
+        header: '操作',
+        size: readOnly ? 76 : 144,
+        cell: ({ row }) => (
+            <div className="flex items-center gap-0.5">
+                <button
+                    onClick={() => setDetailItem(row.original)}
+                    className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>详情</span>
+                </button>
+                {!readOnly && (
+                    <>
+                        <button
+                            onClick={() => openEdit(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            onClick={() => {
+ setDeleteId(row.original.id); setDeleteLabel(row.original.equipment_name ?? ''); 
+}}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    </>
+                )}
+            </div>
+        ),
+    });
 
     // ── Spec fields in form ────────────────────────────────────────
 
     const currentTypeId = form.special_type_id !== '' ? Number(form.special_type_id) : null;
     const specFields = currentTypeId ? (SPEC_CONFIGS[currentTypeId] ?? []) : [];
+    const detailSpecLabels = Object.fromEntries(
+        ((detailItem?.special_type_id ? SPEC_CONFIGS[detailItem.special_type_id] ?? [] : [])).map((field) => [field.key, field.label]),
+    );
 
     // When type changes, clear spec fields
     const handleTypeChange = (val: string) => {
@@ -532,6 +591,29 @@ export default function SpecialEquipmentIndex() {
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
                 toolbar={toolbar}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="特种设备详情"
+                data={detailItem as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    equipment_name: '设备名称',
+                    special_type: '设备类型',
+                    title: '类型名称',
+                    utilized_location: '使用位置',
+                    serial_number: '使用证编号/场内机动车牌证',
+                    norm_model1: detailSpecLabels.norm_model1 ?? '规格参数1',
+                    norm_model2: detailSpecLabels.norm_model2 ?? '规格参数2',
+                    norm_model3: detailSpecLabels.norm_model3 ?? '规格参数3',
+                    norm_model4: detailSpecLabels.norm_model4 ?? '规格参数4',
+                    use_time: '投用时间',
+                    valid_period: '检验有效期',
+                    inspect_unit: '检验单位',
+                    maintain_info: '维护信息',
+                    comment: '备注',
+                }}
             />
 
             {/* Create / Edit modal */}
@@ -678,7 +760,9 @@ export default function SpecialEquipmentIndex() {
             </Modal>
 
             {/* Delete confirm */}
-            <Modal open={!!deleteId} onClose={() => { setDeleteId(null); setDeleteLabel(''); }}>
+            <Modal open={!!deleteId} onClose={() => {
+ setDeleteId(null); setDeleteLabel(''); 
+}}>
                 <div className="p-6">
                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                         <Trash2 className="h-5 w-5 text-red-400" />
@@ -689,7 +773,9 @@ export default function SpecialEquipmentIndex() {
                     </p>
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                    <button onClick={() => { setDeleteId(null); setDeleteLabel(''); }}
+                    <button onClick={() => {
+ setDeleteId(null); setDeleteLabel(''); 
+}}
                         className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">
                         取消
                     </button>

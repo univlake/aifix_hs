@@ -1,16 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
-import { useScope } from '@/contexts/ScopeContext';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
-import { DataTable } from '@/components/data-table/DataTable';
-import api from '@/lib/api';
-import type { ApiResponse } from '@/types/models';
-import { cn } from '@/lib/utils';
-import { type ColumnDef } from '@tanstack/react-table';
+import type {ColumnDef} from '@tanstack/react-table';
 import {
     Plus, Pencil, Trash2, X, AlertTriangle, Loader2,
     BarChart3, TrendingUp,
 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
+import api from '@/lib/api';
+import { cn } from '@/lib/utils';
+import type { ApiResponse } from '@/types/models';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -42,7 +43,10 @@ const inputCls =
     'w-full rounded-lg border border-blue-900/50 bg-[#0a1428] py-2 px-3 text-sm text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30';
 
 function fmt(v: number | null | undefined): string {
-    if (v == null) return '—';
+    if (v == null) {
+return '—';
+}
+
     return Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
@@ -62,7 +66,10 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
 }
 
 function FormError({ message }: { message: string }) {
-    if (!message) return null;
+    if (!message) {
+return null;
+}
+
     return (
         <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -72,7 +79,10 @@ function FormError({ message }: { message: string }) {
 }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -96,6 +106,7 @@ function InvestmentPlansTab({ companyId }: { companyId: number }) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<SecurityInvestment | null>(null);
     const [formError, setFormError] = useState('');
     const [formLoading, setFormLoading] = useState(false);
 
@@ -129,6 +140,7 @@ function InvestmentPlansTab({ companyId }: { companyId: number }) {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 ...form,
@@ -136,16 +148,29 @@ function InvestmentPlansTab({ companyId }: { companyId: number }) {
                 budget: form.budget !== '' ? Number(form.budget) : null,
                 last_year_income: form.last_year_income !== '' ? Number(form.last_year_income) : null,
             };
-            if (form.year === '') payload.year = null;
-            if (form.type === '') payload.type = null;
-            if (form.title === '') payload.title = null;
-            if (form.content === '') payload.content = null;
+
+            if (form.year === '') {
+payload.year = null;
+}
+
+            if (form.type === '') {
+payload.type = null;
+}
+
+            if (form.title === '') {
+payload.title = null;
+}
+
+            if (form.content === '') {
+payload.content = null;
+}
 
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -156,7 +181,10 @@ function InvestmentPlansTab({ companyId }: { companyId: number }) {
     };
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteId) {
+return;
+}
+
         await crud.remove(deleteId);
         setDeleteId(null);
         reload();
@@ -186,9 +214,15 @@ function InvestmentPlansTab({ companyId }: { companyId: number }) {
         {
             id: 'actions',
             header: '操作',
-            size: 88,
+            size: 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={() => setDetailItem(row.original)}
+                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                    >
+                        详情
+                    </button>
                     <button
                         onClick={() => openEdit(row.original)}
                         className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
@@ -227,6 +261,22 @@ function InvestmentPlansTab({ companyId }: { companyId: number }) {
                 isLoading={loading}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="安全投入计划详情"
+                data={detailItem as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    year: '年份',
+                    type: '类型',
+                    title: '标题',
+                    content: '内容说明',
+                    budget: '计划金额（万元）',
+                    last_year_income: '上季度营业收入（万元）',
+                    scale: '占上季度营收比例',
+                }}
             />
 
             {/* Create / Edit */}
@@ -358,6 +408,7 @@ function FundingExecutionsTab({ companyId }: { companyId: number }) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<FundingExecution | null>(null);
     const [formError, setFormError] = useState('');
     const [formLoading, setFormLoading] = useState(false);
 
@@ -388,6 +439,7 @@ function FundingExecutionsTab({ companyId }: { companyId: number }) {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 ...form,
@@ -396,15 +448,25 @@ function FundingExecutionsTab({ companyId }: { companyId: number }) {
                 security_investment_id: form.security_investment_id !== ''
                     ? Number(form.security_investment_id) : null,
             };
-            if (form.year === '') payload.year = null;
-            if (form.simple_content === '') payload.simple_content = null;
-            if (form.content === '') payload.content = null;
+
+            if (form.year === '') {
+payload.year = null;
+}
+
+            if (form.simple_content === '') {
+payload.simple_content = null;
+}
+
+            if (form.content === '') {
+payload.content = null;
+}
 
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -415,7 +477,10 @@ function FundingExecutionsTab({ companyId }: { companyId: number }) {
     };
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteId) {
+return;
+}
+
         await crud.remove(deleteId);
         setDeleteId(null);
         reload();
@@ -462,9 +527,15 @@ function FundingExecutionsTab({ companyId }: { companyId: number }) {
         {
             id: 'actions',
             header: '操作',
-            size: 88,
+            size: 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={() => setDetailItem(row.original)}
+                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                    >
+                        详情
+                    </button>
                     <button
                         onClick={() => openEdit(row.original)}
                         className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
@@ -503,6 +574,24 @@ function FundingExecutionsTab({ companyId }: { companyId: number }) {
                 isLoading={loading}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="经费执行记录详情"
+                data={detailItem as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    year: '年份',
+                    security_investment: '关联计划',
+                    last_year_income: '上季度营业收入（万元）',
+                    scale: '占上季度营收比例',
+                    title: '计划标题',
+                    simple_content: '简要内容',
+                    content: '详细内容',
+                    budget: '执行金额（万元）',
+                    proportion: '占年度安全投入总额比例',
+                }}
             />
 
             {/* Create / Edit */}

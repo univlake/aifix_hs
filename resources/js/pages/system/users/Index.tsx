@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
+import type {ColumnDef} from '@tanstack/react-table';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, KeyRound, ShieldCheck, Eye } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
-import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, KeyRound, ShieldCheck } from 'lucide-react';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 import type { ApiResponse, User, Role } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -25,6 +26,7 @@ export default function UsersIndex() {
 
     const [dialogMode, setDialogMode] = useState<DialogMode>(null);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [detailUser, setDetailUser] = useState<User | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteLabel, setDeleteLabel] = useState('');
     const [formLoading, setFormLoading] = useState(false);
@@ -93,6 +95,7 @@ export default function UsersIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             if (dialogMode === 'create') {
                 await crud.create({
@@ -113,10 +116,12 @@ export default function UsersIndex() {
                     status: Number(form.status),
                 });
                 const prevRole = editingUser.roles?.[0]?.name ?? 'user';
+
                 if (form.role !== prevRole) {
                     await api.put(`/users/${editingUser.id}/role`, { role: form.role });
                 }
             }
+
             setDialogMode(null);
             reload();
         } catch (err: unknown) {
@@ -128,11 +133,25 @@ export default function UsersIndex() {
     };
 
     const handlePassword = async () => {
-        if (!editingUser) return;
-        if (pwForm.password.length < 6) { setFormError('密码不少于6位'); return; }
-        if (pwForm.password !== pwForm.confirm) { setFormError('两次密码不一致'); return; }
+        if (!editingUser) {
+return;
+}
+
+        if (pwForm.password.length < 6) {
+ setFormError('密码不少于6位');
+
+ return; 
+}
+
+        if (pwForm.password !== pwForm.confirm) {
+ setFormError('两次密码不一致');
+
+ return; 
+}
+
         setFormLoading(true);
         setFormError('');
+
         try {
             await api.put(`/users/${editingUser.id}/password`, { password: pwForm.password });
             setDialogMode(null);
@@ -145,7 +164,10 @@ export default function UsersIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteId) {
+return;
+}
+
         await crud.remove(deleteId);
         setDeleteId(null);
         setDeleteLabel('');
@@ -170,8 +192,13 @@ export default function UsersIndex() {
             id: 'role', header: '角色', size: 130,
             cell: ({ row }) => {
                 const role = row.original.roles?.[0];
-                if (!role) return <span className="text-slate-700">—</span>;
+
+                if (!role) {
+return <span className="text-slate-700">—</span>;
+}
+
                 const isSystem = SYSTEM_ROLES.includes(role.name);
+
                 return (
                     <span className={cn(
                         'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
@@ -196,16 +223,26 @@ export default function UsersIndex() {
         },
         { accessorKey: 'phone', header: '手机号', size: 130 },
         {
-            id: 'actions', header: '操作', size: 100,
+            id: 'actions', header: '操作', size: 152,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={() => setDetailUser(row.original)}
+                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                        title="详情"
+                    >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>详情</span>
+                    </button>
                     <ActionBtn onClick={() => openEdit(row.original)} title="编辑" variant="edit">
                         <Pencil className="h-3.5 w-3.5" />
                     </ActionBtn>
                     <ActionBtn onClick={() => openPassword(row.original)} title="重置密码" variant="edit">
                         <KeyRound className="h-3.5 w-3.5" />
                     </ActionBtn>
-                    <ActionBtn onClick={() => { setDeleteId(row.original.id); setDeleteLabel(row.original.username); }} title="删除" variant="delete">
+                    <ActionBtn onClick={() => {
+ setDeleteId(row.original.id); setDeleteLabel(row.original.username); 
+}} title="删除" variant="delete">
                         <Trash2 className="h-3.5 w-3.5" />
                     </ActionBtn>
                 </div>
@@ -263,6 +300,28 @@ export default function UsersIndex() {
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
                 toolbar={filterToolbar}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailUser}
+                title="账号详情"
+                data={detailUser as Record<string, unknown> | null}
+                onClose={() => setDetailUser(null)}
+                labels={{
+                    username: '用户名',
+                    nickname: '昵称',
+                    company: '所属企业',
+                    title: '企业名称',
+                    roles: '角色',
+                    name: '名称',
+                    status: '状态',
+                    phone: '手机号',
+                    email: '邮箱',
+                    company_id: '企业ID',
+                    created_at: '创建时间',
+                    updated_at: '更新时间',
+                }}
+                hiddenKeys={['remember_token', 'pivot']}
             />
 
             {/* Create / Edit modal */}
@@ -335,7 +394,9 @@ export default function UsersIndex() {
             </Modal>
 
             {/* Delete confirm */}
-            <Modal open={!!deleteId} onClose={() => { setDeleteId(null); setDeleteLabel(''); }}>
+            <Modal open={!!deleteId} onClose={() => {
+ setDeleteId(null); setDeleteLabel(''); 
+}}>
                 <div className="p-6">
                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                         <Trash2 className="h-5 w-5 text-red-400" />
@@ -346,7 +407,9 @@ export default function UsersIndex() {
                     </p>
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                    <button onClick={() => { setDeleteId(null); setDeleteLabel(''); }} className={ghostBtn}>取消</button>
+                    <button onClick={() => {
+ setDeleteId(null); setDeleteLabel(''); 
+}} className={ghostBtn}>取消</button>
                     <button onClick={handleDelete} disabled={crud.loading} className={dangerBtn}>
                         {crud.loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                         {crud.loading ? '删除中...' : '确认删除'}
@@ -385,7 +448,10 @@ function ErrorAlert({ message }: { message: string }) {
 }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />

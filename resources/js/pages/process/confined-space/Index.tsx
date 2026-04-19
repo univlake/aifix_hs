@@ -1,14 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
+import type { ColumnDef } from '@tanstack/react-table';
+import { AlertTriangle, Eye, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
-import { cn } from '@/lib/utils';
+import { useApiCrud, useApiList } from '@/hooks/use-api';
 import api from '@/lib/api';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
-
-// ── Types ──────────────────────────────────────────────────────────
+import { cn } from '@/lib/utils';
 
 interface SpaceWorkRow {
     id: number;
@@ -22,17 +21,32 @@ interface SpaceWorkRow {
     word_content: string | null;
 }
 
-interface Option { id: number; label: string; }
-interface HazardOption { id: number; title: string; }
+interface Option {
+    id: number;
+    label: string;
+}
 
-// ── Shared styles ──────────────────────────────────────────────────
+interface HazardOption {
+    id: number;
+    title: string;
+}
 
-const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
+const inputCls =
+    'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
 
-// ── Modal ──────────────────────────────────────────────────────────
+function Modal({
+    open,
+    onClose,
+    children,
+}: {
+    open: boolean;
+    onClose: () => void;
+    children: React.ReactNode;
+}) {
+    if (!open) {
+        return null;
+    }
 
-function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) return null;
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -42,8 +56,6 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
         </div>
     );
 }
-
-// ── Page ───────────────────────────────────────────────────────────
 
 export default function ConfinedSpaceIndex() {
     const { activeCompany, isSubordinate } = useScope();
@@ -55,11 +67,13 @@ export default function ConfinedSpaceIndex() {
             endpoint: '/space-works',
             defaultParams: companyId ? { company_id: companyId } : {},
         });
+
     const crud = useApiCrud('/space-works');
 
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<SpaceWorkRow | null>(null);
     const [deleteItem, setDeleteItem] = useState<SpaceWorkRow | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -67,26 +81,41 @@ export default function ConfinedSpaceIndex() {
     const [hazardOptions, setHazardOptions] = useState<HazardOption[]>([]);
 
     const emptyForm = () => ({
-        name: '', position: '', space_work_type_id: '',
-        size: '', people_num: '', hazard_id: '', word_content: '',
+        name: '',
+        position: '',
+        space_work_type_id: '',
+        size: '',
+        people_num: '',
+        hazard_id: '',
+        word_content: '',
     });
+
     const [form, setForm] = useState<Record<string, string>>(emptyForm());
-    const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+    const set = (key: string, value: string) => {
+        setForm((previous) => ({ ...previous, [key]: value }));
+    };
 
     useEffect(() => {
         api.get('/hazards', { params: { per_page: 200 } })
-            .then((res) => setHazardOptions(res.data?.data?.data ?? res.data?.data ?? []))
+            .then((response) => setHazardOptions(response.data?.data?.data ?? response.data?.data ?? []))
             .catch(() => {});
     }, []);
 
     const loadTypes = useCallback(async () => {
         try {
-            const [typeRes, hazardRes] = await Promise.all([
+            const [typeResponse, hazardResponse] = await Promise.all([
                 api.get('/space-work-types', { params: { per_page: 200 } }),
                 api.get('/hazards', { params: { per_page: 200 } }),
             ]);
-            setSpaceWorkTypes((typeRes.data?.data?.data ?? []).map((x: any) => ({ id: x.id, label: x.title })));
-            setHazardOptions(hazardRes.data?.data?.data ?? hazardRes.data?.data ?? []);
+
+            setSpaceWorkTypes(
+                (typeResponse.data?.data?.data ?? []).map((item: { id: number; title: string }) => ({
+                    id: item.id,
+                    label: item.title,
+                })),
+            );
+            setHazardOptions(hazardResponse.data?.data?.data ?? hazardResponse.data?.data ?? []);
         } catch {
             // silently ignore
         }
@@ -119,6 +148,7 @@ export default function ConfinedSpaceIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 name: form.name || null,
@@ -129,23 +159,31 @@ export default function ConfinedSpaceIndex() {
                 hazard_id: form.hazard_id || null,
                 word_content: form.word_content || null,
             };
-            if (!editingId) payload.company_id = companyId;
+
+            if (!editingId) {
+                payload.company_id = companyId;
+            }
+
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
-        } catch (err: any) {
-            setFormError(err.response?.data?.message ?? '操作失败，请重试');
+        } catch (error: any) {
+            setFormError(error.response?.data?.message ?? '操作失败，请重试');
         } finally {
             setFormLoading(false);
         }
     };
 
     const handleDelete = async () => {
-        if (!deleteItem) return;
+        if (!deleteItem) {
+            return;
+        }
+
         await crud.remove(deleteItem.id);
         setDeleteItem(null);
         reload();
@@ -153,11 +191,9 @@ export default function ConfinedSpaceIndex() {
 
     const toggleHazard = (id: string) => {
         const current = (form.hazard_id ?? '').split(',').filter(Boolean);
-        const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
+        const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
         set('hazard_id', next.join(','));
     };
-
-    // ── Table columns ─────────────────────────────────────────────
 
     const columns: ColumnDef<SpaceWorkRow>[] = [
         {
@@ -181,26 +217,41 @@ export default function ConfinedSpaceIndex() {
             accessorKey: 'size',
             header: '空间大小 (m³)',
             size: 120,
-            cell: ({ row }) => row.original.size
-                ? <span className="font-mono text-xs text-slate-300">{row.original.size} m³</span>
-                : <span className="text-slate-700">—</span>,
+            cell: ({ row }) =>
+                row.original.size ? (
+                    <span className="font-mono text-xs text-slate-300">{row.original.size} m³</span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             accessorKey: 'hazard_id',
             header: '危险有害因素',
             cell: ({ row }) => {
-                const val = row.original.hazard_id;
-                if (!val) return <span className="text-slate-700">—</span>;
-                const ids = val.split(',').filter(Boolean);
-                const titles = ids.map((id) => {
-                    const found = hazardOptions.find((h) => String(h.id) === id);
-                    return found ? found.title : id;
-                });
-                if (!titles.length) return <span className="text-slate-700">—</span>;
+                const value = row.original.hazard_id;
+
+                if (!value) {
+                    return <span className="text-slate-700">—</span>;
+                }
+
+                const titles = value
+                    .split(',')
+                    .filter(Boolean)
+                    .map((id) => hazardOptions.find((hazard) => String(hazard.id) === id)?.title ?? id);
+
+                if (!titles.length) {
+                    return <span className="text-slate-700">—</span>;
+                }
+
                 return (
                     <div className="flex flex-wrap gap-1">
-                        {titles.map((t, i) => (
-                            <span key={i} className="rounded-md border border-amber-500/25 bg-amber-600/8 px-1.5 py-0.5 text-[10px] text-amber-400">{t}</span>
+                        {titles.map((title, index) => (
+                            <span
+                                key={index}
+                                className="rounded-md border border-amber-500/25 bg-amber-600/8 px-1.5 py-0.5 text-[10px] text-amber-400"
+                            >
+                                {title}
+                            </span>
                         ))}
                     </div>
                 );
@@ -212,29 +263,53 @@ export default function ConfinedSpaceIndex() {
             size: 80,
             cell: ({ row }) => row.original.people_num ?? <span className="text-slate-700">—</span>,
         },
-    ];
-
-    if (!readOnly) {
-        columns.push({
+        {
             id: 'actions',
             header: '操作',
-            size: 88,
+            size: readOnly ? 76 : 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
-                    <button onClick={() => openEdit(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400">
-                        <Pencil className="h-3.5 w-3.5" />
+                    <button
+                        onClick={() => setDetailItem(row.original)}
+                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                    >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>详情</span>
                     </button>
-                    <button onClick={() => setDeleteItem(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400">
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {!readOnly && (
+                        <>
+                            <button
+                                onClick={() => openEdit(row.original)}
+                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                            >
+                                <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                                onClick={() => setDeleteItem(row.original)}
+                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                        </>
+                    )}
                 </div>
             ),
-        });
-    }
+        },
+    ];
 
-    // ── Render ────────────────────────────────────────────────────
+    const detailData = detailItem
+        ? {
+            ...detailItem,
+            space_work_type: detailItem.space_work_type?.title ?? null,
+            hazards: detailItem.hazard_id
+                ? detailItem.hazard_id
+                    .split(',')
+                    .filter(Boolean)
+                    .map((id) => hazardOptions.find((hazard) => String(hazard.id) === id)?.title ?? id)
+                    .join('、')
+                : null,
+        }
+        : null;
 
     return (
         <>
@@ -248,9 +323,12 @@ export default function ConfinedSpaceIndex() {
                     </p>
                 </div>
                 {!readOnly && (
-                    <button onClick={openCreate}
-                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95">
-                        <Plus className="h-4 w-4" />新增有限空间
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"
+                    >
+                        <Plus className="h-4 w-4" />
+                        新增有限空间
                     </button>
                 )}
             </div>
@@ -261,24 +339,42 @@ export default function ConfinedSpaceIndex() {
                 isLoading={loading}
                 searchPlaceholder="搜索有限空间名称..."
                 searchValue={searchValue}
-                onSearchChange={(v) => { setSearchValue(v); search({ name: v || undefined }); }}
+                onSearchChange={(value) => {
+                    setSearchValue(value);
+                    search({ name: value || undefined });
+                }}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
             />
 
-            {/* Create / Edit modal */}
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="有限空间辨识详情"
+                data={detailData as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    name: '名称',
+                    position: '所在位置',
+                    space_work_type: '有限空间类型',
+                    size: '空间大小 (m³)',
+                    people_num: '作业人数',
+                    hazards: '危险有害因素',
+                    word_content: '作业内容',
+                }}
+            />
+
             <Modal open={dialogOpen} onClose={() => setDialogOpen(false)}>
                 <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
                     <div>
-                        <h2 className="text-base font-semibold text-slate-100">
-                            {editingId ? '编辑' : '新增'}有限空间
-                        </h2>
+                        <h2 className="text-base font-semibold text-slate-100">{editingId ? '编辑' : '新增'}有限空间</h2>
                         <p className="mt-0.5 text-xs text-slate-600">
                             {editingId ? '修改有限空间档案信息' : '填写信息后保存新记录'}
                         </p>
                     </div>
-                    <button onClick={() => setDialogOpen(false)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-white/5 hover:text-slate-300">
+                    <button
+                        onClick={() => setDialogOpen(false)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-white/5 hover:text-slate-300"
+                    >
                         <X className="h-4 w-4" />
                     </button>
                 </div>
@@ -293,103 +389,147 @@ export default function ConfinedSpaceIndex() {
                         )}
 
                         <div className="grid grid-cols-2 gap-4">
-                            {/* 名称 */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
                                     名称 <span className="ml-1 text-blue-500">*</span>
                                 </label>
-                                <input type="text" value={form.name} onChange={(e) => set('name', e.target.value)}
-                                    placeholder="有限空间名称" className={inputCls} />
+                                <input
+                                    type="text"
+                                    value={form.name}
+                                    onChange={(event) => set('name', event.target.value)}
+                                    placeholder="有限空间名称"
+                                    className={inputCls}
+                                />
                             </div>
 
-                            {/* 所在位置 */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">所在位置</label>
-                                <input type="text" value={form.position} onChange={(e) => set('position', e.target.value)}
-                                    placeholder="具体位置" className={inputCls} />
+                                <input
+                                    type="text"
+                                    value={form.position}
+                                    onChange={(event) => set('position', event.target.value)}
+                                    placeholder="具体位置"
+                                    className={inputCls}
+                                />
                             </div>
 
-                            {/* 有限空间类型 */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">有限空间类型</label>
-                                <select value={form.space_work_type_id} onChange={(e) => set('space_work_type_id', e.target.value)}
-                                    className={cn(inputCls, 'cursor-pointer appearance-none')}>
-                                    <option value="" className="bg-[#0d1530]">请选择</option>
-                                    {spaceWorkTypes.map((o) => (
-                                        <option key={o.id} value={String(o.id)} className="bg-[#0d1530]">{o.label}</option>
+                                <select
+                                    value={form.space_work_type_id}
+                                    onChange={(event) => set('space_work_type_id', event.target.value)}
+                                    className={cn(inputCls, 'cursor-pointer appearance-none')}
+                                >
+                                    <option value="" className="bg-[#0d1530]">
+                                        请选择
+                                    </option>
+                                    {spaceWorkTypes.map((option) => (
+                                        <option key={option.id} value={String(option.id)} className="bg-[#0d1530]">
+                                            {option.label}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
-                            {/* 空间大小 m³ */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
                                     空间大小 <span className="ml-1 normal-case font-normal text-slate-600">(m³)</span>
                                 </label>
                                 <div className="relative">
-                                    <input type="text" value={form.size} onChange={(e) => set('size', e.target.value)}
-                                        placeholder="请输入体积数值" className={cn(inputCls, 'pr-10')} />
-                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-600">m³</span>
+                                    <input
+                                        type="text"
+                                        value={form.size}
+                                        onChange={(event) => set('size', event.target.value)}
+                                        placeholder="请输入体积数值"
+                                        className={cn(inputCls, 'pr-10')}
+                                    />
+                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-600">
+                                        m³
+                                    </span>
                                 </div>
                             </div>
 
-                            {/* 作业人数 */}
                             <div>
                                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">可能涉及作业人数</label>
-                                <input type="number" min="0" value={form.people_num} onChange={(e) => set('people_num', e.target.value)}
-                                    placeholder="人数" className={inputCls} />
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={form.people_num}
+                                    onChange={(event) => set('people_num', event.target.value)}
+                                    placeholder="人数"
+                                    className={inputCls}
+                                />
                             </div>
 
-                            {/* 危险有害因素 multi-select */}
                             <div className="col-span-2">
                                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">危险有害因素</label>
                                 <div className="flex flex-wrap gap-2">
-                                    {hazardOptions.map((h) => {
-                                        const selected = (form.hazard_id ?? '').split(',').filter(Boolean).includes(String(h.id));
+                                    {hazardOptions.map((hazard) => {
+                                        const selected = (form.hazard_id ?? '')
+                                            .split(',')
+                                            .filter(Boolean)
+                                            .includes(String(hazard.id));
+
                                         return (
-                                            <button key={h.id} type="button" onClick={() => toggleHazard(String(h.id))}
+                                            <button
+                                                key={hazard.id}
+                                                type="button"
+                                                onClick={() => toggleHazard(String(hazard.id))}
                                                 className={cn(
                                                     'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
                                                     selected
                                                         ? 'border-amber-500/40 bg-amber-600/12 text-amber-300'
                                                         : 'border-blue-900/30 bg-transparent text-slate-600 hover:border-blue-900/50 hover:text-slate-400',
-                                                )}>
-                                                <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', selected ? 'bg-amber-400' : 'bg-slate-700')} />
-                                                {h.title}
+                                                )}
+                                            >
+                                                <span
+                                                    className={cn(
+                                                        'h-1.5 w-1.5 shrink-0 rounded-full',
+                                                        selected ? 'bg-amber-400' : 'bg-slate-700',
+                                                    )}
+                                                />
+                                                {hazard.title}
                                             </button>
                                         );
                                     })}
-                                    {hazardOptions.length === 0 && (
-                                        <span className="text-xs text-slate-700">加载中...</span>
-                                    )}
+                                    {hazardOptions.length === 0 && <span className="text-xs text-slate-700">加载中...</span>}
                                 </div>
                             </div>
 
-                            {/* 可能涉及的作业内容 */}
                             <div className="col-span-2">
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">可能涉及的作业内容</label>
-                                <textarea value={form.word_content} onChange={(e) => set('word_content', e.target.value)}
-                                    rows={3} placeholder="描述可能涉及的作业内容"
-                                    className={cn(inputCls, 'resize-none')} />
+                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    可能涉及的作业内容
+                                </label>
+                                <textarea
+                                    value={form.word_content}
+                                    onChange={(event) => set('word_content', event.target.value)}
+                                    rows={3}
+                                    placeholder="描述可能涉及的作业内容"
+                                    className={cn(inputCls, 'resize-none')}
+                                />
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                    <button onClick={() => setDialogOpen(false)}
-                        className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">
+                    <button
+                        onClick={() => setDialogOpen(false)}
+                        className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                    >
                         取消
                     </button>
-                    <button onClick={handleSubmit} disabled={formLoading}
-                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/30 disabled:opacity-50 disabled:pointer-events-none">
+                    <button
+                        onClick={handleSubmit}
+                        disabled={formLoading}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/30 disabled:pointer-events-none disabled:opacity-50"
+                    >
                         {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                         {formLoading ? '保存中...' : '保存'}
                     </button>
                 </div>
             </Modal>
 
-            {/* Delete confirm */}
             <Modal open={!!deleteItem} onClose={() => setDeleteItem(null)}>
                 <div className="p-6">
                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
@@ -397,16 +537,22 @@ export default function ConfinedSpaceIndex() {
                     </div>
                     <h2 className="mb-1 text-base font-semibold text-slate-100">删除有限空间</h2>
                     <p className="text-sm text-slate-500">
-                        确定要删除 &ldquo;<span className="font-medium text-slate-300">{deleteItem?.name}</span>&rdquo; 吗？此操作不可撤销。
+                        确定要删除 &ldquo;<span className="font-medium text-slate-300">{deleteItem?.name}</span>&rdquo;
+                        吗？此操作不可撤销。
                     </p>
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                    <button onClick={() => setDeleteItem(null)}
-                        className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">
+                    <button
+                        onClick={() => setDeleteItem(null)}
+                        className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                    >
                         取消
                     </button>
-                    <button onClick={handleDelete} disabled={crud.loading}
-                        className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/25 disabled:opacity-50 disabled:pointer-events-none">
+                    <button
+                        onClick={handleDelete}
+                        disabled={crud.loading}
+                        className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/25 disabled:pointer-events-none disabled:opacity-50"
+                    >
                         {crud.loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                         {crud.loading ? '删除中...' : '确认删除'}
                     </button>

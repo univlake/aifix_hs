@@ -34,10 +34,14 @@ const config: CrudPageConfig = {
             header: '申报状态',
             width: 100,
             render: (value) => {
-                if (!value) return <span className="text-slate-700">—</span>;
+                if (!value) {
+return <span className="text-slate-700">—</span>;
+}
+
                 const color = value === '已申报'
                     ? 'border-emerald-500/20 bg-emerald-600/8 text-emerald-400'
                     : 'border-slate-700/50 bg-slate-700/20 text-slate-500';
+
                 return <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${color}`}>{value as string}</span>;
             },
         },

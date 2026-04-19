@@ -29,7 +29,11 @@ const config: CrudPageConfig = {
             header: '审批意见',
             render: (val) => {
                 const str = val ? String(val) : '';
-                if (!str) return <span className="text-slate-700">—</span>;
+
+                if (!str) {
+return <span className="text-slate-700">—</span>;
+}
+
                 return <span title={str}>{str.length > 20 ? str.slice(0, 20) + '…' : str}</span>;
             },
         },

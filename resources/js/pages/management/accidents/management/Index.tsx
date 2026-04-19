@@ -940,7 +940,7 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
                                         <div className="flex items-center gap-0.5 whitespace-nowrap">
                                             <button
                                                 onClick={() => setDetailId(row.id)}
-                                                className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 hover:bg-blue-600/10 hover:text-blue-300"
+                                                className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
                                             >
                                                 <Eye className="h-3.5 w-3.5" />
                                                 详情

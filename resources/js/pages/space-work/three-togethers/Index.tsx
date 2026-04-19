@@ -1,22 +1,35 @@
-import { useState, useCallback, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
+import type {ColumnDef} from '@tanstack/react-table';
+import { Check, Eye, Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
-import { useScope } from '@/contexts/ScopeContext';
-import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Check } from 'lucide-react';
-import api from '@/lib/api';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
+import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
 
 // ── Constants ─────────────────────────────────────────────────────
 
 function deriveStatus(row: ThreeTogether): StatusValue | '' {
-    if (row.complete_comment || row.acceptance) return '完成验收/评价';
-    if (row.construction_comment || row.safety_requirements) return '施工中';
-    if (row.evaluation_unit_id || row.write_time) return '完成预评价/设计专篇';
-    if (row.design_unit_id || row.design_annex_url) return '设计中';
+    if (row.complete_comment || row.acceptance) {
+return '完成验收/评价';
+}
+
+    if (row.construction_comment || row.safety_requirements) {
+return '施工中';
+}
+
+    if (row.evaluation_unit_id || row.write_time) {
+return '完成预评价/设计专篇';
+}
+
+    if (row.design_unit_id || row.design_annex_url) {
+return '设计中';
+}
+
     return '';
 }
 
@@ -79,6 +92,7 @@ export default function ThreeTogethersIndex() {
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<ThreeTogether | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteLabel, setDeleteLabel] = useState('');
     const [formLoading, setFormLoading] = useState(false);
@@ -151,13 +165,18 @@ export default function ThreeTogethersIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = { ...form };
+
             if (companyId && !payload['company_id']) {
                 payload['company_id'] = companyId;
             }
+
             Object.keys(payload).forEach((k) => {
-                if (payload[k] === '') payload[k] = null;
+                if (payload[k] === '') {
+payload[k] = null;
+}
             });
 
             if (editingId) {
@@ -165,6 +184,7 @@ export default function ThreeTogethersIndex() {
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: unknown) {
@@ -176,7 +196,10 @@ export default function ThreeTogethersIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteId) {
+return;
+}
+
         await crud.remove(deleteId);
         setDeleteId(null);
         setDeleteLabel('');
@@ -200,6 +223,7 @@ export default function ThreeTogethersIndex() {
             cell: ({ row }) => {
                 const s = deriveStatus(row.original);
                 const idx = STATUSES.findIndex((x) => x.value === s);
+
                 return (
                     <span
                         className={cn(
@@ -218,34 +242,54 @@ export default function ThreeTogethersIndex() {
         },
     ];
 
-    if (!readOnly) {
-        tableColumns.push({
-            id: 'actions',
-            header: '操作',
-            size: 88,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => openEdit(row.original)}
-                        title="编辑"
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        onClick={() => {
-                            setDeleteId(row.original.id);
-                            setDeleteLabel(row.original.name ?? '');
-                        }}
-                        title="删除"
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-600/10 hover:text-red-400"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                </div>
-            ),
-        });
-    }
+    tableColumns.push({
+        id: 'actions',
+        header: '操作',
+        size: readOnly ? 76 : 144,
+        cell: ({ row }) => (
+            <div className="flex items-center gap-0.5">
+                <button
+                    onClick={() => setDetailItem(row.original)}
+                    className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>详情</span>
+                </button>
+                {!readOnly && (
+                    <>
+                        <button
+                            onClick={() => openEdit(row.original)}
+                            title="编辑"
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            onClick={() => {
+                                setDeleteId(row.original.id);
+                                setDeleteLabel(row.original.name ?? '');
+                            }}
+                            title="删除"
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-600/10 hover:text-red-400"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    </>
+                )}
+            </div>
+        ),
+    });
+
+    const detailData = detailItem
+        ? {
+            ...detailItem,
+            designUnit: detailItem.designUnit?.name ?? null,
+            evaluationUnit: detailItem.evaluationUnit?.name ?? null,
+            design_unit: detailItem.designUnit?.name ?? null,
+            evaluation_unit: detailItem.evaluationUnit?.name ?? null,
+            status: deriveStatus(detailItem) || detailItem.status || null,
+        }
+        : null;
 
     return (
         <>
@@ -281,6 +325,30 @@ export default function ThreeTogethersIndex() {
                 }}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="三同时管理详情"
+                data={detailData as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    name: '项目名称',
+                    three_together_type: '项目类型',
+                    establish_time: '立项时间',
+                    establish_section: '立项部门',
+                    status: '当前状态',
+                    designUnit: '设计单位',
+                    design_unit: '设计单位',
+                    evaluationUnit: '评价机构',
+                    evaluation_unit: '评价机构',
+                    design_annex_url: '设计文件附件',
+                    write_time: '设计专篇编制日期',
+                    construction_comment: '施工说明',
+                    safety_requirements: '安全要求',
+                    complete_comment: '竣工说明',
+                    acceptance: '验收表',
+                }}
             />
 
             {/* Create / Edit modal */}
@@ -395,7 +463,9 @@ export default function ThreeTogethersIndex() {
             {/* Delete confirm */}
             {!!deleteId && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setDeleteId(null); setDeleteLabel(''); }} />
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => {
+ setDeleteId(null); setDeleteLabel(''); 
+}} />
                     <div className="relative w-full max-w-sm rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
                         <div className="p-6">
                             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
@@ -410,7 +480,9 @@ export default function ThreeTogethersIndex() {
                         </div>
                         <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
                             <button
-                                onClick={() => { setDeleteId(null); setDeleteLabel(''); }}
+                                onClick={() => {
+ setDeleteId(null); setDeleteLabel(''); 
+}}
                                 className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200"
                             >
                                 取消
@@ -500,7 +572,9 @@ function ConditionalFields({
     designUnits: SelectOption[];
     evaluationUnits: SelectOption[];
 }) {
-    if (!status) return null;
+    if (!status) {
+return null;
+}
 
     switch (status) {
         case '设计中':

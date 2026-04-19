@@ -1,12 +1,12 @@
-import { useState } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
+import type {ColumnDef} from '@tanstack/react-table';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Eye } from 'lucide-react';
+import { useState } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
-import { useScope } from '@/contexts/ScopeContext';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
-import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
 
 interface DesignUnitRow {
     id: number;
@@ -20,7 +20,10 @@ interface DesignUnitRow {
 const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -46,6 +49,7 @@ export default function DesignUnitsIndex() {
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<DesignUnitRow | null>(null);
     const [deleteItem, setDeleteItem] = useState<DesignUnitRow | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -75,9 +79,15 @@ export default function DesignUnitsIndex() {
     };
 
     const handleSubmit = async () => {
-        if (!form.name.trim()) { setFormError('单位名称不能为空'); return; }
+        if (!form.name.trim()) {
+ setFormError('单位名称不能为空');
+
+ return; 
+}
+
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 name: form.name,
@@ -86,8 +96,17 @@ export default function DesignUnitsIndex() {
                 contact_tel: form.contact_tel || null,
                 annex_url: form.annex_url || null,
             };
-            if (!editingId) payload.company_id = companyId;
-            editingId ? await crud.update(editingId, payload) : await crud.create(payload);
+
+            if (!editingId) {
+payload.company_id = companyId;
+}
+
+            if (editingId) {
+                await crud.update(editingId, payload);
+            } else {
+                await crud.create(payload);
+            }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -98,7 +117,10 @@ export default function DesignUnitsIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteItem) return;
+        if (!deleteItem) {
+return;
+}
+
         await crud.remove(deleteItem.id);
         setDeleteItem(null);
         reload();
@@ -129,9 +151,10 @@ export default function DesignUnitsIndex() {
 
     if (!readOnly) {
         columns.push({
-            id: 'actions', header: '操作', size: 88,
+            id: 'actions', header: '操作', size: 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
+                    <button onClick={() => setDetailItem(row.original)} className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"><Eye className="h-3.5 w-3.5" /><span>详情</span></button>
                     <button onClick={() => openEdit(row.original)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"><Pencil className="h-3.5 w-3.5" /></button>
                     <button onClick={() => setDeleteItem(row.original)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
                 </div>
@@ -156,8 +179,24 @@ export default function DesignUnitsIndex() {
 
             <DataTable columns={columns} data={data} isLoading={loading}
                 searchPlaceholder="搜索设计单位..." searchValue={searchValue}
-                onSearchChange={(v) => { setSearchValue(v); search({ name: v || undefined }); }}
+                onSearchChange={(v) => {
+ setSearchValue(v); search({ name: v || undefined }); 
+}}
                 pagination={{ current_page, last_page, per_page, total }} onPageChange={goToPage} />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="设计单位详情"
+                data={detailItem as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    name: '单位名称',
+                    qualification_name: '资质名称',
+                    contact: '联系人',
+                    contact_tel: '联系电话',
+                    annex_url: '资质附件',
+                }}
+            />
 
             <Modal open={dialogOpen} onClose={() => setDialogOpen(false)}>
                 <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">

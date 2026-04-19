@@ -1,12 +1,13 @@
-import { useState, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
+import type {ColumnDef} from '@tanstack/react-table';
+import { Eye, Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
-import { cn } from '@/lib/utils';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
 import api from '@/lib/api';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -45,7 +46,10 @@ const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 
 // ── Modal ──────────────────────────────────────────────────────────
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -73,6 +77,7 @@ export default function HazardousProcessIndex() {
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<ProcessRow | null>(null);
     const [deleteItem, setDeleteItem] = useState<ProcessRow | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -136,6 +141,7 @@ export default function HazardousProcessIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 process_type_id: form.process_type_id ? Number(form.process_type_id) : null,
@@ -149,12 +155,17 @@ export default function HazardousProcessIndex() {
                 is_control: Number(form.is_control),
                 is_dust: Number(form.is_dust),
             };
-            if (!editingId) payload.company_id = companyId;
+
+            if (!editingId) {
+payload.company_id = companyId;
+}
+
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -165,7 +176,10 @@ export default function HazardousProcessIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteItem) return;
+        if (!deleteItem) {
+return;
+}
+
         await crud.remove(deleteItem.id);
         setDeleteItem(null);
         reload();
@@ -196,7 +210,11 @@ export default function HazardousProcessIndex() {
             header: '功能配置',
             cell: ({ row }) => {
                 const active = SWITCH_FIELDS.filter((f) => row.original[f.key as keyof ProcessRow]);
-                if (!active.length) return <span className="text-slate-700">—</span>;
+
+                if (!active.length) {
+return <span className="text-slate-700">—</span>;
+}
+
                 return (
                     <div className="flex flex-wrap gap-1">
                         {active.map((f) => (
@@ -210,25 +228,43 @@ export default function HazardousProcessIndex() {
         },
     ];
 
-    if (!readOnly) {
-        columns.push({
-            id: 'actions',
-            header: '操作',
-            size: 88,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-0.5">
-                    <button onClick={() => openEdit(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400">
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => setDeleteItem(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400">
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                </div>
-            ),
-        });
-    }
+    columns.push({
+        id: 'actions',
+        header: '操作',
+        size: readOnly ? 76 : 144,
+        cell: ({ row }) => (
+            <div className="flex items-center gap-0.5">
+                <button onClick={() => setDetailItem(row.original)}
+                    className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300">
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>详情</span>
+                </button>
+                {!readOnly && (
+                    <>
+                        <button onClick={() => openEdit(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400">
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => setDeleteItem(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400">
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    </>
+                )}
+            </div>
+        ),
+    });
+
+    const detailData = detailItem ? {
+        ...detailItem,
+        process_type: detailItem.process_type?.title ?? null,
+        hazardous_chemical: detailItem.hazardous_chemical?.name ?? null,
+        dangerous_equipment: detailItem.dangerous_equipment?.equipment_name ?? null,
+        is_online_test: detailItem.is_online_test === 1 ? '是' : '否',
+        is_automatic: detailItem.is_automatic === 1 ? '是' : '否',
+        is_control: detailItem.is_control === 1 ? '是' : '否',
+        is_dust: detailItem.is_dust === 1 ? '是' : '否',
+    } : null;
 
     // ── Render ────────────────────────────────────────────────────
 
@@ -257,9 +293,30 @@ export default function HazardousProcessIndex() {
                 isLoading={loading}
                 searchPlaceholder="搜索工艺位置..."
                 searchValue={searchValue}
-                onSearchChange={(v) => { setSearchValue(v); search({ position: v || undefined }); }}
+                onSearchChange={(v) => {
+ setSearchValue(v); search({ position: v || undefined }); 
+}}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="较危险工艺详情"
+                data={detailData as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    process_type: '工艺名称',
+                    position: '所在位置',
+                    hazardous_chemical: '使用物料',
+                    dangerous_equipment: '使用设备',
+                    other_equipment_name: '其他设备名称',
+                    operating_people_num: '操作人数',
+                    is_online_test: '在线监测',
+                    is_automatic: '自动化控制',
+                    is_control: '控制措施',
+                    is_dust: '涉及粉尘',
+                }}
             />
 
             {/* Create / Edit modal */}

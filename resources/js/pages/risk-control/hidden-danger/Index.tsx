@@ -155,16 +155,6 @@ function DetailPanel({ row, onClose }: { row: Investigation; onClose: () => void
                         <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                             <DetailField label="整改日期" value={row.correct_date} />
                             <DetailField label="整改结果" value={row.correct_result} />
-                            {row.is_govern === 1 && (
-                                <>
-                                    <DetailField label="治理项目" value={row.govern_title} />
-                                    <DetailField label="治理责任人" value={row.govern_user} />
-                                    <DetailField label="治理日期" value={row.govern_date} />
-                                    <DetailField label="治理费用(万元)" value={row.govern_money} />
-                                    <DetailField label="治理材料" value={row.govern_supplies} />
-                                    <DetailField label="治理内容" value={row.govern_text} />
-                                </>
-                            )}
                         </div>
                     </div>
 
@@ -619,7 +609,7 @@ export default function BlocHiddenDangerIndex() {
                                         <div className="flex items-center gap-0.5">
                                             <button
                                                 onClick={() => setDetail(row)}
-                                                className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 hover:bg-blue-600/10 hover:text-blue-300"
+                                                className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
                                             >
                                                 <Eye className="h-3.5 w-3.5" />
                                                 详情

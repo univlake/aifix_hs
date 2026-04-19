@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
-import { useScope } from '@/contexts/ScopeContext';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
-import { OssUploadField } from '@/components/shared/OssUploadField';
-import { DataTable } from '@/components/data-table/DataTable';
-import api from '@/lib/api';
-import type { ApiResponse } from '@/types/models';
-import { cn } from '@/lib/utils';
+import type {ColumnDef} from '@tanstack/react-table';
 import {
     Save, Loader2, Plus, Pencil, Trash2, X, AlertTriangle, Check,
     FileText, ShieldCheck, Stethoscope,
 } from 'lucide-react';
-import { type ColumnDef } from '@tanstack/react-table';
+import { useState, useEffect } from 'react';
+import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
+import { OssUploadField } from '@/components/shared/OssUploadField';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
+import api from '@/lib/api';
+import { cn } from '@/lib/utils';
+import type { ApiResponse } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -97,7 +98,10 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
 }
 
 function ErrorBanner({ message }: { message: string }) {
-    if (!message) return null;
+    if (!message) {
+return null;
+}
+
     return (
         <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-950/20 px-4 py-3 text-sm text-red-400">
             <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -107,7 +111,10 @@ function ErrorBanner({ message }: { message: string }) {
 }
 
 function SuccessBanner({ message }: { message: string }) {
-    if (!message) return null;
+    if (!message) {
+return null;
+}
+
     return (
         <div className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-400">
             <Check className="h-4 w-4 shrink-0" />
@@ -145,6 +152,7 @@ function EditButtons({
             </button>
         );
     }
+
     return (
         <div className="flex items-center gap-2">
             {!isNew && (
@@ -190,6 +198,7 @@ function InfoCard({
     children: React.ReactNode;
 }) {
     const a = accentMap[accent];
+
     return (
         <div className={`rounded-xl border ${a.border} bg-[#0d1530] p-6`}>
             <div className="mb-5 flex items-start justify-between gap-4">
@@ -228,6 +237,7 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
             .then(({ data: res }) => {
                 const rec = res.data ?? null;
                 setRecord(rec);
+
                 if (rec) {
                     setForm({
                         grade: rec.grade ?? '',
@@ -244,7 +254,9 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
     const isNew = !record;
     const isEditing = isNew || editMode;
 
-    const handleEdit = () => { setEditMode(true); setError(''); };
+    const handleEdit = () => {
+ setEditMode(true); setError(''); 
+};
 
     const handleCancel = () => {
         if (record) {
@@ -255,6 +267,7 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
                 annex_url: record.annex_url ?? '',
             });
         }
+
         setEditMode(false);
         setError('');
     };
@@ -262,8 +275,10 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
     const handleSave = async () => {
         setSaving(true);
         setError('');
+
         try {
             const payload = { ...form, company_id: companyId };
+
             if (record?.id) {
                 const { data: res } = await api.put<ApiResponse<ProductionStandardization>>(
                     `/production-standardizations/${record.id}`, payload,
@@ -275,6 +290,7 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
                 );
                 setRecord(res.data);
             }
+
             setEditMode(false);
             setSavedMsg('已保存');
             setTimeout(() => setSavedMsg(''), 3000);
@@ -391,6 +407,7 @@ function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
             .then(({ data: res }) => {
                 const rec = res.data ?? null;
                 setRecord(rec);
+
                 if (rec) {
                     setForm({
                         certification_body: rec.certification_body ?? '',
@@ -408,7 +425,9 @@ function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
     const isNew = !record;
     const isEditing = isNew || editMode;
 
-    const handleEdit = () => { setEditMode(true); setError(''); };
+    const handleEdit = () => {
+ setEditMode(true); setError(''); 
+};
 
     const handleCancel = () => {
         if (record) {
@@ -420,6 +439,7 @@ function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
                 annex_url: record.annex_url ?? '',
             });
         }
+
         setEditMode(false);
         setError('');
     };
@@ -427,8 +447,10 @@ function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
     const handleSave = async () => {
         setSaving(true);
         setError('');
+
         try {
             const payload = { ...form, company_id: companyId };
+
             if (record?.id) {
                 const { data: res } = await api.put<ApiResponse<OccupationalHealthSafety>>(
                     `/occupational-health-safeties/${record.id}`, payload,
@@ -440,6 +462,7 @@ function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
                 );
                 setRecord(res.data);
             }
+
             setEditMode(false);
             setSavedMsg('已保存');
             setTimeout(() => setSavedMsg(''), 3000);
@@ -549,7 +572,10 @@ function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
 // ── Modal ─────────────────────────────────────────────────────────
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -574,6 +600,7 @@ function FilingPermissionsSection({ companyId }: { companyId: number }) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<FilingPermission | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
     const emptyForm = {
@@ -613,17 +640,24 @@ function FilingPermissionsSection({ companyId }: { companyId: number }) {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 ...form, company_id: companyId,
                 record_type_id: form.record_type_id ? Number(form.record_type_id) : null,
             };
-            Object.keys(payload).forEach((k) => { if (payload[k] === '') payload[k] = null; });
+            Object.keys(payload).forEach((k) => {
+ if (payload[k] === '') {
+payload[k] = null;
+} 
+});
+
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -634,7 +668,10 @@ function FilingPermissionsSection({ companyId }: { companyId: number }) {
     };
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteId) {
+return;
+}
+
         await crud.remove(deleteId);
         setDeleteId(null);
         reload();
@@ -666,9 +703,16 @@ function FilingPermissionsSection({ companyId }: { companyId: number }) {
         {
             id: 'actions',
             header: '操作',
-            size: 88,
+            size: 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={() => setDetailItem(row.original)}
+                        title="详情"
+                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                    >
+                        详情
+                    </button>
                     <button
                         onClick={() => openEdit(row.original)}
                         title="编辑"
@@ -709,6 +753,23 @@ function FilingPermissionsSection({ companyId }: { companyId: number }) {
                 isLoading={loading}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="备案/许可证详情"
+                data={detailItem as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    record_type: '备案/许可类型',
+                    title: '类型名称',
+                    issuing_department: '发证部门',
+                    filing_time: '备案/许可时间',
+                    valid_period: '有效期',
+                    filing_scope: '备案/许可范围',
+                    annex_url: '附件',
+                    comment: '备注',
+                }}
             />
 
             {/* Create / Edit modal */}

@@ -1,13 +1,14 @@
-import { useState } from 'react';
 import { Head } from '@inertiajs/react';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
-import { DataTable } from '@/components/data-table/DataTable';
-import { useScope } from '@/contexts/ScopeContext';
-import { cn } from '@/lib/utils';
 import {
-    Plus, Pencil, Trash2, X, AlertTriangle, Loader2, FlaskConical,
+    Plus, Pencil, Trash2, X, AlertTriangle, Loader2, FlaskConical, Eye,
 } from 'lucide-react';
+import { useState } from 'react';
+import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { cn } from '@/lib/utils';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -85,7 +86,9 @@ function emptyChemical(): Partial<Chemical> {
     };
 }
 
-function emptyIngredient(): Ingredient { return { name: '', content: '', cas: '' }; }
+function emptyIngredient(): Ingredient {
+ return { name: '', content: '', cas: '' }; 
+}
 
 // ── Main page ─────────────────────────────────────────────────────
 
@@ -103,6 +106,7 @@ export default function HazardousChemicalsIndex() {
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<Chemical | null>(null);
     const [deleteItem, setDeleteItem] = useState<Chemical | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -131,17 +135,20 @@ export default function HazardousChemicalsIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload = {
                 ...form,
                 company_id: companyId,
                 ingredients: ingredients.filter((i) => i.name.trim()),
             };
+
             if (editingId) {
                 await crud.update(editingId, payload as Record<string, unknown>);
             } else {
                 await crud.create(payload as Record<string, unknown>);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -152,7 +159,10 @@ export default function HazardousChemicalsIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteItem) return;
+        if (!deleteItem) {
+return;
+}
+
         await crud.remove(deleteItem.id);
         setDeleteItem(null);
         reload();
@@ -198,7 +208,11 @@ export default function HazardousChemicalsIndex() {
             size: 110,
             cell: ({ row }: any) => {
                 const { year_use, year_use_unit } = row.original;
-                if (!year_use) return <span className="text-slate-700">—</span>;
+
+                if (!year_use) {
+return <span className="text-slate-700">—</span>;
+}
+
                 return <span className="text-slate-300">{year_use}{year_use_unit ? ` ${year_use_unit}` : ''}</span>;
             },
         },
@@ -207,7 +221,11 @@ export default function HazardousChemicalsIndex() {
             header: '监管属性',
             cell: ({ row }: any) => {
                 const active = FLAG_FIELDS.filter((f) => row.original[f.key]);
-                if (!active.length) return <span className="text-slate-700">—</span>;
+
+                if (!active.length) {
+return <span className="text-slate-700">—</span>;
+}
+
                 return (
                     <div className="flex flex-wrap gap-1">
                         {active.map((f) => <FlagBadge key={f.key} label={f.label} color={f.color} />)}
@@ -218,9 +236,13 @@ export default function HazardousChemicalsIndex() {
         {
             id: 'actions',
             header: '操作',
-            size: 88,
+            size: 144,
             cell: ({ row }: any) => (
                 <div className="flex items-center gap-0.5">
+                    <button onClick={() => setDetailItem(row.original)} className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300">
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>详情</span>
+                    </button>
                     <ActionBtn variant="edit" title="编辑" onClick={() => openEdit(row.original)}>
                         <Pencil className="h-3.5 w-3.5" />
                     </ActionBtn>
@@ -254,9 +276,43 @@ export default function HazardousChemicalsIndex() {
                 isLoading={loading}
                 searchPlaceholder="搜索化学品名称..."
                 searchValue={searchValue}
-                onSearchChange={(v) => { setSearchValue(v); search({ name: v || undefined }); }}
+                onSearchChange={(v) => {
+ setSearchValue(v); search({ name: v || undefined }); 
+}}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="危险化学品详情"
+                data={detailItem as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    name: '化学品名称',
+                    alias: '别名',
+                    cas: 'CAS号',
+                    matter_state: '物质状态',
+                    fire_class: '火灾危险性类别',
+                    position: '存储位置',
+                    temperature: '操作温度',
+                    storage: '最大存储量',
+                    year_use: '年使用量',
+                    year_use_unit: '年使用量单位',
+                    storage_unit: '存储量单位',
+                    pressure: '操作压力',
+                    pressure_unit: '压力单位',
+                    msds: 'MSDS附件',
+                    is_supervision: '重点监管',
+                    is_toxin: '毒性物质',
+                    is_explosion: '爆炸品',
+                    is_easy_explode: '易燃易爆',
+                    is_narcotics: '麻醉品',
+                    is_monitor: '监控化学品',
+                    is_mixing: '混合物',
+                    chemical_ingredients: '化学成分',
+                    content: '含量',
+                }}
             />
 
             {/* Form modal */}
@@ -335,6 +391,7 @@ export default function HazardousChemicalsIndex() {
                         <div className="grid grid-cols-4 gap-2">
                             {FLAG_FIELDS.map((f) => {
                                 const active = !!(form[f.key] as number);
+
                                 return (
                                     <button
                                         key={f.key}
@@ -421,7 +478,10 @@ export default function HazardousChemicalsIndex() {
 // ── Shared sub-components ─────────────────────────────────────────
 
 function Modal({ open, onClose, children, wide = false }: { open: boolean; onClose: () => void; children: React.ReactNode; wide?: boolean }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />

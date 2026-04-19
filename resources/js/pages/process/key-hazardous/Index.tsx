@@ -1,14 +1,13 @@
-import { useState, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
+import type {ColumnDef} from '@tanstack/react-table';
+import { Eye, Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
-import { cn } from '@/lib/utils';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
 import api from '@/lib/api';
-import {
-    Plus, Pencil, Trash2, X, AlertTriangle, Loader2,
-} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -46,7 +45,10 @@ const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 
 // ── Modal ──────────────────────────────────────────────────────────
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -74,6 +76,7 @@ export default function KeyHazardousProcessIndex() {
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<ProcessRow | null>(null);
     const [deleteItem, setDeleteItem] = useState<ProcessRow | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -139,6 +142,7 @@ export default function KeyHazardousProcessIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 name: form.name || null,
@@ -154,12 +158,17 @@ export default function KeyHazardousProcessIndex() {
                 sil_level: form.sil_level || null,
                 detect_parameter: form.detect_parameter || null,
             };
-            if (!editingId) payload.company_id = companyId;
+
+            if (!editingId) {
+payload.company_id = companyId;
+}
+
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -170,7 +179,10 @@ export default function KeyHazardousProcessIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteItem) return;
+        if (!deleteItem) {
+return;
+}
+
         await crud.remove(deleteItem.id);
         setDeleteItem(null);
         reload();
@@ -216,7 +228,11 @@ export default function KeyHazardousProcessIndex() {
             size: 110,
             cell: ({ row }) => {
                 const { pressure, pressure_unit } = row.original;
-                if (!pressure) return <span className="text-slate-700">—</span>;
+
+                if (!pressure) {
+return <span className="text-slate-700">—</span>;
+}
+
                 return <span className="font-mono text-xs text-slate-300">{pressure}{pressure_unit ? ` ${pressure_unit}` : ''}</span>;
             },
         },
@@ -233,7 +249,11 @@ export default function KeyHazardousProcessIndex() {
             header: '监测远传参数',
             cell: ({ row }) => {
                 const val = row.original.detect_parameter;
-                if (!val) return <span className="text-slate-700">—</span>;
+
+                if (!val) {
+return <span className="text-slate-700">—</span>;
+}
+
                 return (
                     <div className="flex flex-wrap gap-1">
                         {val.split(',').filter(Boolean).map((p) => (
@@ -245,25 +265,40 @@ export default function KeyHazardousProcessIndex() {
         },
     ];
 
-    if (!readOnly) {
-        columns.push({
-            id: 'actions',
-            header: '操作',
-            size: 88,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-0.5">
-                    <button onClick={() => openEdit(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400">
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => setDeleteItem(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400">
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                </div>
-            ),
-        });
-    }
+    columns.push({
+        id: 'actions',
+        header: '操作',
+        size: readOnly ? 76 : 144,
+        cell: ({ row }) => (
+            <div className="flex items-center gap-0.5">
+                <button onClick={() => setDetailItem(row.original)}
+                    className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300">
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>详情</span>
+                </button>
+                {!readOnly && (
+                    <>
+                        <button onClick={() => openEdit(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400">
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => setDeleteItem(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400">
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    </>
+                )}
+            </div>
+        ),
+    });
+
+    const detailData = detailItem ? {
+        ...detailItem,
+        dangerous_craft_type: detailItem.dangerous_craft_type?.title ?? null,
+        hazardous_chemical: detailItem.hazardous_chemical?.name ?? null,
+        dangerous_equipment: detailItem.dangerous_equipment?.equipment_name ?? null,
+        is_sis: detailItem.is_sis === 1 ? '是' : '否',
+    } : null;
 
     // ── Render ────────────────────────────────────────────────────
 
@@ -292,9 +327,32 @@ export default function KeyHazardousProcessIndex() {
                 isLoading={loading}
                 searchPlaceholder="搜索工艺名称..."
                 searchValue={searchValue}
-                onSearchChange={(v) => { setSearchValue(v); search({ name: v || undefined }); }}
+                onSearchChange={(v) => {
+ setSearchValue(v); search({ name: v || undefined }); 
+}}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="重点监管危险工艺详情"
+                data={detailData as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    name: '工艺名称',
+                    dangerous_craft_type: '危险工艺类型',
+                    position: '所在位置',
+                    hazardous_chemical: '使用物料',
+                    dangerous_equipment: '使用设备',
+                    operating_people_num: '操作人数',
+                    temperature: '温度',
+                    pressure: '压力',
+                    pressure_unit: '压力单位',
+                    is_sis: 'SIS',
+                    sil_level: 'SIL等级',
+                    detect_parameter: '监测远传参数',
+                }}
             />
 
             {/* Create / Edit modal */}
@@ -441,6 +499,7 @@ export default function KeyHazardousProcessIndex() {
                                 <div className="flex flex-wrap gap-2">
                                     {DETECT_PARAMS.map((p) => {
                                         const selected = (form.detect_parameter ?? '').split(',').filter(Boolean).includes(p);
+
                                         return (
                                             <button key={p} type="button" onClick={() => toggleDetect(p)}
                                                 className={cn(

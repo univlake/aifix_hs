@@ -1,14 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
 import { Head } from '@inertiajs/react';
-import { useScope } from '@/contexts/ScopeContext';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
-import { cn } from '@/lib/utils';
-import api from '@/lib/api';
-import type { ApiResponse, PaginatedData } from '@/types/models';
 import {
     Loader2, Save, Plus, Pencil, Trash2, X, AlertTriangle,
     Users, ShieldCheck, Flame, HardHat, Download, Upload,
 } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
+import api from '@/lib/api';
+import { cn } from '@/lib/utils';
+import type { ApiResponse, PaginatedData } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -34,14 +35,6 @@ interface CertStatus {
     already_obtain_people: number | null;
     no_obtain_people: string;
     train_people: number | null;
-}
-
-interface StaffPerson {
-    id: number;
-    name: string;
-    cert_title?: string;
-    cert_number?: string;
-    valid_period?: string;
 }
 
 const EMPTY_STATS: PersonnelStats = {
@@ -104,12 +97,16 @@ function EmploymentStatsSection({ companyId }: { companyId: number | undefined }
     const isEditing = isNew || editMode;
 
     useEffect(() => {
-        if (!companyId) return;
+        if (!companyId) {
+return;
+}
+
         setLoading(true);
         api.get<ApiResponse<PaginatedData<PersonnelStats>>>('/personnels', {
             params: { company_id: companyId, per_page: 1 },
         }).then(({ data: res }) => {
             const first = res.data?.data?.[0];
+
             if (first) {
                 setStats(first);
                 setSavedStats(first);
@@ -119,17 +116,23 @@ function EmploymentStatsSection({ companyId }: { companyId: number | undefined }
     }, [companyId]);
 
     const handleSave = async () => {
-        if (!companyId) return;
+        if (!companyId) {
+return;
+}
+
         setSaving(true);
         setError('');
+
         try {
             const payload = { ...stats, company_id: companyId };
+
             if (recordId) {
                 await api.put(`/personnels/${recordId}`, payload);
             } else {
                 const { data: res } = await api.post<ApiResponse<{ id: number }>>('/personnels', payload);
                 setRecordId((res.data as any).id);
             }
+
             setSavedStats(stats);
             setSaved(true);
             setEditMode(false);
@@ -173,7 +176,9 @@ function EmploymentStatsSection({ companyId }: { companyId: number | undefined }
         </div>
     ) : (
         <button
-            onClick={() => { setEditMode(true); setError(''); }}
+            onClick={() => {
+ setEditMode(true); setError(''); 
+}}
             className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200"
         >
             <Pencil className="h-3 w-3" />
@@ -247,7 +252,10 @@ function CertStatusSection({
     const typeIds = types.map((t) => t.type);
 
     const fetchRows = useCallback(() => {
-        if (!companyId) return;
+        if (!companyId) {
+return;
+}
+
         setLoading(true);
         // Fetch all types in one call via multiple requests, merge results
         Promise.all(
@@ -260,6 +268,7 @@ function CertStatusSection({
             // Merge fetched records with defaults
             const merged = types.map((t, idx) => {
                 const existing = results[idx];
+
                 return existing ?? {
                     type: t.type,
                     name: t.name,
@@ -273,7 +282,9 @@ function CertStatusSection({
         }).catch(() => {}).finally(() => setLoading(false));
     }, [companyId]);
 
-    useEffect(() => { fetchRows(); }, [fetchRows]);
+    useEffect(() => {
+ fetchRows(); 
+}, [fetchRows]);
 
     const openEdit = (row: CertStatus) => {
         setEditingRow({ ...row });
@@ -281,16 +292,22 @@ function CertStatusSection({
     };
 
     const handleSave = async () => {
-        if (!editingRow || !companyId) return;
+        if (!editingRow || !companyId) {
+return;
+}
+
         setSaving(true);
         setError('');
+
         try {
             const payload = { ...editingRow, company_id: companyId, name: editingRow.name };
+
             if (editingRow.id) {
                 await api.put(`/certificate-statuses/${editingRow.id}`, payload);
             } else {
                 await api.post('/certificate-statuses', payload);
             }
+
             setEditingRow(null);
             fetchRows();
         } catch (err: any) {
@@ -579,13 +596,17 @@ function StaffTable({
     const [error, setError] = useState('');
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteName, setDeleteName] = useState('');
+    const [detailRow, setDetailRow] = useState<Record<string, unknown> | null>(null);
     const [importing, setImporting] = useState(false);
     const [importError, setImportError] = useState('');
     const importInputRef = useRef<HTMLInputElement>(null);
 
     const initForm = () => {
         const f: Record<string, string> = {};
-        formFields.forEach((f2) => { f[f2.key] = ''; });
+        formFields.forEach((f2) => {
+ f[f2.key] = ''; 
+});
+
         return f;
     };
 
@@ -609,20 +630,28 @@ function StaffTable({
     };
 
     const handleSave = async () => {
-        if (!companyId) return;
+        if (!companyId) {
+return;
+}
+
         setSaving(true);
         setError('');
+
         try {
             const payload: Record<string, unknown> = { ...form, company_id: companyId };
             // clean empty strings to null for date/optional fields
             formFields.forEach((f2) => {
-                if (payload[f2.key] === '') payload[f2.key] = null;
+                if (payload[f2.key] === '') {
+payload[f2.key] = null;
+}
             });
+
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -633,7 +662,10 @@ function StaffTable({
     };
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteId) {
+return;
+}
+
         await crud.remove(deleteId);
         setDeleteId(null);
         setDeleteName('');
@@ -660,9 +692,13 @@ function StaffTable({
     };
 
     const handleImportFile = async (file: File) => {
-        if (!companyId || !file) return;
+        if (!companyId || !file) {
+return;
+}
+
         setImporting(true);
         setImportError('');
+
         try {
             const formData = new FormData();
             formData.append('file', file);
@@ -675,6 +711,7 @@ function StaffTable({
             setImportError(err.response?.data?.message ?? '导入失败，请重试');
         } finally {
             setImporting(false);
+
             if (importInputRef.current) {
                 importInputRef.current.value = '';
             }
@@ -708,7 +745,10 @@ function StaffTable({
                         className="hidden"
                         onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (file) { handleImportFile(file); }
+
+                            if (file) {
+ handleImportFile(file); 
+}
                         }}
                     />
                     <button
@@ -748,11 +788,21 @@ function StaffTable({
                                         <td key={col.key} className="px-4 py-3 text-slate-300">
                                             {col.format
                                                 ? col.format(col.valueGetter ? col.valueGetter(row) : row[col.key]) || <Dash />
-                                                : (() => { const v = col.valueGetter ? col.valueGetter(row) : row[col.key]; return v != null ? String(v) : <Dash />; })()}
+                                                : (() => {
+ const v = col.valueGetter ? col.valueGetter(row) : row[col.key];
+
+ return v != null ? String(v) : <Dash />; 
+})()}
                                         </td>
                                     ))}
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-0.5">
+                                            <button
+                                                onClick={() => setDetailRow(row)}
+                                                className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                                            >
+                                                详情
+                                            </button>
                                             <button
                                                 onClick={() => openEdit(row)}
                                                 className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
@@ -776,6 +826,14 @@ function StaffTable({
                     </table>
                 </div>
             )}
+
+            <ObjectDetailDrawer
+                open={!!detailRow}
+                title="人员详情"
+                data={detailRow}
+                onClose={() => setDetailRow(null)}
+                labels={Object.fromEntries(formFields.map((field) => [field.key, field.label]))}
+            />
 
             {/* Create/Edit modal */}
             {dialogOpen && (

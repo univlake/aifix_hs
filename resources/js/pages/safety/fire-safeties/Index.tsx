@@ -27,6 +27,7 @@ const config: CrudPageConfig = {
             width: 160,
             render: (_, row) => {
                 const unit = row.skill_unit as { name?: string } | null;
+
                 return unit?.name ? String(unit.name) : <span className="text-slate-700">—</span>;
             },
         },
@@ -36,6 +37,7 @@ const config: CrudPageConfig = {
             width: 160,
             render: (_, row) => {
                 const kid = row.skill_unit_kid as { qualification_name?: string } | null;
+
                 return kid?.qualification_name ? String(kid.qualification_name) : <span className="text-slate-700">—</span>;
             },
         },

@@ -1,8 +1,9 @@
 import { Head } from '@inertiajs/react';
 import type {ColumnDef} from '@tanstack/react-table';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, ChevronDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, ChevronDown, Eye } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
@@ -244,6 +245,7 @@ export default function HiddenDangerIndex() {
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<Investigation | null>(null);
     const [deleteItem, setDeleteItem] = useState<Investigation | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -423,14 +425,19 @@ export default function HiddenDangerIndex() {
     columns.push({
         id: 'actions',
         header: '操作',
-        size: 88,
+        size: 144,
         cell: ({ row }) => {
-            if (row.original.company_id !== companyId) {
- return null; 
-}
-
             return (
                 <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={() => setDetailItem(row.original)}
+                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                    >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>详情</span>
+                    </button>
+                    {row.original.company_id === companyId && (
+                        <>
                     <button
                         onClick={() => openEdit(row.original)}
                         className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
@@ -443,6 +450,8 @@ export default function HiddenDangerIndex() {
                     >
                         <Trash2 className="h-3.5 w-3.5" />
                     </button>
+                        </>
+                    )}
                 </div>
             );
         },
@@ -468,6 +477,16 @@ export default function HiddenDangerIndex() {
             />
         </div>
     );
+
+    const detailData = detailItem
+        ? {
+            ...detailItem,
+            monthly_investigation_reviews:
+                detailItem.monthlyInvestigationReviews ?? detailItem.monthly_investigation_reviews ?? [],
+            monthly_investigation_views:
+                detailItem.monthlyInvestigationViews ?? detailItem.monthly_investigation_views ?? [],
+        }
+        : null;
 
     return (
         <>
@@ -500,6 +519,52 @@ export default function HiddenDangerIndex() {
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
                 toolbar={toolbar}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="隐患详情"
+                data={detailData as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                hiddenKeys={[
+                    'govern_title',
+                    'govern_supplies',
+                    'govern_user',
+                    'govern_date',
+                    'govern_text',
+                    'govern_money',
+                    'monthlyInvestigationViews',
+                    'monthlyInvestigationReviews',
+                ]}
+                labels={{
+                    type: '隐患类型',
+                    level: '隐患等级',
+                    is_fire_fighting: '消防排查',
+                    is_emergency: '应急排查',
+                    inv_time: '排查时间',
+                    inv_name: '排查人',
+                    content: '隐患描述',
+                    legalbasis: '法律依据',
+                    proposal: '整改建议',
+                    correct_date: '整改日期',
+                    correct_result: '整改结果',
+                    is_govern: '是否治理项目',
+                    govern_title: '治理项目',
+                    govern_user: '治理责任人',
+                    govern_date: '治理日期',
+                    govern_money: '治理费用(万元)',
+                    govern_supplies: '治理材料',
+                    govern_text: '治理内容',
+                    review_user: '复查人',
+                    review_date: '复查日期',
+                    review_discription: '复查说明',
+                    review_content: '复查结果描述',
+                    monthly_investigation_views: '隐患证据(图片)',
+                    monthly_investigation_reviews: '复查附件',
+                    monthlyInvestigationViews: '隐患证据(图片)',
+                    monthlyInvestigationReviews: '复查附件',
+                    annex_url: '附件',
+                }}
             />
 
             {/* Create / Edit modal */}

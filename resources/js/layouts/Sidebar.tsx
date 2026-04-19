@@ -145,7 +145,7 @@ const navSections: NavSection[] = [
                 icon: GitMerge,
                 children: [
                     { title: '重点监管危险工艺', href: '/process/key-hazardous' },
-                    { title: '较危险工艺', href: '/process/hazardous' },
+                    { title: '较大危险工艺', href: '/process/hazardous' },
                     { title: '有限空间辨识', href: '/space-work/space-works' },
                 ],
             },

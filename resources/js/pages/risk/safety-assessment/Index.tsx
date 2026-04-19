@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
-import { useScope } from '@/contexts/ScopeContext';
+import type {ColumnDef} from '@tanstack/react-table';
+import { Eye, Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
-import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -68,6 +69,7 @@ export default function SafetyAssessmentIndex() {
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<AssessDetect | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteLabel, setDeleteLabel] = useState('');
     const [formLoading, setFormLoading] = useState(false);
@@ -79,7 +81,10 @@ export default function SafetyAssessmentIndex() {
 
     // Load company-scoped skill units (with kids nested)
     useEffect(() => {
-        if (!companyId) return;
+        if (!companyId) {
+return;
+}
+
         api.get<ApiResponse<{ data: SkillUnit[] }>>('/skill-units', {
             params: { company_id: companyId, per_page: 200 },
         })
@@ -93,8 +98,12 @@ export default function SafetyAssessmentIndex() {
     const update = (key: keyof FormData, value: string) =>
         setForm((f) => {
             const next = { ...f, [key]: value };
+
             // Reset kid when institution changes
-            if (key === 'skill_unit_id') next.skill_unit_kid_id = '';
+            if (key === 'skill_unit_id') {
+next.skill_unit_kid_id = '';
+}
+
             return next;
         });
 
@@ -122,6 +131,7 @@ export default function SafetyAssessmentIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 name: form.name,
@@ -132,11 +142,13 @@ export default function SafetyAssessmentIndex() {
                 annex_url: form.annex_url || null,
                 company_id: companyId,
             };
+
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: unknown) {
@@ -148,7 +160,10 @@ export default function SafetyAssessmentIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteId) {
+return;
+}
+
         await crud.remove(deleteId);
         setDeleteId(null);
         setDeleteLabel('');
@@ -190,14 +205,23 @@ export default function SafetyAssessmentIndex() {
                 : <span className="text-slate-700">—</span>,
         },
         {
-            id: 'actions', header: '操作', size: 90,
+            id: 'actions', header: '操作', size: 146,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
+                    <button
+                        onClick={() => setDetailItem(row.original)}
+                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                    >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>详情</span>
+                    </button>
                     <ActionBtn onClick={() => openEdit(row.original)} title="编辑" variant="edit">
                         <Pencil className="h-3.5 w-3.5" />
                     </ActionBtn>
                     <ActionBtn
-                        onClick={() => { setDeleteId(row.original.id); setDeleteLabel(row.original.name); }}
+                        onClick={() => {
+ setDeleteId(row.original.id); setDeleteLabel(row.original.name); 
+}}
                         title="删除"
                         variant="delete"
                     >
@@ -207,6 +231,14 @@ export default function SafetyAssessmentIndex() {
             ),
         },
     ];
+
+    const detailData = detailItem
+        ? {
+            ...detailItem,
+            skill_unit: detailItem.skill_unit?.name ?? null,
+            skill_unit_kid: detailItem.skill_unit_kid?.qualification_name ?? null,
+        }
+        : null;
 
     return (
         <>
@@ -233,6 +265,21 @@ export default function SafetyAssessmentIndex() {
                 onSearchChange={handleSearch}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="安全评价与检测详情"
+                data={detailData as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    name: '名称',
+                    assess_detect_type: '评价或监测类型',
+                    skill_unit: '评价/检测机构',
+                    skill_unit_kid: '资质',
+                    valid_period: '报告有效期',
+                    annex_url: '附件',
+                }}
             />
 
             {/* Create / Edit modal */}
@@ -325,7 +372,9 @@ export default function SafetyAssessmentIndex() {
             </Modal>
 
             {/* Delete confirm */}
-            <Modal open={!!deleteId} onClose={() => { setDeleteId(null); setDeleteLabel(''); }}>
+            <Modal open={!!deleteId} onClose={() => {
+ setDeleteId(null); setDeleteLabel(''); 
+}}>
                 <div className="p-6">
                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                         <Trash2 className="h-5 w-5 text-red-400" />
@@ -336,7 +385,9 @@ export default function SafetyAssessmentIndex() {
                     </p>
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                    <button onClick={() => { setDeleteId(null); setDeleteLabel(''); }} className={ghostBtn}>取消</button>
+                    <button onClick={() => {
+ setDeleteId(null); setDeleteLabel(''); 
+}} className={ghostBtn}>取消</button>
                     <button onClick={handleDelete} disabled={crud.loading} className={dangerBtn}>
                         {crud.loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                         {crud.loading ? '删除中...' : '确认删除'}
@@ -374,7 +425,10 @@ function ErrorAlert({ message }: { message: string }) {
 }
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />

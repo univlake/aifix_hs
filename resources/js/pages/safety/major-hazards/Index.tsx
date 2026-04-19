@@ -1,13 +1,14 @@
-import { useState } from 'react';
 import { Head } from '@inertiajs/react';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
-import { DataTable } from '@/components/data-table/DataTable';
-import { useScope } from '@/contexts/ScopeContext';
-import { cn } from '@/lib/utils';
 import {
-    Plus, Pencil, Trash2, X, AlertTriangle, Loader2, ShieldAlert,
+    Plus, Pencil, Trash2, X, AlertTriangle, Loader2, ShieldAlert, Eye,
 } from 'lucide-react';
+import { useState } from 'react';
+import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -76,6 +77,7 @@ export default function MajorHazardsIndex() {
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<MajorHazard | null>(null);
     const [deleteItem, setDeleteItem] = useState<MajorHazard | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -118,17 +120,20 @@ export default function MajorHazardsIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload = {
                 ...form,
                 company_id: companyId,
                 constitutes: constitutes.filter((c) => c.hazardous_chemical_id),
             };
+
             if (editingId) {
                 await crud.update(editingId, payload as Record<string, unknown>);
             } else {
                 await crud.create(payload as Record<string, unknown>);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -139,7 +144,10 @@ export default function MajorHazardsIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteItem) return;
+        if (!deleteItem) {
+return;
+}
+
         await crud.remove(deleteItem.id);
         setDeleteItem(null);
         reload();
@@ -159,7 +167,11 @@ export default function MajorHazardsIndex() {
             size: 100,
             cell: ({ row }: any) => {
                 const lvl = row.original.level as string | null;
-                if (!lvl) return <span className="text-slate-700">—</span>;
+
+                if (!lvl) {
+return <span className="text-slate-700">—</span>;
+}
+
                 return (
                     <span className={cn('inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium', levelColor[lvl] ?? 'border-slate-700/50 bg-slate-700/20 text-slate-500')}>
                         {lvl}
@@ -200,7 +212,11 @@ export default function MajorHazardsIndex() {
             header: '检测远传参数',
             cell: ({ row }: any) => {
                 const val = row.original.detect_parameter as string | null;
-                if (!val) return <span className="text-slate-700">—</span>;
+
+                if (!val) {
+return <span className="text-slate-700">—</span>;
+}
+
                 return (
                     <div className="flex flex-wrap gap-1">
                         {val.split(',').filter(Boolean).map((p) => (
@@ -213,9 +229,13 @@ export default function MajorHazardsIndex() {
         {
             id: 'actions',
             header: '操作',
-            size: 88,
+            size: 144,
             cell: ({ row }: any) => (
                 <div className="flex items-center gap-0.5">
+                    <button onClick={() => setDetailItem(row.original)} className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300">
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>详情</span>
+                    </button>
                     <ActionBtn variant="edit" title="编辑" onClick={() => openEdit(row.original)}>
                         <Pencil className="h-3.5 w-3.5" />
                     </ActionBtn>
@@ -249,9 +269,30 @@ export default function MajorHazardsIndex() {
                 isLoading={loading}
                 searchPlaceholder="搜索危险源名称..."
                 searchValue={searchValue}
-                onSearchChange={(v) => { setSearchValue(v); search({ name: v || undefined }); }}
+                onSearchChange={(v) => {
+ setSearchValue(v); search({ name: v || undefined }); 
+}}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="重大危险源详情"
+                data={detailItem as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    name: '危险源名称',
+                    level: '危险等级',
+                    position: '所在位置',
+                    r_value: 'R值',
+                    is_sis: '安全联锁',
+                    sil_level: 'SIL等级',
+                    detect_parameter: '检测远传参数',
+                    major_constitutes: '危险源构成',
+                    hazardous_chemical_id: '危险化学品',
+                    number: '数量',
+                }}
             />
 
             {/* Form modal */}
@@ -322,6 +363,7 @@ export default function MajorHazardsIndex() {
                                             const next = selected ? current.filter((x) => x !== p) : [...current, p];
                                             setField('detect_parameter', next.join(','));
                                         };
+
                                         return (
                                             <button key={p} type="button" onClick={toggle}
                                                 className={cn(
@@ -421,7 +463,10 @@ export default function MajorHazardsIndex() {
 // ── Shared sub-components ─────────────────────────────────────────
 
 function Modal({ open, onClose, children, wide = false }: { open: boolean; onClose: () => void; children: React.ReactNode; wide?: boolean }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />

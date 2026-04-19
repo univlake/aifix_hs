@@ -1,7 +1,7 @@
+import { Users, Package, Activity } from 'lucide-react';
 import { useState } from 'react';
 import { CrudPage } from '@/components/shared/CrudPage';
 import type { CrudPageConfig } from '@/components/shared/CrudPage';
-import { Users, Package, Activity } from 'lucide-react';
 
 const teamsConfig: CrudPageConfig = {
     title: '应急队伍',
@@ -15,6 +15,7 @@ const teamsConfig: CrudPageConfig = {
             width: 200,
             render: (val) => {
                 const s = val ? String(val) : '';
+
                 return s
                     ? <span title={s}>{s.length > 20 ? s.slice(0, 20) + '…' : s}</span>
                     : <span className="text-slate-700">—</span>;
@@ -61,6 +62,7 @@ const suppliesConfig: CrudPageConfig = {
             header: '备注',
             render: (val) => {
                 const s = val ? String(val) : '';
+
                 return s
                     ? <span title={s}>{s.length > 30 ? s.slice(0, 30) + '…' : s}</span>
                     : <span className="text-slate-700">—</span>;
@@ -164,6 +166,7 @@ export default function EmergencyIndex() {
             <div className="-mx-6 -mt-6 mb-6 flex items-center gap-0.5 border-b border-slate-800/80 px-6">
                 {TABS.map((tab) => {
                     const Icon = tab.icon;
+
                     return (
                         <button
                             key={tab.key}

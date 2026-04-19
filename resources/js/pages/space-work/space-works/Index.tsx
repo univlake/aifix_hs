@@ -1,12 +1,13 @@
-import { useState, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
+import type {ColumnDef} from '@tanstack/react-table';
+import { Eye, Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { useState, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
-import { cn } from '@/lib/utils';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
 import api from '@/lib/api';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -41,7 +42,10 @@ const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 
 // ── Modal ──────────────────────────────────────────────────────────
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -69,6 +73,7 @@ export default function SpaceWorksIndex() {
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [detailItem, setDetailItem] = useState<JobRow | null>(null);
     const [deleteItem, setDeleteItem] = useState<JobRow | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -137,6 +142,7 @@ export default function SpaceWorksIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 department: form.department || null,
@@ -155,12 +161,17 @@ export default function SpaceWorksIndex() {
                 risk_analysis: form.risk_analysis || null,
                 risk_protection: form.risk_protection || null,
             };
-            if (!editingId) payload.company_id = companyId;
+
+            if (!editingId) {
+payload.company_id = companyId;
+}
+
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -171,7 +182,10 @@ export default function SpaceWorksIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteItem) return;
+        if (!deleteItem) {
+return;
+}
+
         await crud.remove(deleteItem.id);
         setDeleteItem(null);
         reload();
@@ -186,7 +200,11 @@ export default function SpaceWorksIndex() {
             size: 140,
             cell: ({ row }) => {
                 const t = row.original.type;
-                if (!t) return <span className="text-slate-700">—</span>;
+
+                if (!t) {
+return <span className="text-slate-700">—</span>;
+}
+
                 return (
                     <span className={cn(
                         'inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium',
@@ -246,25 +264,40 @@ export default function SpaceWorksIndex() {
         },
     ];
 
-    if (!readOnly) {
-        columns.push({
-            id: 'actions',
-            header: '操作',
-            size: 88,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-0.5">
-                    <button onClick={() => openEdit(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400">
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => setDeleteItem(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400">
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                </div>
-            ),
-        });
-    }
+    columns.push({
+        id: 'actions',
+        header: '操作',
+        size: readOnly ? 76 : 144,
+        cell: ({ row }) => (
+            <div className="flex items-center gap-0.5">
+                <button onClick={() => setDetailItem(row.original)}
+                    className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300">
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>详情</span>
+                </button>
+                {!readOnly && (
+                    <>
+                        <button onClick={() => openEdit(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400">
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => setDeleteItem(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400">
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    </>
+                )}
+            </div>
+        ),
+    });
+
+    const detailData = detailItem
+        ? {
+            ...detailItem,
+            is_outsourcing: detailItem.is_outsourcing === 1 ? '是' : '否',
+            evaluation_unit: detailItem.evaluation_unit?.name ?? null,
+        }
+        : null;
 
     // ── Render ────────────────────────────────────────────────────
 
@@ -293,9 +326,33 @@ export default function SpaceWorksIndex() {
                 isLoading={loading}
                 searchPlaceholder="搜索部门/作业内容..."
                 searchValue={searchValue}
-                onSearchChange={(v) => { setSearchValue(v); search({ department: v || undefined }); }}
+                onSearchChange={(v) => {
+ setSearchValue(v); search({ department: v || undefined }); 
+}}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
+            />
+
+            <ObjectDetailDrawer
+                open={!!detailItem}
+                title="作业管理详情"
+                data={detailData as Record<string, unknown> | null}
+                onClose={() => setDetailItem(null)}
+                labels={{
+                    department: '所属部门',
+                    content: '作业内容',
+                    type: '作业类型',
+                    special_type: '特殊作业类型',
+                    position: '作业位置',
+                    job_time: '作业时间',
+                    unit: '作业单位',
+                    is_outsourcing: '是否外协',
+                    evaluation_unit: '外协单位',
+                    job_people_number: '作业人数',
+                    job_people_name: '作业人员',
+                    risk_analysis: '风险分析',
+                    risk_protection: '防护措施',
+                }}
             />
 
             {/* Create / Edit modal */}
