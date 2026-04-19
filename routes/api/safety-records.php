@@ -229,6 +229,11 @@ Route::middleware('permission:upload.file')->group(function () {
 });
 Route::middleware('permission:upload.oss')->group(function () {
     Route::get('/upload/oss-signature', [UploadOssController::class, 'getSignature']);
+    // Multipart upload for large files (videos, etc.)
+    Route::post('/upload/multipart/init', [UploadOssController::class, 'multipartInit']);
+    Route::post('/upload/multipart/sign-part', [UploadOssController::class, 'multipartSignPart']);
+    Route::post('/upload/multipart/complete', [UploadOssController::class, 'multipartComplete']);
+    Route::post('/upload/multipart/abort', [UploadOssController::class, 'multipartAbort']);
 });
 // Generate a pre-signed URL for a private OSS object (no extra permission needed)
 Route::get('/upload/oss-sign', [UploadOssController::class, 'signedUrl']);

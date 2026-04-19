@@ -86,6 +86,81 @@ class UploadOssController extends Controller
         return $this->success(OssService::signUrl($url));
     }
 
+    public function multipartInit(Request $request): JsonResponse
+    {
+        $request->validate([
+            'filename' => 'required|string|max:255',
+            'dir' => 'nullable|string|max:255',
+        ]);
+
+        $dir = rtrim($request->input('dir') ?: 'videos/'.date('Y/m').'/', '/').'/';
+        $ext = pathinfo($request->input('filename'), PATHINFO_EXTENSION) ?: 'bin';
+        $ext = preg_replace('/[^a-zA-Z0-9]/', '', $ext) ?: 'bin';
+        $key = $dir.date('YmdHis').'_'.bin2hex(random_bytes(4)).'.'.$ext;
+
+        try {
+            $uploadId = OssService::initMultipart($key);
+        } catch (\Throwable $e) {
+            return $this->failed($e->getMessage(), 500);
+        }
+
+        $host = rtrim((string) config('filesystems.disks.oss.url'), '/');
+
+        return $this->success([
+            'upload_id' => $uploadId,
+            'key' => $key,
+            'file_url' => "{$host}/{$key}",
+        ]);
+    }
+
+    public function multipartSignPart(Request $request): JsonResponse
+    {
+        $request->validate([
+            'key' => 'required|string',
+            'upload_id' => 'required|string',
+            'part_number' => 'required|integer|min:1|max:10000',
+        ]);
+
+        $url = OssService::signPartUrl(
+            $request->input('key'),
+            $request->input('upload_id'),
+            (int) $request->input('part_number'),
+        );
+
+        return $this->success(['url' => $url]);
+    }
+
+    public function multipartComplete(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'key' => 'required|string',
+            'upload_id' => 'required|string',
+            'parts' => 'required|array|min:1',
+            'parts.*.PartNumber' => 'required|integer|min:1',
+            'parts.*.ETag' => 'required|string',
+        ]);
+
+        try {
+            $fileUrl = OssService::completeMultipart($data['key'], $data['upload_id'], $data['parts']);
+        } catch (\Throwable $e) {
+            return $this->failed($e->getMessage(), 500);
+        }
+
+        return $this->success(['file_url' => $fileUrl]);
+    }
+
+    public function multipartAbort(Request $request): JsonResponse
+    {
+        $request->validate([
+            'key' => 'required|string',
+            'upload_id' => 'required|string',
+        ]);
+
+        OssService::abortMultipart($request->input('key'), $request->input('upload_id'));
+
+        return $this->message('已取消');
+    }
+
     private function gmtIso8601(int $time): string
     {
         return str_replace('+00:00', '.000Z', gmdate('c', $time));

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
+
 class AccidentBulletin extends BaseModel
 {
     protected $fillable = [
@@ -26,6 +28,13 @@ class AccidentBulletin extends BaseModel
         'user_id',
         'last_user_id',
     ];
+
+    protected $appends = ['kids'];
+
+    public function getKidsAttribute(): Collection
+    {
+        return $this->accidentBulletinKids;
+    }
 
     public function accidentBulletinKids()
     {

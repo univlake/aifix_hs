@@ -1,13 +1,14 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
-import { DataTable } from '@/components/data-table/DataTable';
-import { useScope } from '@/contexts/ScopeContext';
-import { cn } from '@/lib/utils';
+import type {ColumnDef} from '@tanstack/react-table';
 import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, Download, FileDown, Copy } from 'lucide-react';
-import api from '@/lib/api';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { DataTable } from '@/components/data-table/DataTable';
 import { OssUploadField } from '@/components/shared/OssUploadField';
+import { OssVideoUploadField } from '@/components/shared/OssVideoUploadField';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
+import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -21,7 +22,7 @@ export interface SubField {
 export interface FormField {
     key: string;
     label: string;
-    type: 'text' | 'number' | 'textarea' | 'select' | 'switch' | 'date' | 'file' | 'sub-table';
+    type: 'text' | 'number' | 'textarea' | 'select' | 'switch' | 'date' | 'file' | 'video' | 'sub-table';
     required?: boolean;
     placeholder?: string;
     options?: { value: string; label: string }[];
@@ -154,7 +155,11 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                 const labelKey = field.optionsLabelKey ?? 'title';
                 const valueKey = field.optionsValueKey ?? 'id';
                 const params: Record<string, unknown> = { per_page: 200 };
-                if (companyId) params.company_id = companyId;
+
+                if (companyId) {
+params.company_id = companyId;
+}
+
                 api.get<ApiResponse<PaginatedResponse<Record<string, unknown>>>>(field.optionsEndpoint, { params })
                     .then((res) => {
                         const items = res.data.data?.data ?? [];
@@ -174,12 +179,18 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     // Load cascading options when a dependsOnField value changes
     useEffect(() => {
         formFields.forEach((field) => {
-            if (!field.dependsOnField || !field.dependsOnEndpoint) return;
+            if (!field.dependsOnField || !field.dependsOnEndpoint) {
+return;
+}
+
             const parentValue = form[field.dependsOnField];
+
             if (!parentValue) {
                 setDynamicOptions((prev) => ({ ...prev, [field.key]: [] }));
+
                 return;
             }
+
             const endpoint = field.dependsOnEndpoint.replace('{value}', String(parentValue));
             const labelKey = field.optionsLabelKey ?? 'title';
             const valueKey = field.optionsValueKey ?? 'id';
@@ -227,18 +238,24 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                     .catch(() => {});
             }
         });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     }, [filterFields]);
 
     // Load options for cascading filter dropdowns when parent value changes
     useEffect(() => {
         filterFields.forEach((field) => {
-            if (!field.dependsOnKey || !field.optionsEndpoint || field.options) return;
+            if (!field.dependsOnKey || !field.optionsEndpoint || field.options) {
+return;
+}
+
             const parentValue = filterValues[field.dependsOnKey];
+
             if (!parentValue) {
                 setFilterOptions((prev) => ({ ...prev, [field.key]: [] }));
+
                 return;
             }
+
             const lKey = field.optionsLabelKey ?? 'title';
             const vKey = field.optionsValueKey ?? 'id';
             const paramName = field.dependsOnParam ?? field.dependsOnKey;
@@ -266,31 +283,51 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         const next = { ...filterValues, [key]: value };
         // Clear any child filters that depend on this key
         filterFields.forEach((f) => {
-            if (f.dependsOnKey === key) next[f.key] = '';
+            if (f.dependsOnKey === key) {
+next[f.key] = '';
+}
         });
         setFilterValues(next);
         const params: Record<string, unknown> = {};
-        if (searchField && searchValue) params[searchField] = searchValue;
-        Object.entries(next).forEach(([k, v]) => { if (v) params[k] = v; });
+
+        if (searchField && searchValue) {
+params[searchField] = searchValue;
+}
+
+        Object.entries(next).forEach(([k, v]) => {
+ if (v) {
+params[k] = v;
+} 
+});
         search(params);
     };
 
     const initForm = useCallback(() => {
         const f: Record<string, unknown> = {};
         formFields.forEach((field) => {
-            if (field.type === 'sub-table') f[field.key] = [];
-            else if (field.type === 'switch') f[field.key] = 0;
-            else f[field.key] = '';
+            if (field.type === 'sub-table') {
+f[field.key] = [];
+} else if (field.type === 'switch') {
+f[field.key] = 0;
+} else {
+f[field.key] = '';
+}
         });
+
         return f;
     }, [formFields]);
 
     const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !importEndpoint || !companyId) return;
+
+        if (!file || !importEndpoint || !companyId) {
+return;
+}
+
         e.target.value = '';
         setImportLoading(true);
         setImportError([]);
+
         try {
             const fd = new FormData();
             fd.append('file', file);
@@ -301,6 +338,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
             reload();
         } catch (err: any) {
             const rowErrors = err.response?.data?.data?.row_errors;
+
             if (rowErrors) {
                 setImportError(rowErrors);
             } else {
@@ -312,8 +350,12 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     };
 
     const handleExport = async () => {
-        if (!exportEndpoint || !companyId) return;
+        if (!exportEndpoint || !companyId) {
+return;
+}
+
         setExportLoading(true);
+
         try {
             const res = await api.get(exportEndpoint, {
                 params: { company_id: companyId },
@@ -333,7 +375,10 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     };
 
     const handleTemplate = async () => {
-        if (!templateEndpoint || !companyId) return;
+        if (!templateEndpoint || !companyId) {
+return;
+}
+
         try {
             const res = await api.get(templateEndpoint, {
                 params: { company_id: companyId },
@@ -351,8 +396,12 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     };
 
     const handleCopy = async () => {
-        if (!copyEndpoint || !selectedIds.size) return;
+        if (!copyEndpoint || !selectedIds.size) {
+return;
+}
+
         setCopyLoading(true);
+
         try {
             await api.post(copyEndpoint, { ids: Array.from(selectedIds) });
             setSelectedIds(new Set());
@@ -370,7 +419,13 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     const toggleRow = (id: number) =>
         setSelectedIds((prev) => {
             const next = new Set(prev);
-            if (next.has(id)) next.delete(id); else next.add(id);
+
+            if (next.has(id)) {
+next.delete(id);
+} else {
+next.add(id);
+}
+
             return next;
         });
 
@@ -382,12 +437,14 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
             setSelectedIds((prev) => {
                 const next = new Set(prev);
                 data.forEach((r) => next.delete(r[idKey] as number));
+
                 return next;
             });
         } else {
             setSelectedIds((prev) => {
                 const next = new Set(prev);
                 data.forEach((r) => next.add(r[idKey] as number));
+
                 return next;
             });
         }
@@ -397,11 +454,19 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         (val: string) => {
             setSearchValue(val);
             const params: Record<string, unknown> = {};
-            if (searchField) params[searchField] = val || undefined;
-            Object.entries(filterValues).forEach(([k, v]) => { if (v) params[k] = v; });
+
+            if (searchField) {
+params[searchField] = val || undefined;
+}
+
+            Object.entries(filterValues).forEach(([k, v]) => {
+ if (v) {
+params[k] = v;
+} 
+});
             search(params);
         },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
         [search, searchField, filterValues],
     );
 
@@ -419,12 +484,16 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         formFields.forEach((field) => {
             if (field.type === 'sub-table') {
                 f[field.key] = Array.isArray(row[field.key]) ? row[field.key] : [];
+
                 return;
             }
+
             let val = row[field.key] ?? (field.type === 'switch' ? 0 : '');
+
             if (field.type === 'date' && typeof val === 'string' && val.length > 10) {
                 val = val.slice(0, 10);
             }
+
             f[field.key] = val;
         });
         setForm(f);
@@ -434,25 +503,37 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = { ...form };
+
             // Always inject active scope company_id
             if (companyId && !payload['company_id']) {
                 payload['company_id'] = companyId;
             }
+
             formFields.forEach((field) => {
                 if (field.visibleWhen && !field.visibleWhen(form)) {
                     payload[field.key] = null;
+
                     return;
                 }
-                if (field.type === 'sub-table') return;
+
+                if (field.type === 'sub-table') {
+return;
+}
+
                 if (field.type === 'number' && payload[field.key] !== '') {
                     payload[field.key] = Number(payload[field.key]);
                 }
+
                 if (field.type === 'switch') {
                     payload[field.key] = Number(payload[field.key]);
                 }
-                if (payload[field.key] === '') payload[field.key] = null;
+
+                if (payload[field.key] === '') {
+payload[field.key] = null;
+}
             });
 
             if (editingId) {
@@ -460,6 +541,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: any) {
@@ -470,7 +552,10 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     };
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteId) {
+return;
+}
+
         await crud.remove(deleteId);
         setDeleteId(null);
         setDeleteLabel('');
@@ -481,8 +566,11 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         const next = { ...f, [key]: value };
         // Clear any child field that depends on this key
         formFields.forEach((field) => {
-            if (field.dependsOnField === key) next[field.key] = '';
+            if (field.dependsOnField === key) {
+next[field.key] = '';
+}
         });
+
         return next;
     });
 
@@ -494,7 +582,11 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
             <input
                 type="checkbox"
                 checked={allPageSelected}
-                ref={(el) => { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
+                ref={(el) => {
+ if (el) {
+el.indeterminate = somePageSelected && !allPageSelected;
+} 
+}}
                 onChange={toggleAll}
                 className="h-3.5 w-3.5 rounded border-blue-900/60 bg-[#070d1f] accent-blue-500"
             />
@@ -516,9 +608,16 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
             header: col.header,
             size: col.width,
             cell: ({ row }: { row: { original: Record<string, unknown> } }) => {
-                if (col.render) return col.render(row.original[col.key], row.original);
+                if (col.render) {
+return col.render(row.original[col.key], row.original);
+}
+
                 const val = row.original[col.key];
-                if (val === null || val === undefined) return <span className="text-slate-700">—</span>;
+
+                if (val === null || val === undefined) {
+return <span className="text-slate-700">—</span>;
+}
+
                 return String(val);
             },
         })),
@@ -609,8 +708,12 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                 toolbar={(filterFields.length > 0 || copyEndpoint || templateEndpoint || importEndpoint || exportEndpoint) ? (
                     <div className="flex items-center gap-2">
                         {filterFields.map((ff) => {
-                            if (ff.dependsOnKey && !filterValues[ff.dependsOnKey]) return null;
+                            if (ff.dependsOnKey && !filterValues[ff.dependsOnKey]) {
+return null;
+}
+
                             const opts = ff.options ?? filterOptions[ff.key] ?? [];
+
                             return (
                                 <select
                                     key={ff.key}
@@ -704,7 +807,10 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                             formFields.some((f) => f.colSpan === 2) ? 'md:grid-cols-2' : 'grid-cols-1',
                         )}>
                             {formFields.map((field) => {
-                                if (field.visibleWhen && !field.visibleWhen(form)) return null;
+                                if (field.visibleWhen && !field.visibleWhen(form)) {
+return null;
+}
+
                                 return (
                                     <div
                                         key={field.key}
@@ -743,7 +849,9 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
             </Modal>
 
             {/* Delete confirm modal */}
-            <Modal open={!!deleteId} onClose={() => { setDeleteId(null); setDeleteLabel(''); }}>
+            <Modal open={!!deleteId} onClose={() => {
+ setDeleteId(null); setDeleteLabel(''); 
+}}>
                 <div className="p-6">
                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                         <Trash2 className="h-5 w-5 text-red-400" />
@@ -757,7 +865,9 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
                     <button
-                        onClick={() => { setDeleteId(null); setDeleteLabel(''); }}
+                        onClick={() => {
+ setDeleteId(null); setDeleteLabel(''); 
+}}
                         className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200"
                     >
                         取消
@@ -830,6 +940,7 @@ function renderFormField(
             );
         case 'select': {
             const opts = field.options ?? dynamicOptions[field.key] ?? [];
+
             return (
                 <select
                     value={String(value ?? '')}
@@ -874,22 +985,32 @@ function renderFormField(
                     onChange={(url) => updateForm(field.key, url)}
                 />
             );
+        case 'video':
+            return (
+                <OssVideoUploadField
+                    value={(value as string) ?? ''}
+                    onChange={(url) => updateForm(field.key, url)}
+                />
+            );
         case 'sub-table': {
             const rows = (value as Record<string, unknown>[]) ?? [];
             const cols = field.subFields ?? [];
             const addRow = () => {
                 const empty: Record<string, unknown> = {};
-                cols.forEach((c) => { empty[c.key] = ''; });
+                cols.forEach((c) => {
+ empty[c.key] = ''; 
+});
                 updateForm(field.key, [...rows, empty]);
             };
             const removeRow = (idx: number) =>
                 updateForm(field.key, rows.filter((_, i) => i !== idx));
             const updateCell = (idx: number, colKey: string, val: string) =>
                 updateForm(field.key, rows.map((r, i) => i === idx ? { ...r, [colKey]: val } : r));
+
             return (
-                <div className="rounded-lg border border-blue-900/30 overflow-hidden">
+                <div className="rounded-lg border border-blue-900/30 overflow-x-auto">
                     {rows.length > 0 && (
-                        <table className="w-full text-xs">
+                        <table className="w-full min-w-max text-xs">
                             <thead>
                                 <tr className="border-b border-blue-900/30 bg-[#070d1f]">
                                     {cols.map((c) => (
@@ -953,7 +1074,9 @@ function Modal({
     onClose: () => void;
     children: React.ReactNode;
 }) {
-    if (!open) return null;
+    if (!open) {
+return null;
+}
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
