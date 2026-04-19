@@ -1,14 +1,12 @@
-import { useState, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
-import { useApiList, useApiCrud } from '@/hooks/use-api';
-import { DataTable } from '@/components/data-table/DataTable';
-import { useScope } from '@/contexts/ScopeContext';
-import { useAuth } from '@/hooks/use-auth';
-import { OssUploadField } from '@/components/shared/OssUploadField';
-import { OssDownloadLink } from '@/components/shared/OssDownloadLink';
-import { cn } from '@/lib/utils';
+import type {ColumnDef} from '@tanstack/react-table';
 import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, ChevronDown } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { DataTable } from '@/components/data-table/DataTable';
+import { OssUploadField } from '@/components/shared/OssUploadField';
+import { useScope } from '@/contexts/ScopeContext';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { cn } from '@/lib/utils';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -44,18 +42,19 @@ interface Investigation {
     review_content: string | null;
     monthlyInvestigationReviews: AnnexItem[];
     monthlyInvestigationViews: AnnexItem[];
+    monthly_investigation_reviews?: AnnexItem[];
+    monthly_investigation_views?: AnnexItem[];
 }
 
 // ── Constants ──────────────────────────────────────────────────────
 
 const TYPE_OPTIONS = [
-    '安全管理类', '设备设施类', '作业行为类', '消防类',
-    '应急管理类', '职业健康类', '电气安全类', '其他',
+    '消防', '机械', '危化品', '职业健康', '电气', '基础管理', '三违',
 ];
 
 const LEVEL_OPTIONS = ['一般隐患', '重大隐患'];
 
-const CORRECT_RESULT_OPTIONS = ['已整改', '整改中', '未整改'];
+const CORRECT_RESULT_OPTIONS = ['已整改', '未整改', '整改不到位', '部分整改'];
 
 const LEVEL_CLS: Record<string, string> = {
     '一般隐患': 'border-blue-500/30 bg-blue-600/10 text-blue-400',
@@ -70,7 +69,9 @@ const selectCls = cn(inputCls, 'cursor-pointer appearance-none');
 // ── Modal ──────────────────────────────────────────────────────────
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) { return null; }
+    if (!open) {
+ return null; 
+}
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -186,6 +187,9 @@ function emptyForm(): FormState {
 }
 
 function rowToForm(row: Investigation): FormState {
+    const monthlyInvestigationReviews = row.monthlyInvestigationReviews ?? row.monthly_investigation_reviews ?? [];
+    const monthlyInvestigationViews = row.monthlyInvestigationViews ?? row.monthly_investigation_views ?? [];
+
     return {
         type: row.type ?? '',
         level: row.level ?? '',
@@ -209,8 +213,8 @@ function rowToForm(row: Investigation): FormState {
         review_date: row.review_date ?? '',
         review_discription: row.review_discription ?? '',
         review_content: row.review_content ?? '',
-        monthlyInvestigationReviews: row.monthlyInvestigationReviews ?? [],
-        monthlyInvestigationViews: row.monthlyInvestigationViews ?? [],
+        monthlyInvestigationReviews,
+        monthlyInvestigationViews,
     };
 }
 
@@ -218,7 +222,6 @@ function rowToForm(row: Investigation): FormState {
 
 export default function HiddenDangerIndex() {
     const { activeCompany, isSubordinate } = useScope();
-    const { user } = useAuth();
     const companyId = activeCompany?.id;
 
     const [filterType, setFilterType] = useState('');
@@ -278,6 +281,7 @@ export default function HiddenDangerIndex() {
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 type: form.type || null,
@@ -305,13 +309,17 @@ export default function HiddenDangerIndex() {
                 monthlyInvestigationReviews: form.monthlyInvestigationReviews.filter((r) => r.annex_url),
                 monthlyInvestigationViews: form.monthlyInvestigationViews.filter((r) => r.annex_url),
             };
-            if (!editingId) { payload.company_id = companyId; }
+
+            if (!editingId) {
+ payload.company_id = companyId; 
+}
 
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             reload();
         } catch (err: unknown) {
@@ -323,7 +331,10 @@ export default function HiddenDangerIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteItem) { return; }
+        if (!deleteItem) {
+ return; 
+}
+
         await crud.remove(deleteItem.id);
         setDeleteItem(null);
         reload();
@@ -344,7 +355,7 @@ export default function HiddenDangerIndex() {
         },
         {
             accessorKey: 'type',
-            header: '排查类型',
+            header: '隐患类型',
             size: 110,
             cell: ({ row }) => row.original.type
                 ? <span className="rounded-md border border-blue-900/40 bg-blue-600/8 px-2 py-0.5 text-[10px] text-blue-400">{row.original.type}</span>
@@ -356,7 +367,10 @@ export default function HiddenDangerIndex() {
             size: 90,
             cell: ({ row }) => {
                 const lvl = row.original.level;
-                if (!lvl) { return <span className="text-slate-700">—</span>; }
+
+                if (!lvl) {
+ return <span className="text-slate-700">—</span>; 
+}
 
                 return <span className={cn('rounded-md border px-2 py-0.5 text-[10px] font-medium', LEVEL_CLS[lvl] ?? 'border-slate-700/40 bg-slate-700/20 text-slate-500')}>{lvl}</span>;
             },
@@ -371,10 +385,13 @@ export default function HiddenDangerIndex() {
         },
         {
             accessorKey: 'content',
-            header: '隐患内容',
+            header: '隐患描述',
             cell: ({ row }) => {
                 const c = row.original.content;
-                if (!c) { return <span className="text-slate-700">—</span>; }
+
+                if (!c) {
+ return <span className="text-slate-700">—</span>; 
+}
 
                 return <span className="text-xs text-slate-400 line-clamp-2" title={c}>{c}</span>;
             },
@@ -385,12 +402,18 @@ export default function HiddenDangerIndex() {
             size: 90,
             cell: ({ row }) => {
                 const r = row.original.correct_result;
-                if (!r) { return <span className="text-slate-700">—</span>; }
+
+                if (!r) {
+ return <span className="text-slate-700">—</span>; 
+}
+
                 const cls = r === '已整改'
                     ? 'border-emerald-500/30 bg-emerald-600/10 text-emerald-400'
-                    : r === '整改中'
+                    : r === '部分整改'
                         ? 'border-amber-500/30 bg-amber-600/10 text-amber-400'
-                        : 'border-slate-600/40 bg-slate-700/20 text-slate-500';
+                        : r === '整改不到位'
+                            ? 'border-orange-500/30 bg-orange-600/10 text-orange-400'
+                            : 'border-slate-600/40 bg-slate-700/20 text-slate-500';
 
                 return <span className={cn('rounded-md border px-2 py-0.5 text-[10px] font-medium', cls)}>{r}</span>;
             },
@@ -402,7 +425,9 @@ export default function HiddenDangerIndex() {
         header: '操作',
         size: 88,
         cell: ({ row }) => {
-            if (row.original.company_id !== companyId) { return null; }
+            if (row.original.company_id !== companyId) {
+ return null; 
+}
 
             return (
                 <div className="flex items-center gap-0.5">
@@ -427,13 +452,17 @@ export default function HiddenDangerIndex() {
         <div className="flex items-center gap-2">
             <FilterSelect
                 value={filterType}
-                onChange={(v) => { setFilterType(v); applyFilter(v, filterLevel); }}
+                onChange={(v) => {
+ setFilterType(v); applyFilter(v, filterLevel); 
+}}
                 options={TYPE_OPTIONS.map((t) => ({ value: t, label: t }))}
-                placeholder="全部类型"
+                placeholder="全部隐患类型"
             />
             <FilterSelect
                 value={filterLevel}
-                onChange={(v) => { setFilterLevel(v); applyFilter(filterType, v); }}
+                onChange={(v) => {
+ setFilterLevel(v); applyFilter(filterType, v); 
+}}
                 options={LEVEL_OPTIONS.map((l) => ({ value: l, label: l }))}
                 placeholder="全部等级"
             />
@@ -504,7 +533,7 @@ export default function HiddenDangerIndex() {
                             <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-slate-600">基本信息</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">排查类型</label>
+                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">隐患类型</label>
                                     <select value={form.type} onChange={(e) => set('type', e.target.value)} className={selectCls}>
                                         <option value="" className="bg-[#0d1530]">请选择</option>
                                         {TYPE_OPTIONS.map((t) => <option key={t} value={t} className="bg-[#0d1530]">{t}</option>)}
@@ -546,7 +575,7 @@ export default function HiddenDangerIndex() {
                                     </label>
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">隐患内容</label>
+                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">隐患描述</label>
                                     <textarea value={form.content} onChange={(e) => set('content', e.target.value)} rows={3} placeholder="详细描述隐患情况" className={cn(inputCls, 'resize-none')} />
                                 </div>
                                 <div className="col-span-2">
@@ -634,7 +663,7 @@ export default function HiddenDangerIndex() {
                                     <textarea value={form.review_discription} onChange={(e) => set('review_discription', e.target.value)} rows={2} placeholder="复查情况说明" className={cn(inputCls, 'resize-none')} />
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">复查内容</label>
+                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">复查结果描述</label>
                                     <textarea value={form.review_content} onChange={(e) => set('review_content', e.target.value)} rows={2} placeholder="复查详细内容" className={cn(inputCls, 'resize-none')} />
                                 </div>
                             </div>
@@ -645,14 +674,14 @@ export default function HiddenDangerIndex() {
                             <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-slate-600">附件</p>
                             <div className="space-y-4">
                                 <AnnexListEditor
+                                    value={form.monthlyInvestigationViews}
+                                    onChange={(v) => setForm((f) => ({ ...f, monthlyInvestigationViews: v }))}
+                                    label="隐患证据(图片)"
+                                />
+                                <AnnexListEditor
                                     value={form.monthlyInvestigationReviews}
                                     onChange={(v) => setForm((f) => ({ ...f, monthlyInvestigationReviews: v }))}
                                     label="复查附件"
-                                />
-                                <AnnexListEditor
-                                    value={form.monthlyInvestigationViews}
-                                    onChange={(v) => setForm((f) => ({ ...f, monthlyInvestigationViews: v }))}
-                                    label="现场照片"
                                 />
                             </div>
                         </section>

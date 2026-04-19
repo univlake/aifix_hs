@@ -1,12 +1,12 @@
 import { Head } from '@inertiajs/react';
+import { ChevronLeft, ChevronRight, ChevronDown, Loader2, Eye, Plus, Pencil, Trash2, X, AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { OssDownloadLink } from '@/components/shared/OssDownloadLink';
+import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiCrud } from '@/hooks/use-api';
-import { OssUploadField } from '@/components/shared/OssUploadField';
-import { OssDownloadLink } from '@/components/shared/OssDownloadLink';
-import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, ChevronDown, Loader2, Eye, Plus, Pencil, Trash2, X, AlertTriangle } from 'lucide-react';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 import type { ApiResponse, PaginatedData } from '@/types/models';
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -43,19 +43,20 @@ interface Investigation {
     review_content: string | null;
     monthlyInvestigationReviews?: AnnexItem[];
     monthlyInvestigationViews?: AnnexItem[];
+    monthly_investigation_reviews?: AnnexItem[];
+    monthly_investigation_views?: AnnexItem[];
     company: { id: number; title: string } | null;
 }
 
 // ── Constants ──────────────────────────────────────────────────────
 
 const TYPE_OPTIONS = [
-    '安全管理类', '设备设施类', '作业行为类', '消防类',
-    '应急管理类', '职业健康类', '电气安全类', '其他',
+    '消防', '机械', '危化品', '职业健康', '电气', '基础管理', '三违',
 ];
 
 const LEVEL_OPTIONS = ['一般隐患', '重大隐患'];
 
-const CORRECT_RESULT_OPTIONS = ['已整改', '整改中', '未整改'];
+const CORRECT_RESULT_OPTIONS = ['已整改', '未整改', '整改不到位', '部分整改'];
 
 const LEVEL_CLS: Record<string, string> = {
     '一般隐患': 'border-blue-500/30 bg-blue-600/10 text-blue-400',
@@ -65,10 +66,21 @@ const LEVEL_CLS: Record<string, string> = {
 const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
 const selectCls = cn(inputCls, 'cursor-pointer appearance-none');
 
+function DetailField({ label, value }: { label: string; value: string | number | null | undefined }) {
+    return (
+        <div>
+            <p className="text-xs text-slate-600">{label}</p>
+            <p className="mt-0.5 text-sm text-slate-300">{value !== null && value !== undefined && value !== '' ? String(value) : '—'}</p>
+        </div>
+    );
+}
+
 // ── Modal ──────────────────────────────────────────────────────────
 
 function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-    if (!open) { return null; }
+    if (!open) {
+ return null; 
+}
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -83,15 +95,8 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
 // ── Detail panel ───────────────────────────────────────────────────
 
 function DetailPanel({ row, onClose }: { row: Investigation; onClose: () => void }) {
-    const reviews = row.monthlyInvestigationReviews ?? [];
-    const views = row.monthlyInvestigationViews ?? [];
-
-    const Field = ({ label, value }: { label: string; value: string | number | null | undefined }) => (
-        <div>
-            <p className="text-xs text-slate-600">{label}</p>
-            <p className="mt-0.5 text-sm text-slate-300">{value !== null && value !== undefined && value !== '' ? String(value) : '—'}</p>
-        </div>
-    );
+    const reviews = row.monthlyInvestigationReviews ?? row.monthly_investigation_reviews ?? [];
+    const views = row.monthlyInvestigationViews ?? row.monthly_investigation_views ?? [];
 
     return (
         <div className="fixed inset-0 z-50 flex">
@@ -115,10 +120,10 @@ function DetailPanel({ row, onClose }: { row: Investigation; onClose: () => void
                     <div>
                         <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">基本信息</p>
                         <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                            <Field label="排查类型" value={row.type} />
-                            <Field label="隐患等级" value={row.level} />
-                            <Field label="排查时间" value={row.inv_time} />
-                            <Field label="排查人" value={row.inv_name} />
+                            <DetailField label="隐患类型" value={row.type} />
+                            <DetailField label="隐患等级" value={row.level} />
+                            <DetailField label="排查时间" value={row.inv_time} />
+                            <DetailField label="排查人" value={row.inv_name} />
                             <div className="col-span-2">
                                 <p className="text-xs text-slate-600">消防/应急</p>
                                 <p className="mt-0.5 text-sm text-slate-300">
@@ -126,7 +131,7 @@ function DetailPanel({ row, onClose }: { row: Investigation; onClose: () => void
                                 </p>
                             </div>
                             <div className="col-span-2">
-                                <p className="text-xs text-slate-600">隐患内容</p>
+                                <p className="text-xs text-slate-600">隐患描述</p>
                                 <p className="mt-0.5 whitespace-pre-wrap text-sm text-slate-300 leading-relaxed">{row.content || '—'}</p>
                             </div>
                             {row.legalbasis && (
@@ -148,16 +153,16 @@ function DetailPanel({ row, onClose }: { row: Investigation; onClose: () => void
                     <div>
                         <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">整改情况</p>
                         <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                            <Field label="整改日期" value={row.correct_date} />
-                            <Field label="整改结果" value={row.correct_result} />
+                            <DetailField label="整改日期" value={row.correct_date} />
+                            <DetailField label="整改结果" value={row.correct_result} />
                             {row.is_govern === 1 && (
                                 <>
-                                    <Field label="治理项目" value={row.govern_title} />
-                                    <Field label="治理责任人" value={row.govern_user} />
-                                    <Field label="治理日期" value={row.govern_date} />
-                                    <Field label="治理费用(万元)" value={row.govern_money} />
-                                    <Field label="治理材料" value={row.govern_supplies} />
-                                    <Field label="治理内容" value={row.govern_text} />
+                                    <DetailField label="治理项目" value={row.govern_title} />
+                                    <DetailField label="治理责任人" value={row.govern_user} />
+                                    <DetailField label="治理日期" value={row.govern_date} />
+                                    <DetailField label="治理费用(万元)" value={row.govern_money} />
+                                    <DetailField label="治理材料" value={row.govern_supplies} />
+                                    <DetailField label="治理内容" value={row.govern_text} />
                                 </>
                             )}
                         </div>
@@ -168,8 +173,8 @@ function DetailPanel({ row, onClose }: { row: Investigation; onClose: () => void
                         <div>
                             <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">复查信息</p>
                             <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                                <Field label="复查人" value={row.review_user} />
-                                <Field label="复查日期" value={row.review_date} />
+                                <DetailField label="复查人" value={row.review_user} />
+                                <DetailField label="复查日期" value={row.review_date} />
                                 {row.review_discription && (
                                     <div className="col-span-2">
                                         <p className="text-xs text-slate-600">复查说明</p>
@@ -178,7 +183,7 @@ function DetailPanel({ row, onClose }: { row: Investigation; onClose: () => void
                                 )}
                                 {row.review_content && (
                                     <div className="col-span-2">
-                                        <p className="text-xs text-slate-600">复查内容</p>
+                                        <p className="text-xs text-slate-600">复查结果描述</p>
                                         <p className="mt-0.5 text-sm text-slate-400">{row.review_content}</p>
                                     </div>
                                 )}
@@ -190,21 +195,21 @@ function DetailPanel({ row, onClose }: { row: Investigation; onClose: () => void
                     {(reviews.length > 0 || views.length > 0) && (
                         <div>
                             <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">附件</p>
-                            {reviews.length > 0 && (
+                            {views.length > 0 && (
                                 <div className="mb-3">
-                                    <p className="mb-1 text-xs text-slate-600">复查附件</p>
+                                    <p className="mb-1 text-xs text-slate-600">隐患证据(图片)</p>
                                     <div className="flex flex-wrap gap-2">
-                                        {reviews.map((a, i) => (
+                                        {views.map((a, i) => (
                                             <OssDownloadLink key={a.id ?? i} url={a.annex_url} label="查看" />
                                         ))}
                                     </div>
                                 </div>
                             )}
-                            {views.length > 0 && (
+                            {reviews.length > 0 && (
                                 <div>
-                                    <p className="mb-1 text-xs text-slate-600">现场照片</p>
+                                    <p className="mb-1 text-xs text-slate-600">复查附件</p>
                                     <div className="flex flex-wrap gap-2">
-                                        {views.map((a, i) => (
+                                        {reviews.map((a, i) => (
                                             <OssDownloadLink key={a.id ?? i} url={a.annex_url} label="查看" />
                                         ))}
                                     </div>
@@ -317,6 +322,9 @@ function emptyForm(): FormState {
 }
 
 function rowToForm(row: Investigation): FormState {
+    const monthlyInvestigationReviews = row.monthlyInvestigationReviews ?? row.monthly_investigation_reviews ?? [];
+    const monthlyInvestigationViews = row.monthlyInvestigationViews ?? row.monthly_investigation_views ?? [];
+
     return {
         type: row.type ?? '',
         level: row.level ?? '',
@@ -340,8 +348,8 @@ function rowToForm(row: Investigation): FormState {
         review_date: row.review_date ?? '',
         review_discription: row.review_discription ?? '',
         review_content: row.review_content ?? '',
-        monthlyInvestigationReviews: row.monthlyInvestigationReviews ?? [],
-        monthlyInvestigationViews: row.monthlyInvestigationViews ?? [],
+        monthlyInvestigationReviews,
+        monthlyInvestigationViews,
     };
 }
 
@@ -377,8 +385,12 @@ export default function BlocHiddenDangerIndex() {
     const yearOptions = Array.from({ length: 8 }, (_, i) => String(currentYear - i));
 
     const fetchRows = async (p: number, type: string, level: string, year: string) => {
-        if (!companyId) { return; }
+        if (!companyId) {
+ return; 
+}
+
         setLoading(true);
+
         try {
             const res = await api.get<ApiResponse<PaginatedData<Investigation>>>('/bloc-monthly-investigations', {
                 params: {
@@ -424,9 +436,13 @@ export default function BlocHiddenDangerIndex() {
     };
 
     const handleSubmit = async () => {
-        if (!myCompanyId) { return; }
+        if (!myCompanyId) {
+ return; 
+}
+
         setFormLoading(true);
         setFormError('');
+
         try {
             const payload: Record<string, unknown> = {
                 type: form.type || null,
@@ -454,13 +470,17 @@ export default function BlocHiddenDangerIndex() {
                 monthlyInvestigationReviews: form.monthlyInvestigationReviews.filter((r) => r.annex_url),
                 monthlyInvestigationViews: form.monthlyInvestigationViews.filter((r) => r.annex_url),
             };
-            if (!editingId) { payload.company_id = myCompanyId; }
+
+            if (!editingId) {
+ payload.company_id = myCompanyId; 
+}
 
             if (editingId) {
                 await crud.update(editingId, payload);
             } else {
                 await crud.create(payload);
             }
+
             setDialogOpen(false);
             fetchRows(page, filterType, filterLevel, filterYear);
         } catch (err: unknown) {
@@ -472,7 +492,10 @@ export default function BlocHiddenDangerIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteItem) { return; }
+        if (!deleteItem) {
+ return; 
+}
+
         await crud.remove(deleteItem.id);
         setDeleteItem(null);
         fetchRows(page, filterType, filterLevel, filterYear);
@@ -512,7 +535,7 @@ export default function BlocHiddenDangerIndex() {
                     value={filterType}
                     onChange={(v) => setFilterType(v)}
                     options={TYPE_OPTIONS}
-                    placeholder="全部类型"
+                    placeholder="全部隐患类型"
                 />
                 <FilterSelect
                     value={filterLevel}
@@ -527,7 +550,7 @@ export default function BlocHiddenDangerIndex() {
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-blue-900/30 bg-[#070d1f]">
-                            {['企业名称', '排查时间', '排查类型', '等级', '排查人', '隐患内容', '整改结果', '操作'].map((h, i) => (
+                            {['企业名称', '排查时间', '隐患类型', '等级', '排查人', '隐患描述', '整改结果', '操作'].map((h, i) => (
                                 <th key={i} className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                                     {h}
                                 </th>
@@ -583,9 +606,11 @@ export default function BlocHiddenDangerIndex() {
                                         {row.correct_result ? (() => {
                                             const cls = row.correct_result === '已整改'
                                                 ? 'border-emerald-500/30 bg-emerald-600/10 text-emerald-400'
-                                                : row.correct_result === '整改中'
+                                                : row.correct_result === '部分整改'
                                                     ? 'border-amber-500/30 bg-amber-600/10 text-amber-400'
-                                                    : 'border-slate-600/40 bg-slate-700/20 text-slate-500';
+                                                    : row.correct_result === '整改不到位'
+                                                        ? 'border-orange-500/30 bg-orange-600/10 text-orange-400'
+                                                        : 'border-slate-600/40 bg-slate-700/20 text-slate-500';
 
                                             return <span className={cn('rounded-md border px-2 py-0.5 text-[10px] font-medium', cls)}>{row.correct_result}</span>;
                                         })() : <span className="text-slate-700">—</span>}
@@ -680,7 +705,7 @@ export default function BlocHiddenDangerIndex() {
                             <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-slate-600">基本信息</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">排查类型</label>
+                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">隐患类型</label>
                                     <select value={form.type} onChange={(e) => set('type', e.target.value)} className={selectCls}>
                                         <option value="" className="bg-[#0d1530]">请选择</option>
                                         {TYPE_OPTIONS.map((t) => <option key={t} value={t} className="bg-[#0d1530]">{t}</option>)}
@@ -722,7 +747,7 @@ export default function BlocHiddenDangerIndex() {
                                     </label>
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">隐患内容</label>
+                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">隐患描述</label>
                                     <textarea value={form.content} onChange={(e) => set('content', e.target.value)} rows={3} placeholder="详细描述隐患情况" className={cn(inputCls, 'resize-none')} />
                                 </div>
                                 <div className="col-span-2">
@@ -808,7 +833,7 @@ export default function BlocHiddenDangerIndex() {
                                     <textarea value={form.review_discription} onChange={(e) => set('review_discription', e.target.value)} rows={2} placeholder="复查情况说明" className={cn(inputCls, 'resize-none')} />
                                 </div>
                                 <div className="col-span-2">
-                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">复查内容</label>
+                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">复查结果描述</label>
                                     <textarea value={form.review_content} onChange={(e) => set('review_content', e.target.value)} rows={2} placeholder="复查详细内容" className={cn(inputCls, 'resize-none')} />
                                 </div>
                             </div>
@@ -818,14 +843,14 @@ export default function BlocHiddenDangerIndex() {
                             <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-slate-600">附件</p>
                             <div className="space-y-4">
                                 <AnnexListEditor
+                                    value={form.monthlyInvestigationViews}
+                                    onChange={(v) => setForm((f) => ({ ...f, monthlyInvestigationViews: v }))}
+                                    label="隐患证据(图片)"
+                                />
+                                <AnnexListEditor
                                     value={form.monthlyInvestigationReviews}
                                     onChange={(v) => setForm((f) => ({ ...f, monthlyInvestigationReviews: v }))}
                                     label="复查附件"
-                                />
-                                <AnnexListEditor
-                                    value={form.monthlyInvestigationViews}
-                                    onChange={(v) => setForm((f) => ({ ...f, monthlyInvestigationViews: v }))}
-                                    label="现场照片"
                                 />
                             </div>
                         </section>
