@@ -160,7 +160,7 @@ const navSections: NavSection[] = [
                 icon: ShieldAlert,
                 children: [
                     { title: '风险源管理', href: '/risk/hazards' },
-                    { title: '隐患管理', href: '/risk/hidden-danger' },
+                    { title: '隐患管理', href: '/risk/monthly-investigation' },
                     { title: '作业管理', href: '/safety/job-management' },
                     { title: '三同时管理', href: '/space-work/three-togethers' },
                     { title: '安全评价与检测', href: '/risk/safety-assessment' },
@@ -339,7 +339,7 @@ const navSections: NavSection[] = [
         label: '风险管控',
         mode: 'bloc',
         items: [
-            { title: '隐患管理', href: '/risk-control/hidden-danger', icon: AlertTriangle },
+            { title: '隐患管理', href: '/risk-control/monthly-investigation', icon: AlertTriangle },
             { title: '专家检查', href: '/risk-control/expert-inspection', icon: UserCheck },
         ],
     },

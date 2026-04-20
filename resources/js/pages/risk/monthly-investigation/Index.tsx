@@ -221,7 +221,7 @@ function rowToForm(row: Investigation): FormState {
 
 // ── Page ───────────────────────────────────────────────────────────
 
-export default function HiddenDangerIndex() {
+export default function MonthlyInvestigationIndex() {
     const { activeCompany, isSubordinate } = useScope();
     const companyId = activeCompany?.id;
 

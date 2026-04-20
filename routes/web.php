@@ -61,9 +61,8 @@ Route::group([], function () {
     // ── 风险管理 ──────────────────────────────────────────────
     Route::inertia('/risk/hazards', 'risk/hazards/Index');
     Route::inertia('/risk/risk-logs', 'risk/risk-logs/Index');
-    Route::inertia('/risk/hidden-danger', 'risk/hidden-danger/Index');
+    Route::inertia('/risk/monthly-investigation', 'risk/monthly-investigation/Index');
     Route::inertia('/risk/rectification-sheets', 'risk/rectification-sheets/Index');
-    Route::inertia('/risk/monthly-investigations', 'risk/monthly-investigations/Index');
 
     // ── 检查管理 ──────────────────────────────────────────────
     Route::inertia('/inspection/daily-checks', 'inspection/daily-checks/Index');
@@ -169,7 +168,7 @@ Route::group([], function () {
     Route::inertia('/risk-monitoring/special-equipment', 'risk-monitoring/special-equipment/Index');
 
     // ── 风险管控（集团端扩展）────────────────────────────────
-    Route::inertia('/risk-control/hidden-danger', 'risk-control/hidden-danger/Index');
+    Route::inertia('/risk-control/monthly-investigation', 'risk-control/monthly-investigation/Index');
 
     // ── 管理端（集团视图）────────────────────────────────────
     Route::inertia('/management/training/relevant-party', 'management/training/relevant-party/Index');

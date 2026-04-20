@@ -17,14 +17,14 @@ const stats = [
     { title: '企业管理', icon: Building2, href: '/system/companies', color: 'text-blue-400', bg: 'bg-blue-600/15', border: 'border-blue-600/20' },
     { title: '用户管理', icon: Users, href: '/system/users', color: 'text-violet-400', bg: 'bg-violet-600/15', border: 'border-violet-600/20' },
     { title: '风险记录', icon: AlertTriangle, href: '/risk/risk-logs', color: 'text-amber-400', bg: 'bg-amber-600/15', border: 'border-amber-600/20' },
-    { title: '隐患排查', icon: ClipboardCheck, href: '/risk/hidden-danger', color: 'text-emerald-400', bg: 'bg-emerald-600/15', border: 'border-emerald-600/20' },
+    { title: '隐患排查', icon: ClipboardCheck, href: '/risk/monthly-investigation', color: 'text-emerald-400', bg: 'bg-emerald-600/15', border: 'border-emerald-600/20' },
     { title: '检查管理', icon: FileText, href: '/inspection/daily-checks', color: 'text-cyan-400', bg: 'bg-cyan-600/15', border: 'border-cyan-600/20' },
     { title: '培训管理', icon: GraduationCap, href: '/training/training-classes', color: 'text-rose-400', bg: 'bg-rose-600/15', border: 'border-rose-600/20' },
 ];
 
 const quickLinks = [
     { title: '风险记录', href: '/risk/risk-logs' },
-    { title: '隐患排查', href: '/risk/hidden-danger' },
+    { title: '隐患排查', href: '/risk/monthly-investigation' },
     { title: '日常检查', href: '/inspection/daily-checks' },
     { title: '应急演练', href: '/emergency/emergency-drills' },
     { title: '月度统计', href: '/statistics/month-statistics' },

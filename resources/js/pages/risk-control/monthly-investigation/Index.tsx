@@ -345,7 +345,7 @@ function rowToForm(row: Investigation): FormState {
 
 // ── Page ───────────────────────────────────────────────────────────
 
-export default function BlocHiddenDangerIndex() {
+export default function BlocMonthlyInvestigationIndex() {
     const { activeCompany, rootCompany } = useScope();
     const companyId = activeCompany?.id;
     const myCompanyId = rootCompany?.id;
