@@ -12,6 +12,7 @@ import {
     Clock,
     FileText,
     GraduationCap,
+    Inbox,
     MapPin,
     TrendingUp,
     UserCheck,
@@ -74,6 +75,41 @@ interface MeetingNotifyItem {
     meeting?: MeetingRef | null;
 }
 
+interface OfficeNotifyRef {
+    id: number;
+    name: string | null;
+    comment: string | null;
+    feedback_time: string | null;
+    alert_others: string | null;
+}
+
+interface OfficeNotifyPendingItem {
+    id: number;
+    office_notify_id: number;
+    company_id: number;
+    feedback_status: string | null;
+    feedback_time: string | null;
+    office_notify?: OfficeNotifyRef | null;
+    officeNotify?: OfficeNotifyRef | null;
+}
+
+interface NewNotifyRef {
+    id: number;
+    name: string | null;
+    comment: string | null;
+    alert_others: string | null;
+}
+
+interface NewNotifyPendingItem {
+    id: number;
+    new_notify_id: number;
+    company_id: number;
+    read_status: string | null;
+    read_time: string | null;
+    new_notify?: NewNotifyRef | null;
+    newNotify?: NewNotifyRef | null;
+}
+
 const stats = [
     { title: '企业管理', icon: Building2, href: '/system/companies', color: 'text-blue-400', bg: 'bg-blue-600/15', border: 'border-blue-600/20' },
     { title: '用户管理', icon: Users, href: '/system/users', color: 'text-violet-400', bg: 'bg-violet-600/15', border: 'border-violet-600/20' },
@@ -108,6 +144,14 @@ function pickExpertInspection(row: ExpertNotifyItem): InspectionRef | null {
     return ec?.expert_inspection ?? ec?.expertInspection ?? null;
 }
 
+function pickOfficeNotify(row: OfficeNotifyPendingItem): OfficeNotifyRef | null {
+    return row.office_notify ?? row.officeNotify ?? null;
+}
+
+function pickNewNotify(row: NewNotifyPendingItem): NewNotifyRef | null {
+    return row.new_notify ?? row.newNotify ?? null;
+}
+
 export default function Dashboard() {
     const { user, company } = useAuth();
     const { activeCompany } = useScope();
@@ -116,7 +160,9 @@ export default function Dashboard() {
     const [companyNotifs, setCompanyNotifs] = useState<CompanyNotifyItem[]>([]);
     const [expertNotifs, setExpertNotifs] = useState<ExpertNotifyItem[]>([]);
     const [meetingNotifs, setMeetingNotifs] = useState<MeetingNotifyItem[]>([]);
-    const [confirming, setConfirming] = useState<{ kind: 'company' | 'expert' | 'meeting'; id: number } | null>(null);
+    const [officeNotifs, setOfficeNotifs] = useState<OfficeNotifyPendingItem[]>([]);
+    const [newNotifs, setNewNotifs] = useState<NewNotifyPendingItem[]>([]);
+    const [confirming, setConfirming] = useState<{ kind: 'company' | 'expert' | 'meeting' | 'new'; id: number } | null>(null);
 
     const refresh = useCallback(async () => {
         const tasks: Promise<unknown>[] = [];
@@ -129,6 +175,12 @@ export default function Dashboard() {
                 api.get<ApiResponse<MeetingNotifyItem[]>>('/meeting-notifications/pending', {
                     params: { company_id: companyId },
                 }).then((res) => setMeetingNotifs(res.data.data ?? [])).catch(() => setMeetingNotifs([])),
+                api.get<ApiResponse<OfficeNotifyPendingItem[]>>('/office-notify-notifications/pending', {
+                    params: { company_id: companyId },
+                }).then((res) => setOfficeNotifs(res.data.data ?? [])).catch(() => setOfficeNotifs([])),
+                api.get<ApiResponse<NewNotifyPendingItem[]>>('/new-notify-notifications/pending', {
+                    params: { company_id: companyId },
+                }).then((res) => setNewNotifs(res.data.data ?? [])).catch(() => setNewNotifs([])),
             );
         }
 
@@ -180,7 +232,18 @@ export default function Dashboard() {
         }
     };
 
-    const totalPending = companyNotifs.length + expertNotifs.length + meetingNotifs.length;
+    const markNewRead = async (id: number) => {
+        setConfirming({ kind: 'new', id });
+
+        try {
+            await api.post(`/new-notify-scopes/${id}/read`);
+            refresh();
+        } finally {
+            setConfirming(null);
+        }
+    };
+
+    const totalPending = companyNotifs.length + expertNotifs.length + meetingNotifs.length + officeNotifs.length + newNotifs.length;
 
     return (
         <>
@@ -351,6 +414,69 @@ export default function Dashboard() {
                                             disabled={confirming?.kind === 'meeting' && confirming?.id === item.id}
                                             className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
                                         >确认收到</button>
+                                    </div>
+                                );
+                            })}
+                            {officeNotifs.map((item) => {
+                                const n = pickOfficeNotify(item);
+
+                                return (
+                                    <div key={`on-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-rose-500/25 bg-rose-600/5 p-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <ClipboardList className="h-3.5 w-3.5 shrink-0 text-rose-400" />
+                                                <p className="truncate text-sm font-semibold text-slate-100" title={n?.name ?? ''}>{n?.name ?? `任务#${item.office_notify_id}`}</p>
+                                                <span className="shrink-0 rounded border border-rose-500/30 bg-rose-600/10 px-1.5 py-0 text-[10px] text-rose-400">任务型通知</span>
+                                            </div>
+                                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                                                {n?.feedback_time && (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <Clock className="h-3 w-3" />反馈截止：{n.feedback_time}
+                                                    </span>
+                                                )}
+                                                {n?.alert_others && (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <Bell className="h-3 w-3" />通知人：{n.alert_others}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <Link
+                                            href="/tasks/notices"
+                                            className="shrink-0 rounded-md border border-rose-500/30 bg-rose-600/15 px-2.5 py-1 text-xs text-rose-300 hover:bg-rose-600/25"
+                                        >去反馈</Link>
+                                    </div>
+                                );
+                            })}
+                            {newNotifs.map((item) => {
+                                const n = pickNewNotify(item);
+
+                                return (
+                                    <div key={`nn-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-cyan-500/25 bg-cyan-600/5 p-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <Inbox className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
+                                                <p className="truncate text-sm font-semibold text-slate-100" title={n?.name ?? ''}>{n?.name ?? `通知#${item.new_notify_id}`}</p>
+                                                <span className="shrink-0 rounded border border-cyan-500/30 bg-cyan-600/10 px-1.5 py-0 text-[10px] text-cyan-400">通知型通知</span>
+                                            </div>
+                                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                                                {n?.alert_others && (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <Bell className="h-3 w-3" />通知人：{n.alert_others}
+                                                    </span>
+                                                )}
+                                                {n?.comment && (
+                                                    <span className="inline-flex items-center gap-1 truncate" title={n.comment}>
+                                                        <FileText className="h-3 w-3" />{n.comment.slice(0, 40)}{n.comment.length > 40 ? '…' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => markNewRead(item.id)}
+                                            disabled={confirming?.kind === 'new' && confirming?.id === item.id}
+                                            className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
+                                        >标记已读</button>
                                     </div>
                                 );
                             })}

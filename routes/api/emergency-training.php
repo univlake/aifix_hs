@@ -334,6 +334,12 @@ Route::middleware('permission:new-notifies.delete')->group(function () {
     Route::delete('/new-notifies/{id}', [NewNotifyController::class, 'destroy']);
 });
 
+// 企业端反馈 / 已读 / 仪表板待办（受通知企业可用，不走发布方权限）
+Route::post('/office-notify-scopes/{id}/feedback', [OfficeNotifyController::class, 'submitFeedback']);
+Route::post('/new-notify-scopes/{id}/read', [NewNotifyController::class, 'markAsRead']);
+Route::get('/office-notify-notifications/pending', [OfficeNotifyController::class, 'pendingNotices']);
+Route::get('/new-notify-notifications/pending', [NewNotifyController::class, 'pendingNotices']);
+
 // ── 安全投入计划 ─────────────────────────────────────────────────────
 Route::middleware('permission:security-investments.list')->group(function () {
     Route::get('/security-investments', [SecurityInvestmentController::class, 'index']);

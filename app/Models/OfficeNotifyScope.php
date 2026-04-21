@@ -16,4 +16,9 @@ class OfficeNotifyScope extends BaseModel
         'user_id',
         'last_user_id',
     ];
+
+    public function officeNotify()
+    {
+        return $this->belongsTo(OfficeNotify::class);
+    }
 }

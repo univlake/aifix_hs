@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreNewNotifyRequest;
+use App\Http\Requests\Api\V1\UpdateNewNotifyRequest;
 use App\Models\NewNotify;
 use App\Models\NewNotifyScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreNewNotifyRequest;
-use App\Http\Requests\Api\V1\UpdateNewNotifyRequest;
 
 class NewNotifyController extends Controller
 {
@@ -18,11 +18,23 @@ class NewNotifyController extends Controller
         $query = NewNotify::query();
 
         if ($request->filled('company_id')) {
-            $query->where('company_id', $request->company_id);
+            $companyId = (int) $request->company_id;
+            $query->where(function ($q) use ($companyId) {
+                $q->where('company_id', $companyId)
+                    ->orWhereHas('newNotifyScope', function ($inner) use ($companyId) {
+                        $inner->where('company_id', $companyId);
+                    });
+            });
+        }
+
+        if ($request->filled('notify_company_id')) {
+            $query->whereHas('newNotifyScope', function ($q) use ($request) {
+                $q->where('company_id', $request->notify_company_id);
+            });
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->with('newNotifyScope')
@@ -36,7 +48,7 @@ class NewNotifyController extends Controller
     {
         $data = NewNotify::with('newNotifyScope')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('新通知不存在');
         }
 
@@ -56,7 +68,7 @@ class NewNotifyController extends Controller
             if ($kids) {
                 $companyKey = [];
                 foreach ($kids as $v) {
-                    if (!in_array($v['company_id'], $companyKey)) {
+                    if (! in_array($v['company_id'], $companyKey)) {
                         $record->newNotifyScope()->create([
                             'company_name' => $v['company_name'] ?? null,
                             'company_id' => $v['company_id'] ?? null,
@@ -80,7 +92,7 @@ class NewNotifyController extends Controller
     {
         $record = NewNotify::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('新通知不存在');
         }
         $data = $request->validated();
@@ -94,7 +106,7 @@ class NewNotifyController extends Controller
                 NewNotifyScope::where('new_notify_id', $record->id)->delete();
                 $companyKey = [];
                 foreach ($kids as $v) {
-                    if (!in_array($v['company_id'], $companyKey)) {
+                    if (! in_array($v['company_id'], $companyKey)) {
                         $record->newNotifyScope()->create([
                             'company_name' => $v['company_name'] ?? null,
                             'company_id' => $v['company_id'] ?? null,
@@ -118,7 +130,7 @@ class NewNotifyController extends Controller
     {
         $record = NewNotify::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('新通知不存在');
         }
 
@@ -128,5 +140,45 @@ class NewNotifyController extends Controller
         });
 
         return $this->message('删除成功');
+    }
+
+    /**
+     * 企业端仪表板：本企业尚未阅读的通知型通知.
+     */
+    public function pendingNotices(Request $request): JsonResponse
+    {
+        $request->validate(['company_id' => 'required|integer']);
+
+        $list = NewNotifyScope::query()
+            ->where('company_id', $request->company_id)
+            ->where(function ($q) {
+                $q->whereNull('read_status')
+                    ->orWhere('read_status', '!=', '已读');
+            })
+            ->with(['newNotify:id,name,comment,alert_others,annex_url'])
+            ->orderByDesc('id')
+            ->get();
+
+        return $this->success($list);
+    }
+
+    /**
+     * 企业端标记通知为已读.
+     */
+    public function markAsRead(int $id): JsonResponse
+    {
+        $scope = NewNotifyScope::find($id);
+
+        if (! $scope) {
+            return $this->notFound('通知记录不存在');
+        }
+
+        $scope->update([
+            'read_time' => now()->toDateString(),
+            'read_status' => '已读',
+            'last_user_id' => auth()->id() ?? 0,
+        ]);
+
+        return $this->success($scope->fresh());
     }
 }

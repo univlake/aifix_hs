@@ -15,4 +15,9 @@ class NewNotifyScope extends BaseModel
         'user_id',
         'last_user_id',
     ];
+
+    public function newNotify()
+    {
+        return $this->belongsTo(NewNotify::class);
+    }
 }

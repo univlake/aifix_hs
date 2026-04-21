@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreOfficeNotifyRequest;
+use App\Http\Requests\Api\V1\UpdateOfficeNotifyRequest;
 use App\Models\OfficeNotify;
 use App\Models\OfficeNotifyScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreOfficeNotifyRequest;
-use App\Http\Requests\Api\V1\UpdateOfficeNotifyRequest;
 
 class OfficeNotifyController extends Controller
 {
@@ -18,11 +18,23 @@ class OfficeNotifyController extends Controller
         $query = OfficeNotify::query();
 
         if ($request->filled('company_id')) {
-            $query->where('company_id', $request->company_id);
+            $companyId = (int) $request->company_id;
+            $query->where(function ($q) use ($companyId) {
+                $q->where('company_id', $companyId)
+                    ->orWhereHas('officeNotifyScope', function ($inner) use ($companyId) {
+                        $inner->where('company_id', $companyId);
+                    });
+            });
+        }
+
+        if ($request->filled('notify_company_id')) {
+            $query->whereHas('officeNotifyScope', function ($q) use ($request) {
+                $q->where('company_id', $request->notify_company_id);
+            });
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->with('officeNotifyScope')
@@ -36,7 +48,7 @@ class OfficeNotifyController extends Controller
     {
         $data = OfficeNotify::with('officeNotifyScope')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('通知公告不存在');
         }
 
@@ -56,7 +68,7 @@ class OfficeNotifyController extends Controller
             if ($kids) {
                 $companyKey = [];
                 foreach ($kids as $v) {
-                    if (!in_array($v['company_id'], $companyKey)) {
+                    if (! in_array($v['company_id'], $companyKey)) {
                         $record->officeNotifyScope()->create([
                             'company_name' => $v['company_name'] ?? null,
                             'company_id' => $v['company_id'] ?? null,
@@ -80,7 +92,7 @@ class OfficeNotifyController extends Controller
     {
         $record = OfficeNotify::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('通知公告不存在');
         }
         $data = $request->validated();
@@ -94,7 +106,7 @@ class OfficeNotifyController extends Controller
                 OfficeNotifyScope::where('office_notify_id', $record->id)->delete();
                 $companyKey = [];
                 foreach ($kids as $v) {
-                    if (!in_array($v['company_id'], $companyKey)) {
+                    if (! in_array($v['company_id'], $companyKey)) {
                         $record->officeNotifyScope()->create([
                             'company_name' => $v['company_name'] ?? null,
                             'company_id' => $v['company_id'] ?? null,
@@ -118,7 +130,7 @@ class OfficeNotifyController extends Controller
     {
         $record = OfficeNotify::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('通知公告不存在');
         }
 
@@ -128,5 +140,50 @@ class OfficeNotifyController extends Controller
         });
 
         return $this->message('删除成功');
+    }
+
+    /**
+     * 企业端仪表板：本企业尚未反馈的任务型通知.
+     */
+    public function pendingNotices(Request $request): JsonResponse
+    {
+        $request->validate(['company_id' => 'required|integer']);
+
+        $list = OfficeNotifyScope::query()
+            ->where('company_id', $request->company_id)
+            ->where(function ($q) {
+                $q->whereNull('feedback_status')
+                    ->orWhere('feedback_status', '!=', '已反馈');
+            })
+            ->with(['officeNotify:id,name,comment,feedback_time,alert_others,annex_url,excel_url'])
+            ->orderByDesc('id')
+            ->get();
+
+        return $this->success($list);
+    }
+
+    /**
+     * 企业端提交任务反馈（上传附件并标记反馈状态）。
+     */
+    public function submitFeedback(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'feedback_annex_url' => 'required|string',
+        ]);
+
+        $scope = OfficeNotifyScope::find($id);
+
+        if (! $scope) {
+            return $this->notFound('通知反馈记录不存在');
+        }
+
+        $scope->update([
+            'feedback_annex_url' => $request->input('feedback_annex_url'),
+            'feedback_time' => now()->toDateString(),
+            'feedback_status' => '已反馈',
+            'last_user_id' => auth()->id() ?? 0,
+        ]);
+
+        return $this->success($scope->fresh());
     }
 }
