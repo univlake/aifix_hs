@@ -19,6 +19,46 @@ describe('ExpertInspection API', function () {
             $response->assertOk()
                 ->assertJsonStructure(['status', 'data' => ['data' => [['id']]]]);
         });
+
+        it('includes inspections where current user is assigned as expert when expert_user_id is passed', function () {
+            [$user, $company] = createAdminWithCompany();
+            $otherCompany = \App\Models\Company::factory()->create();
+
+            // Inspection belonging to the user's own company — always visible
+            $ownInspection = ExpertInspection::create([
+                'company_id' => $company->id,
+                'title' => '本企业检查',
+            ]);
+
+            // Inspection belonging to another company where the user is assigned as an expert
+            $assignedInspection = ExpertInspection::create([
+                'company_id' => $otherCompany->id,
+                'title' => '受指派检查',
+            ]);
+            $expertCompany = ExpertCompany::create([
+                'expert_inspection_id' => $assignedInspection->id,
+                'check_company_id' => $company->id,
+                'company_id' => $otherCompany->id,
+            ]);
+            ExpertInspectionUser::create([
+                'expert_user_id' => $user->id,
+                'expert_company_id' => $expertCompany->id,
+                'company_id' => $otherCompany->id,
+            ]);
+
+            // Unrelated inspection — must not appear
+            ExpertInspection::create([
+                'company_id' => $otherCompany->id,
+                'title' => '无关检查',
+            ]);
+
+            $response = $this->actingAs($user, 'api')
+                ->getJson("/api/v1/expert-inspections?company_id={$company->id}&expert_user_id={$user->id}");
+
+            $response->assertOk();
+            $titles = collect($response->json('data.data'))->pluck('title')->all();
+            expect($titles)->toContain('本企业检查')->toContain('受指派检查')->not->toContain('无关检查');
+        });
     });
 
     describe('Show (Detail)', function () {

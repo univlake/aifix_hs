@@ -5,10 +5,12 @@ import {
     ArrowRight,
     Bell,
     Building2,
+    CheckCircle2,
     ClipboardCheck,
+    ClipboardList,
+    Clock,
     FileText,
     GraduationCap,
-    Shield,
     TrendingUp,
     UserCheck,
     Users,
@@ -35,22 +37,21 @@ interface CompanyNotifyItem {
     expertInspection?: InspectionRef | null;
 }
 
+interface ExpertCompanyRef {
+    check_company?: { id: number; title: string } | null;
+    checkCompany?: { id: number; title: string } | null;
+    expert_inspection?: InspectionRef | null;
+    expertInspection?: InspectionRef | null;
+    notify_company_time?: string | null;
+    check_company_time?: string | null;
+}
+
 interface ExpertNotifyItem {
     id: number;
     expert_user_id: number;
     expert_company_id: number;
-    expert_company?: {
-        check_company?: { id: number; title: string } | null;
-        checkCompany?: { id: number; title: string } | null;
-        expert_inspection?: InspectionRef | null;
-        expertInspection?: InspectionRef | null;
-    } | null;
-    expertCompany?: {
-        check_company?: { id: number; title: string } | null;
-        checkCompany?: { id: number; title: string } | null;
-        expert_inspection?: InspectionRef | null;
-        expertInspection?: InspectionRef | null;
-    } | null;
+    expert_company?: ExpertCompanyRef | null;
+    expertCompany?: ExpertCompanyRef | null;
 }
 
 const stats = [
@@ -167,68 +168,6 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Expert inspection notifications */}
-            {totalPending > 0 && (
-                <section className="mb-8">
-                    <div className="mb-3 flex items-center gap-2">
-                        <Bell className="h-4 w-4 text-amber-400" />
-                        <h2 className="text-sm font-semibold text-slate-200">专家检查待办通知</h2>
-                        <span className="rounded-full border border-amber-500/30 bg-amber-600/15 px-2 py-0.5 text-[10px] text-amber-400">{totalPending}</span>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                        {/* Company notifications */}
-                        {companyNotifs.map((item) => {
-                            const ins = pickInspection(item);
-
-                            return (
-                                <div key={`c-${item.id}`} className="rounded-xl border border-amber-500/25 bg-amber-600/5 p-4">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <Building2 className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-                                                <p className="truncate text-sm font-semibold text-slate-100" title={ins?.title ?? ''}>{ins?.title ?? `检查#${item.expert_inspection_id}`}</p>
-                                            </div>
-                                            <p className="mt-1 text-[11px] text-slate-500">受检企业待确认 · 通知时间：{item.notify_company_time ?? '—'}</p>
-                                        </div>
-                                        <button
-                                            onClick={() => confirmCompany(item.id)}
-                                            disabled={confirming?.kind === 'company' && confirming?.id === item.id}
-                                            className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
-                                        >确认</button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        {/* Expert notifications */}
-                        {expertNotifs.map((item) => {
-                            const ins = pickExpertInspection(item);
-                            const cc = pickCheckCompany(item);
-
-                            return (
-                                <div key={`e-${item.id}`} className="rounded-xl border border-blue-500/25 bg-blue-600/5 p-4">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <UserCheck className="h-3.5 w-3.5 shrink-0 text-blue-400" />
-                                                <p className="truncate text-sm font-semibold text-slate-100" title={ins?.title ?? ''}>{ins?.title ?? `检查#${item.expert_company_id}`}</p>
-                                            </div>
-                                            <p className="mt-1 text-[11px] text-slate-500">
-                                                指派专家检查 · {cc?.title ? `受检：${cc.title}` : '受检企业未指定'}
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => confirmExpert(item.id)}
-                                            disabled={confirming?.kind === 'expert' && confirming?.id === item.id}
-                                            className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
-                                        >确认</button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
-            )}
-
             {/* Quick stats grid */}
             <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {stats.map((s) => {
@@ -261,25 +200,92 @@ export default function Dashboard() {
 
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 rounded-xl border border-blue-900/40 bg-[#0d1530] p-6">
-                    <div className="mb-5 flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600/15 border border-blue-600/20">
-                            <Shield className="h-4 w-4 text-blue-400" />
-                        </div>
-                        <h2 className="text-sm font-semibold text-slate-200">账户信息</h2>
-                    </div>
-                    <dl className="grid gap-4 sm:grid-cols-2">
-                        {[
-                            { label: '用户名', value: user?.username },
-                            { label: '昵称', value: user?.nickname },
-                            { label: '手机号', value: user?.phone ?? '未设置' },
-                            { label: '邮箱', value: user?.email ?? '未设置' },
-                        ].map((item) => (
-                            <div key={item.label} className="rounded-lg bg-[#070d1f]/60 px-4 py-3">
-                                <dt className="text-xs text-slate-600 mb-1">{item.label}</dt>
-                                <dd className="text-sm font-medium text-slate-300">{item.value}</dd>
+                    <div className="mb-5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-600/15 border border-amber-600/20">
+                                <ClipboardList className="h-4 w-4 text-amber-400" />
                             </div>
-                        ))}
-                    </dl>
+                            <h2 className="text-sm font-semibold text-slate-200">待办事项</h2>
+                            {totalPending > 0 && (
+                                <span className="rounded-full border border-amber-500/30 bg-amber-600/15 px-2 py-0.5 text-[10px] text-amber-400">{totalPending}</span>
+                            )}
+                        </div>
+                    </div>
+                    {totalPending === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                            <CheckCircle2 className="mb-2 h-8 w-8 text-slate-700" />
+                            <p className="text-sm text-slate-500">暂无待办事项</p>
+                            <p className="mt-1 text-xs text-slate-700">所有专家检查通知均已确认</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2.5">
+                            {companyNotifs.map((item) => {
+                                const ins = pickInspection(item);
+
+                                return (
+                                    <div key={`c-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-amber-500/25 bg-amber-600/5 p-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <Building2 className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+                                                <p className="truncate text-sm font-semibold text-slate-100" title={ins?.title ?? ''}>{ins?.title ?? `检查#${item.expert_inspection_id}`}</p>
+                                                <span className="shrink-0 rounded border border-amber-500/30 bg-amber-600/10 px-1.5 py-0 text-[10px] text-amber-400">企业待确认</span>
+                                            </div>
+                                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                                                <span className="inline-flex items-center gap-1">
+                                                    <Bell className="h-3 w-3" />通知：{item.notify_company_time ?? '—'}
+                                                </span>
+                                                <span className="inline-flex items-center gap-1">
+                                                    <Clock className="h-3 w-3" />检查：{item.check_company_time ?? '—'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => confirmCompany(item.id)}
+                                            disabled={confirming?.kind === 'company' && confirming?.id === item.id}
+                                            className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
+                                        >确认收到</button>
+                                    </div>
+                                );
+                            })}
+                            {expertNotifs.map((item) => {
+                                const ins = pickExpertInspection(item);
+                                const cc = pickCheckCompany(item);
+                                const ec = item.expert_company ?? item.expertCompany ?? null;
+                                const checkTime = ec?.check_company_time ?? null;
+                                const notifyTime = ec?.notify_company_time ?? null;
+
+                                return (
+                                    <div key={`e-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-blue-500/25 bg-blue-600/5 p-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <UserCheck className="h-3.5 w-3.5 shrink-0 text-blue-400" />
+                                                <p className="truncate text-sm font-semibold text-slate-100" title={ins?.title ?? ''}>{ins?.title ?? `检查#${item.expert_company_id}`}</p>
+                                                <span className="shrink-0 rounded border border-blue-500/30 bg-blue-600/10 px-1.5 py-0 text-[10px] text-blue-400">专家任务</span>
+                                            </div>
+                                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                                                <span className="inline-flex items-center gap-1">
+                                                    <Building2 className="h-3 w-3" />受检：{cc?.title ?? '未指定'}
+                                                </span>
+                                                <span className="inline-flex items-center gap-1">
+                                                    <Clock className="h-3 w-3" />检查：{checkTime ?? '—'}
+                                                </span>
+                                                {notifyTime && (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <Bell className="h-3 w-3" />通知：{notifyTime}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => confirmExpert(item.id)}
+                                            disabled={confirming?.kind === 'expert' && confirming?.id === item.id}
+                                            className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
+                                        >确认收到</button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-6">
