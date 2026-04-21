@@ -182,7 +182,6 @@ Route::group([], function () {
     Route::inertia('/management/experts', 'management/experts/Index');
     Route::inertia('/management/assessment/filing', 'management/assessment/filing/Index');
     Route::inertia('/management/assessment/scoring', 'management/assessment/scoring/Index');
-    Route::inertia('/management/assessment/results', 'management/assessment/results/Index');
     Route::inertia('/management/assessment/summary', 'management/assessment/summary/Index');
     Route::inertia('/management/statistics/monthly-stats', 'management/statistics/monthly-stats/Index');
     Route::inertia('/management/statistics/annual-stats', 'management/statistics/annual-stats/Index');

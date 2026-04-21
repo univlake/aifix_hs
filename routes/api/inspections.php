@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AccidentChecksController;
 use App\Http\Controllers\Api\V1\AccidentCheckTemplatesController;
 use App\Http\Controllers\Api\V1\AddPointsController;
 use App\Http\Controllers\Api\V1\AddPointsTemplatesController;
+use App\Http\Controllers\Api\V1\AssessmentSummaryController;
 use App\Http\Controllers\Api\V1\CheckStatisticsController;
 use App\Http\Controllers\Api\V1\DailyChecksController;
 use App\Http\Controllers\Api\V1\DailyCheckTemplatesController;
@@ -29,20 +30,23 @@ Route::middleware('permission:daily-check-templates.delete')->group(function () 
     Route::delete('/daily-check-templates/{id}', [DailyCheckTemplatesController::class, 'destroy']);
 });
 
-// ── 日常检查 ─────────────────────────────────────────────────────
+// ── 日常检查（考核填报填报） ─────────────────────────────────────
 Route::middleware('permission:daily-checks.list')->group(function () {
     Route::get('/daily-checks', [DailyChecksController::class, 'index']);
+    Route::get('/daily-checks/submissions', [DailyChecksController::class, 'submissions']);
+    Route::get('/daily-checks/start-form', [DailyChecksController::class, 'startForm']);
+    Route::get('/daily-checks/submission', [DailyChecksController::class, 'showSubmission']);
     Route::get('/daily-checks/{id}', [DailyChecksController::class, 'show']);
 });
 Route::middleware('permission:daily-checks.create')->group(function () {
-    Route::post('/daily-checks', [DailyChecksController::class, 'store']);
+    Route::post('/daily-checks/save-draft', [DailyChecksController::class, 'saveDraft']);
+    Route::post('/daily-checks/complete', [DailyChecksController::class, 'complete']);
 });
 Route::middleware('permission:daily-checks.update')->group(function () {
-    Route::put('/daily-checks/{id}', [DailyChecksController::class, 'update']);
-    Route::patch('/daily-checks/{id}', [DailyChecksController::class, 'update']);
+    Route::post('/daily-checks/score', [DailyChecksController::class, 'score']);
 });
 Route::middleware('permission:daily-checks.delete')->group(function () {
-    Route::delete('/daily-checks/{id}', [DailyChecksController::class, 'destroy']);
+    Route::delete('/daily-checks/destroy-form', [DailyChecksController::class, 'destroyForm']);
 });
 
 // ── 双重预防检查模板 ─────────────────────────────────────────────────────
@@ -80,10 +84,12 @@ Route::middleware('permission:double-checks.delete')->group(function () {
 // ── 系统检查 ─────────────────────────────────────────────────────
 Route::middleware('permission:system-checks.list')->group(function () {
     Route::get('/system-checks', [SystemChecksController::class, 'index']);
+    Route::get('/system-checks/submissions', [SystemChecksController::class, 'submissions']);
     Route::get('/system-checks/{id}', [SystemChecksController::class, 'show']);
 });
 Route::middleware('permission:system-checks.create')->group(function () {
     Route::post('/system-checks', [SystemChecksController::class, 'store']);
+    Route::post('/system-checks/compute', [SystemChecksController::class, 'computeScore']);
 });
 Route::middleware('permission:system-checks.update')->group(function () {
     Route::put('/system-checks/{id}', [SystemChecksController::class, 'update']);
@@ -96,10 +102,13 @@ Route::middleware('permission:system-checks.delete')->group(function () {
 // ── 规范检查 ─────────────────────────────────────────────────────
 Route::middleware('permission:norm-checks.list')->group(function () {
     Route::get('/norm-checks', [NormChecksController::class, 'index']);
+    Route::get('/norm-checks/submissions', [NormChecksController::class, 'submissions']);
+    Route::get('/norm-checks/template-link', [NormChecksController::class, 'templateLink']);
     Route::get('/norm-checks/{id}', [NormChecksController::class, 'show']);
 });
 Route::middleware('permission:norm-checks.create')->group(function () {
     Route::post('/norm-checks', [NormChecksController::class, 'store']);
+    Route::post('/norm-checks/save-score', [NormChecksController::class, 'saveScore']);
 });
 Route::middleware('permission:norm-checks.update')->group(function () {
     Route::put('/norm-checks/{id}', [NormChecksController::class, 'update']);
@@ -128,10 +137,13 @@ Route::middleware('permission:accident-check-templates.delete')->group(function 
 // ── 事故检查 ─────────────────────────────────────────────────────
 Route::middleware('permission:accident-checks.list')->group(function () {
     Route::get('/accident-checks', [AccidentChecksController::class, 'index']);
+    Route::get('/accident-checks/submissions', [AccidentChecksController::class, 'submissions']);
+    Route::get('/accident-checks/start-form', [AccidentChecksController::class, 'startForm']);
     Route::get('/accident-checks/{id}', [AccidentChecksController::class, 'show']);
 });
 Route::middleware('permission:accident-checks.create')->group(function () {
     Route::post('/accident-checks', [AccidentChecksController::class, 'store']);
+    Route::post('/accident-checks/save-score', [AccidentChecksController::class, 'saveScore']);
 });
 Route::middleware('permission:accident-checks.update')->group(function () {
     Route::put('/accident-checks/{id}', [AccidentChecksController::class, 'update']);
@@ -160,10 +172,13 @@ Route::middleware('permission:add-points-templates.delete')->group(function () {
 // ── 加分检查 ─────────────────────────────────────────────────────
 Route::middleware('permission:add-points.list')->group(function () {
     Route::get('/add-points', [AddPointsController::class, 'index']);
+    Route::get('/add-points/submissions', [AddPointsController::class, 'submissions']);
+    Route::get('/add-points/start-form', [AddPointsController::class, 'startForm']);
     Route::get('/add-points/{id}', [AddPointsController::class, 'show']);
 });
 Route::middleware('permission:add-points.create')->group(function () {
     Route::post('/add-points', [AddPointsController::class, 'store']);
+    Route::post('/add-points/save-score', [AddPointsController::class, 'saveScore']);
 });
 Route::middleware('permission:add-points.update')->group(function () {
     Route::put('/add-points/{id}', [AddPointsController::class, 'update']);
@@ -176,6 +191,12 @@ Route::middleware('permission:add-points.delete')->group(function () {
 // ── 检查统计 ─────────────────────────────────────────────────────
 Route::middleware('permission:check-statistics.list')->group(function () {
     Route::get('/check-statistics', [CheckStatisticsController::class, 'index']);
+});
+
+// ── 考核汇总 ─────────────────────────────────────────────────────
+Route::middleware('permission:daily-checks.list')->group(function () {
+    Route::get('/assessment-summary', [AssessmentSummaryController::class, 'summary']);
+    Route::get('/assessment-summary/export', [AssessmentSummaryController::class, 'export']);
 });
 
 // 巡检预警统计（无额外权限限制，监控看板通用）

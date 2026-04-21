@@ -286,7 +286,7 @@ const navSections: NavSection[] = [
         label: '年度考核',
         mode: 'produce',
         items: [
-            { title: '考核归档', href: '/assessment/filing', icon: Award, upstream: true },
+            { title: '考核填报', href: '/assessment/filing', icon: Award, upstream: true },
         ],
     },
     {
@@ -404,9 +404,8 @@ const navSections: NavSection[] = [
                 title: '年度考核',
                 icon: Trophy,
                 children: [
-                    { title: '考核归档', href: '/management/assessment/filing' },
+                    { title: '考核填报', href: '/management/assessment/filing' },
                     { title: '考核评分', href: '/management/assessment/scoring' },
-                    { title: '考核结果', href: '/management/assessment/results' },
                     { title: '考核汇总', href: '/management/assessment/summary' },
                 ],
             },
