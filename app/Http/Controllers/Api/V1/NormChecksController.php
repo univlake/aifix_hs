@@ -154,17 +154,24 @@ class NormChecksController extends Controller
     }
 
     /**
-     * 返回内置打分表下载地址（供大中型企业安全生产标准化管理体系构建填写参考）。
+     * 返回内置打分表下载地址（大中型企业安全生产标准化管理体系构建填写参考）。
+     *
+     * 对应 snap 的 getList 行为；文件位置见 public/demo_check/。
      */
     public function templateLink(Request $request): JsonResponse
     {
-        $type = $request->string('type');
+        $request->validate(['type' => 'required|string']);
+        $type = (string) $request->string('type');
+
         $map = [
-            '机械' => '/demo_check/浙江省机械制造行业安全生产标准化企业考核评定表.xlsx',
+            '机械' => '/demo_check/浙江省机械制造行业安全生产标准化企业考核评定表.xls',
             '造纸' => '/demo_check/造纸企业安全生产标准化评定标准.xlsx',
             '危化' => '/demo_check/危险化学品从业单位安全生产标准化评审标准.xlsx',
         ];
 
-        return $this->success($map[$type->toString()] ?? '/demo_check/冶金等工贸企业安全生产标准化基本规范评分细则.xlsx');
+        return $this->success([
+            'url' => $map[$type] ?? '/demo_check/冶金等工贸企业安全生产标准化基本规范评分细则.xlsx',
+            'type' => $type,
+        ]);
     }
 }

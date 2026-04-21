@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { CheckCircle2, ClipboardList, FileText, Loader2, Plus, Send, Trophy, X } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Download, FileText, Loader2, Plus, Send, Trophy, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
 import { uploadToOss } from '@/components/shared/OssUploadField';
@@ -893,6 +893,7 @@ function NormScoringModal({ companyId, companyName, year, onClose, onSaved }: { 
     const [path, setPath] = useState<string>('');
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [templateLoading, setTemplateLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const upload = async (file: File) => {
@@ -905,6 +906,29 @@ function NormScoringModal({ companyId, companyName, year, onClose, onSaved }: { 
             const err = e as { message?: string };
             setError(err.message ?? '上传失败');
         } finally { setUploading(false); }
+    };
+
+    const downloadTemplate = async () => {
+        setTemplateLoading(true);
+        setError(null);
+        try {
+            const res = await api.get<ApiResponse<{ url: string; type: string }>>('/norm-checks/template-link', {
+                params: { type },
+            });
+            const url = res.data.data?.url;
+            if (!url) throw new Error('模板地址为空');
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.download = url.split('/').pop() ?? '考核表模板';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } catch (e) {
+            const err = e as { response?: { data?: { message?: string } }; message?: string };
+            setError(err.response?.data?.message ?? err.message ?? '下载模板失败');
+        } finally { setTemplateLoading(false); }
     };
 
     const save = async () => {
@@ -929,7 +953,18 @@ function NormScoringModal({ companyId, companyName, year, onClose, onSaved }: { 
 
                 <div className="space-y-3">
                     <label className="block text-xs text-slate-400">
-                        <span className="mb-1 block">企业类型</span>
+                        <span className="mb-1 flex items-center justify-between">
+                            <span>企业类型</span>
+                            <button
+                                type="button"
+                                onClick={downloadTemplate}
+                                disabled={templateLoading}
+                                className="inline-flex items-center gap-1 rounded-md border border-blue-500/30 bg-blue-600/10 px-2 py-0.5 text-[11px] text-blue-300 transition-colors hover:bg-blue-600/20 disabled:opacity-40"
+                            >
+                                {templateLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                                下载考核表模板
+                            </button>
+                        </span>
                         <select className={cn(inputCls, 'w-full')} value={type} onChange={(e) => setType(e.target.value)}>
                             {NORM_TYPES.map((t) => (<option key={t} value={t}>{t}</option>))}
                         </select>
