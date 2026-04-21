@@ -43,6 +43,8 @@ Route::middleware('permission:accident-bulletins.delete')->group(function () {
 // ── 制度草案 ─────────────────────────────────────────────────────
 Route::middleware('permission:information-drafts.list')->group(function () {
     Route::get('/information-drafts', [InformationDraftsController::class, 'index']);
+    Route::get('/information-drafts/dashboard/readings', [InformationDraftsController::class, 'dashboardReadings']);
+    Route::get('/information-drafts/dashboard/pending', [InformationDraftsController::class, 'dashboardPending']);
     Route::get('/information-drafts/{id}', [InformationDraftsController::class, 'show']);
 });
 Route::middleware('permission:information-drafts.create')->group(function () {

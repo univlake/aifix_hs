@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { DraftDetailsModal, type InformationDraft } from '@/pages/management/tasks/manuscripts/Index';
 import {
     Activity,
     AlertTriangle,
@@ -14,6 +15,7 @@ import {
     GraduationCap,
     Inbox,
     MapPin,
+    Pin,
     TrendingUp,
     UserCheck,
     Users,
@@ -110,6 +112,7 @@ interface NewNotifyPendingItem {
     newNotify?: NewNotifyRef | null;
 }
 
+
 const stats = [
     { title: '企业管理', icon: Building2, href: '/system/companies', color: 'text-blue-400', bg: 'bg-blue-600/15', border: 'border-blue-600/20' },
     { title: '用户管理', icon: Users, href: '/system/users', color: 'text-violet-400', bg: 'bg-violet-600/15', border: 'border-violet-600/20' },
@@ -162,6 +165,9 @@ export default function Dashboard() {
     const [meetingNotifs, setMeetingNotifs] = useState<MeetingNotifyItem[]>([]);
     const [officeNotifs, setOfficeNotifs] = useState<OfficeNotifyPendingItem[]>([]);
     const [newNotifs, setNewNotifs] = useState<NewNotifyPendingItem[]>([]);
+    const [manuscripts, setManuscripts] = useState<InformationDraft[]>([]);
+    const [manuscriptPending, setManuscriptPending] = useState<InformationDraft[]>([]);
+    const [viewingDraft, setViewingDraft] = useState<InformationDraft | null>(null);
     const [confirming, setConfirming] = useState<{ kind: 'company' | 'expert' | 'meeting' | 'new'; id: number } | null>(null);
 
     const refresh = useCallback(async () => {
@@ -181,6 +187,12 @@ export default function Dashboard() {
                 api.get<ApiResponse<NewNotifyPendingItem[]>>('/new-notify-notifications/pending', {
                     params: { company_id: companyId },
                 }).then((res) => setNewNotifs(res.data.data ?? [])).catch(() => setNewNotifs([])),
+                api.get<ApiResponse<InformationDraft[]>>('/information-drafts/dashboard/readings', {
+                    params: { company_id: companyId, limit: 8 },
+                }).then((res) => setManuscripts(res.data.data ?? [])).catch(() => setManuscripts([])),
+                api.get<ApiResponse<InformationDraft[]>>('/information-drafts/dashboard/pending', {
+                    params: { company_id: companyId, limit: 10 },
+                }).then((res) => setManuscriptPending(res.data.data ?? [])).catch(() => setManuscriptPending([])),
             );
         }
 
@@ -243,7 +255,7 @@ export default function Dashboard() {
         }
     };
 
-    const totalPending = companyNotifs.length + expertNotifs.length + meetingNotifs.length + officeNotifs.length + newNotifs.length;
+    const totalPending = companyNotifs.length + expertNotifs.length + meetingNotifs.length + officeNotifs.length + newNotifs.length + manuscriptPending.length;
 
     return (
         <>
@@ -294,6 +306,55 @@ export default function Dashboard() {
                         </Link>
                     );
                 })}
+            </div>
+
+            {/* Information drafts */}
+            <div className="mb-8 rounded-xl border border-blue-900/40 bg-[#0d1530] p-6">
+                <div className="mb-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600/15 border border-sky-600/20">
+                            <FileText className="h-4 w-4 text-sky-400" />
+                        </div>
+                        <h2 className="text-sm font-semibold text-slate-200">最新动态</h2>
+                        {manuscripts.length > 0 && (
+                            <span className="rounded-full border border-sky-500/30 bg-sky-600/15 px-2 py-0.5 text-[10px] text-sky-400">{manuscripts.length}</span>
+                        )}
+                    </div>
+                    <Link href="/tasks/manuscripts" className="text-xs text-slate-500 transition-colors hover:text-slate-300">
+                        查看全部<ArrowRight className="ml-1 inline h-3 w-3" />
+                    </Link>
+                </div>
+                {manuscripts.length === 0 ? (
+                    <p className="py-4 text-center text-sm text-slate-600">暂无最新动态</p>
+                ) : (
+                    <ul className="space-y-1.5">
+                        {manuscripts.map((m) => {
+                            const isMine = m.company_id === companyId;
+
+                            return (
+                                <li key={m.id}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewingDraft(m)}
+                                        className="flex w-full items-center gap-3 rounded-lg border border-blue-900/40 bg-[#070d1f] px-4 py-2.5 text-left transition-colors hover:border-sky-500/40 hover:bg-[#0a1329]"
+                                    >
+                                        {m.is_top === 1 && <Pin className="h-3.5 w-3.5 shrink-0 text-amber-400" />}
+                                        <span className="truncate text-sm font-medium text-slate-100">{m.name}</span>
+                                        <span className={`shrink-0 rounded px-1.5 py-0 text-[10px] ${isMine ? 'border border-emerald-500/30 bg-emerald-600/10 text-emerald-400' : 'border border-blue-500/30 bg-blue-600/10 text-blue-300'}`}>
+                                            {isMine ? '本企业' : '上级发布'}
+                                        </span>
+                                        <span className="ml-auto hidden shrink-0 items-center gap-1 text-[11px] text-slate-500 sm:inline-flex">
+                                            <Building2 className="h-3 w-3" />
+                                            <span className="max-w-[160px] truncate">{m.company_name}</span>
+                                        </span>
+                                        <span className="shrink-0 text-[11px] text-slate-500">{String(m.created_at).slice(0, 10)}</span>
+                                        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-600 transition-transform group-hover:translate-x-0.5" />
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">
@@ -480,6 +541,35 @@ export default function Dashboard() {
                                     </div>
                                 );
                             })}
+                            {manuscriptPending.map((d) => (
+                                <div key={`md-${d.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-sky-500/25 bg-sky-600/5 p-3">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <FileText className="h-3.5 w-3.5 shrink-0 text-sky-400" />
+                                            <p className="truncate text-sm font-semibold text-slate-100" title={d.name}>{d.name}</p>
+                                            <span className="shrink-0 rounded border border-sky-500/30 bg-sky-600/10 px-1.5 py-0 text-[10px] text-sky-400">下级上报</span>
+                                        </div>
+                                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                                            <span className="inline-flex items-center gap-1">
+                                                <Building2 className="h-3 w-3" />{d.company_name}
+                                            </span>
+                                            {d.draft_others && (
+                                                <span className="inline-flex items-center gap-1">
+                                                    <UserCheck className="h-3 w-3" />{d.draft_others}
+                                                </span>
+                                            )}
+                                            <span className="inline-flex items-center gap-1">
+                                                <Clock className="h-3 w-3" />{String(d.created_at).slice(0, 10)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setViewingDraft(d)}
+                                        className="shrink-0 rounded-md border border-sky-500/30 bg-sky-600/15 px-2.5 py-1 text-xs text-sky-300 hover:bg-sky-600/25"
+                                    >查看详情</button>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -505,6 +595,13 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            {viewingDraft && (
+                <DraftDetailsModal
+                    draft={viewingDraft}
+                    onClose={() => setViewingDraft(null)}
+                />
+            )}
         </>
     );
 }
