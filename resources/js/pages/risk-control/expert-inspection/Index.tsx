@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ConfirmRectificationModal } from '@/components/shared/HiddenDangerActionModals';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiCrud } from '@/hooks/use-api';
+import { useAuth } from '@/hooks/use-auth';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse, PaginatedData } from '@/types/models';
@@ -1054,6 +1055,7 @@ return;
 
 export default function ExpertInspectionGroupView() {
     const { rootCompany } = useScope();
+    const { user } = useAuth();
     const companyId = rootCompany?.id;
 
     const [rows, setRows] = useState<Inspection[]>([]);
@@ -1071,15 +1073,21 @@ export default function ExpertInspectionGroupView() {
     const [deleting, setDeleting] = useState(false);
 
     const fetchRows = useCallback(async (p: number, title: string) => {
-        if (!companyId) {
-return;
-}
+        if (!companyId && !user?.id) {
+            return;
+        }
 
         setLoading(true);
 
         try {
             const res = await api.get<ApiResponse<PaginatedData<Inspection>>>('/expert-inspections', {
-                params: { company_id: companyId, page: p, per_page: 15, ...(title ? { title } : {}) },
+                params: {
+                    ...(companyId ? { company_id: companyId } : {}),
+                    ...(user?.id ? { expert_user_id: user.id } : {}),
+                    page: p,
+                    per_page: 15,
+                    ...(title ? { title } : {}),
+                },
             });
             setRows(res.data.data.data);
             setLastPage(res.data.data.last_page);
@@ -1087,12 +1095,12 @@ return;
         } finally {
             setLoading(false);
         }
-    }, [companyId]);
+    }, [companyId, user?.id]);
 
     useEffect(() => {
         setPage(1);
         fetchRows(1, search);
-    }, [companyId, search, fetchRows]);
+    }, [companyId, user?.id, search, fetchRows]);
 
     const handlePage = (p: number) => {
         setPage(p);

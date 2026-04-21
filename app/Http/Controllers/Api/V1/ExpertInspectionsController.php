@@ -21,8 +21,22 @@ class ExpertInspectionsController extends Controller
     {
         $query = ExpertInspection::query();
 
-        if ($request->filled('company_id')) {
-            $query->where('company_id', $request->company_id);
+        $companyId = $request->get('company_id');
+        $expertUserId = $request->get('expert_user_id');
+
+        if ($companyId && $expertUserId) {
+            $query->where(function ($q) use ($companyId, $expertUserId) {
+                $q->where('company_id', $companyId)
+                    ->orWhereHas('expertCompanies.expertInspectionUsers', function ($qq) use ($expertUserId) {
+                        $qq->where('expert_user_id', $expertUserId);
+                    });
+            });
+        } elseif ($companyId) {
+            $query->where('company_id', $companyId);
+        } elseif ($expertUserId) {
+            $query->whereHas('expertCompanies.expertInspectionUsers', function ($q) use ($expertUserId) {
+                $q->where('expert_user_id', $expertUserId);
+            });
         }
 
         if ($request->filled('title')) {
