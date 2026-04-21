@@ -178,7 +178,6 @@ const navSections: NavSection[] = [
                 title: '会议培训',
                 icon: CalendarDays,
                 children: [
-                    { title: '会议', href: '/meeting/meetings', upstream: true },
                     { title: '内部会议', href: '/meeting/internal-meetings' },
                     { title: '教育培训', href: '/training/education' },
                 ],
@@ -254,6 +253,7 @@ const navSections: NavSection[] = [
                 title: '任务管理',
                 icon: ClipboardList,
                 children: [
+                    { title: '会议', href: '/meeting/meetings', upstream: true },
                     { title: '通知公告', href: '/tasks/notices', upstream: true },
                     { title: '信息稿件管理', href: '/tasks/manuscripts', upstream: true },
                     { title: '月度数据上报', href: '/tasks/monthly-report', upstream: true },
@@ -344,6 +344,13 @@ const navSections: NavSection[] = [
         ],
     },
     {
+        label: '内部会议',
+        mode: 'bloc',
+        items: [
+            { title: '内部会议', href: '/meeting/internal-meetings', icon: CalendarDays },
+        ],
+    },
+    {
         label: '教育培训',
         mode: 'bloc',
         items: [
@@ -370,9 +377,6 @@ const navSections: NavSection[] = [
                 children: [
                     { title: '会议通知', href: '/management/tasks/meeting-notices' },
                     { title: '通知公告', href: '/management/tasks/notices' },
-                    { title: '处置通知公告', href: '/management/tasks/disposal-notices' },
-                    { title: '会议签到', href: '/meeting/meeting-sign-ups' },
-                    { title: '内部会议', href: '/meeting/internal-meetings' },
                     { title: '信息稿件管理', href: '/management/tasks/manuscripts' },
                 ],
             },
