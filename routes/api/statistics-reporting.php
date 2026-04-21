@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\HomesController;
 use App\Http\Controllers\Api\V1\InformationDraftsController;
 use App\Http\Controllers\Api\V1\MajorHazardMapController;
 use App\Http\Controllers\Api\V1\MonthStatisticsController;
+use App\Http\Controllers\Api\V1\NoticeStatsController;
 use App\Http\Controllers\Api\V1\OnlineInspectionController;
 use App\Http\Controllers\Api\V1\RectificationSheetCountController;
 use App\Http\Controllers\Api\V1\RegulationLibraryController;
@@ -125,6 +126,12 @@ Route::middleware('permission:year-statistics.update')->group(function () {
 });
 Route::middleware('permission:year-statistics.delete')->group(function () {
     Route::delete('/year-statistics/{id}', [YearStatisticsController::class, 'destroy']);
+});
+
+// ── 通知公告反馈统计（只读，使用 office-notifies.list 权限） ─────
+Route::middleware('permission:office-notifies.list')->group(function () {
+    Route::get('/notice-stats/summary', [NoticeStatsController::class, 'summary']);
+    Route::get('/notice-stats/pending', [NoticeStatsController::class, 'pending']);
 });
 
 // ── 集团专家 ─────────────────────────────────────────────────────
