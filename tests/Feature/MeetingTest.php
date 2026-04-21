@@ -19,6 +19,24 @@ describe('Meeting API', function () {
             $response->assertOk()
                 ->assertJsonStructure(['status', 'data' => ['data' => [['id']]]]);
         });
+
+        it('returns meetings where company is notified via company_id filter', function () {
+            [$user, $company] = createAdminWithCompany();
+            $organizer = Company::factory()->create();
+
+            $owned = Meeting::create(['company_id' => $company->id, 'name' => '自办会议']);
+            $invited = Meeting::create(['company_id' => $organizer->id, 'name' => '受邀会议']);
+            MeetingNotice::create(['meeting_id' => $invited->id, 'company_id' => $company->id]);
+            Meeting::create(['company_id' => $organizer->id, 'name' => '无关会议']);
+
+            $response = $this->actingAs($user, 'api')
+                ->getJson("/api/v1/meetings?company_id={$company->id}");
+
+            $response->assertOk();
+            $ids = collect($response->json('data.data'))->pluck('id')->all();
+            expect($ids)->toContain($owned->id, $invited->id);
+            expect(count($ids))->toBe(2);
+        });
     });
 
     describe('Show (Detail)', function () {

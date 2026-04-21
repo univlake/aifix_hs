@@ -18,7 +18,13 @@ class MeetingController extends Controller
         $query = Meeting::query();
 
         if ($request->filled('company_id')) {
-            $query->where('company_id', $request->company_id);
+            $companyId = (int) $request->company_id;
+            $query->where(function ($q) use ($companyId) {
+                $q->where('company_id', $companyId)
+                    ->orWhereHas('meetingNotices', function ($inner) use ($companyId) {
+                        $inner->where('company_id', $companyId);
+                    });
+            });
         }
 
         if ($request->filled('notify_company_id')) {
