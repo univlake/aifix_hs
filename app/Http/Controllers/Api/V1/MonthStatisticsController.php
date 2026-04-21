@@ -4,7 +4,18 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\StoreMonthStatisticsRequest;
+use App\Models\AccidentBulletin;
+use App\Models\AccidentBulletinKid;
+use App\Models\Company;
+use App\Models\EmergencyDrill;
+use App\Models\FireEquipment;
+use App\Models\FireFacility;
+use App\Models\FundingExecution;
+use App\Models\InternalMeeting;
+use App\Models\InternalTraining;
+use App\Models\MonthlyInvestigation;
 use App\Models\MonthStatistic;
+use App\Models\Personnel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,12 +25,33 @@ class MonthStatisticsController extends Controller
     public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'company_id' => 'required|integer',
+            'company_id' => 'nullable|integer',
+            'pid' => 'nullable|integer',
         ]);
 
-        $data = MonthStatistic::query()
-            ->where('company_id', $request->company_id)
-            ->with(['monthStatisticAccident', 'monthStatisticControl'])
+        if (! $request->filled('company_id') && ! $request->filled('pid')) {
+            return $this->failed('company_id 或 pid 至少提供一个', 422);
+        }
+
+        $query = MonthStatistic::query();
+
+        if ($request->filled('pid')) {
+            // List reports from direct subordinates of the given company.
+            // include_pid=1 additionally includes the parent itself (bloc reporting view).
+            $subordinateIds = Company::query()
+                ->where('pid', (int) $request->pid)
+                ->pluck('id')
+                ->all();
+            if ($request->boolean('include_pid')) {
+                $subordinateIds[] = (int) $request->pid;
+            }
+            $query->whereIn('company_id', $subordinateIds);
+        } else {
+            $query->where('company_id', $request->company_id);
+        }
+
+        $data = $query
+            ->with(['monthStatisticAccident', 'monthStatisticControl', 'company:id,title'])
             ->orderByDesc('created_at')
             ->paginate($request->get('per_page', 15));
 
@@ -204,5 +236,297 @@ class MonthStatisticsController extends Controller
         $record->delete();
 
         return $this->message('删除成功');
+    }
+
+    /**
+     * 生成当月月报的预填充数据。
+     *
+     * 数据来源：
+     *   - is_produce=1：聚合本企业当月生产数据
+     *   - is_bloc=1：同时累加直接下级企业的数据
+     *   - 治理计划/事故详情：汇总本企业 + 直接下级企业
+     */
+    public function stuff(Request $request): JsonResponse
+    {
+        $request->validate([
+            'company_id' => 'required|integer',
+        ]);
+
+        $company = Company::query()->with('baseArea', 'enterpriseType')->find($request->company_id);
+        if (! $company) {
+            return $this->notFound('企业不存在');
+        }
+
+        $year = (int) date('Y');
+        $month = (int) date('m');
+
+        $self = $company->is_produce ? $this->aggregateMonth([(int) $company->id], $year, $month) : $this->emptyMonthCounts();
+
+        $subIds = [];
+        if ($company->is_bloc) {
+            $subIds = Company::query()->where('pid', $company->id)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        }
+        $subs = $this->aggregateMonth($subIds, $year, $month);
+
+        $counts = [];
+        foreach ($this->monthCountKeys() as $key) {
+            $counts[$key] = (int) ($self[$key] ?? 0) + (int) ($subs[$key] ?? 0);
+        }
+
+        // 起始职工数量：本企业 Personnel.total_people（若生产端）
+        if ($company->is_produce) {
+            $personnel = Personnel::query()->where('company_id', $company->id)->first();
+            $counts['average_employee'] = (int) ($personnel->total_people ?? 0) + (int) ($subs['average_employee'] ?? 0);
+        }
+
+        // 治理计划详情与事故详情：本企业 + 直接下级
+        $detailIds = array_values(array_unique(array_merge([(int) $company->id], $subIds)));
+
+        $governDetails = MonthlyInvestigation::query()
+            ->whereIn('company_id', $detailIds)
+            ->whereYear('inv_time', $year)
+            ->whereMonth('inv_time', $month)
+            ->where('level', '重大隐患')
+            ->where('is_govern', 1)
+            ->get();
+
+        $accidentDetails = AccidentBulletinKid::query()
+            ->whereIn('company_id', $detailIds)
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->get();
+
+        $counts['no_rectify_info'] = null;
+        $counts['govern_hidden_danger'] = $governDetails;
+        $counts['accident_bulletin'] = $accidentDetails;
+        $counts['company_id'] = (int) $company->id;
+        $counts['company_name'] = (string) $company->title;
+
+        return $this->success($counts);
+    }
+
+    /**
+     * Aggregate month counts for the given set of company ids.
+     *
+     * @param  array<int>  $companyIds
+     * @return array<string, int>
+     */
+    protected function aggregateMonth(array $companyIds, int $year, int $month): array
+    {
+        if (empty($companyIds)) {
+            return $this->emptyMonthCounts();
+        }
+
+        // Personnel baseline: sum of total_people across the given companies.
+        $averageEmployee = (int) (Personnel::query()
+            ->whereIn('company_id', $companyIds)
+            ->sum('total_people'));
+
+        $safetyMeeting = InternalMeeting::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('created_at', $year)->whereMonth('created_at', $month)
+            ->where('type', '安全例会')->count();
+        $fireMeeting = InternalMeeting::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('created_at', $year)->whereMonth('created_at', $month)
+            ->where('type', '消防例会')->count();
+
+        $safetyCheck = MonthlyInvestigation::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('created_at', $year)->whereMonth('created_at', $month)
+            ->where('type', '!=', '消防')->count();
+        $fireCheck = MonthlyInvestigation::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('created_at', $year)->whereMonth('created_at', $month)
+            ->where('type', '消防')->count();
+
+        $safetyFunding = (int) FundingExecution::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('created_at', $year)->whereMonth('created_at', $month)
+            ->whereHas('security_investment', function ($q) {
+                $q->where('type', '安全投入');
+            })->sum('budget');
+        $fireFunding = (int) FundingExecution::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('created_at', $year)->whereMonth('created_at', $month)
+            ->whereHas('security_investment', function ($q) {
+                $q->where('type', '消防投入');
+            })->sum('budget');
+
+        $fireEquip = FireEquipment::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('created_at', $year)->whereMonth('created_at', $month)
+            ->select(DB::raw('special_type, count(*) as cnt'))
+            ->groupBy('special_type')
+            ->pluck('cnt', 'special_type');
+
+        $hydrating = (int) ($fireEquip['水带苗子'] ?? 0);
+        $retrofit = (int) ($fireEquip['改造电气线路'] ?? 0);
+        $extinguisher = (int) ($fireEquip['灭火器'] ?? 0);
+        $smartFire = (int) FireFacility::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('created_at', $year)->whereMonth('created_at', $month)
+            ->where('special_type', '智慧消防系统')->count();
+
+        $trainings = InternalTraining::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('training_date', $year)->whereMonth('training_date', $month)
+            ->select(DB::raw('training_type, count(*) as cnt, COALESCE(SUM(number),0) as num'))
+            ->groupBy('training_type')->get()->keyBy('training_type');
+
+        $safetyTrainCount = (int) ($trainings['安全培训']->cnt ?? 0);
+        $safetyTrainNum = (int) ($trainings['安全培训']->num ?? 0);
+        $newPeopleNum = (int) ($trainings['新员工培训']->num ?? 0);
+        $fireTrainCount = (int) ($trainings['消防培训']->cnt ?? 0);
+        $fireTrainNum = (int) ($trainings['消防培训']->num ?? 0);
+
+        $drills = EmergencyDrill::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('drill_time', $year)->whereMonth('drill_time', $month)
+            ->select(DB::raw('drill_type, count(*) as cnt, COALESCE(SUM(drill_number),0) as num'))
+            ->groupBy('drill_type')->get()->keyBy('drill_type');
+
+        $safetyEmCount = (int) ($drills['安全生产']->cnt ?? 0);
+        $safetyEmNum = (int) ($drills['安全生产']->num ?? 0);
+        $fireEmCount = (int) ($drills['消防安全']->cnt ?? 0);
+        $fireEmNum = (int) ($drills['消防安全']->num ?? 0);
+
+        $someHidden = MonthlyInvestigation::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
+            ->where('level', '一般隐患')->count();
+        $someRectify = MonthlyInvestigation::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
+            ->where('level', '一般隐患')->where('correct_result', '!=', '未整改')->count();
+        $bigHidden = MonthlyInvestigation::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
+            ->where('level', '重大隐患')->count();
+        $bigRectify = MonthlyInvestigation::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
+            ->where('level', '重大隐患')->where('correct_result', '!=', '未整改')->count();
+        $governCount = MonthlyInvestigation::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
+            ->where('level', '重大隐患')->where('is_govern', 1)->count();
+
+        $fireDanger = MonthlyInvestigation::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
+            ->where('type', '消防')->count();
+        $fireLaw = MonthlyInvestigation::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
+            ->where('is_fire_fighting', 1)->count();
+        $fireLawRectify = MonthlyInvestigation::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
+            ->where('is_fire_fighting', 1)->where('correct_result', '!=', '未整改')->count();
+
+        $accidentCount = AccidentBulletin::query()
+            ->whereIn('company_id', $companyIds)
+            ->whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
+
+        return [
+            'average_employee' => $averageEmployee,
+            'safety_meeting_count' => $safetyMeeting,
+            'fire_meeting_count' => $fireMeeting,
+            'safety_check_count' => $safetyCheck,
+            'fire_check_count' => $fireCheck,
+            'safety_funding' => $safetyFunding,
+            'fire_funding' => $fireFunding,
+            'hydrating_seedlings' => $hydrating,
+            'retrofit_electrical' => $retrofit,
+            'fire_extinguisher' => $extinguisher,
+            'smart_fire' => $smartFire,
+            'safety_training_count' => $safetyTrainCount,
+            'safety_training_number' => $safetyTrainNum,
+            'new_people_training_number' => $newPeopleNum,
+            'fire_training_count' => $fireTrainCount,
+            'fire_training_number' => $fireTrainNum,
+            'safety_emergency_count' => $safetyEmCount,
+            'safety_emergency_number' => $safetyEmNum,
+            'fire_emergency_count' => $fireEmCount,
+            'fire_emergency_number' => $fireEmNum,
+            'some_hidden_danger' => $someHidden,
+            'some_rectify_hidden_danger' => $someRectify,
+            'big_hidden_danger' => $bigHidden,
+            'big_rectify_hidden_danger' => $bigRectify,
+            'govern_hidden_danger_count' => $governCount,
+            'fire_fighting_danger' => $fireDanger,
+            'fire_fighting_hidden_danger' => $fireLaw,
+            'fire_fighting_hidden_danger_rectify' => $fireLawRectify,
+            'accident_bulletin_count' => $accidentCount,
+        ];
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    protected function emptyMonthCounts(): array
+    {
+        return array_fill_keys($this->monthCountKeys(), 0);
+    }
+
+    /**
+     * @return array<string>
+     */
+    protected function monthCountKeys(): array
+    {
+        return [
+            'average_employee', 'safety_meeting_count', 'fire_meeting_count',
+            'safety_check_count', 'fire_check_count', 'safety_funding', 'fire_funding',
+            'hydrating_seedlings', 'retrofit_electrical', 'fire_extinguisher', 'smart_fire',
+            'safety_training_count', 'safety_training_number', 'new_people_training_number',
+            'fire_training_count', 'fire_training_number',
+            'safety_emergency_count', 'safety_emergency_number',
+            'fire_emergency_count', 'fire_emergency_number',
+            'some_hidden_danger', 'some_rectify_hidden_danger',
+            'big_hidden_danger', 'big_rectify_hidden_danger', 'govern_hidden_danger_count',
+            'fire_fighting_danger', 'fire_fighting_hidden_danger', 'fire_fighting_hidden_danger_rectify',
+            'accident_bulletin_count',
+        ];
+    }
+
+    /**
+     * 月报汇总：对给定父企业的直接下级，在给定年月份范围内对所有数值字段求和。
+     */
+    public function statistics(Request $request): JsonResponse
+    {
+        $request->validate([
+            'company_id' => 'required|integer',
+            'date_time' => 'required|date_format:Y-m',
+        ]);
+
+        $companyId = (int) $request->company_id;
+        [$year, $month] = array_map('intval', explode('-', $request->date_time));
+
+        $subordinateIds = Company::query()->where('pid', $companyId)->pluck('id')->all();
+
+        $base = MonthStatistic::query()
+            ->whereIn('company_id', $subordinateIds)
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month);
+
+        $selectExpr = collect($this->monthCountKeys())
+            ->map(fn (string $key) => "COALESCE(SUM({$key}),0) AS {$key}")
+            ->push('COUNT(*) AS count_number')
+            ->implode(', ');
+
+        $totals = (clone $base)
+            ->selectRaw($selectExpr)
+            ->first();
+
+        $normalized = [];
+        foreach ($this->monthCountKeys() as $key) {
+            $normalized[$key] = (int) ($totals->{$key} ?? 0);
+        }
+        $normalized['count_number'] = (int) ($totals->count_number ?? 0);
+        $normalized['date'] = sprintf('%04d-%02d', $year, $month);
+        $normalized['subordinate_count'] = count($subordinateIds);
+
+        return $this->success($normalized);
     }
 }

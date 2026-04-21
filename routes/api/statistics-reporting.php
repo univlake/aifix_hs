@@ -94,6 +94,8 @@ Route::post('/expert-inspection-users/{id}/confirm', [ExpertInspectionsControlle
 // ── 月度统计 ─────────────────────────────────────────────────────
 Route::middleware('permission:month-statistics.list')->group(function () {
     Route::get('/month-statistics', [MonthStatisticsController::class, 'index']);
+    Route::get('/month-statistics/stuff', [MonthStatisticsController::class, 'stuff']);
+    Route::get('/month-statistics/statistics', [MonthStatisticsController::class, 'statistics']);
     Route::get('/month-statistics/{id}', [MonthStatisticsController::class, 'show']);
 });
 Route::middleware('permission:month-statistics.create')->group(function () {
@@ -110,6 +112,8 @@ Route::middleware('permission:month-statistics.delete')->group(function () {
 // ── 年度统计 ─────────────────────────────────────────────────────
 Route::middleware('permission:year-statistics.list')->group(function () {
     Route::get('/year-statistics', [YearStatisticsController::class, 'index']);
+    Route::get('/year-statistics/stuff', [YearStatisticsController::class, 'stuff']);
+    Route::get('/year-statistics/statistics', [YearStatisticsController::class, 'statistics']);
     Route::get('/year-statistics/{id}', [YearStatisticsController::class, 'show']);
 });
 Route::middleware('permission:year-statistics.create')->group(function () {

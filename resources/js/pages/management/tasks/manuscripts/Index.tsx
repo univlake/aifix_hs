@@ -186,7 +186,7 @@ export function ManuscriptsPage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setViewing(d)}
-                                                    title="查看详情"
+                                                    title="详情"
                                                     className="inline-flex items-center gap-1 rounded-lg border border-blue-500/30 bg-blue-600/10 px-3 py-1 text-xs text-blue-300 transition-colors hover:bg-blue-600/20"
                                                 >
                                                     <Eye className="h-3.5 w-3.5" />详情
@@ -482,47 +482,47 @@ interface DraftDetailsModalProps {
 
 export function DraftDetailsModal({ draft, onClose }: DraftDetailsModalProps) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-            <div className="w-full max-w-2xl rounded-xl border border-blue-900/40 bg-[#050915] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                <header className="mb-4 flex items-start justify-between gap-4">
-                    <div className="flex-1">
+        <div className="fixed inset-0 z-50 flex">
+            <div className="flex-1 bg-black/50" onClick={onClose} />
+            <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden border-l border-blue-900/40 bg-[#070d1f] shadow-2xl">
+                <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
+                    <div>
                         <div className="flex items-center gap-2">
                             {draft.is_top === 1 && <Pin className="h-4 w-4 text-amber-400" />}
-                            <h3 className="text-base font-semibold text-slate-100">{draft.name}</h3>
+                            <h2 className="text-base font-semibold text-slate-100">{draft.name}</h2>
                             {draft.status === 1 ? (
                                 <span className="inline-flex items-center rounded border border-emerald-500/20 bg-emerald-600/10 px-1.5 py-0.5 text-[11px] text-emerald-400">已发布</span>
                             ) : (
                                 <span className="inline-flex items-center rounded border border-slate-700/50 bg-slate-700/20 px-1.5 py-0.5 text-[11px] text-slate-500">未发布</span>
                             )}
                         </div>
+                        <p className="mt-0.5 text-xs text-slate-600">仅展示记录信息</p>
                     </div>
-                    <button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X className="h-4 w-4" /></button>
-                </header>
+                    <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-slate-300">
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
 
-                <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
-                    <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                <div className="flex-1 overflow-y-auto p-6">
+                    <div className="space-y-4">
                         <DetailRow label="起草企业" value={draft.company_name} />
                         <DetailRow label="起草部门" value={draft.draft_department ?? '—'} />
                         <DetailRow label="起草人" value={draft.draft_others ?? '—'} />
                         <DetailRow label="创建时间" value={fmtDate(draft.created_at)} />
-                    </dl>
-                    <div>
-                        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500">内容</p>
-                        <div className="whitespace-pre-wrap rounded-lg border border-blue-900/30 bg-[#070d1f] p-3 text-sm text-slate-200">
-                            {draft.comment ?? <span className="text-slate-600">暂无内容</span>}
+                        <div>
+                            <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">内容</p>
+                            <div className="whitespace-pre-wrap rounded-lg border border-blue-900/30 bg-[#0b1226] p-3 text-sm leading-relaxed text-slate-300">
+                                {draft.comment ?? <span className="text-slate-600">暂无内容</span>}
+                            </div>
+                        </div>
+                        <div>
+                            <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">附件</p>
+                            {draft.annex_url
+                                ? <OssDownloadLink url={draft.annex_url} label="下载附件" />
+                                : <span className="text-sm text-slate-600">—</span>}
                         </div>
                     </div>
-                    <div>
-                        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500">附件</p>
-                        {draft.annex_url
-                            ? <OssDownloadLink url={draft.annex_url} label="下载附件" />
-                            : <span className="text-sm text-slate-600">—</span>}
-                    </div>
                 </div>
-
-                <footer className="mt-4 flex justify-end">
-                    <button onClick={onClose} className="rounded-lg border border-blue-900/40 px-3 py-1.5 text-xs text-slate-300 hover:bg-blue-900/20">关闭</button>
-                </footer>
             </div>
         </div>
     );
@@ -531,8 +531,8 @@ export function DraftDetailsModal({ draft, onClose }: DraftDetailsModalProps) {
 function DetailRow({ label, value }: { label: string; value: string }) {
     return (
         <div>
-            <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-            <dd className="mt-0.5 text-slate-200">{value}</dd>
+            <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+            <p className="text-sm leading-relaxed text-slate-300">{value}</p>
         </div>
     );
 }

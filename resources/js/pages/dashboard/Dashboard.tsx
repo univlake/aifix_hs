@@ -567,7 +567,7 @@ export default function Dashboard() {
                                         type="button"
                                         onClick={() => setViewingDraft(d)}
                                         className="shrink-0 rounded-md border border-sky-500/30 bg-sky-600/15 px-2.5 py-1 text-xs text-sky-300 hover:bg-sky-600/25"
-                                    >查看详情</button>
+                                    >详情</button>
                                 </div>
                             ))}
                         </div>
