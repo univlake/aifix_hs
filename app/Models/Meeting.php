@@ -23,6 +23,18 @@ class Meeting extends BaseModel
         'last_user_id',
     ];
 
+    protected $casts = [
+        'meeting_date' => 'datetime',
+        'sign_up_date' => 'datetime',
+        'sign_end_date' => 'datetime',
+    ];
+
+    public function meetingNotices()
+    {
+        return $this->hasMany(MeetingNotice::class);
+    }
+
+    // 向后兼容：保留旧别名
     public function meetingNotice()
     {
         return $this->hasMany(MeetingNotice::class);
@@ -31,5 +43,10 @@ class Meeting extends BaseModel
     public function meetingSignUps()
     {
         return $this->hasMany(MeetingSignUp::class, 'meeting_id');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'company_id');
     }
 }

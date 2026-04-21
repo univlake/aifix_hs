@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Company;
 use App\Models\Meeting;
+use App\Models\MeetingNotice;
 
 describe('Meeting API', function () {
     describe('Index (List)', function () {
@@ -132,6 +134,95 @@ describe('Meeting API', function () {
                 ->deleteJson("/api/v1/meetings/{$record->id}");
 
             $response->assertStatus(403);
+        });
+    });
+
+    describe('Notice Distribution', function () {
+        it('creates meeting with nested notices via kids', function () {
+            [$user, $company] = createAdminWithCompany();
+            $otherCompany = Company::factory()->create();
+
+            $response = $this->actingAs($user, 'api')
+                ->postJson('/api/v1/meetings', [
+                    'company_id' => $company->id,
+                    'name' => '分发通知',
+                    'kids' => [
+                        ['company_id' => $otherCompany->id, 'company_name' => $otherCompany->title],
+                    ],
+                ]);
+
+            $response->assertOk();
+            $meetingId = $response->json('data.id');
+            expect(MeetingNotice::where('meeting_id', $meetingId)->count())->toBe(1);
+        });
+
+        it('notify endpoint stamps notify_time', function () {
+            [$user, $company] = createAdminWithCompany();
+            $meeting = Meeting::create(['company_id' => $company->id, 'name' => '通知测试']);
+            $notice = MeetingNotice::create([
+                'meeting_id' => $meeting->id,
+                'company_id' => $company->id,
+            ]);
+
+            $response = $this->actingAs($user, 'api')
+                ->postJson("/api/v1/meeting-notices/{$notice->id}/notify");
+
+            $response->assertOk();
+            expect($notice->fresh()->notify_time)->not->toBeNull();
+        });
+
+        it('confirm endpoint stamps confirm_time', function () {
+            [$user, $company] = createAdminWithCompany();
+            $meeting = Meeting::create(['company_id' => $company->id, 'name' => '确认测试']);
+            $notice = MeetingNotice::create([
+                'meeting_id' => $meeting->id,
+                'company_id' => $company->id,
+                'notify_time' => now(),
+            ]);
+
+            $response = $this->actingAs($user, 'api')
+                ->postJson("/api/v1/meeting-notices/{$notice->id}/confirm");
+
+            $response->assertOk();
+            expect($notice->fresh()->confirm_time)->not->toBeNull();
+        });
+    });
+
+    describe('Pending Notifications', function () {
+        it('returns pending items; null notify_time counts as immediate', function () {
+            [$user, $company] = createAdminWithCompany();
+            $meeting = Meeting::create(['company_id' => $company->id, 'name' => '待办测试']);
+
+            // pending with notify time in past
+            MeetingNotice::create([
+                'meeting_id' => $meeting->id,
+                'company_id' => $company->id,
+                'notify_time' => now()->subHour(),
+            ]);
+            // pending with null notify time — still shown (immediate)
+            MeetingNotice::create([
+                'meeting_id' => $meeting->id,
+                'company_id' => $company->id,
+                'notify_time' => null,
+            ]);
+            // future notify: excluded
+            MeetingNotice::create([
+                'meeting_id' => $meeting->id,
+                'company_id' => $company->id,
+                'notify_time' => now()->addDay(),
+            ]);
+            // already confirmed: excluded
+            MeetingNotice::create([
+                'meeting_id' => $meeting->id,
+                'company_id' => $company->id,
+                'notify_time' => now()->subHour(),
+                'confirm_time' => now(),
+            ]);
+
+            $response = $this->actingAs($user, 'api')
+                ->getJson("/api/v1/meeting-notifications/pending?company_id={$company->id}");
+
+            $response->assertOk()->assertJsonCount(2, 'data');
         });
     });
 });

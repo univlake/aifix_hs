@@ -265,6 +265,11 @@ Route::middleware('permission:meetings.delete')->group(function () {
     Route::delete('/meetings/{id}', [MeetingController::class, 'destroy']);
 });
 
+// 通知发送 / 企业确认 / 仪表板待办（不走 meeting 权限中间件，企业侧也可确认）
+Route::post('/meeting-notices/{id}/notify', [MeetingController::class, 'notifyNotice']);
+Route::post('/meeting-notices/{id}/confirm', [MeetingController::class, 'confirmNotice']);
+Route::get('/meeting-notifications/pending', [MeetingController::class, 'pendingNotices']);
+
 // ── 会议报名 ─────────────────────────────────────────────────────
 Route::middleware('permission:meeting-sign-ups.list')->group(function () {
     Route::get('/meeting-sign-ups', [MeetingSignUpController::class, 'index']);
