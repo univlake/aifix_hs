@@ -14,11 +14,38 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     /**
+     * 认证用户所在企业 id；未绑定企业时为 null.
+     */
+    protected function currentCompanyId(): ?int
+    {
+        $cid = auth()->user()?->company_id;
+
+        return $cid ? (int) $cid : null;
+    }
+
+    /**
+     * 在当前企业范围内查找目标用户，跨企业视为不存在。
+     */
+    protected function findInOwnCompany(int $id): ?User
+    {
+        $cid = $this->currentCompanyId();
+
+        if (! $cid) {
+            return null;
+        }
+
+        return User::with(['roles.permissions', 'company:id,title'])
+            ->where('company_id', $cid)
+            ->find($id);
+    }
+
+    /**
      * 用户列表
      */
     public function index(Request $request): JsonResponse
     {
-        $query = User::with('roles');
+        $cid = $this->currentCompanyId();
+        $query = User::with('roles')->where('company_id', $cid ?? 0);
 
         if ($request->filled('username')) {
             $query->where('username', 'like', '%'.$request->username.'%');
@@ -26,10 +53,6 @@ class UserController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
-        }
-
-        if ($request->filled('company_id')) {
-            $query->where('company_id', $request->company_id);
         }
 
         // 按角色筛选
@@ -49,7 +72,7 @@ class UserController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $user = User::with(['roles.permissions', 'company:id,title'])->find($id);
+        $user = $this->findInOwnCompany($id);
 
         if (! $user) {
             return $this->notFound('用户不存在');
@@ -63,12 +86,18 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
+        $cid = $this->currentCompanyId();
+
+        if (! $cid) {
+            return $this->failed('当前账号未绑定企业，无法创建用户', 403);
+        }
+
         $data = $request->validated();
         $user = User::create([
             'username' => $data['username'],
             'password' => Hash::make($data['password']),
             'nickname' => $data['nickname'],
-            'company_id' => $data['company_id'],
+            'company_id' => $cid,
             'phone' => $data['phone'] ?? null,
             'email' => $data['email'] ?? null,
             'status' => 1,
@@ -86,12 +115,15 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, int $id): JsonResponse
     {
-        $user = User::find($id);
+        $user = $this->findInOwnCompany($id);
 
         if (! $user) {
             return $this->notFound('用户不存在');
         }
+
         $data = $request->validated();
+        // 不允许跨企业转移
+        unset($data['company_id']);
         $user->update($data);
 
         return $this->success(new UserResource($user->fresh(['roles'])));
@@ -102,7 +134,7 @@ class UserController extends Controller
      */
     public function assignRole(Request $request, int $id): JsonResponse
     {
-        $user = User::find($id);
+        $user = $this->findInOwnCompany($id);
 
         if (! $user) {
             return $this->notFound('用户不存在');
@@ -119,7 +151,7 @@ class UserController extends Controller
      */
     public function resetPassword(Request $request, int $id): JsonResponse
     {
-        $user = User::find($id);
+        $user = $this->findInOwnCompany($id);
 
         if (! $user) {
             return $this->notFound('用户不存在');

@@ -11,8 +11,6 @@ import type { ApiResponse, User, Role } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
 
-interface Company { id: number; title: string }
-
 type DialogMode = 'create' | 'edit' | 'password' | null;
 
 const SYSTEM_ROLES = ['super-admin', 'admin', 'reviewer', 'user'];
@@ -34,18 +32,15 @@ export default function UsersIndex() {
 
     const [filters, setFilters] = useState({ username: '', status: '', role: '' });
     const [roles, setRoles] = useState<Role[]>([]);
-    const [companies, setCompanies] = useState<Company[]>([]);
 
     const [form, setForm] = useState({
         username: '', password: '', nickname: '',
-        company_id: '', phone: '', email: '', role: 'user', status: '1',
+        phone: '', email: '', role: 'user', status: '1',
     });
     const [pwForm, setPwForm] = useState({ password: '', confirm: '' });
 
     useEffect(() => {
         api.get<ApiResponse<Role[]>>('/roles').then((r) => setRoles(r.data.data ?? [])).catch(() => {});
-        api.get<ApiResponse<{ data: Company[] }>>('/companies', { params: { per_page: 200 } })
-            .then((r) => setCompanies(r.data.data?.data ?? [])).catch(() => {});
     }, []);
 
     const applyFilters = useCallback((next: typeof filters) => {
@@ -64,7 +59,7 @@ export default function UsersIndex() {
 
     const openCreate = () => {
         setFormError('');
-        setForm({ username: '', password: '', nickname: '', company_id: '', phone: '', email: '', role: 'user', status: '1' });
+        setForm({ username: '', password: '', nickname: '', phone: '', email: '', role: 'user', status: '1' });
         setEditingUser(null);
         setDialogMode('create');
     };
@@ -75,7 +70,6 @@ export default function UsersIndex() {
             username: user.username,
             password: '',
             nickname: user.nickname ?? '',
-            company_id: user.company_id ? String(user.company_id) : '',
             phone: user.phone ?? '',
             email: user.email ?? '',
             role: user.roles?.[0]?.name ?? 'user',
@@ -102,7 +96,6 @@ export default function UsersIndex() {
                     username: form.username,
                     password: form.password,
                     nickname: form.nickname,
-                    company_id: form.company_id ? Number(form.company_id) : null,
                     phone: form.phone || null,
                     email: form.email || null,
                     role: form.role,
@@ -110,7 +103,6 @@ export default function UsersIndex() {
             } else if (dialogMode === 'edit' && editingUser) {
                 await crud.update(editingUser.id, {
                     nickname: form.nickname,
-                    company_id: form.company_id ? Number(form.company_id) : null,
                     phone: form.phone || null,
                     email: form.email || null,
                     status: Number(form.status),
@@ -345,19 +337,11 @@ return <span className="text-slate-700">—</span>;
                             <input type="password" className={inputClass} value={form.password} onChange={(e) => setF('password', e.target.value)} placeholder="至少6位" />
                         </Field>
                     )}
-                    <div className="grid grid-cols-2 gap-4">
-                        <Field label="所属企业">
-                            <select className={inputClass} value={form.company_id} onChange={(e) => setF('company_id', e.target.value)}>
-                                <option value="">请选择企业</option>
-                                {companies.map((c) => <option key={c.id} value={String(c.id)}>{c.title}</option>)}
-                            </select>
-                        </Field>
-                        <Field label="角色">
-                            <select className={inputClass} value={form.role} onChange={(e) => setF('role', e.target.value)}>
-                                {roles.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
-                            </select>
-                        </Field>
-                    </div>
+                    <Field label="角色">
+                        <select className={inputClass} value={form.role} onChange={(e) => setF('role', e.target.value)}>
+                            {roles.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+                        </select>
+                    </Field>
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="手机号">
                             <input className={inputClass} value={form.phone} onChange={(e) => setF('phone', e.target.value)} placeholder="选填" />

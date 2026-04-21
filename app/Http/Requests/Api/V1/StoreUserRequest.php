@@ -17,7 +17,6 @@ class StoreUserRequest extends FormRequest
             'username' => 'required|string|max:30|unique:users,username',
             'password' => 'required|string|min:6',
             'nickname' => 'required|string|max:100',
-            'company_id' => 'required|integer',
             'phone' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'role' => 'nullable|string|exists:roles,name',
@@ -37,8 +36,6 @@ class StoreUserRequest extends FormRequest
             'nickname.required' => '不能为空',
             'nickname.string' => '必须是字符串',
             'nickname.max' => '不能超过100个字符',
-            'company_id.required' => '不能为空',
-            'company_id.integer' => '必须是整数',
             'phone.max' => '不能超过255个字符',
             'email.max' => '不能超过255个字符',
         ];
