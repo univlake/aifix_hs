@@ -81,6 +81,13 @@ Route::middleware('permission:expert-inspections.delete')->group(function () {
     Route::delete('/expert-inspection-companies/{id}', [ExpertInspectionsController::class, 'destroyCompany']);
     Route::delete('/expert-inspection-users/{id}', [ExpertInspectionsController::class, 'destroyUser']);
 });
+// 企业/专家端通知与确认（不走权限中间件，登录态即可）
+Route::get('/expert-inspection-notifications/company', [ExpertInspectionsController::class, 'companyNotifications']);
+Route::get('/expert-inspection-notifications/expert', [ExpertInspectionsController::class, 'expertNotifications']);
+Route::get('/my-check-inspections', [ExpertInspectionsController::class, 'myCheckInspections']);
+Route::get('/my-expert-assignments', [ExpertInspectionsController::class, 'myExpertAssignments']);
+Route::post('/expert-inspection-companies/{id}/confirm', [ExpertInspectionsController::class, 'confirmCompany']);
+Route::post('/expert-inspection-users/{id}/confirm', [ExpertInspectionsController::class, 'confirmUser']);
 
 // ── 月度统计 ─────────────────────────────────────────────────────
 Route::middleware('permission:month-statistics.list')->group(function () {

@@ -16,6 +16,7 @@ class UpdateExpertCompanyRequest extends FormRequest
         return [
             'notify_company_time' => 'sometimes|nullable|date',
             'check_company_time' => 'sometimes|nullable|date',
+            'confirm_time' => 'sometimes|nullable|date',
             'status' => 'sometimes|nullable|integer',
         ];
     }

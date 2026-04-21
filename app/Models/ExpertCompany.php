@@ -9,6 +9,7 @@ class ExpertCompany extends BaseModel
         'check_company_id',
         'notify_company_time',
         'check_company_time',
+        'confirm_time',
         'status',
         'company_id',
         'user_id',
@@ -28,5 +29,10 @@ class ExpertCompany extends BaseModel
     public function expertInspectionUsers()
     {
         return $this->hasMany(ExpertInspectionUser::class, 'expert_company_id');
+    }
+
+    public function hiddenDangerInfos()
+    {
+        return $this->hasMany(HiddenDangerInfo::class, 'expert_company_id');
     }
 }

@@ -8,6 +8,7 @@ class ExpertInspectionUser extends BaseModel
         'expert_user_id',
         'expert_company_id',
         'status',
+        'confirm_time',
         'comment',
         'company_id',
         'user_id',
@@ -17,5 +18,10 @@ class ExpertInspectionUser extends BaseModel
     public function expertCompany()
     {
         return $this->belongsTo(ExpertCompany::class, 'expert_company_id');
+    }
+
+    public function expertUser()
+    {
+        return $this->belongsTo(User::class, 'expert_user_id');
     }
 }

@@ -39,4 +39,24 @@ class HiddenDangerInfo extends BaseModel
     {
         return $this->hasMany(HiddenUploadAnnex::class)->where('is_review', 1);
     }
+
+    public function hiddenRectifyAnnex()
+    {
+        return $this->hasMany(HiddenUploadAnnex::class)->where('is_review', 3);
+    }
+
+    public function expertInspection()
+    {
+        return $this->belongsTo(ExpertInspection::class);
+    }
+
+    public function expertCompany()
+    {
+        return $this->belongsTo(ExpertCompany::class);
+    }
+
+    public function checkCompany()
+    {
+        return $this->belongsTo(Company::class, 'check_company_id');
+    }
 }

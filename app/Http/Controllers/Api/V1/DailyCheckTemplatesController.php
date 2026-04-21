@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreDailyCheckTemplatesRequest;
+use App\Http\Requests\Api\V1\UpdateDailyCheckTemplatesRequest;
 use App\Models\DailyCheckTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreDailyCheckTemplatesRequest;
-use App\Http\Requests\Api\V1\UpdateDailyCheckTemplatesRequest;
 
 class DailyCheckTemplatesController extends Controller
 {
@@ -35,7 +35,7 @@ class DailyCheckTemplatesController extends Controller
     {
         $data = DailyCheckTemplate::with(['child'])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('日常检查模板不存在');
         }
 
@@ -54,7 +54,7 @@ class DailyCheckTemplatesController extends Controller
     {
         $record = DailyCheckTemplate::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('日常检查模板不存在');
         }
         $data = $request->validated();
@@ -67,7 +67,7 @@ class DailyCheckTemplatesController extends Controller
     {
         $record = DailyCheckTemplate::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('日常检查模板不存在');
         }
 

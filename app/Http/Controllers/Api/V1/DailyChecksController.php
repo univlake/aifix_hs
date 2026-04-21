@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreDailyChecksRequest;
+use App\Http\Requests\Api\V1\UpdateDailyChecksRequest;
 use App\Models\DailyCheck;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreDailyChecksRequest;
-use App\Http\Requests\Api\V1\UpdateDailyChecksRequest;
 
 class DailyChecksController extends Controller
 {
@@ -34,7 +34,7 @@ class DailyChecksController extends Controller
     {
         $data = DailyCheck::with('dailyCheckTemplate')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('日常检查记录不存在');
         }
 
@@ -56,9 +56,10 @@ class DailyChecksController extends Controller
     {
         $record = DailyCheck::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('日常检查记录不存在');
         }
+
         $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
         $record->update($data);
@@ -70,7 +71,7 @@ class DailyChecksController extends Controller
     {
         $record = DailyCheck::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('日常检查记录不存在');
         }
 

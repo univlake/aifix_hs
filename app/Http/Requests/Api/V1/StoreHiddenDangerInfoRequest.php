@@ -39,6 +39,9 @@ class StoreHiddenDangerInfoRequest extends FormRequest
             'hiddenReviewAnnex' => 'nullable|array',
             'hiddenReviewAnnex.*.geolocation' => 'nullable|string',
             'hiddenReviewAnnex.*.annex_url' => 'nullable|string',
+            'hiddenRectifyAnnex' => 'nullable|array',
+            'hiddenRectifyAnnex.*.geolocation' => 'nullable|string',
+            'hiddenRectifyAnnex.*.annex_url' => 'nullable|string',
         ];
     }
 

@@ -28,6 +28,10 @@ Route::middleware('permission:hidden-danger-infos.update')->group(function () {
 Route::middleware('permission:hidden-danger-infos.delete')->group(function () {
     Route::delete('/hidden-danger-infos/{id}', [HiddenDangerInfoController::class, 'destroy']);
 });
+// 整改流程：整改 / 整改确认 / 归档（登录态即可，前端按角色显示按钮）
+Route::post('/hidden-danger-infos/{id}/rectify', [HiddenDangerInfoController::class, 'rectify']);
+Route::post('/hidden-danger-infos/{id}/confirm-rectification', [HiddenDangerInfoController::class, 'confirmRectification']);
+Route::post('/hidden-danger-infos/{id}/archive', [HiddenDangerInfoController::class, 'archive']);
 
 // ── 整改单 ─────────────────────────────────────────────────────
 Route::middleware('permission:rectification-sheets.list')->group(function () {

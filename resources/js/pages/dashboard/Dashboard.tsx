@@ -1,17 +1,57 @@
 import { Head, Link } from '@inertiajs/react';
-import { useAuth } from '@/hooks/use-auth';
 import {
-    Building2,
-    Users,
-    AlertTriangle,
-    ClipboardCheck,
-    GraduationCap,
-    FileText,
-    Shield,
     Activity,
+    AlertTriangle,
     ArrowRight,
+    Bell,
+    Building2,
+    ClipboardCheck,
+    FileText,
+    GraduationCap,
+    Shield,
     TrendingUp,
+    UserCheck,
+    Users,
 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useScope } from '@/contexts/ScopeContext';
+import { useAuth } from '@/hooks/use-auth';
+import api from '@/lib/api';
+import type { ApiResponse } from '@/types/models';
+
+interface InspectionRef {
+    id: number;
+    title: string;
+    start_date: string | null;
+    end_date: string | null;
+}
+
+interface CompanyNotifyItem {
+    id: number;
+    expert_inspection_id: number;
+    notify_company_time: string | null;
+    check_company_time: string | null;
+    expert_inspection?: InspectionRef | null;
+    expertInspection?: InspectionRef | null;
+}
+
+interface ExpertNotifyItem {
+    id: number;
+    expert_user_id: number;
+    expert_company_id: number;
+    expert_company?: {
+        check_company?: { id: number; title: string } | null;
+        checkCompany?: { id: number; title: string } | null;
+        expert_inspection?: InspectionRef | null;
+        expertInspection?: InspectionRef | null;
+    } | null;
+    expertCompany?: {
+        check_company?: { id: number; title: string } | null;
+        checkCompany?: { id: number; title: string } | null;
+        expert_inspection?: InspectionRef | null;
+        expertInspection?: InspectionRef | null;
+    } | null;
+}
 
 const stats = [
     { title: '企业管理', icon: Building2, href: '/system/companies', color: 'text-blue-400', bg: 'bg-blue-600/15', border: 'border-blue-600/20' },
@@ -31,8 +71,80 @@ const quickLinks = [
     { title: '法律法规库', href: '/regulation/libraries' },
 ];
 
+function pickInspection<T extends { expert_inspection?: InspectionRef | null; expertInspection?: InspectionRef | null }>(row: T): InspectionRef | null {
+    return row.expert_inspection ?? row.expertInspection ?? null;
+}
+
+function pickCheckCompany(row: ExpertNotifyItem): { id: number; title: string } | null {
+    const ec = row.expert_company ?? row.expertCompany ?? null;
+
+    return ec?.check_company ?? ec?.checkCompany ?? null;
+}
+
+function pickExpertInspection(row: ExpertNotifyItem): InspectionRef | null {
+    const ec = row.expert_company ?? row.expertCompany ?? null;
+
+    return ec?.expert_inspection ?? ec?.expertInspection ?? null;
+}
+
 export default function Dashboard() {
     const { user, company } = useAuth();
+    const { activeCompany } = useScope();
+    const companyId = activeCompany?.id;
+
+    const [companyNotifs, setCompanyNotifs] = useState<CompanyNotifyItem[]>([]);
+    const [expertNotifs, setExpertNotifs] = useState<ExpertNotifyItem[]>([]);
+    const [confirming, setConfirming] = useState<{ kind: 'company' | 'expert'; id: number } | null>(null);
+
+    const refresh = useCallback(async () => {
+        const tasks: Promise<unknown>[] = [];
+
+        if (companyId) {
+            tasks.push(
+                api.get<ApiResponse<CompanyNotifyItem[]>>('/expert-inspection-notifications/company', {
+                    params: { company_id: companyId },
+                }).then((res) => setCompanyNotifs(res.data.data ?? [])).catch(() => setCompanyNotifs([])),
+            );
+        }
+
+        if (user?.id) {
+            tasks.push(
+                api.get<ApiResponse<ExpertNotifyItem[]>>('/expert-inspection-notifications/expert', {
+                    params: { expert_user_id: user.id },
+                }).then((res) => setExpertNotifs(res.data.data ?? [])).catch(() => setExpertNotifs([])),
+            );
+        }
+
+        await Promise.all(tasks);
+    }, [companyId, user?.id]);
+
+    useEffect(() => {
+ refresh(); 
+}, [refresh]);
+
+    const confirmCompany = async (id: number) => {
+        setConfirming({ kind: 'company', id });
+
+        try {
+            await api.post(`/expert-inspection-companies/${id}/confirm`);
+            refresh();
+        } finally {
+            setConfirming(null);
+        }
+    };
+
+    const confirmExpert = async (id: number) => {
+        setConfirming({ kind: 'expert', id });
+
+        try {
+            await api.post(`/expert-inspection-users/${id}/confirm`);
+            refresh();
+        } finally {
+            setConfirming(null);
+        }
+    };
+
+    const totalPending = companyNotifs.length + expertNotifs.length;
 
     return (
         <>
@@ -55,17 +167,79 @@ export default function Dashboard() {
                 </div>
             </div>
 
+            {/* Expert inspection notifications */}
+            {totalPending > 0 && (
+                <section className="mb-8">
+                    <div className="mb-3 flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-amber-400" />
+                        <h2 className="text-sm font-semibold text-slate-200">专家检查待办通知</h2>
+                        <span className="rounded-full border border-amber-500/30 bg-amber-600/15 px-2 py-0.5 text-[10px] text-amber-400">{totalPending}</span>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                        {/* Company notifications */}
+                        {companyNotifs.map((item) => {
+                            const ins = pickInspection(item);
+
+                            return (
+                                <div key={`c-${item.id}`} className="rounded-xl border border-amber-500/25 bg-amber-600/5 p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <Building2 className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+                                                <p className="truncate text-sm font-semibold text-slate-100" title={ins?.title ?? ''}>{ins?.title ?? `检查#${item.expert_inspection_id}`}</p>
+                                            </div>
+                                            <p className="mt-1 text-[11px] text-slate-500">受检企业待确认 · 通知时间：{item.notify_company_time ?? '—'}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => confirmCompany(item.id)}
+                                            disabled={confirming?.kind === 'company' && confirming?.id === item.id}
+                                            className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
+                                        >确认</button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {/* Expert notifications */}
+                        {expertNotifs.map((item) => {
+                            const ins = pickExpertInspection(item);
+                            const cc = pickCheckCompany(item);
+
+                            return (
+                                <div key={`e-${item.id}`} className="rounded-xl border border-blue-500/25 bg-blue-600/5 p-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <UserCheck className="h-3.5 w-3.5 shrink-0 text-blue-400" />
+                                                <p className="truncate text-sm font-semibold text-slate-100" title={ins?.title ?? ''}>{ins?.title ?? `检查#${item.expert_company_id}`}</p>
+                                            </div>
+                                            <p className="mt-1 text-[11px] text-slate-500">
+                                                指派专家检查 · {cc?.title ? `受检：${cc.title}` : '受检企业未指定'}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => confirmExpert(item.id)}
+                                            disabled={confirming?.kind === 'expert' && confirming?.id === item.id}
+                                            className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
+                                        >确认</button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
+
             {/* Quick stats grid */}
             <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {stats.map((s) => {
                     const Icon = s.icon;
+
                     return (
                         <Link
                             key={s.title}
                             href={s.href}
                             className={`group relative overflow-hidden rounded-xl border ${s.border} bg-[#0d1530] p-5 transition-all hover:border-opacity-60 hover:bg-[#0d1530]/90`}
                         >
-                            {/* Hover glow */}
                             <div className="absolute inset-0 rounded-xl bg-blue-600/0 transition-all group-hover:bg-blue-600/3" />
                             <div className="relative flex items-start justify-between">
                                 <div>
@@ -86,7 +260,6 @@ export default function Dashboard() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">
-                {/* System info */}
                 <div className="lg:col-span-2 rounded-xl border border-blue-900/40 bg-[#0d1530] p-6">
                     <div className="mb-5 flex items-center gap-2">
                         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600/15 border border-blue-600/20">
@@ -109,7 +282,6 @@ export default function Dashboard() {
                     </dl>
                 </div>
 
-                {/* Quick links */}
                 <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-6">
                     <div className="mb-5 flex items-center gap-2">
                         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-600/15 border border-violet-600/20">
