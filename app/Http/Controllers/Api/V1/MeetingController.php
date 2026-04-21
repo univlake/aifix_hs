@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreMeetingRequest;
+use App\Http\Requests\Api\V1\UpdateMeetingRequest;
 use App\Models\Meeting;
 use App\Models\MeetingNotice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreMeetingRequest;
-use App\Http\Requests\Api\V1\UpdateMeetingRequest;
 
 class MeetingController extends Controller
 {
@@ -21,11 +21,24 @@ class MeetingController extends Controller
             $query->where('company_id', $request->company_id);
         }
 
-        if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+        if ($request->filled('notify_company_id')) {
+            $query->whereHas('meetingNotices', function ($q) use ($request) {
+                $q->where('company_id', $request->notify_company_id);
+            });
         }
 
-        $list = $query->with('meetingNotice')
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%'.$request->name.'%');
+        }
+
+        if ($request->filled('start_date')) {
+            $query->where('meeting_date', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->where('meeting_date', '<=', $request->end_date);
+        }
+
+        $list = $query->with('meetingNotices')
             ->orderBy('meeting_date', 'desc')
             ->paginate($request->get('per_page', 15));
 
@@ -34,9 +47,12 @@ class MeetingController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $data = Meeting::with(['meetingNotice', 'meetingSignUps'])->find($id);
+        $data = Meeting::with([
+            'meetingNotices.company:id,title',
+            'meetingSignUps',
+        ])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('会议不存在');
         }
 
@@ -76,7 +92,7 @@ class MeetingController extends Controller
     {
         $record = Meeting::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('会议不存在');
         }
         $data = $request->validated();
@@ -110,16 +126,83 @@ class MeetingController extends Controller
     {
         $record = Meeting::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('会议不存在');
         }
 
         DB::transaction(function () use ($record) {
-            $record->meetingNotice()->delete();
+            $record->meetingNotices()->delete();
             $record->meetingSignUps()->delete();
             $record->delete();
         });
 
         return $this->message('删除成功');
+    }
+
+    /**
+     * 触发一个会议通知的发送（标记 notify_time）。
+     * 邮件/短信通道尚未接入时，仅写入时间戳与活动日志；
+     * 后续接入时在此处调用 Mail::send(...) 或短信服务即可。
+     */
+    public function notifyNotice(int $id): JsonResponse
+    {
+        $notice = MeetingNotice::find($id);
+
+        if (! $notice) {
+            return $this->notFound('会议通知记录不存在');
+        }
+
+        $notice->update([
+            'notify_time' => now(),
+            'last_user_id' => auth()->id() ?? 0,
+        ]);
+
+        activity('meeting_notice')
+            ->performedOn($notice)
+            ->causedBy(auth()->user())
+            ->withProperties(['meeting_id' => $notice->meeting_id, 'company_id' => $notice->company_id])
+            ->log('发送会议通知');
+
+        return $this->success($notice->fresh());
+    }
+
+    /**
+     * 企业端确认收到通知.
+     */
+    public function confirmNotice(int $id): JsonResponse
+    {
+        $notice = MeetingNotice::find($id);
+
+        if (! $notice) {
+            return $this->notFound('会议通知记录不存在');
+        }
+
+        $notice->update([
+            'confirm_time' => now(),
+            'last_user_id' => auth()->id() ?? 0,
+        ]);
+
+        return $this->success($notice->fresh());
+    }
+
+    /**
+     * 企业端仪表板：本企业尚未确认的会议通知.
+     */
+    public function pendingNotices(Request $request): JsonResponse
+    {
+        $request->validate(['company_id' => 'required|integer']);
+
+        $list = MeetingNotice::query()
+            ->where('company_id', $request->company_id)
+            ->whereNull('confirm_time')
+            ->where(function ($q) {
+                $q->whereNull('notify_time')
+                    ->orWhere('notify_time', '<=', now());
+            })
+            ->with(['meeting:id,name,meeting_date,sign_end_date,place,theme'])
+            ->orderByDesc('notify_time')
+            ->get();
+
+        return $this->success($list);
     }
 }

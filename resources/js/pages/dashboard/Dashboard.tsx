@@ -5,12 +5,14 @@ import {
     ArrowRight,
     Bell,
     Building2,
+    CalendarDays,
     CheckCircle2,
     ClipboardCheck,
     ClipboardList,
     Clock,
     FileText,
     GraduationCap,
+    MapPin,
     TrendingUp,
     UserCheck,
     Users,
@@ -54,6 +56,24 @@ interface ExpertNotifyItem {
     expertCompany?: ExpertCompanyRef | null;
 }
 
+interface MeetingRef {
+    id: number;
+    name: string | null;
+    meeting_date: string | null;
+    sign_end_date: string | null;
+    place: string | null;
+    theme: string | null;
+}
+
+interface MeetingNotifyItem {
+    id: number;
+    meeting_id: number;
+    company_id: number;
+    notify_time: string | null;
+    confirm_time: string | null;
+    meeting?: MeetingRef | null;
+}
+
 const stats = [
     { title: '企业管理', icon: Building2, href: '/system/companies', color: 'text-blue-400', bg: 'bg-blue-600/15', border: 'border-blue-600/20' },
     { title: '用户管理', icon: Users, href: '/system/users', color: 'text-violet-400', bg: 'bg-violet-600/15', border: 'border-violet-600/20' },
@@ -95,7 +115,8 @@ export default function Dashboard() {
 
     const [companyNotifs, setCompanyNotifs] = useState<CompanyNotifyItem[]>([]);
     const [expertNotifs, setExpertNotifs] = useState<ExpertNotifyItem[]>([]);
-    const [confirming, setConfirming] = useState<{ kind: 'company' | 'expert'; id: number } | null>(null);
+    const [meetingNotifs, setMeetingNotifs] = useState<MeetingNotifyItem[]>([]);
+    const [confirming, setConfirming] = useState<{ kind: 'company' | 'expert' | 'meeting'; id: number } | null>(null);
 
     const refresh = useCallback(async () => {
         const tasks: Promise<unknown>[] = [];
@@ -105,6 +126,9 @@ export default function Dashboard() {
                 api.get<ApiResponse<CompanyNotifyItem[]>>('/expert-inspection-notifications/company', {
                     params: { company_id: companyId },
                 }).then((res) => setCompanyNotifs(res.data.data ?? [])).catch(() => setCompanyNotifs([])),
+                api.get<ApiResponse<MeetingNotifyItem[]>>('/meeting-notifications/pending', {
+                    params: { company_id: companyId },
+                }).then((res) => setMeetingNotifs(res.data.data ?? [])).catch(() => setMeetingNotifs([])),
             );
         }
 
@@ -145,7 +169,18 @@ export default function Dashboard() {
         }
     };
 
-    const totalPending = companyNotifs.length + expertNotifs.length;
+    const confirmMeeting = async (id: number) => {
+        setConfirming({ kind: 'meeting', id });
+
+        try {
+            await api.post(`/meeting-notices/${id}/confirm`);
+            refresh();
+        } finally {
+            setConfirming(null);
+        }
+    };
+
+    const totalPending = companyNotifs.length + expertNotifs.length + meetingNotifs.length;
 
     return (
         <>
@@ -215,7 +250,7 @@ export default function Dashboard() {
                         <div className="flex flex-col items-center justify-center py-8 text-center">
                             <CheckCircle2 className="mb-2 h-8 w-8 text-slate-700" />
                             <p className="text-sm text-slate-500">暂无待办事项</p>
-                            <p className="mt-1 text-xs text-slate-700">所有专家检查通知均已确认</p>
+                            <p className="mt-1 text-xs text-slate-700">所有通知均已确认</p>
                         </div>
                     ) : (
                         <div className="space-y-2.5">
@@ -279,6 +314,41 @@ export default function Dashboard() {
                                         <button
                                             onClick={() => confirmExpert(item.id)}
                                             disabled={confirming?.kind === 'expert' && confirming?.id === item.id}
+                                            className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
+                                        >确认收到</button>
+                                    </div>
+                                );
+                            })}
+                            {meetingNotifs.map((item) => {
+                                const m = item.meeting ?? null;
+
+                                return (
+                                    <div key={`m-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-violet-500/25 bg-violet-600/5 p-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <CalendarDays className="h-3.5 w-3.5 shrink-0 text-violet-400" />
+                                                <p className="truncate text-sm font-semibold text-slate-100" title={m?.name ?? ''}>{m?.name ?? `会议#${item.meeting_id}`}</p>
+                                                <span className="shrink-0 rounded border border-violet-500/30 bg-violet-600/10 px-1.5 py-0 text-[10px] text-violet-400">会议通知</span>
+                                            </div>
+                                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                                                <span className="inline-flex items-center gap-1">
+                                                    <Clock className="h-3 w-3" />时间：{m?.meeting_date ?? '—'}
+                                                </span>
+                                                {m?.place && (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <MapPin className="h-3 w-3" />{m.place}
+                                                    </span>
+                                                )}
+                                                {m?.sign_end_date && (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <Bell className="h-3 w-3" />报名截止：{m.sign_end_date}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => confirmMeeting(item.id)}
+                                            disabled={confirming?.kind === 'meeting' && confirming?.id === item.id}
                                             className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
                                         >确认收到</button>
                                     </div>
