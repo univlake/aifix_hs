@@ -287,12 +287,12 @@ const navSections: NavSection[] = [
                     {
                         title: '施工单位',
                         href: '/third-party/construction-units',
-                        permission: 'construction-units.list',
+                        permission: 'evaluation-units.list',
                     },
                     {
                         title: '技术服务单位',
                         href: '/third-party/technical-services',
-                        permission: 'technical-service-units.list',
+                        permission: 'skill-units.list',
                     },
                 ],
             },
