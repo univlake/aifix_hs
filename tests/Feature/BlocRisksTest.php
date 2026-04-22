@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\Company;
+use App\Models\MonthlyInvestigation;
 use App\Models\RiskLog;
+use Illuminate\Support\Facades\DB;
 
 describe('BlocRisks dashboard endpoints', function () {
     it('returns inherent risk aggregate', function () {
@@ -93,6 +95,57 @@ describe('BlocRisks dashboard endpoints', function () {
         $this->actingAs($user, 'api')
             ->getJson('/api/v1/bloc-hidden-danger-sort?company_id='.$company->id)
             ->assertOk();
+    });
+
+    it('bloc-risks-log issues at most 4 RiskLog queries regardless of subordinate count', function () {
+        [$user, $company] = createAdminWithCompany();
+        // Many subordinates + many days of logs
+        foreach (range(1, 10) as $i) {
+            $sub = Company::factory()->create(['pid' => $company->id, 'status' => 1]);
+            foreach (range(0, 6) as $daysAgo) {
+                RiskLog::create([
+                    'company_id' => $sub->id,
+                    'type' => 1,
+                    'risk_num' => 5,
+                    'risk_grade' => '橙',
+                    'date' => date('Ymd', strtotime("-{$daysAgo} days")),
+                    'content' => 'test',
+                ]);
+            }
+        }
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->actingAs($user, 'api')
+            ->getJson('/api/v1/bloc-risks-log?company_id='.$company->id)
+            ->assertOk();
+        $queries = DB::getQueryLog();
+        DB::disableQueryLog();
+
+        $riskLogQueries = collect($queries)->filter(fn ($q) => str_contains(strtolower($q['query']), 'from `risk_logs`'))->count();
+        // Pre-refactor: 14 (7 days × 2 types). Post-refactor: 1 bulk query.
+        expect($riskLogQueries)->toBeLessThanOrEqual(2, "Expected ≤2 risk_log queries; got {$riskLogQueries}");
+    });
+
+    it('hidden-danger-sort issues O(1) MonthlyInvestigation queries regardless of subordinate count', function () {
+        [$user, $company] = createAdminWithCompany();
+        // 8 subordinates with monthly investigations
+        foreach (range(1, 8) as $i) {
+            $sub = Company::factory()->create(['pid' => $company->id, 'status' => 1]);
+            MonthlyInvestigation::create(['company_id' => $sub->id, 'correct_result' => '已整改']);
+        }
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->actingAs($user, 'api')
+            ->getJson('/api/v1/bloc-hidden-danger-sort?company_id='.$company->id)
+            ->assertOk();
+        $queries = DB::getQueryLog();
+        DB::disableQueryLog();
+
+        $invQueries = collect($queries)->filter(fn ($q) => str_contains(strtolower($q['query']), 'from `monthly_investigations`'))->count();
+        // Pre-refactor: 4 per subordinate = 32. Post-refactor: 1.
+        expect($invQueries)->toBeLessThanOrEqual(2, "Expected ≤2 monthly_investigations queries; got {$invQueries}");
     });
 
     it('aggregates today-dated risk_log rows in bloc-risks-log', function () {
