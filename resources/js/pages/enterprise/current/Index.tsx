@@ -1,20 +1,8 @@
-import { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
-import { useScope } from '@/contexts/ScopeContext';
-import api from '@/lib/api';
-import { LatLngPickerModal } from '@/components/map/LatLngPickerModal';
-import { GeoRangeDrawerModal } from '@/components/map/GeoRangeDrawerModal';
 import {
     Building2,
     MapPin,
-    Phone,
-    Mail,
-    Hash,
-    Briefcase,
-    Calendar,
     Globe,
-    Shield,
-    Activity,
     User,
     AlertTriangle,
     Pencil,
@@ -24,6 +12,12 @@ import {
     Navigation,
     Check,
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { GeoRangeDrawerModal } from '@/components/map/GeoRangeDrawerModal';
+import { LatLngPickerModal } from '@/components/map/LatLngPickerModal';
+import { useScope } from '@/contexts/ScopeContext';
+import api from '@/lib/api';
+import { getErrorMessage } from '@/types/api-error';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -51,7 +45,7 @@ interface Company {
     float_risk_grade?: string;
     acreage?: string;
     longitude?: string | number;
-    dimension?: string | number;  // latitude
+    dimension?: string | number; // latitude
     geographic_range?: string;
     enterprise_type_id?: number | string;
     operational_type_id?: number | string;
@@ -61,7 +55,10 @@ interface Company {
     float_risk?: string | number;
 }
 
-type EditForm = Omit<Company, 'id' | 'status_str' | 'enterprise_type' | 'operational_type'>;
+type EditForm = Omit<
+    Company,
+    'id' | 'status_str' | 'enterprise_type' | 'operational_type'
+>;
 
 // ── Page ──────────────────────────────────────────────────────────
 
@@ -85,7 +82,10 @@ export default function CurrentEnterprise() {
     const [geoRangeOpen, setGeoRangeOpen] = useState(false);
 
     useEffect(() => {
-        if (!activeCompany?.id) return;
+        if (!activeCompany?.id) {
+            return;
+        }
+
         setLoading(true);
         setError('');
 
@@ -104,8 +104,17 @@ export default function CurrentEnterprise() {
             api.get('/enterprise-types').catch(() => null),
             api.get('/operational-types').catch(() => null),
         ]).then(([etRes, otRes]) => {
-            if (etRes) setEnterpriseTypes(etRes.data.data?.data ?? etRes.data.data ?? []);
-            if (otRes) setOperationalTypes(otRes.data.data?.data ?? otRes.data.data ?? []);
+            if (etRes) {
+                setEnterpriseTypes(
+                    etRes.data.data?.data ?? etRes.data.data ?? [],
+                );
+            }
+
+            if (otRes) {
+                setOperationalTypes(
+                    otRes.data.data?.data ?? otRes.data.data ?? [],
+                );
+            }
         });
     }, [activeCompany?.id]);
 
@@ -113,9 +122,13 @@ export default function CurrentEnterprise() {
         setForm((f) => ({ ...f, [key]: value }));
 
     const handleSave = async () => {
-        if (!company) return;
+        if (!company) {
+            return;
+        }
+
         setSaving(true);
         setSaveError('');
+
         try {
             const res = await api.put(`/companies/${company.id}`, form);
             setCompany(res.data.data);
@@ -123,8 +136,8 @@ export default function CurrentEnterprise() {
             setEditMode(false);
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
-        } catch (err: any) {
-            setSaveError(err.response?.data?.message ?? '保存失败，请重试');
+        } catch (err: unknown) {
+            setSaveError(getErrorMessage(err, '保存失败，请重试'));
         } finally {
             setSaving(false);
         }
@@ -157,17 +170,28 @@ export default function CurrentEnterprise() {
                 onClose={() => setGeoRangeOpen(false)}
                 center={{ lat: form.dimension, lng: form.longitude }}
                 value={form.geographic_range}
-                onConfirm={(coords) => setField('geographic_range', JSON.stringify(coords))}
+                onConfirm={(coords) =>
+                    setField('geographic_range', JSON.stringify(coords))
+                }
             />
 
             {/* Page header */}
             <div className="mb-8 flex items-start justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-100">当前企业</h1>
-                    <p className="mt-1 text-sm text-slate-500">查看与管理当前登录企业的基本信息</p>
+                    <h1 className="text-2xl font-bold text-slate-100">
+                        当前企业
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500">
+                        查看与管理当前登录企业的基本信息
+                    </p>
                 </div>
                 <div className="flex items-center gap-2.5">
-                    {company && <StatusBadge status={company.status} label={company.status_str} />}
+                    {company && (
+                        <StatusBadge
+                            status={company.status}
+                            label={company.status_str}
+                        />
+                    )}
                     {!loading && company && !editMode && (
                         <button
                             onClick={() => setEditMode(true)}
@@ -181,7 +205,7 @@ export default function CurrentEnterprise() {
                         <>
                             <button
                                 onClick={handleCancel}
-                                className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 px-3.5 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+                                className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 px-3.5 py-2 text-xs text-slate-400 transition-colors hover:text-slate-200"
                             >
                                 <X className="h-3.5 w-3.5" />
                                 取消
@@ -189,7 +213,7 @@ export default function CurrentEnterprise() {
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-medium text-white hover:bg-blue-500 transition-colors disabled:opacity-60"
+                                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-60"
                             >
                                 <Save className="h-3.5 w-3.5" />
                                 {saving ? '保存中...' : '保存'}
@@ -220,48 +244,102 @@ export default function CurrentEnterprise() {
             {company && !loading && (
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* ── Left column ── */}
-                    <div className="lg:col-span-2 space-y-6">
-
+                    <div className="space-y-6 lg:col-span-2">
                         {/* Basic info */}
-                        <InfoCard title="基本信息" icon={Building2} accent="blue">
+                        <InfoCard
+                            title="基本信息"
+                            icon={Building2}
+                            accent="blue"
+                        >
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <EditableField
-                                    label="企业名称" required
-                                    value={editMode ? (form.title ?? '') : (company.title ?? '')}
+                                    label="企业名称"
+                                    required
+                                    value={
+                                        editMode
+                                            ? (form.title ?? '')
+                                            : (company.title ?? '')
+                                    }
                                     editing={editMode}
                                     onChange={(v) => setField('title', v)}
                                 />
                                 <EditableField
                                     label="统一社会信用代码"
-                                    value={editMode ? (form.credit_code ?? '') : (company.credit_code ?? '')}
+                                    value={
+                                        editMode
+                                            ? (form.credit_code ?? '')
+                                            : (company.credit_code ?? '')
+                                    }
                                     editing={editMode}
                                     onChange={(v) => setField('credit_code', v)}
                                 />
                                 <SelectField
                                     label="企业类型"
-                                    value={editMode ? String(form.enterprise_type_id ?? '') : String(company.enterprise_type_id ?? '')}
-                                    displayValue={company.enterprise_type?.title}
+                                    value={
+                                        editMode
+                                            ? String(
+                                                  form.enterprise_type_id ?? '',
+                                              )
+                                            : String(
+                                                  company.enterprise_type_id ??
+                                                      '',
+                                              )
+                                    }
+                                    displayValue={
+                                        company.enterprise_type?.title
+                                    }
                                     options={enterpriseTypes}
                                     editing={editMode}
-                                    onChange={(v) => setField('enterprise_type_id', Number(v))}
+                                    onChange={(v) =>
+                                        setField(
+                                            'enterprise_type_id',
+                                            Number(v),
+                                        )
+                                    }
                                 />
                                 <SelectField
                                     label="经营类型"
-                                    value={editMode ? String(form.operational_type_id ?? '') : String(company.operational_type_id ?? '')}
-                                    displayValue={company.operational_type?.title}
+                                    value={
+                                        editMode
+                                            ? String(
+                                                  form.operational_type_id ??
+                                                      '',
+                                              )
+                                            : String(
+                                                  company.operational_type_id ??
+                                                      '',
+                                              )
+                                    }
+                                    displayValue={
+                                        company.operational_type?.title
+                                    }
                                     options={operationalTypes}
                                     editing={editMode}
-                                    onChange={(v) => setField('operational_type_id', Number(v))}
+                                    onChange={(v) =>
+                                        setField(
+                                            'operational_type_id',
+                                            Number(v),
+                                        )
+                                    }
                                 />
                                 <EditableField
-                                    label="成立时间" type="date"
-                                    value={editMode ? (form.established ?? '') : (company.established ?? '')}
+                                    label="成立时间"
+                                    type="date"
+                                    value={
+                                        editMode
+                                            ? (form.established ?? '')
+                                            : (company.established ?? '')
+                                    }
                                     editing={editMode}
                                     onChange={(v) => setField('established', v)}
                                 />
                                 <EditableField
                                     label="占地面积 (㎡)"
-                                    value={editMode ? String(form.acreage ?? '') : String(company.acreage ?? '')}
+                                    value={
+                                        editMode
+                                            ? String(form.acreage ?? '')
+                                            : String(company.acreage ?? '')
+                                    }
                                     editing={editMode}
                                     onChange={(v) => setField('acreage', v)}
                                 />
@@ -269,12 +347,21 @@ export default function CurrentEnterprise() {
                         </InfoCard>
 
                         {/* Location & Coordinates */}
-                        <InfoCard title="位置与坐标" icon={Navigation} accent="cyan">
+                        <InfoCard
+                            title="位置与坐标"
+                            icon={Navigation}
+                            accent="cyan"
+                        >
                             <div className="space-y-3">
                                 {/* Address */}
                                 <EditableField
-                                    label="详细地址" multiline
-                                    value={editMode ? (form.address ?? '') : (company.address ?? '')}
+                                    label="详细地址"
+                                    multiline
+                                    value={
+                                        editMode
+                                            ? (form.address ?? '')
+                                            : (company.address ?? '')
+                                    }
                                     editing={editMode}
                                     onChange={(v) => setField('address', v)}
                                 />
@@ -283,11 +370,15 @@ export default function CurrentEnterprise() {
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     <div className="rounded-lg bg-[#070d1f]/60 px-4 py-3">
                                         <div className="mb-1 flex items-center justify-between">
-                                            <dt className="text-xs text-slate-600">经度 (Longitude)</dt>
+                                            <dt className="text-xs text-slate-600">
+                                                经度 (Longitude)
+                                            </dt>
                                             {editMode && (
                                                 <button
-                                                    onClick={() => setLatlngOpen(true)}
-                                                    className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-400 transition-colors"
+                                                    onClick={() =>
+                                                        setLatlngOpen(true)
+                                                    }
+                                                    className="flex items-center gap-1 text-[10px] text-blue-500 transition-colors hover:text-blue-400"
                                                 >
                                                     <MapPin className="h-3 w-3" />
                                                     地图选点
@@ -299,23 +390,36 @@ export default function CurrentEnterprise() {
                                                 type="number"
                                                 step="0.000001"
                                                 value={form.longitude ?? ''}
-                                                onChange={(e) => setField('longitude', e.target.value)}
+                                                onChange={(e) =>
+                                                    setField(
+                                                        'longitude',
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 placeholder="如：116.407400"
                                                 className={inputCls}
                                             />
                                         ) : (
-                                            <dd className="text-sm font-mono text-slate-300">
-                                                {company.longitude ? Number(company.longitude).toFixed(6) : '未填写'}
+                                            <dd className="font-mono text-sm text-slate-300">
+                                                {company.longitude
+                                                    ? Number(
+                                                          company.longitude,
+                                                      ).toFixed(6)
+                                                    : '未填写'}
                                             </dd>
                                         )}
                                     </div>
                                     <div className="rounded-lg bg-[#070d1f]/60 px-4 py-3">
                                         <div className="mb-1 flex items-center justify-between">
-                                            <dt className="text-xs text-slate-600">纬度 (Latitude)</dt>
+                                            <dt className="text-xs text-slate-600">
+                                                纬度 (Latitude)
+                                            </dt>
                                             {editMode && (
                                                 <button
-                                                    onClick={() => setLatlngOpen(true)}
-                                                    className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-400 transition-colors"
+                                                    onClick={() =>
+                                                        setLatlngOpen(true)
+                                                    }
+                                                    className="flex items-center gap-1 text-[10px] text-blue-500 transition-colors hover:text-blue-400"
                                                 >
                                                     <MapPin className="h-3 w-3" />
                                                     地图选点
@@ -327,13 +431,22 @@ export default function CurrentEnterprise() {
                                                 type="number"
                                                 step="0.000001"
                                                 value={form.dimension ?? ''}
-                                                onChange={(e) => setField('dimension', e.target.value)}
+                                                onChange={(e) =>
+                                                    setField(
+                                                        'dimension',
+                                                        e.target.value,
+                                                    )
+                                                }
                                                 placeholder="如：39.904200"
                                                 className={inputCls}
                                             />
                                         ) : (
-                                            <dd className="text-sm font-mono text-slate-300">
-                                                {company.dimension ? Number(company.dimension).toFixed(6) : '未填写'}
+                                            <dd className="font-mono text-sm text-slate-300">
+                                                {company.dimension
+                                                    ? Number(
+                                                          company.dimension,
+                                                      ).toFixed(6)
+                                                    : '未填写'}
                                             </dd>
                                         )}
                                     </div>
@@ -342,11 +455,15 @@ export default function CurrentEnterprise() {
                                 {/* Geographic Range */}
                                 <div className="rounded-lg bg-[#070d1f]/60 px-4 py-3">
                                     <div className="mb-2 flex items-center justify-between">
-                                        <dt className="text-xs text-slate-600">企业地理范围</dt>
+                                        <dt className="text-xs text-slate-600">
+                                            企业地理范围
+                                        </dt>
                                         {editMode && (
                                             <button
-                                                onClick={() => setGeoRangeOpen(true)}
-                                                className="flex items-center gap-1 rounded-md border border-blue-600/30 bg-blue-600/10 px-2.5 py-1 text-[10px] font-medium text-blue-400 hover:bg-blue-600/20 transition-colors"
+                                                onClick={() =>
+                                                    setGeoRangeOpen(true)
+                                                }
+                                                className="flex items-center gap-1 rounded-md border border-blue-600/30 bg-blue-600/10 px-2.5 py-1 text-[10px] font-medium text-blue-400 transition-colors hover:bg-blue-600/20"
                                             >
                                                 <Layers className="h-3 w-3" />
                                                 绘制范围
@@ -354,9 +471,15 @@ export default function CurrentEnterprise() {
                                         )}
                                     </div>
                                     <GeoRangePreview
-                                        value={editMode ? form.geographic_range : company.geographic_range}
+                                        value={
+                                            editMode
+                                                ? form.geographic_range
+                                                : company.geographic_range
+                                        }
                                         editing={editMode}
-                                        onOpenDrawer={() => setGeoRangeOpen(true)}
+                                        onOpenDrawer={() =>
+                                            setGeoRangeOpen(true)
+                                        }
                                     />
                                 </div>
                             </div>
@@ -366,16 +489,33 @@ export default function CurrentEnterprise() {
                         <InfoCard title="企业描述" icon={Globe} accent="violet">
                             <div className="space-y-3">
                                 <EditableField
-                                    label="经营范围" multiline rows={3}
-                                    value={editMode ? (form.business_scope ?? '') : (company.business_scope ?? '')}
+                                    label="经营范围"
+                                    multiline
+                                    rows={3}
+                                    value={
+                                        editMode
+                                            ? (form.business_scope ?? '')
+                                            : (company.business_scope ?? '')
+                                    }
                                     editing={editMode}
-                                    onChange={(v) => setField('business_scope', v)}
+                                    onChange={(v) =>
+                                        setField('business_scope', v)
+                                    }
                                 />
                                 <EditableField
-                                    label="企业简介" multiline rows={4}
-                                    value={editMode ? (form.company_introduction ?? '') : (company.company_introduction ?? '')}
+                                    label="企业简介"
+                                    multiline
+                                    rows={4}
+                                    value={
+                                        editMode
+                                            ? (form.company_introduction ?? '')
+                                            : (company.company_introduction ??
+                                              '')
+                                    }
                                     editing={editMode}
-                                    onChange={(v) => setField('company_introduction', v)}
+                                    onChange={(v) =>
+                                        setField('company_introduction', v)
+                                    }
                                 />
                             </div>
                         </InfoCard>
@@ -383,36 +523,109 @@ export default function CurrentEnterprise() {
 
                     {/* ── Right column ── */}
                     <div className="space-y-6">
-
                         {/* Supervisor */}
-                        <InfoCard title="安全监督联系人" icon={User} accent="violet">
+                        <InfoCard
+                            title="安全监督联系人"
+                            icon={User}
+                            accent="violet"
+                        >
                             <div className="space-y-3">
-                                <EditableField label="姓名"
-                                    value={editMode ? (form.supervise_name ?? '') : (company.supervise_name ?? '')}
-                                    editing={editMode} onChange={(v) => setField('supervise_name', v)} />
-                                <EditableField label="职位"
-                                    value={editMode ? (form.supervise_position ?? '') : (company.supervise_position ?? '')}
-                                    editing={editMode} onChange={(v) => setField('supervise_position', v)} />
-                                <EditableField label="手机号"
-                                    value={editMode ? (form.supervise_tel ?? '') : (company.supervise_tel ?? '')}
-                                    editing={editMode} onChange={(v) => setField('supervise_tel', v)} />
-                                <EditableField label="座机"
-                                    value={editMode ? (form.supervise_fix ?? '') : (company.supervise_fix ?? '')}
-                                    editing={editMode} onChange={(v) => setField('supervise_fix', v)} />
-                                <EditableField label="邮箱" type="email"
-                                    value={editMode ? (form.supervise_email ?? '') : (company.supervise_email ?? '')}
-                                    editing={editMode} onChange={(v) => setField('supervise_email', v)} />
+                                <EditableField
+                                    label="姓名"
+                                    value={
+                                        editMode
+                                            ? (form.supervise_name ?? '')
+                                            : (company.supervise_name ?? '')
+                                    }
+                                    editing={editMode}
+                                    onChange={(v) =>
+                                        setField('supervise_name', v)
+                                    }
+                                />
+                                <EditableField
+                                    label="职位"
+                                    value={
+                                        editMode
+                                            ? (form.supervise_position ?? '')
+                                            : (company.supervise_position ?? '')
+                                    }
+                                    editing={editMode}
+                                    onChange={(v) =>
+                                        setField('supervise_position', v)
+                                    }
+                                />
+                                <EditableField
+                                    label="手机号"
+                                    value={
+                                        editMode
+                                            ? (form.supervise_tel ?? '')
+                                            : (company.supervise_tel ?? '')
+                                    }
+                                    editing={editMode}
+                                    onChange={(v) =>
+                                        setField('supervise_tel', v)
+                                    }
+                                />
+                                <EditableField
+                                    label="座机"
+                                    value={
+                                        editMode
+                                            ? (form.supervise_fix ?? '')
+                                            : (company.supervise_fix ?? '')
+                                    }
+                                    editing={editMode}
+                                    onChange={(v) =>
+                                        setField('supervise_fix', v)
+                                    }
+                                />
+                                <EditableField
+                                    label="邮箱"
+                                    type="email"
+                                    value={
+                                        editMode
+                                            ? (form.supervise_email ?? '')
+                                            : (company.supervise_email ?? '')
+                                    }
+                                    editing={editMode}
+                                    onChange={(v) =>
+                                        setField('supervise_email', v)
+                                    }
+                                />
                             </div>
                         </InfoCard>
 
                         {/* Risk */}
-                        <InfoCard title="风险等级" icon={AlertTriangle} accent="amber">
-                            <p className="mb-3 text-[11px] text-slate-600">风险值由系统自动计算，不可手动修改</p>
+                        <InfoCard
+                            title="风险等级"
+                            icon={AlertTriangle}
+                            accent="amber"
+                        >
+                            <p className="mb-3 text-[11px] text-slate-600">
+                                风险值由系统自动计算，不可手动修改
+                            </p>
                             <div className="space-y-3">
-                                <ReadonlyField label="固有风险分值" value={String(company.inherent_risk ?? '未计算')} />
-                                <ReadonlyField label="固有风险等级" value={company.inherent_risk_grade ?? '未计算'} />
-                                <ReadonlyField label="浮动风险分值" value={String(company.float_risk ?? '未计算')} />
-                                <ReadonlyField label="浮动风险等级" value={company.float_risk_grade ?? '未计算'} />
+                                <ReadonlyField
+                                    label="固有风险分值"
+                                    value={String(
+                                        company.inherent_risk ?? '未计算',
+                                    )}
+                                />
+                                <ReadonlyField
+                                    label="固有风险等级"
+                                    value={
+                                        company.inherent_risk_grade ?? '未计算'
+                                    }
+                                />
+                                <ReadonlyField
+                                    label="浮动风险分值"
+                                    value={String(
+                                        company.float_risk ?? '未计算',
+                                    )}
+                                />
+                                <ReadonlyField
+                                    label="浮动风险等级"
+                                    value={company.float_risk_grade ?? '未计算'}
+                                />
                             </div>
                         </InfoCard>
                     </div>
@@ -430,23 +643,47 @@ function StatusBadge({ status, label }: { status: number; label: string }) {
         1: 'border-emerald-500/30 bg-emerald-600/10 text-emerald-400',
         2: 'border-slate-500/30 bg-slate-600/10 text-slate-400',
     };
+
     return (
-        <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${colors[status] ?? colors[2]}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${status === 1 ? 'bg-emerald-400 animate-pulse' : 'bg-current'}`} />
+        <span
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${colors[status] ?? colors[2]}`}
+        >
+            <span
+                className={`h-1.5 w-1.5 rounded-full ${status === 1 ? 'animate-pulse bg-emerald-400' : 'bg-current'}`}
+            />
             {label}
         </span>
     );
 }
 
 const accentMap = {
-    blue: { border: 'border-blue-900/40', icon: 'bg-blue-600/15 border-blue-600/20', iconColor: 'text-blue-400' },
-    cyan: { border: 'border-cyan-900/40', icon: 'bg-cyan-600/15 border-cyan-600/20', iconColor: 'text-cyan-400' },
-    violet: { border: 'border-violet-900/40', icon: 'bg-violet-600/15 border-violet-600/20', iconColor: 'text-violet-400' },
-    amber: { border: 'border-amber-900/40', icon: 'bg-amber-600/15 border-amber-600/20', iconColor: 'text-amber-400' },
+    blue: {
+        border: 'border-blue-900/40',
+        icon: 'bg-blue-600/15 border-blue-600/20',
+        iconColor: 'text-blue-400',
+    },
+    cyan: {
+        border: 'border-cyan-900/40',
+        icon: 'bg-cyan-600/15 border-cyan-600/20',
+        iconColor: 'text-cyan-400',
+    },
+    violet: {
+        border: 'border-violet-900/40',
+        icon: 'bg-violet-600/15 border-violet-600/20',
+        iconColor: 'text-violet-400',
+    },
+    amber: {
+        border: 'border-amber-900/40',
+        icon: 'bg-amber-600/15 border-amber-600/20',
+        iconColor: 'text-amber-400',
+    },
 };
 
 function InfoCard({
-    title, icon: Icon, accent = 'blue', children,
+    title,
+    icon: Icon,
+    accent = 'blue',
+    children,
 }: {
     title: string;
     icon: React.ComponentType<{ className?: string }>;
@@ -454,13 +691,18 @@ function InfoCard({
     children: React.ReactNode;
 }) {
     const a = accentMap[accent];
+
     return (
         <div className={`rounded-xl border ${a.border} bg-[#0d1530] p-6`}>
             <div className="mb-5 flex items-center gap-2">
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg border ${a.icon}`}>
+                <div
+                    className={`flex h-7 w-7 items-center justify-center rounded-lg border ${a.icon}`}
+                >
                     <Icon className={`h-4 w-4 ${a.iconColor}`} />
                 </div>
-                <h2 className="text-sm font-semibold text-slate-200">{title}</h2>
+                <h2 className="text-sm font-semibold text-slate-200">
+                    {title}
+                </h2>
             </div>
             {children}
         </div>
@@ -470,14 +712,21 @@ function InfoCard({
 function ReadonlyField({ label, value }: { label: string; value?: string }) {
     return (
         <div className="rounded-lg bg-[#070d1f]/60 px-4 py-3">
-            <dt className="text-xs text-slate-600 mb-1">{label}</dt>
-            <dd className="text-sm font-medium text-slate-300">{value || '未填写'}</dd>
+            <dt className="mb-1 text-xs text-slate-600">{label}</dt>
+            <dd className="text-sm font-medium text-slate-300">
+                {value || '未填写'}
+            </dd>
         </div>
     );
 }
 
 function SelectField({
-    label, value, displayValue, options, editing, onChange,
+    label,
+    value,
+    displayValue,
+    options,
+    editing,
+    onChange,
 }: {
     label: string;
     value: string;
@@ -488,36 +737,65 @@ function SelectField({
 }) {
     return (
         <div className="rounded-lg bg-[#070d1f]/60 px-4 py-3">
-            <dt className="text-xs text-slate-600 mb-1.5">{label}</dt>
+            <dt className="mb-1.5 text-xs text-slate-600">{label}</dt>
             {editing ? (
                 <div className="relative">
                     <select
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
-                        className={`${inputCls} appearance-none pr-8 cursor-pointer`}
+                        className={`${inputCls} cursor-pointer appearance-none pr-8`}
                     >
-                        <option value="" disabled className="bg-[#0d1530] text-slate-500">请选择{label}</option>
+                        <option
+                            value=""
+                            disabled
+                            className="bg-[#0d1530] text-slate-500"
+                        >
+                            请选择{label}
+                        </option>
                         {options.map((o) => (
-                            <option key={o.id} value={String(o.id)} className="bg-[#0d1530] text-slate-200">
+                            <option
+                                key={o.id}
+                                value={String(o.id)}
+                                className="bg-[#0d1530] text-slate-200"
+                            >
                                 {o.title}
                             </option>
                         ))}
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-                        <svg className="h-3.5 w-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        <svg
+                            className="h-3.5 w-3.5 text-slate-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                            />
                         </svg>
                     </div>
                 </div>
             ) : (
-                <dd className="text-sm font-medium text-slate-300">{displayValue || '未填写'}</dd>
+                <dd className="text-sm font-medium text-slate-300">
+                    {displayValue || '未填写'}
+                </dd>
             )}
         </div>
     );
 }
 
 function EditableField({
-    label, required, value, editing, onChange, type = 'text', multiline, rows = 2,
+    label,
+    required,
+    value,
+    editing,
+    onChange,
+    type = 'text',
+    multiline,
+    rows = 2,
 }: {
     label: string;
     required?: boolean;
@@ -530,7 +808,7 @@ function EditableField({
 }) {
     return (
         <div className="rounded-lg bg-[#070d1f]/60 px-4 py-3">
-            <dt className="text-xs text-slate-600 mb-1.5">
+            <dt className="mb-1.5 text-xs text-slate-600">
                 {label}
                 {required && <span className="ml-0.5 text-blue-500">*</span>}
             </dt>
@@ -553,7 +831,7 @@ function EditableField({
                     />
                 )
             ) : (
-                <dd className="text-sm font-medium text-slate-300 leading-relaxed whitespace-pre-line">
+                <dd className="text-sm leading-relaxed font-medium whitespace-pre-line text-slate-300">
                     {value || '未填写'}
                 </dd>
             )}
@@ -562,7 +840,9 @@ function EditableField({
 }
 
 function GeoRangePreview({
-    value, editing, onOpenDrawer,
+    value,
+    editing,
+    onOpenDrawer,
 }: {
     value?: string;
     editing: boolean;
@@ -575,7 +855,7 @@ function GeoRangePreview({
                 {editing && (
                     <button
                         onClick={onOpenDrawer}
-                        className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
+                        className="text-xs text-blue-500 transition-colors hover:text-blue-400"
                     >
                         点击绘制
                     </button>
@@ -585,13 +865,21 @@ function GeoRangePreview({
     }
 
     let coords: [number, number][] = [];
-    try { coords = JSON.parse(value); } catch { /* noop */ }
+
+    try {
+        coords = JSON.parse(value);
+    } catch {
+        /* noop */
+    }
 
     return (
         <div className="space-y-2">
             <div className="flex flex-wrap gap-1.5">
                 {coords.slice(0, 3).map(([lat, lng], i) => (
-                    <span key={i} className="inline-block rounded bg-blue-900/30 px-2 py-0.5 text-[10px] font-mono text-blue-300">
+                    <span
+                        key={i}
+                        className="inline-block rounded bg-blue-900/30 px-2 py-0.5 font-mono text-[10px] text-blue-300"
+                    >
                         [{lat.toFixed(4)}, {lng.toFixed(4)}]
                     </span>
                 ))}
@@ -601,21 +889,30 @@ function GeoRangePreview({
                     </span>
                 )}
             </div>
-            <p className="text-xs text-slate-600">{coords.length} 个顶点 · 已定义地理围栏</p>
+            <p className="text-xs text-slate-600">
+                {coords.length} 个顶点 · 已定义地理围栏
+            </p>
         </div>
     );
 }
 
 function LoadingSkeleton() {
     return (
-        <div className="grid gap-6 lg:grid-cols-3 animate-pulse">
-            <div className="lg:col-span-2 space-y-6">
+        <div className="grid animate-pulse gap-6 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
                 {[200, 240, 160].map((h, i) => (
-                    <div key={i} className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-6" style={{ minHeight: h }}>
-                        <div className="h-4 w-28 rounded bg-slate-800 mb-5" />
+                    <div
+                        key={i}
+                        className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-6"
+                        style={{ minHeight: h }}
+                    >
+                        <div className="mb-5 h-4 w-28 rounded bg-slate-800" />
                         <div className="grid gap-3 sm:grid-cols-2">
                             {Array.from({ length: 4 }).map((_, j) => (
-                                <div key={j} className="h-14 rounded-lg bg-slate-800/50" />
+                                <div
+                                    key={j}
+                                    className="h-14 rounded-lg bg-slate-800/50"
+                                />
                             ))}
                         </div>
                     </div>
@@ -623,11 +920,18 @@ function LoadingSkeleton() {
             </div>
             <div className="space-y-6">
                 {[220, 140].map((h, i) => (
-                    <div key={i} className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-6" style={{ minHeight: h }}>
-                        <div className="h-4 w-24 rounded bg-slate-800 mb-5" />
+                    <div
+                        key={i}
+                        className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-6"
+                        style={{ minHeight: h }}
+                    >
+                        <div className="mb-5 h-4 w-24 rounded bg-slate-800" />
                         <div className="space-y-3">
                             {Array.from({ length: 4 }).map((_, j) => (
-                                <div key={j} className="h-12 rounded-lg bg-slate-800/50" />
+                                <div
+                                    key={j}
+                                    className="h-12 rounded-lg bg-slate-800/50"
+                                />
                             ))}
                         </div>
                     </div>

@@ -5,8 +5,8 @@ import {
     useEffect,
     useCallback,
     useRef,
-    type ReactNode,
 } from 'react';
+import type { ReactNode } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import api from '@/lib/api';
 import { setScopeCompanyId } from '@/lib/scope-store';
@@ -64,6 +64,7 @@ const STORAGE_KEY = 'scope_state';
 function loadPersisted(): PersistedScope | null {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
+
         return raw ? JSON.parse(raw) : null;
     } catch {
         return null;
@@ -84,7 +85,9 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
     const { company: authCompany, isAuthenticated, isLoading } = useAuth();
 
     const [rootCompany, setRootCompany] = useState<ScopeCompany | null>(null);
-    const [activeCompany, setActiveCompany] = useState<ScopeCompany | null>(null);
+    const [activeCompany, setActiveCompany] = useState<ScopeCompany | null>(
+        null,
+    );
     const [mode, setModeState] = useState<ScopeMode>('produce');
     const [subordinates, setSubordinates] = useState<ScopeCompany[]>([]);
     const [loadingSubordinates, setLoadingSubordinates] = useState(false);
@@ -94,8 +97,14 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
 
     // ── Initialise scope from auth company ────────────────────────
     useEffect(() => {
-        if (isLoading || !isAuthenticated || !authCompany?.id) return;
-        if (initialized.current) return;
+        if (isLoading || !isAuthenticated || !authCompany?.id) {
+            return;
+        }
+
+        if (initialized.current) {
+            return;
+        }
+
         initialized.current = true;
 
         api.get(`/companies/${authCompany.id}`)
@@ -105,12 +114,15 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
 
                 // Determine default mode
                 const defaultMode: ScopeMode =
-                    full.is_bloc && !full.is_produce ? 'bloc'
-                        : full.is_produce && !full.is_bloc ? 'produce'
-                            : 'bloc'; // both: default to bloc
+                    full.is_bloc && !full.is_produce
+                        ? 'bloc'
+                        : full.is_produce && !full.is_bloc
+                          ? 'produce'
+                          : 'bloc'; // both: default to bloc
 
                 // Restore persisted scope if it belongs to the same root company
                 const persisted = loadPersisted();
+
                 if (persisted && persisted.rootCompanyId === full.id) {
                     setModeState(persisted.mode);
 
@@ -159,11 +171,14 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
 
     // ── Fetch direct subordinates ────────────────────────────────
     useEffect(() => {
-        if (!rootCompany) return;
+        if (!rootCompany) {
+            return;
+        }
+
         setLoadingSubordinates(true);
         api.get('/companies', { params: { pid: rootCompany.id, per_page: 50 } })
             .then((res) => {
-                const items: ScopeCompany[] = (res.data.data?.data ?? []);
+                const items: ScopeCompany[] = res.data.data?.data ?? [];
                 setSubordinates(items);
             })
             .catch(() => setSubordinates([]))
@@ -187,7 +202,11 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
 
     const persist = useCallback(
         (active: ScopeCompany, newMode: ScopeMode, root: ScopeCompany) => {
-            savePersisted({ rootCompanyId: root.id, activeCompanyId: active.id, mode: newMode });
+            savePersisted({
+                rootCompanyId: root.id,
+                activeCompanyId: active.id,
+                mode: newMode,
+            });
             setScopeCompanyId(active.id);
         },
         [],
@@ -195,7 +214,10 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
 
     const setMode = useCallback(
         (newMode: ScopeMode) => {
-            if (!rootCompany || !activeCompany) return;
+            if (!rootCompany || !activeCompany) {
+                return;
+            }
+
             setModeState(newMode);
             // Switching mode always returns to root company view
             setActiveCompany(rootCompany);
@@ -206,7 +228,10 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
 
     const enterCompany = useCallback(
         (company: ScopeCompany) => {
-            if (!rootCompany) return;
+            if (!rootCompany) {
+                return;
+            }
+
             setActiveCompany(company);
             setModeState('produce'); // subordinate view is always produce
             persist(company, 'produce', rootCompany);
@@ -215,7 +240,10 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
     );
 
     const exitToRoot = useCallback(() => {
-        if (!rootCompany) return;
+        if (!rootCompany) {
+            return;
+        }
+
         const defaultMode: ScopeMode = rootCompany.is_bloc ? 'bloc' : 'produce';
         setActiveCompany(rootCompany);
         setModeState(defaultMode);
@@ -256,6 +284,10 @@ export function ScopeProvider({ children }: { children: ReactNode }) {
 
 export function useScope(): ScopeContextType {
     const ctx = useContext(ScopeContext);
-    if (!ctx) throw new Error('useScope must be used inside ScopeProvider');
+
+    if (!ctx) {
+        throw new Error('useScope must be used inside ScopeProvider');
+    }
+
     return ctx;
 }

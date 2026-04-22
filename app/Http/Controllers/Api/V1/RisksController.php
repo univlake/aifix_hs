@@ -20,7 +20,7 @@ class RisksController extends Controller
         $request->validate(['company_id' => 'required|integer']);
 
         $company = Company::query()->find($request->company_id);
-        if (!$company) {
+        if (! $company) {
             return $this->notFound('企业不存在');
         }
 
@@ -34,7 +34,7 @@ class RisksController extends Controller
             ->orderByDesc('created_at')
             ->first();
 
-        if (!$inherentLog || !$floatLog) {
+        if (! $inherentLog || ! $floatLog) {
             return $this->success([]);
         }
 

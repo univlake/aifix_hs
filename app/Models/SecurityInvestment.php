@@ -21,8 +21,9 @@ class SecurityInvestment extends BaseModel
     public function getScaleAttribute()
     {
         if ($this->last_year_income && $this->last_year_income > 0) {
-            return round($this->budget / $this->last_year_income * 100, 2) . '%';
+            return round($this->budget / $this->last_year_income * 100, 2).'%';
         }
+
         return '0%';
     }
 }

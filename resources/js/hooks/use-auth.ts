@@ -24,10 +24,17 @@ export function useAuth() {
 
     const fetchUser = useCallback(async () => {
         const token = localStorage.getItem('access_token');
+
         if (!token) {
-            setState((s) => ({ ...s, isLoading: false, isAuthenticated: false }));
+            setState((s) => ({
+                ...s,
+                isLoading: false,
+                isAuthenticated: false,
+            }));
+
             return;
         }
+
         try {
             const data = await authApi.userInfo();
             setState({
@@ -60,7 +67,10 @@ export function useAuth() {
 
     const hasPermission = useCallback(
         (permission: string) => {
-            return state.permissions.includes(permission) || state.roles.some((r) => r.name === 'super-admin');
+            return (
+                state.permissions.includes(permission) ||
+                state.roles.some((r) => r.name === 'super-admin')
+            );
         },
         [state.permissions, state.roles],
     );
@@ -72,12 +82,16 @@ export function useAuth() {
         [state.roles],
     );
 
-    const login = useCallback(async (username: string, password: string) => {
-        const data = await authApi.login(username, password);
-        localStorage.setItem('access_token', data.access_token);
-        await fetchUser();
-        return data;
-    }, [fetchUser]);
+    const login = useCallback(
+        async (username: string, password: string) => {
+            const data = await authApi.login(username, password);
+            localStorage.setItem('access_token', data.access_token);
+            await fetchUser();
+
+            return data;
+        },
+        [fetchUser],
+    );
 
     const logout = useCallback(async () => {
         await authApi.logout();
@@ -92,5 +106,12 @@ export function useAuth() {
         window.location.href = '/login';
     }, []);
 
-    return { ...state, hasPermission, hasRole, login, logout, refetch: fetchUser };
+    return {
+        ...state,
+        hasPermission,
+        hasRole,
+        login,
+        logout,
+        refetch: fetchUser,
+    };
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Spatie\Permission\Models\Role;
 
 describe('Role CRUD API', function () {
@@ -133,7 +134,7 @@ describe('Role CRUD API', function () {
         it('rejects deletion when users still hold the role', function () {
             [$superAdmin] = createSuperAdminWithCompany();
             $role = Role::create(['name' => 'occupied', 'guard_name' => 'api']);
-            $userRole = \App\Models\User::factory()->create();
+            $userRole = User::factory()->create();
             $userRole->assignRole($role);
 
             $response = $this->actingAs($superAdmin, 'api')

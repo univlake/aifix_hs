@@ -12,7 +12,12 @@ const config: CrudPageConfig = {
     formFields: [
         { key: 'title', label: '名称', type: 'text', required: true },
         { key: 'quantity', label: '数量', type: 'number' },
-        { key: 'company_id', label: '所属企业', type: 'select', optionsEndpoint: '/companies' },
+        {
+            key: 'company_id',
+            label: '所属企业',
+            type: 'select',
+            optionsEndpoint: '/companies',
+        },
     ],
     searchField: 'title',
     searchPlaceholder: '搜索应急物资...',

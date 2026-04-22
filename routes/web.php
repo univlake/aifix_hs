@@ -67,7 +67,6 @@ Route::group([], function () {
 
     // ── 检查管理 ──────────────────────────────────────────────
     Route::inertia('/inspection/daily-checks', 'inspection/daily-checks/Index');
-    Route::inertia('/inspection/double-checks', 'inspection/double-checks/Index');
     Route::inertia('/inspection/system-checks', 'inspection/system-checks/Index');
     Route::inertia('/inspection/norm-checks', 'inspection/norm-checks/Index');
     Route::inertia('/inspection/accident-checks', 'inspection/accident-checks/Index');

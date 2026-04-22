@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreCertificateStatusRequest;
+use App\Http\Requests\Api\V1\UpdateCertificateStatusRequest;
 use App\Models\CertificateStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreCertificateStatusRequest;
-use App\Http\Requests\Api\V1\UpdateCertificateStatusRequest;
 
 class CertificateStatusController extends Controller
 {
@@ -41,7 +41,7 @@ class CertificateStatusController extends Controller
     {
         $record = CertificateStatus::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('持证情况不存在');
         }
 
@@ -69,7 +69,7 @@ class CertificateStatusController extends Controller
     {
         $record = CertificateStatus::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('持证情况不存在');
         }
         $data = $request->validated();
@@ -86,7 +86,7 @@ class CertificateStatusController extends Controller
     {
         $record = CertificateStatus::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('持证情况不存在');
         }
 

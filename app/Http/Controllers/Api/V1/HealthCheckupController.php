@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreHealthCheckupRequest;
+use App\Http\Requests\Api\V1\UpdateHealthCheckupRequest;
 use App\Models\HealthCheckup;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreHealthCheckupRequest;
-use App\Http\Requests\Api\V1\UpdateHealthCheckupRequest;
 
 class HealthCheckupController extends Controller
 {
@@ -20,7 +20,7 @@ class HealthCheckupController extends Controller
         }
 
         if ($request->filled('type')) {
-            $query->where('type', 'like', '%' . $request->type . '%');
+            $query->where('type', 'like', '%'.$request->type.'%');
         }
 
         $list = $query->orderBy('id', 'desc')
@@ -33,7 +33,7 @@ class HealthCheckupController extends Controller
     {
         $data = HealthCheckup::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('职业健康体检不存在');
         }
 
@@ -55,7 +55,7 @@ class HealthCheckupController extends Controller
     {
         $healthCheckup = HealthCheckup::find($id);
 
-        if (!$healthCheckup) {
+        if (! $healthCheckup) {
             return $this->notFound('职业健康体检不存在');
         }
         $data = $request->validated();
@@ -69,7 +69,7 @@ class HealthCheckupController extends Controller
     {
         $healthCheckup = HealthCheckup::find($id);
 
-        if (!$healthCheckup) {
+        if (! $healthCheckup) {
             return $this->notFound('职业健康体检不存在');
         }
 

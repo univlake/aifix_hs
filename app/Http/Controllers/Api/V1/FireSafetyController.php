@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreFireSafetyRequest;
+use App\Http\Requests\Api\V1\UpdateFireSafetyRequest;
 use App\Models\FireSafety;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreFireSafetyRequest;
-use App\Http\Requests\Api\V1\UpdateFireSafetyRequest;
 
 class FireSafetyController extends Controller
 {
@@ -20,7 +20,7 @@ class FireSafetyController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->with(['skillUnit', 'skillUnitKid'])
@@ -34,7 +34,7 @@ class FireSafetyController extends Controller
     {
         $data = FireSafety::with(['skillUnit', 'skillUnitKid'])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('消防管理不存在');
         }
 
@@ -56,7 +56,7 @@ class FireSafetyController extends Controller
     {
         $record = FireSafety::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('消防管理不存在');
         }
         $data = $request->validated();
@@ -70,7 +70,7 @@ class FireSafetyController extends Controller
     {
         $record = FireSafety::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('消防管理不存在');
         }
 

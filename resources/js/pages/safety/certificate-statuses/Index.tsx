@@ -14,7 +14,12 @@ const config: CrudPageConfig = {
         { key: 'title', label: '名称', type: 'text', required: true },
         { key: 'valid_from', label: '有效期起', type: 'date' },
         { key: 'valid_to', label: '有效期止', type: 'date' },
-        { key: 'company_id', label: '所属单位', type: 'select', optionsEndpoint: '/companies' },
+        {
+            key: 'company_id',
+            label: '所属单位',
+            type: 'select',
+            optionsEndpoint: '/companies',
+        },
     ],
     searchField: 'title',
     searchPlaceholder: '搜索证书名称...',

@@ -12,7 +12,12 @@ const config: CrudPageConfig = {
     formFields: [
         { key: 'meeting_id', label: '会议ID', type: 'number', required: true },
         { key: 'user_id', label: '用户ID', type: 'number', required: true },
-        { key: 'company_id', label: '企业', type: 'select', optionsEndpoint: '/companies' },
+        {
+            key: 'company_id',
+            label: '企业',
+            type: 'select',
+            optionsEndpoint: '/companies',
+        },
     ],
     searchField: 'meeting_id',
     searchPlaceholder: '搜索会议签到...',

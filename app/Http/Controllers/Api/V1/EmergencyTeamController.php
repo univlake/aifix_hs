@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreEmergencyTeamRequest;
+use App\Http\Requests\Api\V1\UpdateEmergencyTeamRequest;
 use App\Models\EmergencyTeam;
 use App\Models\EmergencyTeamKid;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreEmergencyTeamRequest;
-use App\Http\Requests\Api\V1\UpdateEmergencyTeamRequest;
 
 class EmergencyTeamController extends Controller
 {
@@ -22,7 +22,7 @@ class EmergencyTeamController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->with('emergencyTeamKid')
@@ -36,7 +36,7 @@ class EmergencyTeamController extends Controller
     {
         $data = EmergencyTeam::with('emergencyTeamKid')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('应急队伍不存在');
         }
 
@@ -77,7 +77,7 @@ class EmergencyTeamController extends Controller
     {
         $record = EmergencyTeam::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('应急队伍不存在');
         }
         $data = $request->validated();
@@ -112,7 +112,7 @@ class EmergencyTeamController extends Controller
     {
         $record = EmergencyTeam::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('应急队伍不存在');
         }
 

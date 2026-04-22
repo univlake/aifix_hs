@@ -1,5 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import { DraftDetailsModal, type InformationDraft } from '@/pages/management/tasks/manuscripts/Index';
 import {
     Activity,
     AlertTriangle,
@@ -27,6 +26,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
 import { useAuth } from '@/hooks/use-auth';
 import api from '@/lib/api';
+import { DraftDetailsModal } from '@/pages/management/tasks/manuscripts/Index';
+import type { InformationDraft } from '@/pages/management/tasks/manuscripts/Index';
 import type { ApiResponse } from '@/types/models';
 
 interface InspectionRef {
@@ -143,7 +144,6 @@ interface CompanyDetail {
     operational_type?: { id: number; title: string } | null;
 }
 
-
 type StatItem = {
     title: string;
     icon: React.ComponentType<{ className?: string }>;
@@ -156,21 +156,105 @@ type StatItem = {
 type QuickLink = { title: string; href: string };
 
 const produceStats: StatItem[] = [
-    { title: '风险源管理', icon: AlertTriangle, href: '/risk/hazards', color: 'text-amber-400', bg: 'bg-amber-600/15', border: 'border-amber-600/20' },
-    { title: '隐患管理', icon: ClipboardCheck, href: '/risk/monthly-investigation', color: 'text-emerald-400', bg: 'bg-emerald-600/15', border: 'border-emerald-600/20' },
-    { title: '专家检查', icon: UserCheck, href: '/risk/expert-inspection', color: 'text-blue-400', bg: 'bg-blue-600/15', border: 'border-blue-600/20' },
-    { title: '事故上报', icon: Siren, href: '/accident/report', color: 'text-rose-400', bg: 'bg-rose-600/15', border: 'border-rose-600/20' },
-    { title: '考核填报', icon: Award, href: '/assessment/filing', color: 'text-violet-400', bg: 'bg-violet-600/15', border: 'border-violet-600/20' },
-    { title: '通知公告', icon: Bell, href: '/tasks/notices', color: 'text-cyan-400', bg: 'bg-cyan-600/15', border: 'border-cyan-600/20' },
+    {
+        title: '风险源管理',
+        icon: AlertTriangle,
+        href: '/risk/hazards',
+        color: 'text-amber-400',
+        bg: 'bg-amber-600/15',
+        border: 'border-amber-600/20',
+    },
+    {
+        title: '隐患管理',
+        icon: ClipboardCheck,
+        href: '/risk/monthly-investigation',
+        color: 'text-emerald-400',
+        bg: 'bg-emerald-600/15',
+        border: 'border-emerald-600/20',
+    },
+    {
+        title: '专家检查',
+        icon: UserCheck,
+        href: '/risk/expert-inspection',
+        color: 'text-blue-400',
+        bg: 'bg-blue-600/15',
+        border: 'border-blue-600/20',
+    },
+    {
+        title: '事故上报',
+        icon: Siren,
+        href: '/accident/report',
+        color: 'text-rose-400',
+        bg: 'bg-rose-600/15',
+        border: 'border-rose-600/20',
+    },
+    {
+        title: '考核填报',
+        icon: Award,
+        href: '/assessment/filing',
+        color: 'text-violet-400',
+        bg: 'bg-violet-600/15',
+        border: 'border-violet-600/20',
+    },
+    {
+        title: '通知公告',
+        icon: Bell,
+        href: '/tasks/notices',
+        color: 'text-cyan-400',
+        bg: 'bg-cyan-600/15',
+        border: 'border-cyan-600/20',
+    },
 ];
 
 const blocStats: StatItem[] = [
-    { title: '下级企业', icon: GitBranch, href: '/enterprise/subsidiaries', color: 'text-blue-400', bg: 'bg-blue-600/15', border: 'border-blue-600/20' },
-    { title: '企业分布图', icon: MapIcon, href: '/risk-monitoring/enterprise-map', color: 'text-cyan-400', bg: 'bg-cyan-600/15', border: 'border-cyan-600/20' },
-    { title: '风险监控', icon: Activity, href: '/risk-monitoring/risk-monitor', color: 'text-emerald-400', bg: 'bg-emerald-600/15', border: 'border-emerald-600/20' },
-    { title: '隐患管理', icon: AlertTriangle, href: '/risk-control/monthly-investigation', color: 'text-amber-400', bg: 'bg-amber-600/15', border: 'border-amber-600/20' },
-    { title: '专家检查', icon: UserCheck, href: '/risk-control/expert-inspection', color: 'text-violet-400', bg: 'bg-violet-600/15', border: 'border-violet-600/20' },
-    { title: '专家库', icon: Users, href: '/management/experts', color: 'text-rose-400', bg: 'bg-rose-600/15', border: 'border-rose-600/20' },
+    {
+        title: '下级企业',
+        icon: GitBranch,
+        href: '/enterprise/subsidiaries',
+        color: 'text-blue-400',
+        bg: 'bg-blue-600/15',
+        border: 'border-blue-600/20',
+    },
+    {
+        title: '企业分布图',
+        icon: MapIcon,
+        href: '/risk-monitoring/enterprise-map',
+        color: 'text-cyan-400',
+        bg: 'bg-cyan-600/15',
+        border: 'border-cyan-600/20',
+    },
+    {
+        title: '风险监控',
+        icon: Activity,
+        href: '/risk-monitoring/risk-monitor',
+        color: 'text-emerald-400',
+        bg: 'bg-emerald-600/15',
+        border: 'border-emerald-600/20',
+    },
+    {
+        title: '隐患管理',
+        icon: AlertTriangle,
+        href: '/risk-control/monthly-investigation',
+        color: 'text-amber-400',
+        bg: 'bg-amber-600/15',
+        border: 'border-amber-600/20',
+    },
+    {
+        title: '专家检查',
+        icon: UserCheck,
+        href: '/risk-control/expert-inspection',
+        color: 'text-violet-400',
+        bg: 'bg-violet-600/15',
+        border: 'border-violet-600/20',
+    },
+    {
+        title: '专家库',
+        icon: Users,
+        href: '/management/experts',
+        color: 'text-rose-400',
+        bg: 'bg-rose-600/15',
+        border: 'border-rose-600/20',
+    },
 ];
 
 const produceQuickLinks: QuickLink[] = [
@@ -191,11 +275,18 @@ const blocQuickLinks: QuickLink[] = [
     { title: '账号管理', href: '/system/users' },
 ];
 
-function pickInspection<T extends { expert_inspection?: InspectionRef | null; expertInspection?: InspectionRef | null }>(row: T): InspectionRef | null {
+function pickInspection<
+    T extends {
+        expert_inspection?: InspectionRef | null;
+        expertInspection?: InspectionRef | null;
+    },
+>(row: T): InspectionRef | null {
     return row.expert_inspection ?? row.expertInspection ?? null;
 }
 
-function pickCheckCompany(row: ExpertNotifyItem): { id: number; title: string } | null {
+function pickCheckCompany(
+    row: ExpertNotifyItem,
+): { id: number; title: string } | null {
     const ec = row.expert_company ?? row.expertCompany ?? null;
 
     return ec?.check_company ?? ec?.checkCompany ?? null;
@@ -207,7 +298,9 @@ function pickExpertInspection(row: ExpertNotifyItem): InspectionRef | null {
     return ec?.expert_inspection ?? ec?.expertInspection ?? null;
 }
 
-function pickOfficeNotify(row: OfficeNotifyPendingItem): OfficeNotifyRef | null {
+function pickOfficeNotify(
+    row: OfficeNotifyPendingItem,
+): OfficeNotifyRef | null {
     return row.office_notify ?? row.officeNotify ?? null;
 }
 
@@ -228,14 +321,20 @@ function InfoRow({
     extra?: string | null;
     mono?: boolean;
 }) {
-    if (!value) return null;
+    if (!value) {
+        return null;
+    }
 
     return (
         <div className="flex items-start gap-2 text-xs text-slate-400">
             <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-600" />
             <div className="min-w-0 flex-1">
                 {label && <span className="text-slate-600">{label}：</span>}
-                <span className={`${mono ? 'font-mono text-[11px]' : ''} text-slate-300`}>{value}</span>
+                <span
+                    className={`${mono ? 'font-mono text-[11px]' : ''} text-slate-300`}
+                >
+                    {value}
+                </span>
                 {extra && <span className="ml-2 text-slate-500">{extra}</span>}
             </div>
         </div>
@@ -252,38 +351,86 @@ export default function Dashboard() {
     const [companyNotifs, setCompanyNotifs] = useState<CompanyNotifyItem[]>([]);
     const [expertNotifs, setExpertNotifs] = useState<ExpertNotifyItem[]>([]);
     const [meetingNotifs, setMeetingNotifs] = useState<MeetingNotifyItem[]>([]);
-    const [officeNotifs, setOfficeNotifs] = useState<OfficeNotifyPendingItem[]>([]);
+    const [officeNotifs, setOfficeNotifs] = useState<OfficeNotifyPendingItem[]>(
+        [],
+    );
     const [newNotifs, setNewNotifs] = useState<NewNotifyPendingItem[]>([]);
     const [manuscripts, setManuscripts] = useState<InformationDraft[]>([]);
-    const [manuscriptPending, setManuscriptPending] = useState<InformationDraft[]>([]);
-    const [companyDetail, setCompanyDetail] = useState<CompanyDetail | null>(null);
-    const [viewingDraft, setViewingDraft] = useState<InformationDraft | null>(null);
-    const [confirming, setConfirming] = useState<{ kind: 'company' | 'expert' | 'meeting' | 'new'; id: number } | null>(null);
+    const [manuscriptPending, setManuscriptPending] = useState<
+        InformationDraft[]
+    >([]);
+    const [companyDetail, setCompanyDetail] = useState<CompanyDetail | null>(
+        null,
+    );
+    const [viewingDraft, setViewingDraft] = useState<InformationDraft | null>(
+        null,
+    );
+    const [confirming, setConfirming] = useState<{
+        kind: 'company' | 'expert' | 'meeting' | 'new';
+        id: number;
+    } | null>(null);
 
     const refresh = useCallback(async () => {
         const tasks: Promise<unknown>[] = [];
 
         if (companyId) {
             tasks.push(
-                api.get<ApiResponse<CompanyNotifyItem[]>>('/expert-inspection-notifications/company', {
-                    params: { company_id: companyId },
-                }).then((res) => setCompanyNotifs(res.data.data ?? [])).catch(() => setCompanyNotifs([])),
-                api.get<ApiResponse<MeetingNotifyItem[]>>('/meeting-notifications/pending', {
-                    params: { company_id: companyId },
-                }).then((res) => setMeetingNotifs(res.data.data ?? [])).catch(() => setMeetingNotifs([])),
-                api.get<ApiResponse<OfficeNotifyPendingItem[]>>('/office-notify-notifications/pending', {
-                    params: { company_id: companyId },
-                }).then((res) => setOfficeNotifs(res.data.data ?? [])).catch(() => setOfficeNotifs([])),
-                api.get<ApiResponse<NewNotifyPendingItem[]>>('/new-notify-notifications/pending', {
-                    params: { company_id: companyId },
-                }).then((res) => setNewNotifs(res.data.data ?? [])).catch(() => setNewNotifs([])),
-                api.get<ApiResponse<InformationDraft[]>>('/information-drafts/dashboard/readings', {
-                    params: { company_id: companyId, limit: 8 },
-                }).then((res) => setManuscripts(res.data.data ?? [])).catch(() => setManuscripts([])),
-                api.get<ApiResponse<InformationDraft[]>>('/information-drafts/dashboard/pending', {
-                    params: { company_id: companyId, limit: 10 },
-                }).then((res) => setManuscriptPending(res.data.data ?? [])).catch(() => setManuscriptPending([])),
-                api.get<ApiResponse<CompanyDetail>>(`/companies/${companyId}`)
+                api
+                    .get<ApiResponse<CompanyNotifyItem[]>>(
+                        '/expert-inspection-notifications/company',
+                        {
+                            params: { company_id: companyId },
+                        },
+                    )
+                    .then((res) => setCompanyNotifs(res.data.data ?? []))
+                    .catch(() => setCompanyNotifs([])),
+                api
+                    .get<ApiResponse<MeetingNotifyItem[]>>(
+                        '/meeting-notifications/pending',
+                        {
+                            params: { company_id: companyId },
+                        },
+                    )
+                    .then((res) => setMeetingNotifs(res.data.data ?? []))
+                    .catch(() => setMeetingNotifs([])),
+                api
+                    .get<ApiResponse<OfficeNotifyPendingItem[]>>(
+                        '/office-notify-notifications/pending',
+                        {
+                            params: { company_id: companyId },
+                        },
+                    )
+                    .then((res) => setOfficeNotifs(res.data.data ?? []))
+                    .catch(() => setOfficeNotifs([])),
+                api
+                    .get<ApiResponse<NewNotifyPendingItem[]>>(
+                        '/new-notify-notifications/pending',
+                        {
+                            params: { company_id: companyId },
+                        },
+                    )
+                    .then((res) => setNewNotifs(res.data.data ?? []))
+                    .catch(() => setNewNotifs([])),
+                api
+                    .get<ApiResponse<InformationDraft[]>>(
+                        '/information-drafts/dashboard/readings',
+                        {
+                            params: { company_id: companyId, limit: 8 },
+                        },
+                    )
+                    .then((res) => setManuscripts(res.data.data ?? []))
+                    .catch(() => setManuscripts([])),
+                api
+                    .get<ApiResponse<InformationDraft[]>>(
+                        '/information-drafts/dashboard/pending',
+                        {
+                            params: { company_id: companyId, limit: 10 },
+                        },
+                    )
+                    .then((res) => setManuscriptPending(res.data.data ?? []))
+                    .catch(() => setManuscriptPending([])),
+                api
+                    .get<ApiResponse<CompanyDetail>>(`/companies/${companyId}`)
                     .then((res) => setCompanyDetail(res.data.data ?? null))
                     .catch(() => setCompanyDetail(null)),
             );
@@ -291,9 +438,15 @@ export default function Dashboard() {
 
         if (user?.id) {
             tasks.push(
-                api.get<ApiResponse<ExpertNotifyItem[]>>('/expert-inspection-notifications/expert', {
-                    params: { expert_user_id: user.id },
-                }).then((res) => setExpertNotifs(res.data.data ?? [])).catch(() => setExpertNotifs([])),
+                api
+                    .get<ApiResponse<ExpertNotifyItem[]>>(
+                        '/expert-inspection-notifications/expert',
+                        {
+                            params: { expert_user_id: user.id },
+                        },
+                    )
+                    .then((res) => setExpertNotifs(res.data.data ?? []))
+                    .catch(() => setExpertNotifs([])),
             );
         }
 
@@ -301,8 +454,8 @@ export default function Dashboard() {
     }, [companyId, user?.id]);
 
     useEffect(() => {
- refresh(); 
-}, [refresh]);
+        refresh();
+    }, [refresh]);
 
     const confirmCompany = async (id: number) => {
         setConfirming({ kind: 'company', id });
@@ -348,7 +501,13 @@ export default function Dashboard() {
         }
     };
 
-    const totalPending = companyNotifs.length + expertNotifs.length + meetingNotifs.length + officeNotifs.length + newNotifs.length + manuscriptPending.length;
+    const totalPending =
+        companyNotifs.length +
+        expertNotifs.length +
+        meetingNotifs.length +
+        officeNotifs.length +
+        newNotifs.length +
+        manuscriptPending.length;
 
     return (
         <>
@@ -359,14 +518,18 @@ export default function Dashboard() {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-100">
                         欢迎回来，
-                        <span className="text-blue-400">{user?.nickname ?? user?.username}</span>
+                        <span className="text-blue-400">
+                            {user?.nickname ?? user?.username}
+                        </span>
                     </h1>
                     <p className="mt-1 text-sm text-slate-500">
-                        {company?.title ? `当前企业：${company.title}` : '安全生产管理系统 · 数字化管控平台'}
+                        {company?.title
+                            ? `当前企业：${company.title}`
+                            : '安全生产管理系统 · 数字化管控平台'}
                     </p>
                 </div>
-                <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-400">
-                    <Activity className="h-3.5 w-3.5 animate-pulse-glow" />
+                <div className="hidden items-center gap-1.5 text-xs text-emerald-400 sm:flex">
+                    <Activity className="animate-pulse-glow h-3.5 w-3.5" />
                     系统运行正常
                 </div>
             </div>
@@ -377,44 +540,69 @@ export default function Dashboard() {
                 <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-5">
                     <div className="mb-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600/15 border border-sky-600/20">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-sky-600/20 bg-sky-600/15">
                                 <FileText className="h-4 w-4 text-sky-400" />
                             </div>
-                            <h2 className="text-sm font-semibold text-slate-200">最新动态</h2>
+                            <h2 className="text-sm font-semibold text-slate-200">
+                                最新动态
+                            </h2>
                             {manuscripts.length > 0 && (
-                                <span className="rounded-full border border-sky-500/30 bg-sky-600/15 px-2 py-0.5 text-[10px] text-sky-400">{manuscripts.length}</span>
+                                <span className="rounded-full border border-sky-500/30 bg-sky-600/15 px-2 py-0.5 text-[10px] text-sky-400">
+                                    {manuscripts.length}
+                                </span>
                             )}
                         </div>
-                        <Link href="/tasks/manuscripts" className="text-xs text-slate-500 transition-colors hover:text-slate-300">
-                            查看全部<ArrowRight className="ml-1 inline h-3 w-3" />
+                        <Link
+                            href="/tasks/manuscripts"
+                            className="text-xs text-slate-500 transition-colors hover:text-slate-300"
+                        >
+                            查看全部
+                            <ArrowRight className="ml-1 inline h-3 w-3" />
                         </Link>
                     </div>
                     {manuscripts.length === 0 ? (
-                        <p className="py-4 text-center text-sm text-slate-600">暂无最新动态</p>
+                        <p className="py-4 text-center text-sm text-slate-600">
+                            暂无最新动态
+                        </p>
                     ) : (
                         <ul className="space-y-1.5">
                             {manuscripts.slice(0, 5).map((m) => {
                                 const isMine = m.company_id === companyId;
-                                const accent = isMine ? 'border-l-emerald-500/60' : 'border-l-blue-500/60';
+                                const accent = isMine
+                                    ? 'border-l-emerald-500/60'
+                                    : 'border-l-blue-500/60';
 
                                 return (
                                     <li key={m.id}>
                                         <button
                                             type="button"
                                             onClick={() => setViewingDraft(m)}
-                                            className={`flex w-full flex-col gap-0.5 rounded-md border border-blue-900/40 border-l-2 ${accent} bg-[#070d1f] px-3 py-2 text-left transition-colors hover:border-sky-500/40 hover:bg-[#0a1329]`}
+                                            className={`flex w-full flex-col gap-0.5 rounded-md border border-l-2 border-blue-900/40 ${accent} bg-[#070d1f] px-3 py-2 text-left transition-colors hover:border-sky-500/40 hover:bg-[#0a1329]`}
                                             title={`${m.name} · ${m.company_name}`}
                                         >
                                             <div className="flex items-center gap-1.5">
-                                                {m.is_top === 1 && <Pin className="h-3 w-3 shrink-0 text-amber-400" />}
-                                                <span className="truncate text-sm text-slate-100">{m.name}</span>
+                                                {m.is_top === 1 && (
+                                                    <Pin className="h-3 w-3 shrink-0 text-amber-400" />
+                                                )}
+                                                <span className="truncate text-sm text-slate-100">
+                                                    {m.name}
+                                                </span>
                                             </div>
                                             <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                                                <span className={`rounded px-1.5 py-0 text-[10px] ${isMine ? 'border border-emerald-500/30 bg-emerald-600/10 text-emerald-400' : 'border border-blue-500/30 bg-blue-600/10 text-blue-300'}`}>
+                                                <span
+                                                    className={`rounded px-1.5 py-0 text-[10px] ${isMine ? 'border border-emerald-500/30 bg-emerald-600/10 text-emerald-400' : 'border border-blue-500/30 bg-blue-600/10 text-blue-300'}`}
+                                                >
                                                     {isMine ? '本企业' : '上级'}
                                                 </span>
-                                                <span className="truncate">{m.company_name}</span>
-                                                <span className="ml-auto shrink-0">{String(m.created_at).slice(5, 10)}</span>
+                                                <span className="truncate">
+                                                    {m.company_name}
+                                                </span>
+                                                <span className="ml-auto shrink-0">
+                                                    {String(m.created_at).slice(
+                                                        5,
+                                                        10,
+                                                    )}
+                                                </span>
                                             </div>
                                         </button>
                                     </li>
@@ -427,10 +615,12 @@ export default function Dashboard() {
                 {/* Quick stats */}
                 <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-5">
                     <div className="mb-3 flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-600/15 border border-violet-600/20">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-600/20 bg-violet-600/15">
                             <TrendingUp className="h-4 w-4 text-violet-400" />
                         </div>
-                        <h2 className="text-sm font-semibold text-slate-200">常用模块</h2>
+                        <h2 className="text-sm font-semibold text-slate-200">
+                            常用模块
+                        </h2>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                         {stats.map((s) => {
@@ -442,10 +632,16 @@ export default function Dashboard() {
                                     href={s.href}
                                     className={`group flex items-center gap-2 rounded-lg border ${s.border} bg-[#070d1f] px-2.5 py-2 transition-all hover:bg-[#0a1329]`}
                                 >
-                                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${s.bg} border ${s.border}`}>
-                                        <Icon className={`h-3.5 w-3.5 ${s.color}`} />
+                                    <div
+                                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${s.bg} border ${s.border}`}
+                                    >
+                                        <Icon
+                                            className={`h-3.5 w-3.5 ${s.color}`}
+                                        />
                                     </div>
-                                    <span className="flex-1 truncate text-[13px] font-medium text-slate-200">{s.title}</span>
+                                    <span className="flex-1 truncate text-[13px] font-medium text-slate-200">
+                                        {s.title}
+                                    </span>
                                     <ArrowRight className="h-3 w-3 shrink-0 text-slate-600 transition-transform group-hover:translate-x-0.5" />
                                 </Link>
                             );
@@ -457,36 +653,67 @@ export default function Dashboard() {
                 <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-5 md:col-span-2 lg:col-span-1">
                     <div className="mb-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600/15 border border-blue-600/20">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-blue-600/20 bg-blue-600/15">
                                 <Building2 className="h-4 w-4 text-blue-400" />
                             </div>
-                            <h2 className="text-sm font-semibold text-slate-200">企业信息</h2>
+                            <h2 className="text-sm font-semibold text-slate-200">
+                                企业信息
+                            </h2>
                         </div>
-                        <Link href="/enterprise/current" className="text-xs text-slate-500 transition-colors hover:text-slate-300">
-                            查看详情<ArrowRight className="ml-1 inline h-3 w-3" />
+                        <Link
+                            href="/enterprise/current"
+                            className="text-xs text-slate-500 transition-colors hover:text-slate-300"
+                        >
+                            查看详情
+                            <ArrowRight className="ml-1 inline h-3 w-3" />
                         </Link>
                     </div>
                     {companyDetail ? (
                         <div className="space-y-2.5">
                             <div>
-                                <p className="truncate text-sm font-semibold text-slate-100" title={companyDetail.title}>{companyDetail.title}</p>
+                                <p
+                                    className="truncate text-sm font-semibold text-slate-100"
+                                    title={companyDetail.title}
+                                >
+                                    {companyDetail.title}
+                                </p>
                                 <div className="mt-1 flex flex-wrap gap-1">
                                     {companyDetail.enterprise_type?.title && (
                                         <span className="rounded border border-blue-500/30 bg-blue-600/10 px-1.5 py-0 text-[10px] text-blue-300">
-                                            {companyDetail.enterprise_type.title}
+                                            {
+                                                companyDetail.enterprise_type
+                                                    .title
+                                            }
                                         </span>
                                     )}
                                     {companyDetail.inherent_risk_grade && (
                                         <span className="rounded border border-amber-500/30 bg-amber-600/10 px-1.5 py-0 text-[10px] text-amber-300">
-                                            风险：{companyDetail.inherent_risk_grade}
+                                            风险：
+                                            {companyDetail.inherent_risk_grade}
                                         </span>
                                     )}
                                 </div>
                             </div>
-                            <InfoRow icon={MapPin} value={companyDetail.address} />
-                            <InfoRow icon={FileText} label="信用代码" value={companyDetail.credit_code} mono />
-                            <InfoRow icon={UserCheck} value={companyDetail.supervise_name} extra={companyDetail.supervise_tel} />
-                            <InfoRow icon={CalendarDays} label="成立" value={companyDetail.established?.slice(0, 10)} />
+                            <InfoRow
+                                icon={MapPin}
+                                value={companyDetail.address}
+                            />
+                            <InfoRow
+                                icon={FileText}
+                                label="信用代码"
+                                value={companyDetail.credit_code}
+                                mono
+                            />
+                            <InfoRow
+                                icon={UserCheck}
+                                value={companyDetail.supervise_name}
+                                extra={companyDetail.supervise_tel}
+                            />
+                            <InfoRow
+                                icon={CalendarDays}
+                                label="成立"
+                                value={companyDetail.established?.slice(0, 10)}
+                            />
                         </div>
                     ) : (
                         <div className="space-y-2 py-2">
@@ -500,47 +727,79 @@ export default function Dashboard() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">
-                <div className="lg:col-span-2 rounded-xl border border-blue-900/40 bg-[#0d1530] p-6">
+                <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-6 lg:col-span-2">
                     <div className="mb-5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-600/15 border border-amber-600/20">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-amber-600/20 bg-amber-600/15">
                                 <ClipboardList className="h-4 w-4 text-amber-400" />
                             </div>
-                            <h2 className="text-sm font-semibold text-slate-200">待办事项</h2>
+                            <h2 className="text-sm font-semibold text-slate-200">
+                                待办事项
+                            </h2>
                             {totalPending > 0 && (
-                                <span className="rounded-full border border-amber-500/30 bg-amber-600/15 px-2 py-0.5 text-[10px] text-amber-400">{totalPending}</span>
+                                <span className="rounded-full border border-amber-500/30 bg-amber-600/15 px-2 py-0.5 text-[10px] text-amber-400">
+                                    {totalPending}
+                                </span>
                             )}
                         </div>
                     </div>
                     {totalPending === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8 text-center">
                             <CheckCircle2 className="mb-2 h-8 w-8 text-slate-700" />
-                            <p className="text-sm text-slate-500">暂无待办事项</p>
-                            <p className="mt-1 text-xs text-slate-700">所有通知均已确认</p>
+                            <p className="text-sm text-slate-500">
+                                暂无待办事项
+                            </p>
+                            <p className="mt-1 text-xs text-slate-700">
+                                所有通知均已确认
+                            </p>
                         </div>
                     ) : (
                         <div className="space-y-2.5">
                             {companyNotifs.map((item) => {
                                 const ins = pickInspection(item);
-                                const users = item.expert_inspection_users ?? item.expertInspectionUsers ?? [];
+                                const users =
+                                    item.expert_inspection_users ??
+                                    item.expertInspectionUsers ??
+                                    [];
                                 const expertNames = users
-                                    .map((u) => (u.expert_user ?? u.expertUser)?.nickname)
+                                    .map(
+                                        (u) =>
+                                            (u.expert_user ?? u.expertUser)
+                                                ?.nickname,
+                                    )
                                     .filter((n): n is string => !!n);
 
                                 return (
-                                    <div key={`c-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-amber-500/25 bg-amber-600/5 p-3">
-                                        <div className="flex-1 min-w-0">
+                                    <div
+                                        key={`c-${item.id}`}
+                                        className="flex items-start justify-between gap-3 rounded-lg border border-amber-500/25 bg-amber-600/5 p-3"
+                                    >
+                                        <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2">
                                                 <Building2 className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-                                                <p className="truncate text-sm font-semibold text-slate-100" title={ins?.title ?? ''}>{ins?.title ?? `检查#${item.expert_inspection_id}`}</p>
-                                                <span className="shrink-0 rounded border border-amber-500/30 bg-amber-600/10 px-1.5 py-0 text-[10px] text-amber-400">企业待确认</span>
+                                                <p
+                                                    className="truncate text-sm font-semibold text-slate-100"
+                                                    title={ins?.title ?? ''}
+                                                >
+                                                    {ins?.title ??
+                                                        `检查#${item.expert_inspection_id}`}
+                                                </p>
+                                                <span className="shrink-0 rounded border border-amber-500/30 bg-amber-600/10 px-1.5 py-0 text-[10px] text-amber-400">
+                                                    企业待确认
+                                                </span>
                                             </div>
                                             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
                                                 <span className="inline-flex items-center gap-1">
-                                                    <Bell className="h-3 w-3" />通知：{item.notify_company_time ?? '—'}
+                                                    <Bell className="h-3 w-3" />
+                                                    通知：
+                                                    {item.notify_company_time ??
+                                                        '—'}
                                                 </span>
                                                 <span className="inline-flex items-center gap-1">
-                                                    <Clock className="h-3 w-3" />检查：{item.check_company_time ?? '—'}
+                                                    <Clock className="h-3 w-3" />
+                                                    检查：
+                                                    {item.check_company_time ??
+                                                        '—'}
                                                 </span>
                                             </div>
                                             {expertNames.length > 0 && (
@@ -548,53 +807,93 @@ export default function Dashboard() {
                                                     <UserCheck className="h-3 w-3 text-slate-500" />
                                                     <span>专家：</span>
                                                     {expertNames.map((n, i) => (
-                                                        <span key={`${item.id}-exp-${i}`} className="rounded bg-blue-900/30 px-1.5 py-0 text-[10px] text-blue-200">{n}</span>
+                                                        <span
+                                                            key={`${item.id}-exp-${i}`}
+                                                            className="rounded bg-blue-900/30 px-1.5 py-0 text-[10px] text-blue-200"
+                                                        >
+                                                            {n}
+                                                        </span>
                                                     ))}
                                                 </div>
                                             )}
                                         </div>
                                         <button
-                                            onClick={() => confirmCompany(item.id)}
-                                            disabled={confirming?.kind === 'company' && confirming?.id === item.id}
+                                            onClick={() =>
+                                                confirmCompany(item.id)
+                                            }
+                                            disabled={
+                                                confirming?.kind ===
+                                                    'company' &&
+                                                confirming?.id === item.id
+                                            }
                                             className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
-                                        >确认收到</button>
+                                        >
+                                            确认收到
+                                        </button>
                                     </div>
                                 );
                             })}
                             {expertNotifs.map((item) => {
                                 const ins = pickExpertInspection(item);
                                 const cc = pickCheckCompany(item);
-                                const ec = item.expert_company ?? item.expertCompany ?? null;
-                                const checkTime = ec?.check_company_time ?? null;
-                                const notifyTime = ec?.notify_company_time ?? null;
+                                const ec =
+                                    item.expert_company ??
+                                    item.expertCompany ??
+                                    null;
+                                const checkTime =
+                                    ec?.check_company_time ?? null;
+                                const notifyTime =
+                                    ec?.notify_company_time ?? null;
 
                                 return (
-                                    <div key={`e-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-blue-500/25 bg-blue-600/5 p-3">
-                                        <div className="flex-1 min-w-0">
+                                    <div
+                                        key={`e-${item.id}`}
+                                        className="flex items-start justify-between gap-3 rounded-lg border border-blue-500/25 bg-blue-600/5 p-3"
+                                    >
+                                        <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2">
                                                 <UserCheck className="h-3.5 w-3.5 shrink-0 text-blue-400" />
-                                                <p className="truncate text-sm font-semibold text-slate-100" title={ins?.title ?? ''}>{ins?.title ?? `检查#${item.expert_company_id}`}</p>
-                                                <span className="shrink-0 rounded border border-blue-500/30 bg-blue-600/10 px-1.5 py-0 text-[10px] text-blue-400">专家任务</span>
+                                                <p
+                                                    className="truncate text-sm font-semibold text-slate-100"
+                                                    title={ins?.title ?? ''}
+                                                >
+                                                    {ins?.title ??
+                                                        `检查#${item.expert_company_id}`}
+                                                </p>
+                                                <span className="shrink-0 rounded border border-blue-500/30 bg-blue-600/10 px-1.5 py-0 text-[10px] text-blue-400">
+                                                    专家任务
+                                                </span>
                                             </div>
                                             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
                                                 <span className="inline-flex items-center gap-1">
-                                                    <Building2 className="h-3 w-3" />受检：{cc?.title ?? '未指定'}
+                                                    <Building2 className="h-3 w-3" />
+                                                    受检：
+                                                    {cc?.title ?? '未指定'}
                                                 </span>
                                                 <span className="inline-flex items-center gap-1">
-                                                    <Clock className="h-3 w-3" />检查：{checkTime ?? '—'}
+                                                    <Clock className="h-3 w-3" />
+                                                    检查：{checkTime ?? '—'}
                                                 </span>
                                                 {notifyTime && (
                                                     <span className="inline-flex items-center gap-1">
-                                                        <Bell className="h-3 w-3" />通知：{notifyTime}
+                                                        <Bell className="h-3 w-3" />
+                                                        通知：{notifyTime}
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => confirmExpert(item.id)}
-                                            disabled={confirming?.kind === 'expert' && confirming?.id === item.id}
+                                            onClick={() =>
+                                                confirmExpert(item.id)
+                                            }
+                                            disabled={
+                                                confirming?.kind === 'expert' &&
+                                                confirming?.id === item.id
+                                            }
                                             className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
-                                        >确认收到</button>
+                                        >
+                                            确认收到
+                                        </button>
                                     </div>
                                 );
                             })}
@@ -602,34 +901,58 @@ export default function Dashboard() {
                                 const m = item.meeting ?? null;
 
                                 return (
-                                    <div key={`m-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-violet-500/25 bg-violet-600/5 p-3">
-                                        <div className="flex-1 min-w-0">
+                                    <div
+                                        key={`m-${item.id}`}
+                                        className="flex items-start justify-between gap-3 rounded-lg border border-violet-500/25 bg-violet-600/5 p-3"
+                                    >
+                                        <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2">
                                                 <CalendarDays className="h-3.5 w-3.5 shrink-0 text-violet-400" />
-                                                <p className="truncate text-sm font-semibold text-slate-100" title={m?.name ?? ''}>{m?.name ?? `会议#${item.meeting_id}`}</p>
-                                                <span className="shrink-0 rounded border border-violet-500/30 bg-violet-600/10 px-1.5 py-0 text-[10px] text-violet-400">会议通知</span>
+                                                <p
+                                                    className="truncate text-sm font-semibold text-slate-100"
+                                                    title={m?.name ?? ''}
+                                                >
+                                                    {m?.name ??
+                                                        `会议#${item.meeting_id}`}
+                                                </p>
+                                                <span className="shrink-0 rounded border border-violet-500/30 bg-violet-600/10 px-1.5 py-0 text-[10px] text-violet-400">
+                                                    会议通知
+                                                </span>
                                             </div>
                                             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
                                                 <span className="inline-flex items-center gap-1">
-                                                    <Clock className="h-3 w-3" />时间：{m?.meeting_date ?? '—'}
+                                                    <Clock className="h-3 w-3" />
+                                                    时间：
+                                                    {m?.meeting_date ?? '—'}
                                                 </span>
                                                 {m?.place && (
                                                     <span className="inline-flex items-center gap-1">
-                                                        <MapPin className="h-3 w-3" />{m.place}
+                                                        <MapPin className="h-3 w-3" />
+                                                        {m.place}
                                                     </span>
                                                 )}
                                                 {m?.sign_end_date && (
                                                     <span className="inline-flex items-center gap-1">
-                                                        <Bell className="h-3 w-3" />报名截止：{m.sign_end_date}
+                                                        <Bell className="h-3 w-3" />
+                                                        报名截止：
+                                                        {m.sign_end_date}
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => confirmMeeting(item.id)}
-                                            disabled={confirming?.kind === 'meeting' && confirming?.id === item.id}
+                                            onClick={() =>
+                                                confirmMeeting(item.id)
+                                            }
+                                            disabled={
+                                                confirming?.kind ===
+                                                    'meeting' &&
+                                                confirming?.id === item.id
+                                            }
                                             className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
-                                        >确认收到</button>
+                                        >
+                                            确认收到
+                                        </button>
                                     </div>
                                 );
                             })}
@@ -637,22 +960,36 @@ export default function Dashboard() {
                                 const n = pickOfficeNotify(item);
 
                                 return (
-                                    <div key={`on-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-rose-500/25 bg-rose-600/5 p-3">
-                                        <div className="flex-1 min-w-0">
+                                    <div
+                                        key={`on-${item.id}`}
+                                        className="flex items-start justify-between gap-3 rounded-lg border border-rose-500/25 bg-rose-600/5 p-3"
+                                    >
+                                        <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2">
                                                 <ClipboardList className="h-3.5 w-3.5 shrink-0 text-rose-400" />
-                                                <p className="truncate text-sm font-semibold text-slate-100" title={n?.name ?? ''}>{n?.name ?? `任务#${item.office_notify_id}`}</p>
-                                                <span className="shrink-0 rounded border border-rose-500/30 bg-rose-600/10 px-1.5 py-0 text-[10px] text-rose-400">任务型通知</span>
+                                                <p
+                                                    className="truncate text-sm font-semibold text-slate-100"
+                                                    title={n?.name ?? ''}
+                                                >
+                                                    {n?.name ??
+                                                        `任务#${item.office_notify_id}`}
+                                                </p>
+                                                <span className="shrink-0 rounded border border-rose-500/30 bg-rose-600/10 px-1.5 py-0 text-[10px] text-rose-400">
+                                                    任务型通知
+                                                </span>
                                             </div>
                                             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
                                                 {n?.feedback_time && (
                                                     <span className="inline-flex items-center gap-1">
-                                                        <Clock className="h-3 w-3" />反馈截止：{n.feedback_time}
+                                                        <Clock className="h-3 w-3" />
+                                                        反馈截止：
+                                                        {n.feedback_time}
                                                     </span>
                                                 )}
                                                 {n?.alert_others && (
                                                     <span className="inline-flex items-center gap-1">
-                                                        <Bell className="h-3 w-3" />通知人：{n.alert_others}
+                                                        <Bell className="h-3 w-3" />
+                                                        通知人：{n.alert_others}
                                                     </span>
                                                 )}
                                             </div>
@@ -660,7 +997,9 @@ export default function Dashboard() {
                                         <Link
                                             href="/tasks/notices"
                                             className="shrink-0 rounded-md border border-rose-500/30 bg-rose-600/15 px-2.5 py-1 text-xs text-rose-300 hover:bg-rose-600/25"
-                                        >去反馈</Link>
+                                        >
+                                            去反馈
+                                        </Link>
                                     </div>
                                 );
                             })}
@@ -668,53 +1007,93 @@ export default function Dashboard() {
                                 const n = pickNewNotify(item);
 
                                 return (
-                                    <div key={`nn-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-cyan-500/25 bg-cyan-600/5 p-3">
-                                        <div className="flex-1 min-w-0">
+                                    <div
+                                        key={`nn-${item.id}`}
+                                        className="flex items-start justify-between gap-3 rounded-lg border border-cyan-500/25 bg-cyan-600/5 p-3"
+                                    >
+                                        <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2">
                                                 <Inbox className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
-                                                <p className="truncate text-sm font-semibold text-slate-100" title={n?.name ?? ''}>{n?.name ?? `通知#${item.new_notify_id}`}</p>
-                                                <span className="shrink-0 rounded border border-cyan-500/30 bg-cyan-600/10 px-1.5 py-0 text-[10px] text-cyan-400">通知型通知</span>
+                                                <p
+                                                    className="truncate text-sm font-semibold text-slate-100"
+                                                    title={n?.name ?? ''}
+                                                >
+                                                    {n?.name ??
+                                                        `通知#${item.new_notify_id}`}
+                                                </p>
+                                                <span className="shrink-0 rounded border border-cyan-500/30 bg-cyan-600/10 px-1.5 py-0 text-[10px] text-cyan-400">
+                                                    通知型通知
+                                                </span>
                                             </div>
                                             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
                                                 {n?.alert_others && (
                                                     <span className="inline-flex items-center gap-1">
-                                                        <Bell className="h-3 w-3" />通知人：{n.alert_others}
+                                                        <Bell className="h-3 w-3" />
+                                                        通知人：{n.alert_others}
                                                     </span>
                                                 )}
                                                 {n?.comment && (
-                                                    <span className="inline-flex items-center gap-1 truncate" title={n.comment}>
-                                                        <FileText className="h-3 w-3" />{n.comment.slice(0, 40)}{n.comment.length > 40 ? '…' : ''}
+                                                    <span
+                                                        className="inline-flex items-center gap-1 truncate"
+                                                        title={n.comment}
+                                                    >
+                                                        <FileText className="h-3 w-3" />
+                                                        {n.comment.slice(0, 40)}
+                                                        {n.comment.length > 40
+                                                            ? '…'
+                                                            : ''}
                                                     </span>
                                                 )}
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => markNewRead(item.id)}
-                                            disabled={confirming?.kind === 'new' && confirming?.id === item.id}
+                                            disabled={
+                                                confirming?.kind === 'new' &&
+                                                confirming?.id === item.id
+                                            }
                                             className="shrink-0 rounded-md border border-emerald-500/30 bg-emerald-600/15 px-2.5 py-1 text-xs text-emerald-300 hover:bg-emerald-600/25 disabled:opacity-50"
-                                        >标记已读</button>
+                                        >
+                                            标记已读
+                                        </button>
                                     </div>
                                 );
                             })}
                             {manuscriptPending.map((d) => (
-                                <div key={`md-${d.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-sky-500/25 bg-sky-600/5 p-3">
-                                    <div className="flex-1 min-w-0">
+                                <div
+                                    key={`md-${d.id}`}
+                                    className="flex items-start justify-between gap-3 rounded-lg border border-sky-500/25 bg-sky-600/5 p-3"
+                                >
+                                    <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
                                             <FileText className="h-3.5 w-3.5 shrink-0 text-sky-400" />
-                                            <p className="truncate text-sm font-semibold text-slate-100" title={d.name}>{d.name}</p>
-                                            <span className="shrink-0 rounded border border-sky-500/30 bg-sky-600/10 px-1.5 py-0 text-[10px] text-sky-400">下级上报</span>
+                                            <p
+                                                className="truncate text-sm font-semibold text-slate-100"
+                                                title={d.name}
+                                            >
+                                                {d.name}
+                                            </p>
+                                            <span className="shrink-0 rounded border border-sky-500/30 bg-sky-600/10 px-1.5 py-0 text-[10px] text-sky-400">
+                                                下级上报
+                                            </span>
                                         </div>
                                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
                                             <span className="inline-flex items-center gap-1">
-                                                <Building2 className="h-3 w-3" />{d.company_name}
+                                                <Building2 className="h-3 w-3" />
+                                                {d.company_name}
                                             </span>
                                             {d.draft_others && (
                                                 <span className="inline-flex items-center gap-1">
-                                                    <UserCheck className="h-3 w-3" />{d.draft_others}
+                                                    <UserCheck className="h-3 w-3" />
+                                                    {d.draft_others}
                                                 </span>
                                             )}
                                             <span className="inline-flex items-center gap-1">
-                                                <Clock className="h-3 w-3" />{String(d.created_at).slice(0, 10)}
+                                                <Clock className="h-3 w-3" />
+                                                {String(d.created_at).slice(
+                                                    0,
+                                                    10,
+                                                )}
                                             </span>
                                         </div>
                                     </div>
@@ -722,7 +1101,9 @@ export default function Dashboard() {
                                         type="button"
                                         onClick={() => setViewingDraft(d)}
                                         className="shrink-0 rounded-md border border-sky-500/30 bg-sky-600/15 px-2.5 py-1 text-xs text-sky-300 hover:bg-sky-600/25"
-                                    >详情</button>
+                                    >
+                                        详情
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -731,17 +1112,19 @@ export default function Dashboard() {
 
                 <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-6">
                     <div className="mb-5 flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-600/15 border border-violet-600/20">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-600/20 bg-violet-600/15">
                             <TrendingUp className="h-4 w-4 text-violet-400" />
                         </div>
-                        <h2 className="text-sm font-semibold text-slate-200">快捷入口</h2>
+                        <h2 className="text-sm font-semibold text-slate-200">
+                            快捷入口
+                        </h2>
                     </div>
                     <div className="space-y-1.5">
                         {quickLinks.map((l) => (
                             <Link
                                 key={l.title}
                                 href={l.href}
-                                className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm text-slate-400 transition-colors hover:bg-blue-600/10 hover:text-slate-200 group"
+                                className="group flex items-center justify-between rounded-lg px-3 py-2.5 text-sm text-slate-400 transition-colors hover:bg-blue-600/10 hover:text-slate-200"
                             >
                                 <span>{l.title}</span>
                                 <ArrowRight className="h-3.5 w-3.5 text-slate-700 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500" />

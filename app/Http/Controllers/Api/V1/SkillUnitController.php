@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreSkillUnitRequest;
+use App\Http\Requests\Api\V1\UpdateSkillUnitRequest;
 use App\Models\SkillUnit;
 use App\Models\SkillUnitKid;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreSkillUnitRequest;
-use App\Http\Requests\Api\V1\UpdateSkillUnitRequest;
 
 class SkillUnitController extends Controller
 {
@@ -25,7 +25,7 @@ class SkillUnitController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->with(['kids'])
@@ -42,7 +42,7 @@ class SkillUnitController extends Controller
     {
         $record = SkillUnit::with(['kids'])->find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('施工单位不存在');
         }
 
@@ -85,7 +85,7 @@ class SkillUnitController extends Controller
     {
         $skillUnit = SkillUnit::find($id);
 
-        if (!$skillUnit) {
+        if (! $skillUnit) {
             return $this->notFound('施工单位不存在');
         }
         $data = $request->validated();
@@ -118,7 +118,7 @@ class SkillUnitController extends Controller
     {
         $skillUnit = SkillUnit::find($id);
 
-        if (!$skillUnit) {
+        if (! $skillUnit) {
             return $this->notFound('施工单位不存在');
         }
 

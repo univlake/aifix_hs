@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreInherentRiskLogRequest;
+use App\Http\Requests\Api\V1\UpdateInherentRiskLogRequest;
 use App\Models\InherentRiskLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreInherentRiskLogRequest;
-use App\Http\Requests\Api\V1\UpdateInherentRiskLogRequest;
 
 class InherentRiskLogController extends Controller
 {
@@ -29,7 +29,7 @@ class InherentRiskLogController extends Controller
     {
         $data = InherentRiskLog::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('固有风险日志不存在');
         }
 
@@ -51,7 +51,7 @@ class InherentRiskLogController extends Controller
     {
         $inherentRiskLog = InherentRiskLog::find($id);
 
-        if (!$inherentRiskLog) {
+        if (! $inherentRiskLog) {
             return $this->notFound('固有风险日志不存在');
         }
         $data = $request->validated();
@@ -65,7 +65,7 @@ class InherentRiskLogController extends Controller
     {
         $inherentRiskLog = InherentRiskLog::find($id);
 
-        if (!$inherentRiskLog) {
+        if (! $inherentRiskLog) {
             return $this->notFound('固有风险日志不存在');
         }
 

@@ -117,17 +117,46 @@ export interface DangerForm {
     correct_deadline: string;
 }
 
-export const HIDDEN_TYPE_OPTIONS = ['危化品', '电气', '机械', '安全设施', '消防', '职业卫生', '其他'];
+export const HIDDEN_TYPE_OPTIONS = [
+    '危化品',
+    '电气',
+    '机械',
+    '安全设施',
+    '消防',
+    '职业卫生',
+    '其他',
+];
 export const HIDDEN_LEVEL_OPTIONS = ['一般隐患', '重大隐患'];
-export const HAZARD_STATS_TYPES = ['危化品', '电气', '机械', '安全设施', '消防', '职业健康', '其他'];
+export const HAZARD_STATS_TYPES = [
+    '危化品',
+    '电气',
+    '机械',
+    '安全设施',
+    '消防',
+    '职业健康',
+    '其他',
+];
 
-export const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
+export const inputCls =
+    'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
 
-export const emptyPlan = (): PlanForm => ({ title: '', description: '', comment: '', start_date: '', end_date: '' });
+export const emptyPlan = (): PlanForm => ({
+    title: '',
+    description: '',
+    comment: '',
+    start_date: '',
+    end_date: '',
+});
 
 export const emptyDanger = (): DangerForm => ({
-    area: '', session: '第一轮', description: '', hidden_type: '',
-    hidden_level: '', legalises: '', proposal: '', correct_deadline: '',
+    area: '',
+    session: '第一轮',
+    description: '',
+    hidden_type: '',
+    hidden_level: '',
+    legalises: '',
+    proposal: '',
+    correct_deadline: '',
 });
 
 export function planFromRow(row: Inspection): PlanForm {

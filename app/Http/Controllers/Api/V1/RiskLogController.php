@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreRiskLogRequest;
+use App\Http\Requests\Api\V1\UpdateRiskLogRequest;
 use App\Models\RiskLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreRiskLogRequest;
-use App\Http\Requests\Api\V1\UpdateRiskLogRequest;
 
 class RiskLogController extends Controller
 {
@@ -29,7 +29,7 @@ class RiskLogController extends Controller
     {
         $data = RiskLog::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('风险日志不存在');
         }
 
@@ -51,7 +51,7 @@ class RiskLogController extends Controller
     {
         $riskLog = RiskLog::find($id);
 
-        if (!$riskLog) {
+        if (! $riskLog) {
             return $this->notFound('风险日志不存在');
         }
         $data = $request->validated();
@@ -65,7 +65,7 @@ class RiskLogController extends Controller
     {
         $riskLog = RiskLog::find($id);
 
-        if (!$riskLog) {
+        if (! $riskLog) {
             return $this->notFound('风险日志不存在');
         }
 

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreSecurityInvestmentRequest;
+use App\Http\Requests\Api\V1\UpdateSecurityInvestmentRequest;
 use App\Models\SecurityInvestment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreSecurityInvestmentRequest;
-use App\Http\Requests\Api\V1\UpdateSecurityInvestmentRequest;
 
 class SecurityInvestmentController extends Controller
 {
@@ -33,7 +33,7 @@ class SecurityInvestmentController extends Controller
     {
         $data = SecurityInvestment::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('安全投入计划不存在');
         }
 
@@ -55,7 +55,7 @@ class SecurityInvestmentController extends Controller
     {
         $record = SecurityInvestment::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('安全投入计划不存在');
         }
         $data = $request->validated();
@@ -69,7 +69,7 @@ class SecurityInvestmentController extends Controller
     {
         $record = SecurityInvestment::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('安全投入计划不存在');
         }
 

@@ -12,13 +12,16 @@ const api = axios.create({
 // ── Request: Bearer Token + Scope header ─────────────────────
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('access_token');
+
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
         const scopeId = getScopeCompanyId();
+
         if (scopeId) {
             config.headers['X-Scope-Company-Id'] = String(scopeId);
         }
     }
+
     return config;
 });
 
@@ -28,11 +31,13 @@ api.interceptors.response.use(
     (error) => {
         if (error.response?.status === 401) {
             localStorage.removeItem('access_token');
+
             // 避免登录页循环重定向
             if (!window.location.pathname.startsWith('/login')) {
                 window.location.href = '/login';
             }
         }
+
         return Promise.reject(error);
     },
 );

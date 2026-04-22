@@ -15,7 +15,10 @@ export function usePermission() {
     const { hasPermission } = useAuth();
     const { isSubordinate } = useScope();
 
-    const can = useCallback((permission: string) => hasPermission(permission), [hasPermission]);
+    const can = useCallback(
+        (permission: string) => hasPermission(permission),
+        [hasPermission],
+    );
 
     const canWrite = useCallback(
         (permission: string) => hasPermission(permission) && !isSubordinate,

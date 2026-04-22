@@ -21,7 +21,11 @@ const config: CrudPageConfig = {
             render: (_, row) => {
                 const unit = row.skill_unit as { name?: string } | null;
 
-                return unit?.name ? String(unit.name) : <span className="text-slate-700">—</span>;
+                return unit?.name ? (
+                    String(unit.name)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                );
             },
         },
         {
@@ -29,16 +33,27 @@ const config: CrudPageConfig = {
             header: '资质证书',
             width: 160,
             render: (_, row) => {
-                const kid = row.skill_unit_kid as { qualification_name?: string } | null;
+                const kid = row.skill_unit_kid as {
+                    qualification_name?: string;
+                } | null;
 
-                return kid?.qualification_name ? String(kid.qualification_name) : <span className="text-slate-700">—</span>;
+                return kid?.qualification_name ? (
+                    String(kid.qualification_name)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                );
             },
         },
         {
             key: 'valid_period',
             header: '有效期',
             width: 120,
-            render: (val) => (val ? String(val).slice(0, 10) : <span className="text-slate-700">—</span>),
+            render: (val) =>
+                val ? (
+                    String(val).slice(0, 10)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             key: 'annex_url',
@@ -60,8 +75,20 @@ const config: CrudPageConfig = {
         },
     ],
     formFields: [
-        { key: 'name', label: '评价名称', type: 'text', required: true, colSpan: 2 },
-        { key: 'type', label: '评价或检测类型', type: 'select', options: EVAL_TYPES, placeholder: '请选择类型' },
+        {
+            key: 'name',
+            label: '评价名称',
+            type: 'text',
+            required: true,
+            colSpan: 2,
+        },
+        {
+            key: 'type',
+            label: '评价或检测类型',
+            type: 'select',
+            options: EVAL_TYPES,
+            placeholder: '请选择类型',
+        },
         {
             key: 'skill_unit_id',
             label: '检测机构',

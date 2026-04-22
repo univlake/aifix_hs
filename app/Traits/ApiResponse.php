@@ -3,8 +3,8 @@
 namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\Response as FoundationResponse;
 use Illuminate\Support\Facades\Response;
+use Symfony\Component\HttpFoundation\Response as FoundationResponse;
 
 trait ApiResponse
 {
@@ -19,6 +19,7 @@ trait ApiResponse
     {
         $httpCode = $httpCode ?? $statusCode;
         $this->statusCode = $statusCode;
+
         return $this;
     }
 
@@ -34,6 +35,7 @@ trait ApiResponse
         }
         $status = ['status' => $status, 'code' => $this->statusCode];
         $data = array_merge($status, $data);
+
         return $this->respond($data);
     }
 

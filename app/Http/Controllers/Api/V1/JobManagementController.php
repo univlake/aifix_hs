@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreJobManagementRequest;
+use App\Http\Requests\Api\V1\UpdateJobManagementRequest;
 use App\Models\JobManagement;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreJobManagementRequest;
-use App\Http\Requests\Api\V1\UpdateJobManagementRequest;
 
 class JobManagementController extends Controller
 {
@@ -48,7 +48,7 @@ class JobManagementController extends Controller
     {
         $jobManagement = JobManagement::with(['evaluationUnit'])->find($id);
 
-        if (!$jobManagement) {
+        if (! $jobManagement) {
             return $this->notFound('作业管理不存在');
         }
 
@@ -76,7 +76,7 @@ class JobManagementController extends Controller
     {
         $jobManagement = JobManagement::find($id);
 
-        if (!$jobManagement) {
+        if (! $jobManagement) {
             return $this->notFound('作业管理不存在');
         }
         $data = $request->validated();
@@ -93,7 +93,7 @@ class JobManagementController extends Controller
     {
         $jobManagement = JobManagement::find($id);
 
-        if (!$jobManagement) {
+        if (! $jobManagement) {
             return $this->notFound('作业管理不存在');
         }
 

@@ -21,8 +21,9 @@ class FundingExecution extends BaseModel
     {
         $investment = SecurityInvestment::find($this->security_investment_id);
         if ($investment && $investment->budget > 0) {
-            return round($this->budget / $investment->budget * 100, 2) . '%';
+            return round($this->budget / $investment->budget * 100, 2).'%';
         }
+
         return '0%';
     }
 

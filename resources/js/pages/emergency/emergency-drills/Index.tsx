@@ -12,7 +12,12 @@ const config: CrudPageConfig = {
     formFields: [
         { key: 'title', label: '标题', type: 'text', required: true },
         { key: 'drill_date', label: '演练日期', type: 'date' },
-        { key: 'company_id', label: '所属企业', type: 'select', optionsEndpoint: '/companies' },
+        {
+            key: 'company_id',
+            label: '所属企业',
+            type: 'select',
+            optionsEndpoint: '/companies',
+        },
     ],
     searchField: 'title',
     searchPlaceholder: '搜索应急演练...',

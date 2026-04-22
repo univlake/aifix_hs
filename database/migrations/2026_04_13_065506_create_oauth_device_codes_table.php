@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('oauth_device_codes')) return;
+        if (Schema::hasTable('oauth_device_codes')) {
+            return;
+        }
 
         Schema::create('oauth_device_codes', function (Blueprint $table) {
             $table->char('id', 80)->primary();

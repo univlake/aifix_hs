@@ -1,23 +1,40 @@
-import { useState, useEffect, useMemo } from 'react';
 import { Head } from '@inertiajs/react';
-import { cn } from '@/lib/utils';
 import { Search, Lock } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
 
-interface Permission { id: number; name: string }
-interface GroupedPermissions { [module: string]: Permission[] }
+interface Permission {
+    id: number;
+    name: string;
+}
+interface GroupedPermissions {
+    [module: string]: Permission[];
+}
 
 const ACTION_LABELS: Record<string, string> = {
-    list: '列表', create: '新增', update: '编辑', delete: '删除',
-    manage: '管理', view: '查看', review: '审核', assign: '分配',
-    tree: '树形', portrait: '画像', file: '文件上传', oss: 'OSS上传',
+    list: '列表',
+    create: '新增',
+    update: '编辑',
+    delete: '删除',
+    manage: '管理',
+    view: '查看',
+    review: '审核',
+    assign: '分配',
+    tree: '树形',
+    portrait: '画像',
+    file: '文件上传',
+    oss: 'OSS上传',
 };
 
 function formatModule(name: string): string {
-    return name.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return name
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
 }
 
 function formatAction(action: string): string {
@@ -34,7 +51,9 @@ export default function PermissionsIndex() {
 
     useEffect(() => {
         setLoading(true);
-        api.get<ApiResponse<{ list: Permission[]; grouped: GroupedPermissions }>>('/permissions')
+        api.get<
+            ApiResponse<{ list: Permission[]; grouped: GroupedPermissions }>
+        >('/permissions')
             .then((r) => {
                 setGrouped(r.data.data?.grouped ?? {});
                 setTotal(r.data.data?.list.length ?? 0);
@@ -46,22 +65,36 @@ export default function PermissionsIndex() {
     const filteredModules = useMemo(() => {
         const q = search.trim().toLowerCase();
         const modules = Object.keys(grouped).sort();
-        if (!q) return modules;
+
+        if (!q) {
+            return modules;
+        }
+
         return modules.filter((m) => {
-            if (m.toLowerCase().includes(q)) return true;
+            if (m.toLowerCase().includes(q)) {
+                return true;
+            }
+
             return grouped[m].some((p) => p.name.toLowerCase().includes(q));
         });
     }, [grouped, search]);
 
     const filteredGrouped = useMemo(() => {
         const q = search.trim().toLowerCase();
-        if (!q) return grouped;
+
+        if (!q) {
+            return grouped;
+        }
+
         const result: GroupedPermissions = {};
         filteredModules.forEach((m) => {
             result[m] = grouped[m].filter(
-                (p) => p.name.toLowerCase().includes(q) || m.toLowerCase().includes(q),
+                (p) =>
+                    p.name.toLowerCase().includes(q) ||
+                    m.toLowerCase().includes(q),
             );
         });
+
         return result;
     }, [grouped, filteredModules, search]);
 
@@ -71,10 +104,19 @@ export default function PermissionsIndex() {
 
             <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-100">权限列表</h1>
+                    <h1 className="text-xl font-bold text-slate-100">
+                        权限列表
+                    </h1>
                     <p className="mt-0.5 text-xs text-slate-600">
-                        共 <span className="font-medium text-slate-400">{total}</span> 个权限，
-                        <span className="font-medium text-slate-400">{Object.keys(grouped).length}</span> 个模块
+                        共{' '}
+                        <span className="font-medium text-slate-400">
+                            {total}
+                        </span>{' '}
+                        个权限，
+                        <span className="font-medium text-slate-400">
+                            {Object.keys(grouped).length}
+                        </span>{' '}
+                        个模块
                         <span className="ml-1.5 text-slate-700">· 只读</span>
                     </p>
                 </div>
@@ -102,6 +144,7 @@ export default function PermissionsIndex() {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredModules.map((module) => {
                         const perms = filteredGrouped[module] ?? [];
+
                         return (
                             <div
                                 key={module}
@@ -117,14 +160,18 @@ export default function PermissionsIndex() {
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
                                     {perms.map((p) => {
-                                        const action = p.name.split('.').slice(1).join('.');
+                                        const action = p.name
+                                            .split('.')
+                                            .slice(1)
+                                            .join('.');
+
                                         return (
                                             <span
                                                 key={p.id}
                                                 title={p.name}
                                                 className={cn(
-                                                    'inline-flex items-center rounded px-2 py-0.5 text-[11px] border',
-                                                    'bg-blue-600/8 text-blue-400/70 border-blue-900/30',
+                                                    'inline-flex items-center rounded border px-2 py-0.5 text-[11px]',
+                                                    'border-blue-900/30 bg-blue-600/8 text-blue-400/70',
                                                 )}
                                             >
                                                 {formatAction(action)}

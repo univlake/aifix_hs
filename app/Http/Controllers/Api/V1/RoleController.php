@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 use App\Http\Requests\Api\V1\StoreRoleRequest;
 use App\Http\Requests\Api\V1\UpdateRoleRequest;
+use Illuminate\Http\JsonResponse;
+use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
@@ -31,7 +29,7 @@ class RoleController extends Controller
     {
         $role = Role::with('permissions')->find($id);
 
-        if (!$role) {
+        if (! $role) {
             return $this->notFound('角色不存在');
         }
 
@@ -49,7 +47,7 @@ class RoleController extends Controller
             'guard_name' => 'api',
         ]);
 
-        if (!empty($data['permissions'])) {
+        if (! empty($data['permissions'])) {
             $role->syncPermissions($data['permissions']);
         }
 
@@ -63,7 +61,7 @@ class RoleController extends Controller
     {
         $role = Role::find($id);
 
-        if (!$role) {
+        if (! $role) {
             return $this->notFound('角色不存在');
         }
 
@@ -90,7 +88,7 @@ class RoleController extends Controller
     {
         $role = Role::find($id);
 
-        if (!$role) {
+        if (! $role) {
             return $this->notFound('角色不存在');
         }
 

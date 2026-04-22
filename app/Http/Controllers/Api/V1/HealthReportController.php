@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreHealthReportRequest;
+use App\Http\Requests\Api\V1\UpdateHealthReportRequest;
 use App\Models\HealthReport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreHealthReportRequest;
-use App\Http\Requests\Api\V1\UpdateHealthReportRequest;
 
 class HealthReportController extends Controller
 {
@@ -20,7 +20,7 @@ class HealthReportController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->orderBy('id', 'desc')
@@ -33,7 +33,7 @@ class HealthReportController extends Controller
     {
         $data = HealthReport::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('职业病报告不存在');
         }
 
@@ -55,7 +55,7 @@ class HealthReportController extends Controller
     {
         $healthReport = HealthReport::find($id);
 
-        if (!$healthReport) {
+        if (! $healthReport) {
             return $this->notFound('职业病报告不存在');
         }
         $data = $request->validated();
@@ -69,7 +69,7 @@ class HealthReportController extends Controller
     {
         $healthReport = HealthReport::find($id);
 
-        if (!$healthReport) {
+        if (! $healthReport) {
             return $this->notFound('职业病报告不存在');
         }
 

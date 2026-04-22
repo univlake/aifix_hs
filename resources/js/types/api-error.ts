@@ -14,15 +14,21 @@ export interface ApiErrorPayload {
  */
 export function getErrorMessage(err: unknown, fallback = '请求失败'): string {
     if (typeof err === 'object' && err !== null) {
-        const maybe = err as { response?: { data?: ApiErrorPayload }; message?: string };
+        const maybe = err as {
+            response?: { data?: ApiErrorPayload };
+            message?: string;
+        };
         const apiMessage = maybe.response?.data?.message;
+
         if (typeof apiMessage === 'string' && apiMessage.length > 0) {
             return apiMessage;
         }
+
         if (typeof maybe.message === 'string' && maybe.message.length > 0) {
             return maybe.message;
         }
     }
+
     return fallback;
 }
 
@@ -32,8 +38,10 @@ export function getErrorMessage(err: unknown, fallback = '请求失败'): string
 export function getApiPayload<T = unknown>(err: unknown): T | undefined {
     if (typeof err === 'object' && err !== null) {
         const maybe = err as { response?: { data?: { data?: T } } };
+
         return maybe.response?.data?.data;
     }
+
     return undefined;
 }
 
@@ -41,7 +49,9 @@ export function getApiPayload<T = unknown>(err: unknown): T | undefined {
 export function isAbortedRequest(err: unknown): boolean {
     if (typeof err === 'object' && err !== null) {
         const e = err as { name?: string; code?: string };
+
         return e.name === 'CanceledError' || e.code === 'ERR_CANCELED';
     }
+
     return false;
 }

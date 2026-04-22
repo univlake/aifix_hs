@@ -1,4 +1,11 @@
-import { Loader2, Upload, FileVideo, X, ExternalLink, Pause } from 'lucide-react';
+import {
+    Loader2,
+    Upload,
+    FileVideo,
+    X,
+    ExternalLink,
+    Pause,
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 import api from '@/lib/api';
 import type { ApiResponse } from '@/types/models';
@@ -31,12 +38,19 @@ const CHUNK_SIZE = 10 * 1024 * 1024; // 10 MiB
 const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GiB — OSS multipart limit
 const MAX_PARALLEL = 3;
 
-async function signPartUrl(key: string, uploadId: string, partNumber: number): Promise<string> {
-    const { data: res } = await api.post<ApiResponse<MultipartSign>>('/upload/multipart/sign-part', {
-        key,
-        upload_id: uploadId,
-        part_number: partNumber,
-    });
+async function signPartUrl(
+    key: string,
+    uploadId: string,
+    partNumber: number,
+): Promise<string> {
+    const { data: res } = await api.post<ApiResponse<MultipartSign>>(
+        '/upload/multipart/sign-part',
+        {
+            key,
+            upload_id: uploadId,
+            part_number: partNumber,
+        },
+    );
 
     return res.data.url;
 }
@@ -53,12 +67,14 @@ function putPart(
         xhr.timeout = 0; // no timeout for large chunks
         xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
-onProgress(e.loaded);
-}
+                onProgress(e.loaded);
+            }
         };
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-                const etag = xhr.getResponseHeader('ETag') ?? xhr.getResponseHeader('Etag');
+                const etag =
+                    xhr.getResponseHeader('ETag') ??
+                    xhr.getResponseHeader('Etag');
 
                 if (!etag) {
                     reject(new Error('分片响应缺少 ETag'));
@@ -83,9 +99,12 @@ async function uploadChunked(
     run: UploadRun,
     onProgress: (pct: number, loaded: number, total: number) => void,
 ): Promise<string> {
-    const { data: init } = await api.post<ApiResponse<MultipartInit>>('/upload/multipart/init', {
-        filename: file.name,
-    });
+    const { data: init } = await api.post<ApiResponse<MultipartInit>>(
+        '/upload/multipart/init',
+        {
+            filename: file.name,
+        },
+    );
     const { key, upload_id: uploadId } = init.data;
 
     const total = file.size;
@@ -95,7 +114,11 @@ async function uploadChunked(
 
     const aggregate = () => {
         const loaded = partLoaded.reduce((a, b) => a + b, 0);
-        onProgress(Math.min(100, Math.round((loaded / total) * 100)), loaded, total);
+        onProgress(
+            Math.min(100, Math.round((loaded / total) * 100)),
+            loaded,
+            total,
+        );
     };
 
     let nextPart = 0;
@@ -106,8 +129,8 @@ async function uploadChunked(
             const current = nextPart++;
 
             if (current >= totalParts) {
-return;
-}
+                return;
+            }
 
             const partNumber = current + 1;
             const start = current * CHUNK_SIZE;
@@ -132,16 +155,22 @@ return;
     };
 
     try {
-        await Promise.all(Array.from({ length: Math.min(MAX_PARALLEL, totalParts) }, worker));
+        await Promise.all(
+            Array.from({ length: Math.min(MAX_PARALLEL, totalParts) }, worker),
+        );
 
         if (run.aborted) {
-            await api.post('/upload/multipart/abort', { key, upload_id: uploadId }).catch(() => {});
+            await api
+                .post('/upload/multipart/abort', { key, upload_id: uploadId })
+                .catch(() => {});
 
             throw new Error('已取消');
         }
 
         if (failure) {
-            await api.post('/upload/multipart/abort', { key, upload_id: uploadId }).catch(() => {});
+            await api
+                .post('/upload/multipart/abort', { key, upload_id: uploadId })
+                .catch(() => {});
 
             throw failure;
         }
@@ -153,7 +182,9 @@ return;
 
         return done.data.file_url;
     } catch (err) {
-        await api.post('/upload/multipart/abort', { key, upload_id: uploadId }).catch(() => {});
+        await api
+            .post('/upload/multipart/abort', { key, upload_id: uploadId })
+            .catch(() => {});
 
         throw err;
     }
@@ -165,7 +196,11 @@ interface OssVideoUploadFieldProps {
     accept?: string;
 }
 
-export function OssVideoUploadField({ value, onChange, accept = 'video/*' }: OssVideoUploadFieldProps) {
+export function OssVideoUploadField({
+    value,
+    onChange,
+    accept = 'video/*',
+}: OssVideoUploadFieldProps) {
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [loaded, setLoaded] = useState(0);
@@ -174,7 +209,9 @@ export function OssVideoUploadField({ value, onChange, accept = 'video/*' }: Oss
     const inputRef = useRef<HTMLInputElement>(null);
     const runRef = useRef<UploadRun>({ xhr: null, aborted: false });
 
-    const filename = value ? decodeURIComponent(value.split('/').pop()?.split('?')[0] ?? '') : '';
+    const filename = value
+        ? decodeURIComponent(value.split('/').pop()?.split('?')[0] ?? '')
+        : '';
 
     const resetState = () => {
         setUploading(false);
@@ -187,15 +224,17 @@ export function OssVideoUploadField({ value, onChange, accept = 'video/*' }: Oss
         const file = e.target.files?.[0];
 
         if (inputRef.current) {
-inputRef.current.value = '';
-}
+            inputRef.current.value = '';
+        }
 
         if (!file) {
-return;
-}
+            return;
+        }
 
         if (file.size > MAX_FILE_SIZE) {
-            setError(`文件超过上限 ${(MAX_FILE_SIZE / 1024 / 1024 / 1024).toFixed(0)} GB`);
+            setError(
+                `文件超过上限 ${(MAX_FILE_SIZE / 1024 / 1024 / 1024).toFixed(0)} GB`,
+            );
 
             return;
         }
@@ -208,18 +247,22 @@ return;
         runRef.current = { xhr: null, aborted: false };
 
         try {
-            const url = await uploadChunked(file, runRef.current, (pct, l, t) => {
-                setProgress(pct);
-                setLoaded(l);
-                setTotal(t);
-            });
+            const url = await uploadChunked(
+                file,
+                runRef.current,
+                (pct, l, t) => {
+                    setProgress(pct);
+                    setLoaded(l);
+                    setTotal(t);
+                },
+            );
             onChange(url);
         } catch (err) {
             const msg = err instanceof Error ? err.message : '上传失败';
 
             if (msg !== '已取消') {
-setError(msg);
-}
+                setError(msg);
+            }
         } finally {
             resetState();
         }
@@ -239,8 +282,16 @@ setError(msg);
                     disabled={uploading}
                     className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                    {uploading ? `上传中 ${progress}%` : value ? '重新上传' : '选择视频'}
+                    {uploading ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                        <Upload className="h-3 w-3" />
+                    )}
+                    {uploading
+                        ? `上传中 ${progress}%`
+                        : value
+                          ? '重新上传'
+                          : '选择视频'}
                 </button>
                 {uploading && (
                     <button
@@ -264,7 +315,13 @@ setError(msg);
                 )}
             </div>
 
-            <input ref={inputRef} type="file" accept={accept} onChange={handleFileChange} className="hidden" />
+            <input
+                ref={inputRef}
+                type="file"
+                accept={accept}
+                onChange={handleFileChange}
+                className="hidden"
+            />
 
             {uploading && (
                 <div className="space-y-1">
@@ -275,7 +332,8 @@ setError(msg);
                         />
                     </div>
                     <p className="text-xs text-slate-500">
-                        {formatBytes(loaded)} / {formatBytes(total)} · 分片上传中，大文件可能耗时数分钟
+                        {formatBytes(loaded)} / {formatBytes(total)} ·
+                        分片上传中，大文件可能耗时数分钟
                     </p>
                 </div>
             )}
@@ -290,7 +348,9 @@ setError(msg);
                     className="flex items-center gap-1.5 text-xs text-blue-400 transition-colors hover:text-blue-300"
                 >
                     <FileVideo className="h-3.5 w-3.5 shrink-0" />
-                    <span className="max-w-xs truncate">{filename || '查看视频'}</span>
+                    <span className="max-w-xs truncate">
+                        {filename || '查看视频'}
+                    </span>
                     <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
             )}
@@ -300,11 +360,14 @@ setError(msg);
 
 function formatBytes(bytes: number): string {
     if (bytes === 0) {
-return '0 B';
-}
+        return '0 B';
+    }
 
     const units = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+    const i = Math.min(
+        units.length - 1,
+        Math.floor(Math.log(bytes) / Math.log(1024)),
+    );
 
     return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }

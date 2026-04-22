@@ -22,7 +22,12 @@ const config: CrudPageConfig = {
             key: 'drill_time',
             header: '演练时间',
             width: 110,
-            render: (val) => val ? String(val).slice(0, 10) : <span className="text-slate-700">—</span>,
+            render: (val) =>
+                val ? (
+                    String(val).slice(0, 10)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         { key: 'drill_local', header: '演练地点', width: 130 },
         { key: 'organization_department', header: '组织部门', width: 130 },
@@ -30,7 +35,13 @@ const config: CrudPageConfig = {
         { key: 'drill_number', header: '参演人数', width: 90 },
     ],
     formFields: [
-        { key: 'name', label: '演练名称', type: 'text', required: true, colSpan: 2 },
+        {
+            key: 'name',
+            label: '演练名称',
+            type: 'text',
+            required: true,
+            colSpan: 2,
+        },
         { key: 'drill_time', label: '演练时间', type: 'date' },
         { key: 'drill_local', label: '演练地点', type: 'text' },
         { key: 'organization_department', label: '组织部门', type: 'text' },

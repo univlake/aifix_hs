@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreEmergencyDrillRequest;
+use App\Http\Requests\Api\V1\UpdateEmergencyDrillRequest;
 use App\Models\EmergencyDrill;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreEmergencyDrillRequest;
-use App\Http\Requests\Api\V1\UpdateEmergencyDrillRequest;
 
 class EmergencyDrillController extends Controller
 {
@@ -20,7 +20,7 @@ class EmergencyDrillController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->orderBy('id', 'desc')
@@ -33,7 +33,7 @@ class EmergencyDrillController extends Controller
     {
         $data = EmergencyDrill::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('应急演练不存在');
         }
 
@@ -55,7 +55,7 @@ class EmergencyDrillController extends Controller
     {
         $record = EmergencyDrill::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('应急演练不存在');
         }
         $data = $request->validated();
@@ -69,7 +69,7 @@ class EmergencyDrillController extends Controller
     {
         $record = EmergencyDrill::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('应急演练不存在');
         }
 

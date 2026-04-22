@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreTrainingClassRequest;
+use App\Http\Requests\Api\V1\UpdateTrainingClassRequest;
 use App\Models\TrainingClass;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreTrainingClassRequest;
-use App\Http\Requests\Api\V1\UpdateTrainingClassRequest;
 
 class TrainingClassController extends Controller
 {
@@ -20,7 +20,7 @@ class TrainingClassController extends Controller
         }
 
         if ($request->filled('title')) {
-            $query->where('title', 'like', '%' . $request->title . '%');
+            $query->where('title', 'like', '%'.$request->title.'%');
         }
 
         $list = $query->orderBy('id', 'desc')
@@ -33,7 +33,7 @@ class TrainingClassController extends Controller
     {
         $data = TrainingClass::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('培训课程不存在');
         }
 
@@ -55,7 +55,7 @@ class TrainingClassController extends Controller
     {
         $record = TrainingClass::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('培训课程不存在');
         }
         $data = $request->validated();
@@ -69,7 +69,7 @@ class TrainingClassController extends Controller
     {
         $record = TrainingClass::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('培训课程不存在');
         }
 
