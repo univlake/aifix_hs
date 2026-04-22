@@ -4,10 +4,6 @@ use App\Models\Company;
 use App\Models\RiskLog;
 
 describe('BlocRisks dashboard endpoints', function () {
-    // NOTE: GET /bloc-risks routes to BlocRisksController::index which doesn't exist.
-    // That is a pre-existing bug in routes/api/statistics-reporting.php — out of scope
-    // for this test file; reporting separately.
-
     it('returns inherent risk aggregate', function () {
         [$user, $company] = createAdminWithCompany();
         Company::factory()->create(['pid' => $company->id, 'status' => 1, 'inherent_risk' => 6.0, 'inherent_risk_grade' => '橙']);
