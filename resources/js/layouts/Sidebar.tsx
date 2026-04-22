@@ -451,6 +451,7 @@ const navSections: NavSection[] = [
             { title: '账号管理', href: '/system/users', icon: UserCircle },
             { title: '角色管理', href: '/system/roles', icon: Shield },
             { title: '权限管理', href: '/system/permissions', icon: Settings },
+            { title: '考核模板管理', href: '/system/assessment-templates', icon: ClipboardList },
             {
                 title: '基础数据',
                 icon: Database,

@@ -1461,7 +1461,7 @@ setSearch(searchInput.trim());
                                             <button onClick={() => setDetail(row)} className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300">
                                                 <Eye className="h-3.5 w-3.5" />详情
                                             </button>
-                                            {active && (
+                                            {active && row.company_id === companyId && (
                                                 <>
                                                     <button onClick={() => openEdit(row)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400" title="编辑">
                                                         <Pencil className="h-3.5 w-3.5" />

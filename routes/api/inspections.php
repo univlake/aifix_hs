@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AccidentCheckTemplatesController;
 use App\Http\Controllers\Api\V1\AddPointsController;
 use App\Http\Controllers\Api\V1\AddPointsTemplatesController;
 use App\Http\Controllers\Api\V1\AssessmentSummaryController;
+use App\Http\Controllers\Api\V1\AssessmentTemplatesController;
 use App\Http\Controllers\Api\V1\CheckStatisticsController;
 use App\Http\Controllers\Api\V1\DailyChecksController;
 use App\Http\Controllers\Api\V1\DailyCheckTemplatesController;
@@ -201,3 +202,9 @@ Route::middleware('permission:daily-checks.list')->group(function () {
 
 // 巡检预警统计（无额外权限限制，监控看板通用）
 Route::get('/inspection-alerts', [CheckStatisticsController::class, 'alerts']);
+
+// ── 考核模板管理（年度聚合 + 一键拷贝） ───────────────────────────
+Route::get('/assessment-templates/years', [AssessmentTemplatesController::class, 'years']);
+Route::middleware('permission:daily-check-templates.create')->group(function () {
+    Route::post('/assessment-templates/copy', [AssessmentTemplatesController::class, 'copy']);
+});

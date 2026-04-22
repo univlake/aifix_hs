@@ -48,6 +48,7 @@ Route::group([], function () {
     Route::inertia('/system/report-configs', 'system/report-configs/Index');
     Route::inertia('/system/record-types', 'system/record-types/Index');
     Route::inertia('/system/regulation-library-types', 'system/regulation-library-types/Index');
+    Route::inertia('/system/assessment-templates', 'system/assessment-templates/Index');
 
     // ── 企业管理 ──────────────────────────────────────────────
     Route::inertia('/safety/buildings', 'safety/buildings/Index');
