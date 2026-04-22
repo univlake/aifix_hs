@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Loader2, Upload, FileText, ExternalLink, X } from 'lucide-react';
 import api from '@/lib/api';
+import { getErrorMessage } from '@/types/api-error';
 import type { ApiResponse } from '@/types/models';
 
 interface OssSignature {
@@ -37,7 +38,7 @@ async function uploadToOss(file: File, dir?: string): Promise<string> {
         if (response.status !== 0 && !response.ok && response.status !== 204) {
             throw new Error(`OSS上传失败: ${response.status}`);
         }
-    } catch (err: any) {
+    } catch (err: unknown) {
         // OSS may not include CORS headers in its response for local dev origins,
         // causing fetch() to throw TypeError even though the upload succeeded.
         // Verify by probing the URL with no-cors (opaque response, won't throw on CORS).
@@ -84,8 +85,8 @@ export function OssUploadField({ value, onChange, dir, accept, displayValue }: O
         try {
             const url = await uploadToOss(file, dir);
             onChange(url);
-        } catch (err: any) {
-            setUploadError(err.message ?? '上传失败，请重试');
+        } catch (err: unknown) {
+            setUploadError(getErrorMessage(err, '上传失败，请重试'));
         } finally {
             setUploading(false);
             if (inputRef.current) inputRef.current.value = '';
