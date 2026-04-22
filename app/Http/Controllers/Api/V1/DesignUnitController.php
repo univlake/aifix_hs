@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreDesignUnitRequest;
+use App\Http\Requests\Api\V1\UpdateDesignUnitRequest;
 use App\Models\DesignUnit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreDesignUnitRequest;
-use App\Http\Requests\Api\V1\UpdateDesignUnitRequest;
 
 class DesignUnitController extends Controller
 {
@@ -23,7 +23,7 @@ class DesignUnitController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->orderBy('id', 'desc')
@@ -39,7 +39,7 @@ class DesignUnitController extends Controller
     {
         $record = DesignUnit::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('设计单位不存在');
         }
 
@@ -67,7 +67,7 @@ class DesignUnitController extends Controller
     {
         $record = DesignUnit::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('设计单位不存在');
         }
         $data = $request->validated();
@@ -84,7 +84,7 @@ class DesignUnitController extends Controller
     {
         $record = DesignUnit::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('设计单位不存在');
         }
 

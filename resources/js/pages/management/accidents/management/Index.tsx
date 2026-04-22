@@ -1,5 +1,17 @@
 import { Head } from '@inertiajs/react';
-import { Activity, List, Loader2, ChevronLeft, ChevronRight, X, Pencil, Trash2, Eye, AlertTriangle, Plus } from 'lucide-react';
+import {
+    Activity,
+    List,
+    Loader2,
+    ChevronLeft,
+    ChevronRight,
+    X,
+    Pencil,
+    Trash2,
+    Eye,
+    AlertTriangle,
+    Plus,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
@@ -61,33 +73,79 @@ interface AccidentFull extends AccidentRow {
 // ── Enum options ───────────────────────────────────────────────────
 
 const TYPE_OPTIONS = [
-    '物体打击', '车辆伤害', '机械伤害', '起重伤害', '触电', '溺水', '灼烫', '火灾',
-    '高处堕落', '坍塌', '冒顶片帮', '透水', '放炮', '火药爆炸', '瓦斯爆炸', '锅炉爆炸',
-    '容器爆炸', '其他爆炸', '中毒和窒息', '其他伤害',
+    '物体打击',
+    '车辆伤害',
+    '机械伤害',
+    '起重伤害',
+    '触电',
+    '溺水',
+    '灼烫',
+    '火灾',
+    '高处堕落',
+    '坍塌',
+    '冒顶片帮',
+    '透水',
+    '放炮',
+    '火药爆炸',
+    '瓦斯爆炸',
+    '锅炉爆炸',
+    '容器爆炸',
+    '其他爆炸',
+    '中毒和窒息',
+    '其他伤害',
 ];
 
 const LEVEL_OPTIONS = [
-    '未遂事故', '轻伤事故', '重伤事故', '一般事故', '较大事故', '重大事故', '特别重大事故',
+    '未遂事故',
+    '轻伤事故',
+    '重伤事故',
+    '一般事故',
+    '较大事故',
+    '重大事故',
+    '特别重大事故',
 ];
 
 const DIRECT_CAUSE_OPTIONS = [
-    '操作错误/忽视安全/忽视警告', '安全装置失效', '使用不安全设备', '手代替工具操作',
-    '物体存放不当', '攀坐不安全位置', '冒险进入危险场所', '在起吊物下作业停留',
-    '机器运转时加油修理检查调整焊接清扫等', '忽视个人防护用品使用', '有分散注意力行为',
-    '不安全装束', '易燃易爆等危险物品处理错误', '防护保险信号等装置缺乏或有缺陷',
-    '设备设施工具有缺陷', '个人防护用品用具缺少或有缺陷', '生产施工场地环境不良',
+    '操作错误/忽视安全/忽视警告',
+    '安全装置失效',
+    '使用不安全设备',
+    '手代替工具操作',
+    '物体存放不当',
+    '攀坐不安全位置',
+    '冒险进入危险场所',
+    '在起吊物下作业停留',
+    '机器运转时加油修理检查调整焊接清扫等',
+    '忽视个人防护用品使用',
+    '有分散注意力行为',
+    '不安全装束',
+    '易燃易爆等危险物品处理错误',
+    '防护保险信号等装置缺乏或有缺陷',
+    '设备设施工具有缺陷',
+    '个人防护用品用具缺少或有缺陷',
+    '生产施工场地环境不良',
 ];
 
 const INDIRECT_CAUSE_OPTIONS = [
-    '技术和设计有缺陷', '设备设施工具有缺陷', '防护保险信号等装置缺乏或有缺陷',
-    '生产场所环境不良', '个人防护用品缺少或有缺陷', '没有安全操作规程或不健全',
-    '违反操作规程或劳动纪律', '劳动组织不合理', '对现场工作缺乏检查或指挥有错误',
-    '教育培训不够缺乏安全操作知识', '其他',
+    '技术和设计有缺陷',
+    '设备设施工具有缺陷',
+    '防护保险信号等装置缺乏或有缺陷',
+    '生产场所环境不良',
+    '个人防护用品缺少或有缺陷',
+    '没有安全操作规程或不健全',
+    '违反操作规程或劳动纪律',
+    '劳动组织不合理',
+    '对现场工作缺乏检查或指挥有错误',
+    '教育培训不够缺乏安全操作知识',
+    '其他',
 ];
 
 const DEGREE_INJURY_OPTIONS = [
-    '死亡3人及以上事故', '死亡1-2人事故', '火灾爆炸中毒引起的未造成人员死亡事故',
-    '重伤', '轻伤', '未遂',
+    '死亡3人及以上事故',
+    '死亡1-2人事故',
+    '火灾爆炸中毒引起的未造成人员死亡事故',
+    '重伤',
+    '轻伤',
+    '未遂',
 ];
 
 // ── Annual Chart ───────────────────────────────────────────────────
@@ -99,12 +157,33 @@ const PLOT_W = CHART_W - PAD.left - PAD.right;
 const PLOT_H = CHART_H - PAD.top - PAD.bottom;
 
 const SERIES = [
-    { key: 'accident_count' as const, label: '事故数', color: '#3b82f6', shape: 'bar' },
-    { key: 'hurt_count' as const, label: '受伤人数', color: '#f59e0b', shape: 'line' },
-    { key: 'death_count' as const, label: '死亡人数', color: '#ef4444', shape: 'line' },
+    {
+        key: 'accident_count' as const,
+        label: '事故数',
+        color: '#3b82f6',
+        shape: 'bar',
+    },
+    {
+        key: 'hurt_count' as const,
+        label: '受伤人数',
+        color: '#f59e0b',
+        shape: 'line',
+    },
+    {
+        key: 'death_count' as const,
+        label: '死亡人数',
+        color: '#ef4444',
+        shape: 'line',
+    },
 ];
 
-function AnnualChart({ data, loading }: { data: AnnualStat[]; loading: boolean }) {
+function AnnualChart({
+    data,
+    loading,
+}: {
+    data: AnnualStat[];
+    loading: boolean;
+}) {
     if (loading) {
         return (
             <div className="flex h-64 items-center justify-center">
@@ -156,7 +235,9 @@ function AnnualChart({ data, loading }: { data: AnnualStat[]; loading: boolean }
                                 y2={y}
                                 stroke="#1e3a5f"
                                 strokeWidth="1"
-                                strokeDasharray={i === gridLines ? 'none' : '4 3'}
+                                strokeDasharray={
+                                    i === gridLines ? 'none' : '4 3'
+                                }
                             />
                             <text
                                 x={PAD.left - 6}
@@ -192,7 +273,9 @@ function AnnualChart({ data, loading }: { data: AnnualStat[]; loading: boolean }
                 {/* Lines for hurt_count and death_count */}
                 {(['hurt_count', 'death_count'] as const).map((key) => {
                     const color = SERIES.find((s) => s.key === key)!.color;
-                    const pts = data.map((d, i) => `${toX(i)},${toY(d[key])}`).join(' ');
+                    const pts = data
+                        .map((d, i) => `${toX(i)},${toY(d[key])}`)
+                        .join(' ');
 
                     return (
                         <g key={key}>
@@ -265,7 +348,9 @@ function AnnualChart({ data, loading }: { data: AnnualStat[]; loading: boolean }
                                 />
                             </span>
                         )}
-                        <span className="text-xs text-slate-400">{s.label}</span>
+                        <span className="text-xs text-slate-400">
+                            {s.label}
+                        </span>
                     </div>
                 ))}
             </div>
@@ -307,14 +392,25 @@ function toEditForm(detail: AccidentFull): EditForm {
     return rest;
 }
 
-function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+function Modal({
+    open,
+    onClose,
+    children,
+}: {
+    open: boolean;
+    onClose: () => void;
+    children: React.ReactNode;
+}) {
     if (!open) {
         return null;
     }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={onClose}
+            />
             <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
                 {children}
             </div>
@@ -322,13 +418,7 @@ function Modal({ open, onClose, children }: { open: boolean; onClose: () => void
     );
 }
 
-function DetailPanel({
-    id,
-    onClose,
-}: {
-    id: number;
-    onClose: () => void;
-}) {
+function DetailPanel({ id, onClose }: { id: number; onClose: () => void }) {
     const [detail, setDetail] = useState<AccidentFull | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -352,8 +442,13 @@ function DetailPanel({
             <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden border-l border-blue-900/40 bg-[#070d1f] shadow-2xl">
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
-                    <h2 className="text-base font-semibold text-slate-100">事故详情</h2>
-                    <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-slate-300">
+                    <h2 className="text-base font-semibold text-slate-100">
+                        事故详情
+                    </h2>
+                    <button
+                        onClick={onClose}
+                        className="rounded-lg p-1.5 text-slate-500 hover:text-slate-300"
+                    >
                         <X className="h-5 w-5" />
                     </button>
                 </div>
@@ -374,40 +469,67 @@ function DetailPanel({
                         <div className="space-y-5">
                             {/* Basic info grid */}
                             <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                                {(Object.keys(FIELD_LABELS) as (keyof typeof FIELD_LABELS)[])
-                                    .filter((k) => k !== 'content' && k !== 'accident_report_url' && k !== 'accident_photo_url')
+                                {(
+                                    Object.keys(
+                                        FIELD_LABELS,
+                                    ) as (keyof typeof FIELD_LABELS)[]
+                                )
+                                    .filter(
+                                        (k) =>
+                                            k !== 'content' &&
+                                            k !== 'accident_report_url' &&
+                                            k !== 'accident_photo_url',
+                                    )
                                     .map((key) => {
-                                        const val = detail[key as keyof AccidentFull];
-                                        const display = val !== null && val !== undefined && val !== ''
-                                            ? String(val)
-                                            : '—';
+                                        const val =
+                                            detail[key as keyof AccidentFull];
+                                        const display =
+                                            val !== null &&
+                                            val !== undefined &&
+                                            val !== ''
+                                                ? String(val)
+                                                : '—';
 
                                         return (
                                             <div key={key}>
-                                                <p className="text-xs text-slate-600">{FIELD_LABELS[key]}</p>
-                                                <p className="mt-0.5 text-sm text-slate-300">{display}</p>
+                                                <p className="text-xs text-slate-600">
+                                                    {FIELD_LABELS[key]}
+                                                </p>
+                                                <p className="mt-0.5 text-sm text-slate-300">
+                                                    {display}
+                                                </p>
                                             </div>
                                         );
-                                    })
-                                }
+                                    })}
                             </div>
 
                             {/* Content */}
                             {detail.content && (
                                 <div>
-                                    <p className="text-xs text-slate-600">{FIELD_LABELS.content}</p>
-                                    <p className="mt-1 whitespace-pre-wrap text-sm text-slate-300 leading-relaxed">{detail.content}</p>
+                                    <p className="text-xs text-slate-600">
+                                        {FIELD_LABELS.content}
+                                    </p>
+                                    <p className="mt-1 text-sm leading-relaxed whitespace-pre-wrap text-slate-300">
+                                        {detail.content}
+                                    </p>
                                 </div>
                             )}
 
                             {/* Attachments */}
-                            {(detail.accident_report_url || detail.accident_photo_url) && (
+                            {(detail.accident_report_url ||
+                                detail.accident_photo_url) && (
                                 <div className="grid grid-cols-2 gap-4">
                                     {detail.accident_report_url && (
                                         <div>
-                                            <p className="text-xs text-slate-600">{FIELD_LABELS.accident_report_url}</p>
+                                            <p className="text-xs text-slate-600">
+                                                {
+                                                    FIELD_LABELS.accident_report_url
+                                                }
+                                            </p>
                                             <a
-                                                href={detail.accident_report_url}
+                                                href={
+                                                    detail.accident_report_url
+                                                }
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="mt-1 inline-block text-xs text-blue-400 underline underline-offset-2 hover:text-blue-300"
@@ -418,7 +540,11 @@ function DetailPanel({
                                     )}
                                     {detail.accident_photo_url && (
                                         <div>
-                                            <p className="text-xs text-slate-600">{FIELD_LABELS.accident_photo_url}</p>
+                                            <p className="text-xs text-slate-600">
+                                                {
+                                                    FIELD_LABELS.accident_photo_url
+                                                }
+                                            </p>
                                             <a
                                                 href={detail.accident_photo_url}
                                                 target="_blank"
@@ -435,21 +561,58 @@ function DetailPanel({
                             {/* Kids table */}
                             {detail.kids.length > 0 && (
                                 <div>
-                                    <p className="mb-2 text-xs font-medium text-slate-500">伤亡人员明细</p>
+                                    <p className="mb-2 text-xs font-medium text-slate-500">
+                                        伤亡人员明细
+                                    </p>
                                     <div className="overflow-x-auto rounded-lg border border-blue-900/30">
-                                        <table className="min-w-max w-full text-xs">
+                                        <table className="w-full min-w-max text-xs">
                                             <thead>
                                                 <tr className="border-b border-blue-900/30 bg-[#0a1020]">
-                                                    {['姓名', '性别', '年龄', '部门', '工种', '工龄', '文化程度', '伤害程度', '误工天数'].map((h) => (
-                                                        <th key={h} className="px-3 py-2 text-left font-medium text-slate-500">{h}</th>
+                                                    {[
+                                                        '姓名',
+                                                        '性别',
+                                                        '年龄',
+                                                        '部门',
+                                                        '工种',
+                                                        '工龄',
+                                                        '文化程度',
+                                                        '伤害程度',
+                                                        '误工天数',
+                                                    ].map((h) => (
+                                                        <th
+                                                            key={h}
+                                                            className="px-3 py-2 text-left font-medium text-slate-500"
+                                                        >
+                                                            {h}
+                                                        </th>
                                                     ))}
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {detail.kids.map((k, i) => (
-                                                    <tr key={i} className="border-b border-blue-900/20 last:border-0">
-                                                        {(['name', 'sex', 'age', 'department', 'work_type', 'work_age', 'education_level', 'degree_injury', 'days_off'] as (keyof KidRow)[]).map((f) => (
-                                                            <td key={f} className="px-3 py-2 text-slate-400">{k[f] ?? '—'}</td>
+                                                    <tr
+                                                        key={i}
+                                                        className="border-b border-blue-900/20 last:border-0"
+                                                    >
+                                                        {(
+                                                            [
+                                                                'name',
+                                                                'sex',
+                                                                'age',
+                                                                'department',
+                                                                'work_type',
+                                                                'work_age',
+                                                                'education_level',
+                                                                'degree_injury',
+                                                                'days_off',
+                                                            ] as (keyof KidRow)[]
+                                                        ).map((f) => (
+                                                            <td
+                                                                key={f}
+                                                                className="px-3 py-2 text-slate-400"
+                                                            >
+                                                                {k[f] ?? '—'}
+                                                            </td>
                                                         ))}
                                                     </tr>
                                                 ))}
@@ -496,7 +659,7 @@ function EditAccidentModal({
     }, [id, open]);
 
     const setField = (key: keyof EditForm, value: unknown) => {
-        setForm((prev) => prev ? { ...prev, [key]: value } : prev);
+        setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
     };
 
     const setKid = (idx: number, key: keyof KidRow, value: string) => {
@@ -505,7 +668,9 @@ function EditAccidentModal({
                 return prev;
             }
 
-            const kids = prev.kids.map((k, i) => i === idx ? { ...k, [key]: value } : k);
+            const kids = prev.kids.map((k, i) =>
+                i === idx ? { ...k, [key]: value } : k,
+            );
 
             return { ...prev, kids };
         });
@@ -517,7 +682,17 @@ function EditAccidentModal({
                 return prev;
             }
 
-            const blank: KidRow = { name: '', sex: '', age: '', department: '', work_type: '', work_age: '', education_level: '', degree_injury: '', days_off: '' };
+            const blank: KidRow = {
+                name: '',
+                sex: '',
+                age: '',
+                department: '',
+                work_type: '',
+                work_age: '',
+                education_level: '',
+                degree_injury: '',
+                days_off: '',
+            };
 
             return { ...prev, kids: [...prev.kids, blank] };
         });
@@ -557,8 +732,12 @@ function EditAccidentModal({
         <Modal open={open} onClose={onClose}>
             <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
                 <div>
-                    <h2 className="text-base font-semibold text-slate-100">编辑事故记录</h2>
-                    <p className="mt-0.5 text-xs text-slate-600">修改现有记录信息</p>
+                    <h2 className="text-base font-semibold text-slate-100">
+                        编辑事故记录
+                    </h2>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                        修改现有记录信息
+                    </p>
                 </div>
                 <button
                     onClick={onClose}
@@ -585,45 +764,124 @@ function EditAccidentModal({
 
                     {!loading && form && (
                         <div className="grid gap-4 md:grid-cols-2">
-                            {([
-                                ['type', '事故类型', 'select', false],
-                                ['accident_level', '事故等级', 'select', false],
-                                ['happen_time', '发生时间', 'date', false],
-                                ['department', '发生部门', 'text', false],
-                                ['happen_area', '发生地点', 'text', true],
-                                ['degree_injury', '伤亡程度', 'select', false],
-                                ['direct_cause', '直接原因', 'select', false],
-                                ['indirect_cause', '间接原因', 'select', true],
-                                ['staff_die', '员工死亡人数', 'number', false],
-                                ['staff_hurt', '员工受伤人数', 'number', false],
-                                ['not_staff_die', '非员工死亡人数', 'number', false],
-                                ['not_staff_hurt', '非员工受伤人数', 'number', false],
-                                ['direct_loss_property', '直接经济损失 (万元)', 'text', false],
-                                ['gauge_loss_property', '间接经济损失 (万元)', 'text', false],
-                            ] as [keyof EditForm, string, string, boolean][]).map(([key, label, type, colSpan]) => {
-                                const inputClass = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
-                                const selectOptions = key === 'type'
-                                    ? TYPE_OPTIONS
-                                    : key === 'accident_level'
-                                        ? LEVEL_OPTIONS
-                                        : key === 'degree_injury'
+                            {(
+                                [
+                                    ['type', '事故类型', 'select', false],
+                                    [
+                                        'accident_level',
+                                        '事故等级',
+                                        'select',
+                                        false,
+                                    ],
+                                    ['happen_time', '发生时间', 'date', false],
+                                    ['department', '发生部门', 'text', false],
+                                    ['happen_area', '发生地点', 'text', true],
+                                    [
+                                        'degree_injury',
+                                        '伤亡程度',
+                                        'select',
+                                        false,
+                                    ],
+                                    [
+                                        'direct_cause',
+                                        '直接原因',
+                                        'select',
+                                        false,
+                                    ],
+                                    [
+                                        'indirect_cause',
+                                        '间接原因',
+                                        'select',
+                                        true,
+                                    ],
+                                    [
+                                        'staff_die',
+                                        '员工死亡人数',
+                                        'number',
+                                        false,
+                                    ],
+                                    [
+                                        'staff_hurt',
+                                        '员工受伤人数',
+                                        'number',
+                                        false,
+                                    ],
+                                    [
+                                        'not_staff_die',
+                                        '非员工死亡人数',
+                                        'number',
+                                        false,
+                                    ],
+                                    [
+                                        'not_staff_hurt',
+                                        '非员工受伤人数',
+                                        'number',
+                                        false,
+                                    ],
+                                    [
+                                        'direct_loss_property',
+                                        '直接经济损失 (万元)',
+                                        'text',
+                                        false,
+                                    ],
+                                    [
+                                        'gauge_loss_property',
+                                        '间接经济损失 (万元)',
+                                        'text',
+                                        false,
+                                    ],
+                                ] as [keyof EditForm, string, string, boolean][]
+                            ).map(([key, label, type, colSpan]) => {
+                                const inputClass =
+                                    'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
+                                const selectOptions =
+                                    key === 'type'
+                                        ? TYPE_OPTIONS
+                                        : key === 'accident_level'
+                                          ? LEVEL_OPTIONS
+                                          : key === 'degree_injury'
                                             ? DEGREE_INJURY_OPTIONS
                                             : key === 'direct_cause'
-                                                ? DIRECT_CAUSE_OPTIONS
-                                                : INDIRECT_CAUSE_OPTIONS;
+                                              ? DIRECT_CAUSE_OPTIONS
+                                              : INDIRECT_CAUSE_OPTIONS;
 
                                 return (
-                                    <div key={key} className={colSpan ? 'md:col-span-2' : ''}>
-                                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">{label}</label>
+                                    <div
+                                        key={key}
+                                        className={
+                                            colSpan ? 'md:col-span-2' : ''
+                                        }
+                                    >
+                                        <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                            {label}
+                                        </label>
                                         {type === 'select' ? (
                                             <select
                                                 value={String(form[key] ?? '')}
-                                                onChange={(e) => setField(key, e.target.value || null)}
-                                                className={cn(inputClass, 'cursor-pointer appearance-none')}
+                                                onChange={(e) =>
+                                                    setField(
+                                                        key,
+                                                        e.target.value || null,
+                                                    )
+                                                }
+                                                className={cn(
+                                                    inputClass,
+                                                    'cursor-pointer appearance-none',
+                                                )}
                                             >
-                                                <option value="" disabled className="bg-[#0d1530]">请选择</option>
+                                                <option
+                                                    value=""
+                                                    disabled
+                                                    className="bg-[#0d1530]"
+                                                >
+                                                    请选择
+                                                </option>
                                                 {selectOptions.map((option) => (
-                                                    <option key={option} value={option} className="bg-[#0d1530]">
+                                                    <option
+                                                        key={option}
+                                                        value={option}
+                                                        className="bg-[#0d1530]"
+                                                    >
                                                         {option}
                                                     </option>
                                                 ))}
@@ -631,9 +889,25 @@ function EditAccidentModal({
                                         ) : (
                                             <input
                                                 type={type}
-                                                value={(form[key] as string | number) ?? ''}
-                                                onChange={(e) => setField(key, type === 'number' ? e.target.value : e.target.value)}
-                                                className={cn(inputClass, type === 'date' ? 'cursor-pointer' : '')}
+                                                value={
+                                                    (form[key] as
+                                                        | string
+                                                        | number) ?? ''
+                                                }
+                                                onChange={(e) =>
+                                                    setField(
+                                                        key,
+                                                        type === 'number'
+                                                            ? e.target.value
+                                                            : e.target.value,
+                                                    )
+                                                }
+                                                className={cn(
+                                                    inputClass,
+                                                    type === 'date'
+                                                        ? 'cursor-pointer'
+                                                        : '',
+                                                )}
                                             />
                                         )}
                                     </div>
@@ -641,53 +915,114 @@ function EditAccidentModal({
                             })}
 
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">事故经过</label>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    事故经过
+                                </label>
                                 <textarea
                                     value={form.content ?? ''}
-                                    onChange={(e) => setField('content', e.target.value)}
+                                    onChange={(e) =>
+                                        setField('content', e.target.value)
+                                    }
                                     rows={3}
-                                    className="w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 resize-none"
+                                    className="w-full resize-none rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 transition-colors outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20"
                                 />
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">事故报告附件</label>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    事故报告附件
+                                </label>
                                 <OssUploadField
                                     value={form.accident_report_url ?? ''}
-                                    onChange={(url) => setField('accident_report_url', url)}
+                                    onChange={(url) =>
+                                        setField('accident_report_url', url)
+                                    }
                                 />
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">现场照片</label>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    现场照片
+                                </label>
                                 <OssUploadField
                                     value={form.accident_photo_url ?? ''}
-                                    onChange={(url) => setField('accident_photo_url', url)}
+                                    onChange={(url) =>
+                                        setField('accident_photo_url', url)
+                                    }
                                 />
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">伤亡人员明细</label>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    伤亡人员明细
+                                </label>
                                 <div className="overflow-x-auto rounded-lg border border-blue-900/30">
                                     {form.kids.length > 0 && (
-                                        <table className="min-w-max w-full text-xs">
+                                        <table className="w-full min-w-max text-xs">
                                             <thead>
                                                 <tr className="border-b border-blue-900/30 bg-[#070d1f]">
-                                                    {['姓名', '性别', '年龄', '部门', '工种', '工龄', '文化程度', '伤害程度', '误工天数'].map((header) => (
-                                                        <th key={header} className="px-3 py-2 text-left font-medium uppercase tracking-wide text-slate-500">{header}</th>
+                                                    {[
+                                                        '姓名',
+                                                        '性别',
+                                                        '年龄',
+                                                        '部门',
+                                                        '工种',
+                                                        '工龄',
+                                                        '文化程度',
+                                                        '伤害程度',
+                                                        '误工天数',
+                                                    ].map((header) => (
+                                                        <th
+                                                            key={header}
+                                                            className="px-3 py-2 text-left font-medium tracking-wide text-slate-500 uppercase"
+                                                        >
+                                                            {header}
+                                                        </th>
                                                     ))}
                                                     <th className="w-8 px-2 py-2" />
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {form.kids.map((kid, idx) => (
-                                                    <tr key={idx} className="border-b border-blue-900/20 last:border-0">
-                                                        {(['name', 'sex', 'age', 'department', 'work_type', 'work_age', 'education_level', 'degree_injury', 'days_off'] as (keyof KidRow)[]).map((field) => (
-                                                            <td key={field} className="px-2 py-1.5">
+                                                    <tr
+                                                        key={idx}
+                                                        className="border-b border-blue-900/20 last:border-0"
+                                                    >
+                                                        {(
+                                                            [
+                                                                'name',
+                                                                'sex',
+                                                                'age',
+                                                                'department',
+                                                                'work_type',
+                                                                'work_age',
+                                                                'education_level',
+                                                                'degree_injury',
+                                                                'days_off',
+                                                            ] as (keyof KidRow)[]
+                                                        ).map((field) => (
+                                                            <td
+                                                                key={field}
+                                                                className="px-2 py-1.5"
+                                                            >
                                                                 <input
                                                                     type="text"
-                                                                    value={String(kid[field] ?? '')}
-                                                                    onChange={(e) => setKid(idx, field, e.target.value)}
+                                                                    value={String(
+                                                                        kid[
+                                                                            field
+                                                                        ] ?? '',
+                                                                    )}
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setKid(
+                                                                            idx,
+                                                                            field,
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
                                                                     className="w-full rounded border border-blue-900/30 bg-transparent px-2 py-1 text-slate-200 placeholder-slate-700 outline-none focus:border-blue-500/60"
                                                                 />
                                                             </td>
@@ -695,7 +1030,11 @@ function EditAccidentModal({
                                                         <td className="px-2 py-1.5 text-center">
                                                             <button
                                                                 type="button"
-                                                                onClick={() => removeKid(idx)}
+                                                                onClick={() =>
+                                                                    removeKid(
+                                                                        idx,
+                                                                    )
+                                                                }
                                                                 className="text-slate-600 hover:text-red-400"
                                                             >
                                                                 <X className="h-3.5 w-3.5" />
@@ -709,7 +1048,7 @@ function EditAccidentModal({
                                     <button
                                         type="button"
                                         onClick={addKid}
-                                        className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
+                                        className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-xs text-slate-500 transition-colors hover:bg-white/5 hover:text-slate-300"
                                     >
                                         <Plus className="h-3 w-3" />
                                         添加成员
@@ -731,9 +1070,9 @@ function EditAccidentModal({
                 <button
                     onClick={handleSave}
                     disabled={saving || loading}
-                    className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:bg-blue-600/30 hover:text-blue-200 disabled:opacity-50 disabled:pointer-events-none"
+                    className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:bg-blue-600/30 hover:text-blue-200 disabled:pointer-events-none disabled:opacity-50"
                 >
-                        {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                     {saving ? '保存中...' : '保存'}
                 </button>
             </div>
@@ -749,14 +1088,20 @@ function LevelBadge({ level }: { level: string | null }) {
     }
 
     const color =
-        level === '特别重大事故' ? 'bg-red-600/20 text-red-400 border-red-500/30'
-            : level === '重大事故' ? 'bg-orange-600/20 text-orange-400 border-orange-500/30'
-                : level === '较大事故' ? 'bg-amber-600/20 text-amber-400 border-amber-500/30'
-                    : level === '一般事故' ? 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30'
-                        : 'bg-slate-600/20 text-slate-400 border-slate-500/30';
+        level === '特别重大事故'
+            ? 'bg-red-600/20 text-red-400 border-red-500/30'
+            : level === '重大事故'
+              ? 'bg-orange-600/20 text-orange-400 border-orange-500/30'
+              : level === '较大事故'
+                ? 'bg-amber-600/20 text-amber-400 border-amber-500/30'
+                : level === '一般事故'
+                  ? 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30'
+                  : 'bg-slate-600/20 text-slate-400 border-slate-500/30';
 
     return (
-        <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-xs font-medium ${color}`}>
+        <span
+            className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-xs font-medium ${color}`}
+        >
             {level}
         </span>
     );
@@ -781,9 +1126,16 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
     const [deleting, setDeleting] = useState(false);
 
     const currentYear = new Date().getFullYear();
-    const yearOptions = Array.from({ length: 8 }, (_, i) => String(currentYear - i));
+    const yearOptions = Array.from({ length: 8 }, (_, i) =>
+        String(currentYear - i),
+    );
 
-    const fetchRows = async (p: number, type: string, level: string, year: string) => {
+    const fetchRows = async (
+        p: number,
+        type: string,
+        level: string,
+        year: string,
+    ) => {
         if (!companyId) {
             return;
         }
@@ -846,35 +1198,43 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
                 <select
                     value={filterYear}
                     onChange={(e) => setFilterYear(e.target.value)}
-                    className="h-8 rounded-lg border border-blue-900/40 bg-[#070d1f] px-2.5 text-sm text-slate-300 outline-none appearance-none"
+                    className="h-8 appearance-none rounded-lg border border-blue-900/40 bg-[#070d1f] px-2.5 text-sm text-slate-300 outline-none"
                 >
                     <option value="">全部年份</option>
                     {yearOptions.map((y) => (
-                        <option key={y} value={y}>{y} 年</option>
+                        <option key={y} value={y}>
+                            {y} 年
+                        </option>
                     ))}
                 </select>
                 <select
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
-                    className="h-8 rounded-lg border border-blue-900/40 bg-[#070d1f] px-2.5 text-sm text-slate-300 outline-none appearance-none"
+                    className="h-8 appearance-none rounded-lg border border-blue-900/40 bg-[#070d1f] px-2.5 text-sm text-slate-300 outline-none"
                 >
                     <option value="">全部类型</option>
                     {TYPE_OPTIONS.map((t) => (
-                        <option key={t} value={t}>{t}</option>
+                        <option key={t} value={t}>
+                            {t}
+                        </option>
                     ))}
                 </select>
                 <select
                     value={filterLevel}
                     onChange={(e) => setFilterLevel(e.target.value)}
-                    className="h-8 rounded-lg border border-blue-900/40 bg-[#070d1f] px-2.5 text-sm text-slate-300 outline-none appearance-none"
+                    className="h-8 appearance-none rounded-lg border border-blue-900/40 bg-[#070d1f] px-2.5 text-sm text-slate-300 outline-none"
                 >
                     <option value="">全部等级</option>
                     {LEVEL_OPTIONS.map((l) => (
-                        <option key={l} value={l}>{l}</option>
+                        <option key={l} value={l}>
+                            {l}
+                        </option>
                     ))}
                 </select>
                 <span className="ml-auto text-xs text-slate-600">
-                    共 <span className="font-medium text-slate-400">{total}</span> 条
+                    共{' '}
+                    <span className="font-medium text-slate-400">{total}</span>{' '}
+                    条
                 </span>
             </div>
 
@@ -883,8 +1243,21 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-blue-900/30 bg-[#070d1f]">
-                            {['企业名称', '发生时间', '事故类型', '事故等级', '伤亡程度', '死亡', '受伤', '发生地点', '操作'].map((h, i) => (
-                                <th key={i} className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                            {[
+                                '企业名称',
+                                '发生时间',
+                                '事故类型',
+                                '事故等级',
+                                '伤亡程度',
+                                '死亡',
+                                '受伤',
+                                '发生地点',
+                                '操作',
+                            ].map((h, i) => (
+                                <th
+                                    key={i}
+                                    className="px-4 py-2.5 text-left text-xs font-medium tracking-wide text-slate-500 uppercase"
+                                >
                                     {h}
                                 </th>
                             ))}
@@ -899,73 +1272,129 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
                             </tr>
                         ) : rows.length === 0 ? (
                             <tr>
-                                <td colSpan={9} className="py-16 text-center text-sm text-slate-600">
+                                <td
+                                    colSpan={9}
+                                    className="py-16 text-center text-sm text-slate-600"
+                                >
                                     暂无事故记录
                                 </td>
                             </tr>
                         ) : (
                             rows.map((row) => {
-                                const canManage = currentUserCompanyId !== null && Number(row.company_id) === Number(currentUserCompanyId);
+                                const canManage =
+                                    currentUserCompanyId !== null &&
+                                    Number(row.company_id) ===
+                                        Number(currentUserCompanyId);
 
                                 return (
-                                <tr
-                                    key={row.id}
-                                    className="border-b border-blue-900/20 last:border-0 transition-colors hover:bg-white/[0.02]"
-                                >
-                                    <td className="max-w-[160px] truncate px-4 py-2.5 text-slate-300" title={row.company?.title ?? ''}>
-                                        {row.company?.title ?? <span className="text-slate-700">—</span>}
-                                    </td>
-                                    <td className="px-4 py-2.5 text-slate-400">
-                                        {row.happen_time ? row.happen_time.slice(0, 10) : <span className="text-slate-700">—</span>}
-                                    </td>
-                                    <td className="px-4 py-2.5 text-slate-300">
-                                        {row.type ?? <span className="text-slate-700">—</span>}
-                                    </td>
-                                    <td className="px-4 py-2.5">
-                                        <LevelBadge level={row.accident_level} />
-                                    </td>
-                                    <td className="px-4 py-2.5 text-slate-400">
-                                        {row.degree_injury ?? <span className="text-slate-700">—</span>}
-                                    </td>
-                                    <td className="px-4 py-2.5 text-center font-medium text-red-400">
-                                        {(row.staff_die ?? 0) + (row.not_staff_die ?? 0) || <span className="text-slate-700">0</span>}
-                                    </td>
-                                    <td className="px-4 py-2.5 text-center font-medium text-amber-400">
-                                        {(row.staff_hurt ?? 0) + (row.not_staff_hurt ?? 0) || <span className="text-slate-700">0</span>}
-                                    </td>
-                                    <td className="max-w-[140px] truncate px-4 py-2.5 text-slate-400" title={row.happen_area ?? ''}>
-                                        {row.happen_area ?? <span className="text-slate-700">—</span>}
-                                    </td>
-                                    <td className="px-4 py-2.5">
-                                        <div className="flex items-center gap-0.5 whitespace-nowrap">
-                                            <button
-                                                onClick={() => setDetailId(row.id)}
-                                                className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
-                                            >
-                                                <Eye className="h-3.5 w-3.5" />
-                                                详情
-                                            </button>
-                                            {canManage && (
-                                                <>
-                                                    <button
-                                                        onClick={() => setEditId(row.id)}
-                                                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                                                        title="编辑"
-                                                    >
-                                                        <Pencil className="h-3.5 w-3.5" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setDeleteRow(row)}
-                                                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                                                        title="删除"
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                    </button>
-                                                </>
+                                    <tr
+                                        key={row.id}
+                                        className="border-b border-blue-900/20 transition-colors last:border-0 hover:bg-white/[0.02]"
+                                    >
+                                        <td
+                                            className="max-w-[160px] truncate px-4 py-2.5 text-slate-300"
+                                            title={row.company?.title ?? ''}
+                                        >
+                                            {row.company?.title ?? (
+                                                <span className="text-slate-700">
+                                                    —
+                                                </span>
                                             )}
-                                        </div>
-                                    </td>
-                                </tr>
+                                        </td>
+                                        <td className="px-4 py-2.5 text-slate-400">
+                                            {row.happen_time ? (
+                                                row.happen_time.slice(0, 10)
+                                            ) : (
+                                                <span className="text-slate-700">
+                                                    —
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-slate-300">
+                                            {row.type ?? (
+                                                <span className="text-slate-700">
+                                                    —
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                            <LevelBadge
+                                                level={row.accident_level}
+                                            />
+                                        </td>
+                                        <td className="px-4 py-2.5 text-slate-400">
+                                            {row.degree_injury ?? (
+                                                <span className="text-slate-700">
+                                                    —
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-center font-medium text-red-400">
+                                            {(row.staff_die ?? 0) +
+                                                (row.not_staff_die ?? 0) || (
+                                                <span className="text-slate-700">
+                                                    0
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-center font-medium text-amber-400">
+                                            {(row.staff_hurt ?? 0) +
+                                                (row.not_staff_hurt ?? 0) || (
+                                                <span className="text-slate-700">
+                                                    0
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td
+                                            className="max-w-[140px] truncate px-4 py-2.5 text-slate-400"
+                                            title={row.happen_area ?? ''}
+                                        >
+                                            {row.happen_area ?? (
+                                                <span className="text-slate-700">
+                                                    —
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                            <div className="flex items-center gap-0.5 whitespace-nowrap">
+                                                <button
+                                                    onClick={() =>
+                                                        setDetailId(row.id)
+                                                    }
+                                                    className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
+                                                >
+                                                    <Eye className="h-3.5 w-3.5" />
+                                                    详情
+                                                </button>
+                                                {canManage && (
+                                                    <>
+                                                        <button
+                                                            onClick={() =>
+                                                                setEditId(
+                                                                    row.id,
+                                                                )
+                                                            }
+                                                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                                                            title="编辑"
+                                                        >
+                                                            <Pencil className="h-3.5 w-3.5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                setDeleteRow(
+                                                                    row,
+                                                                )
+                                                            }
+                                                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                                                            title="删除"
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
                                 );
                             })
                         )}
@@ -979,7 +1408,7 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
                     <button
                         onClick={() => handlePage(page - 1)}
                         disabled={page <= 1}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-900/40 text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:opacity-30 disabled:pointer-events-none"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-900/40 text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:pointer-events-none disabled:opacity-30"
                     >
                         <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -989,7 +1418,7 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
                     <button
                         onClick={() => handlePage(page + 1)}
                         disabled={page >= lastPage}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-900/40 text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:opacity-30 disabled:pointer-events-none"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-900/40 text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:pointer-events-none disabled:opacity-30"
                     >
                         <ChevronRight className="h-4 w-4" />
                     </button>
@@ -998,10 +1427,7 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
 
             {/* Detail slide-over */}
             {detailId !== null && (
-                <DetailPanel
-                    id={detailId}
-                    onClose={() => setDetailId(null)}
-                />
+                <DetailPanel id={detailId} onClose={() => setDetailId(null)} />
             )}
 
             {editId !== null && (
@@ -1017,25 +1443,32 @@ function AccidentList({ companyId }: { companyId: number | undefined }) {
 
             {deleteRow !== null && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60" onClick={() => setDeleteRow(null)} />
+                    <div
+                        className="absolute inset-0 bg-black/60"
+                        onClick={() => setDeleteRow(null)}
+                    />
                     <div className="relative w-full max-w-md rounded-2xl border border-blue-900/40 bg-[#070d1f] p-6 shadow-2xl">
-                        <h3 className="text-base font-semibold text-slate-100">删除事故记录</h3>
+                        <h3 className="text-base font-semibold text-slate-100">
+                            删除事故记录
+                        </h3>
                         <p className="mt-2 text-sm leading-6 text-slate-400">
                             确认删除这条事故记录吗？删除后将无法恢复。
                         </p>
                         <div className="mt-5 flex items-center justify-end gap-3">
                             <button
                                 onClick={() => setDeleteRow(null)}
-                                className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                                className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 transition-colors hover:text-slate-200"
                             >
                                 取消
                             </button>
                             <button
                                 onClick={handleDelete}
                                 disabled={deleting}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                             >
-                                {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                {deleting && (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                )}
                                 确认删除
                             </button>
                         </div>
@@ -1067,18 +1500,24 @@ export default function AccidentManagementIndex() {
 
         prevCompanyId.current = companyId;
         queueMicrotask(() => setChartLoading(true));
-        api.get<ApiResponse<AnnualStat[]>>('/bloc-accident-bulletins/annual-stats', {
-            params: { company_id: companyId },
-        })
+        api.get<ApiResponse<AnnualStat[]>>(
+            '/bloc-accident-bulletins/annual-stats',
+            {
+                params: { company_id: companyId },
+            },
+        )
             .then((res) => setChartData(res.data.data))
             .catch(() => setChartData([]))
             .finally(() => setChartLoading(false));
     }, [companyId]);
 
-    const TABS = useMemo(() => [
-        { key: 'chart' as Tab, label: '年度曲线图', icon: Activity },
-        { key: 'list' as Tab, label: '事故列表', icon: List },
-    ], []);
+    const TABS = useMemo(
+        () => [
+            { key: 'chart' as Tab, label: '年度曲线图', icon: Activity },
+            { key: 'list' as Tab, label: '事故列表', icon: List },
+        ],
+        [],
+    );
 
     return (
         <>
@@ -1105,34 +1544,68 @@ export default function AccidentManagementIndex() {
             {activeTab === 'chart' && (
                 <div>
                     <div className="mb-4">
-                        <h1 className="text-lg font-semibold text-slate-100">事故年度趋势</h1>
+                        <h1 className="text-lg font-semibold text-slate-100">
+                            事故年度趋势
+                        </h1>
                         <p className="mt-0.5 text-xs text-slate-600">
                             当前企业及下属企业历年事故数、受伤人数、死亡人数汇总
                         </p>
                     </div>
 
                     {/* Summary cards */}
-                    {!chartLoading && chartData.length > 0 && (() => {
-                        const total_accidents = chartData.reduce((s, d) => s + (d.accident_count ?? 0), 0);
-                        const total_hurt = chartData.reduce((s, d) => s + (d.hurt_count ?? 0), 0);
-                        const total_death = chartData.reduce((s, d) => s + (d.death_count ?? 0), 0);
-                        const cards = [
-                            { label: '累计事故', value: total_accidents, color: 'text-blue-400' },
-                            { label: '累计受伤', value: total_hurt, color: 'text-amber-400' },
-                            { label: '累计死亡', value: total_death, color: 'text-red-400' },
-                        ];
+                    {!chartLoading &&
+                        chartData.length > 0 &&
+                        (() => {
+                            const total_accidents = chartData.reduce(
+                                (s, d) => s + (d.accident_count ?? 0),
+                                0,
+                            );
+                            const total_hurt = chartData.reduce(
+                                (s, d) => s + (d.hurt_count ?? 0),
+                                0,
+                            );
+                            const total_death = chartData.reduce(
+                                (s, d) => s + (d.death_count ?? 0),
+                                0,
+                            );
+                            const cards = [
+                                {
+                                    label: '累计事故',
+                                    value: total_accidents,
+                                    color: 'text-blue-400',
+                                },
+                                {
+                                    label: '累计受伤',
+                                    value: total_hurt,
+                                    color: 'text-amber-400',
+                                },
+                                {
+                                    label: '累计死亡',
+                                    value: total_death,
+                                    color: 'text-red-400',
+                                },
+                            ];
 
-                        return (
-                            <div className="mb-6 grid grid-cols-3 gap-4">
-                                {cards.map(({ label, value, color }) => (
-                                    <div key={label} className="rounded-xl border border-blue-900/30 bg-[#0d1530]/60 p-4">
-                                        <p className="text-xs text-slate-500">{label}</p>
-                                        <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        );
-                    })()}
+                            return (
+                                <div className="mb-6 grid grid-cols-3 gap-4">
+                                    {cards.map(({ label, value, color }) => (
+                                        <div
+                                            key={label}
+                                            className="rounded-xl border border-blue-900/30 bg-[#0d1530]/60 p-4"
+                                        >
+                                            <p className="text-xs text-slate-500">
+                                                {label}
+                                            </p>
+                                            <p
+                                                className={`mt-1 text-2xl font-bold ${color}`}
+                                            >
+                                                {value}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
 
                     <div className="rounded-xl border border-blue-900/30 bg-[#0d1530]/60 p-5">
                         <AnnualChart data={chartData} loading={chartLoading} />
@@ -1140,9 +1613,7 @@ export default function AccidentManagementIndex() {
                 </div>
             )}
 
-            {activeTab === 'list' && (
-                <AccidentList companyId={companyId} />
-            )}
+            {activeTab === 'list' && <AccidentList companyId={companyId} />}
         </>
     );
 }

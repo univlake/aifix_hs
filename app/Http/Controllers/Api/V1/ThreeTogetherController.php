@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreThreeTogetherRequest;
+use App\Http\Requests\Api\V1\UpdateThreeTogetherRequest;
 use App\Models\ThreeTogether;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreThreeTogetherRequest;
-use App\Http\Requests\Api\V1\UpdateThreeTogetherRequest;
 
 class ThreeTogetherController extends Controller
 {
@@ -20,7 +20,7 @@ class ThreeTogetherController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->with(['designUnit', 'evaluationUnit'])
@@ -34,7 +34,7 @@ class ThreeTogetherController extends Controller
     {
         $data = ThreeTogether::with(['designUnit', 'evaluationUnit'])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('三同时管理不存在');
         }
 
@@ -56,7 +56,7 @@ class ThreeTogetherController extends Controller
     {
         $record = ThreeTogether::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('三同时管理不存在');
         }
         $data = $request->validated();
@@ -70,7 +70,7 @@ class ThreeTogetherController extends Controller
     {
         $record = ThreeTogether::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('三同时管理不存在');
         }
 

@@ -11,6 +11,7 @@ import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/types/api-error';
 
 interface SpaceWorkRow {
     id: number;
@@ -52,7 +53,10 @@ function Modal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={onClose}
+            />
             <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
                 {children}
             </div>
@@ -69,12 +73,21 @@ export default function ConfinedSpaceIndex() {
     const canUpdate = !readOnly && canWrite('space-works.update');
     const canDelete = !readOnly && canWrite('space-works.delete');
 
-    const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
-        useApiList<SpaceWorkRow>({
-            endpoint: '/space-works',
-            defaultParams: companyId ? { company_id: companyId } : {},
-            enabled: !!companyId,
-        });
+    const {
+        data,
+        loading,
+        total,
+        current_page,
+        last_page,
+        per_page,
+        reload,
+        goToPage,
+        search,
+    } = useApiList<SpaceWorkRow>({
+        endpoint: '/space-works',
+        defaultParams: companyId ? { company_id: companyId } : {},
+        enabled: !!companyId,
+    });
 
     const crud = useApiCrud('/space-works');
 
@@ -107,7 +120,11 @@ export default function ConfinedSpaceIndex() {
 
     useEffect(() => {
         api.get('/hazards', { params: { per_page: 200 } })
-            .then((response) => setHazardOptions(response.data?.data?.data ?? response.data?.data ?? []))
+            .then((response) =>
+                setHazardOptions(
+                    response.data?.data?.data ?? response.data?.data ?? [],
+                ),
+            )
             .catch(() => {});
     }, []);
 
@@ -119,12 +136,18 @@ export default function ConfinedSpaceIndex() {
             ]);
 
             setSpaceWorkTypes(
-                (typeResponse.data?.data?.data ?? []).map((item: { id: number; title: string }) => ({
-                    id: item.id,
-                    label: item.title,
-                })),
+                (typeResponse.data?.data?.data ?? []).map(
+                    (item: { id: number; title: string }) => ({
+                        id: item.id,
+                        label: item.title,
+                    }),
+                ),
             );
-            setHazardOptions(hazardResponse.data?.data?.data ?? hazardResponse.data?.data ?? []);
+            setHazardOptions(
+                hazardResponse.data?.data?.data ??
+                    hazardResponse.data?.data ??
+                    [],
+            );
         } catch {
             // silently ignore
         }
@@ -144,7 +167,9 @@ export default function ConfinedSpaceIndex() {
         setForm({
             name: row.name ?? '',
             position: row.position ?? '',
-            space_work_type_id: row.space_work_type_id ? String(row.space_work_type_id) : '',
+            space_work_type_id: row.space_work_type_id
+                ? String(row.space_work_type_id)
+                : '',
             size: row.size ?? '',
             people_num: row.people_num ? String(row.people_num) : '',
             hazard_id: row.hazard_id ?? '',
@@ -162,7 +187,9 @@ export default function ConfinedSpaceIndex() {
             const payload: Record<string, unknown> = {
                 name: form.name || null,
                 position: form.position || null,
-                space_work_type_id: form.space_work_type_id ? Number(form.space_work_type_id) : null,
+                space_work_type_id: form.space_work_type_id
+                    ? Number(form.space_work_type_id)
+                    : null,
                 size: form.size || null,
                 people_num: form.people_num ? Number(form.people_num) : null,
                 hazard_id: form.hazard_id || null,
@@ -181,8 +208,8 @@ export default function ConfinedSpaceIndex() {
 
             setDialogOpen(false);
             reload();
-        } catch (error: any) {
-            setFormError(error.response?.data?.message ?? '操作失败，请重试');
+        } catch (error: unknown) {
+            setFormError(getErrorMessage(error, '操作失败，请重试'));
         } finally {
             setFormLoading(false);
         }
@@ -200,7 +227,9 @@ export default function ConfinedSpaceIndex() {
 
     const toggleHazard = (id: string) => {
         const current = (form.hazard_id ?? '').split(',').filter(Boolean);
-        const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+        const next = current.includes(id)
+            ? current.filter((item) => item !== id)
+            : [...current, id];
         set('hazard_id', next.join(','));
     };
 
@@ -208,19 +237,29 @@ export default function ConfinedSpaceIndex() {
         {
             accessorKey: 'name',
             header: '名称',
-            cell: ({ row }) => <span className="font-medium text-slate-200">{row.original.name}</span>,
+            cell: ({ row }) => (
+                <span className="font-medium text-slate-200">
+                    {row.original.name}
+                </span>
+            ),
         },
         {
             accessorKey: 'position',
             header: '所在位置',
             size: 140,
-            cell: ({ row }) => row.original.position ?? <span className="text-slate-700">—</span>,
+            cell: ({ row }) =>
+                row.original.position ?? (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             accessorKey: 'space_work_type',
             header: '有限空间类型',
             size: 130,
-            cell: ({ row }) => row.original.space_work_type?.title ?? <span className="text-slate-700">—</span>,
+            cell: ({ row }) =>
+                row.original.space_work_type?.title ?? (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             accessorKey: 'size',
@@ -228,7 +267,9 @@ export default function ConfinedSpaceIndex() {
             size: 120,
             cell: ({ row }) =>
                 row.original.size ? (
-                    <span className="font-mono text-xs text-slate-300">{row.original.size} m³</span>
+                    <span className="font-mono text-xs text-slate-300">
+                        {row.original.size} m³
+                    </span>
                 ) : (
                     <span className="text-slate-700">—</span>
                 ),
@@ -246,7 +287,12 @@ export default function ConfinedSpaceIndex() {
                 const titles = value
                     .split(',')
                     .filter(Boolean)
-                    .map((id) => hazardOptions.find((hazard) => String(hazard.id) === id)?.title ?? id);
+                    .map(
+                        (id) =>
+                            hazardOptions.find(
+                                (hazard) => String(hazard.id) === id,
+                            )?.title ?? id,
+                    );
 
                 if (!titles.length) {
                     return <span className="text-slate-700">—</span>;
@@ -270,7 +316,10 @@ export default function ConfinedSpaceIndex() {
             accessorKey: 'people_num',
             header: '作业人数',
             size: 80,
-            cell: ({ row }) => row.original.people_num ?? <span className="text-slate-700">—</span>,
+            cell: ({ row }) =>
+                row.original.people_num ?? (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             id: 'actions',
@@ -278,7 +327,10 @@ export default function ConfinedSpaceIndex() {
             size: readOnly ? 76 : 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
-                    <DetailButton row={row.original} onOpen={detail.openDetail} />
+                    <DetailButton
+                        row={row.original}
+                        onOpen={detail.openDetail}
+                    />
                     {canUpdate && (
                         <button
                             onClick={() => openEdit(row.original)}
@@ -302,16 +354,21 @@ export default function ConfinedSpaceIndex() {
 
     const detailData = detailItem
         ? {
-            ...detailItem,
-            space_work_type: detailItem.space_work_type?.title ?? null,
-            hazards: detailItem.hazard_id
-                ? detailItem.hazard_id
-                    .split(',')
-                    .filter(Boolean)
-                    .map((id) => hazardOptions.find((hazard) => String(hazard.id) === id)?.title ?? id)
-                    .join('、')
-                : null,
-        }
+              ...detailItem,
+              space_work_type: detailItem.space_work_type?.title ?? null,
+              hazards: detailItem.hazard_id
+                  ? detailItem.hazard_id
+                        .split(',')
+                        .filter(Boolean)
+                        .map(
+                            (id) =>
+                                hazardOptions.find(
+                                    (hazard) => String(hazard.id) === id,
+                                )?.title ?? id,
+                        )
+                        .join('、')
+                  : null,
+          }
         : null;
 
     return (
@@ -320,9 +377,15 @@ export default function ConfinedSpaceIndex() {
 
             <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-100">有限空间辨识</h1>
+                    <h1 className="text-xl font-bold text-slate-100">
+                        有限空间辨识
+                    </h1>
                     <p className="mt-0.5 text-xs text-slate-600">
-                        共 <span className="font-medium text-slate-400">{total}</span> 条记录
+                        共{' '}
+                        <span className="font-medium text-slate-400">
+                            {total}
+                        </span>{' '}
+                        条记录
                     </p>
                 </div>
                 {canCreate && (
@@ -369,9 +432,13 @@ export default function ConfinedSpaceIndex() {
             <Modal open={dialogOpen} onClose={() => setDialogOpen(false)}>
                 <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
                     <div>
-                        <h2 className="text-base font-semibold text-slate-100">{editingId ? '编辑' : '新增'}有限空间</h2>
+                        <h2 className="text-base font-semibold text-slate-100">
+                            {editingId ? '编辑' : '新增'}有限空间
+                        </h2>
                         <p className="mt-0.5 text-xs text-slate-600">
-                            {editingId ? '修改有限空间档案信息' : '填写信息后保存新记录'}
+                            {editingId
+                                ? '修改有限空间档案信息'
+                                : '填写信息后保存新记录'}
                         </p>
                     </div>
                     <button
@@ -393,41 +460,64 @@ export default function ConfinedSpaceIndex() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    名称 <span className="ml-1 text-blue-500">*</span>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    名称{' '}
+                                    <span className="ml-1 text-blue-500">
+                                        *
+                                    </span>
                                 </label>
                                 <input
                                     type="text"
                                     value={form.name}
-                                    onChange={(event) => set('name', event.target.value)}
+                                    onChange={(event) =>
+                                        set('name', event.target.value)
+                                    }
                                     placeholder="有限空间名称"
                                     className={inputCls}
                                 />
                             </div>
 
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">所在位置</label>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    所在位置
+                                </label>
                                 <input
                                     type="text"
                                     value={form.position}
-                                    onChange={(event) => set('position', event.target.value)}
+                                    onChange={(event) =>
+                                        set('position', event.target.value)
+                                    }
                                     placeholder="具体位置"
                                     className={inputCls}
                                 />
                             </div>
 
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">有限空间类型</label>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    有限空间类型
+                                </label>
                                 <select
                                     value={form.space_work_type_id}
-                                    onChange={(event) => set('space_work_type_id', event.target.value)}
-                                    className={cn(inputCls, 'cursor-pointer appearance-none')}
+                                    onChange={(event) =>
+                                        set(
+                                            'space_work_type_id',
+                                            event.target.value,
+                                        )
+                                    }
+                                    className={cn(
+                                        inputCls,
+                                        'cursor-pointer appearance-none',
+                                    )}
                                 >
                                     <option value="" className="bg-[#0d1530]">
                                         请选择
                                     </option>
                                     {spaceWorkTypes.map((option) => (
-                                        <option key={option.id} value={String(option.id)} className="bg-[#0d1530]">
+                                        <option
+                                            key={option.id}
+                                            value={String(option.id)}
+                                            className="bg-[#0d1530]"
+                                        >
                                             {option.label}
                                         </option>
                                     ))}
@@ -435,37 +525,48 @@ export default function ConfinedSpaceIndex() {
                             </div>
 
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
-                                    空间大小 <span className="ml-1 normal-case font-normal text-slate-600">(m³)</span>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    空间大小{' '}
+                                    <span className="ml-1 font-normal text-slate-600 normal-case">
+                                        (m³)
+                                    </span>
                                 </label>
                                 <div className="relative">
                                     <input
                                         type="text"
                                         value={form.size}
-                                        onChange={(event) => set('size', event.target.value)}
+                                        onChange={(event) =>
+                                            set('size', event.target.value)
+                                        }
                                         placeholder="请输入体积数值"
                                         className={cn(inputCls, 'pr-10')}
                                     />
-                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-600">
+                                    <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-slate-600">
                                         m³
                                     </span>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">可能涉及作业人数</label>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    可能涉及作业人数
+                                </label>
                                 <input
                                     type="number"
                                     min="0"
                                     value={form.people_num}
-                                    onChange={(event) => set('people_num', event.target.value)}
+                                    onChange={(event) =>
+                                        set('people_num', event.target.value)
+                                    }
                                     placeholder="人数"
                                     className={inputCls}
                                 />
                             </div>
 
                             <div className="col-span-2">
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">危险有害因素</label>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    危险有害因素
+                                </label>
                                 <div className="flex flex-wrap gap-2">
                                     {hazardOptions.map((hazard) => {
                                         const selected = (form.hazard_id ?? '')
@@ -477,7 +578,11 @@ export default function ConfinedSpaceIndex() {
                                             <button
                                                 key={hazard.id}
                                                 type="button"
-                                                onClick={() => toggleHazard(String(hazard.id))}
+                                                onClick={() =>
+                                                    toggleHazard(
+                                                        String(hazard.id),
+                                                    )
+                                                }
                                                 className={cn(
                                                     'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
                                                     selected
@@ -488,24 +593,32 @@ export default function ConfinedSpaceIndex() {
                                                 <span
                                                     className={cn(
                                                         'h-1.5 w-1.5 shrink-0 rounded-full',
-                                                        selected ? 'bg-amber-400' : 'bg-slate-700',
+                                                        selected
+                                                            ? 'bg-amber-400'
+                                                            : 'bg-slate-700',
                                                     )}
                                                 />
                                                 {hazard.title}
                                             </button>
                                         );
                                     })}
-                                    {hazardOptions.length === 0 && <span className="text-xs text-slate-700">加载中...</span>}
+                                    {hazardOptions.length === 0 && (
+                                        <span className="text-xs text-slate-700">
+                                            加载中...
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="col-span-2">
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                                     可能涉及的作业内容
                                 </label>
                                 <textarea
                                     value={form.word_content}
-                                    onChange={(event) => set('word_content', event.target.value)}
+                                    onChange={(event) =>
+                                        set('word_content', event.target.value)
+                                    }
                                     rows={3}
                                     placeholder="描述可能涉及的作业内容"
                                     className={cn(inputCls, 'resize-none')}
@@ -527,7 +640,9 @@ export default function ConfinedSpaceIndex() {
                         disabled={formLoading}
                         className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/30 disabled:pointer-events-none disabled:opacity-50"
                     >
-                        {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        {formLoading && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        )}
                         {formLoading ? '保存中...' : '保存'}
                     </button>
                 </div>
@@ -538,10 +653,15 @@ export default function ConfinedSpaceIndex() {
                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                         <Trash2 className="h-5 w-5 text-red-400" />
                     </div>
-                    <h2 className="mb-1 text-base font-semibold text-slate-100">删除有限空间</h2>
+                    <h2 className="mb-1 text-base font-semibold text-slate-100">
+                        删除有限空间
+                    </h2>
                     <p className="text-sm text-slate-500">
-                        确定要删除 &ldquo;<span className="font-medium text-slate-300">{deleteItem?.name}</span>&rdquo;
-                        吗？此操作不可撤销。
+                        确定要删除 &ldquo;
+                        <span className="font-medium text-slate-300">
+                            {deleteItem?.name}
+                        </span>
+                        &rdquo; 吗？此操作不可撤销。
                     </p>
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
@@ -556,7 +676,9 @@ export default function ConfinedSpaceIndex() {
                         disabled={crud.loading}
                         className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/25 disabled:pointer-events-none disabled:opacity-50"
                     >
-                        {crud.loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        {crud.loading && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        )}
                         {crud.loading ? '删除中...' : '确认删除'}
                     </button>
                 </div>

@@ -16,9 +16,14 @@ const config: CrudPageConfig = {
             key: 'type',
             header: '检查类型',
             width: 90,
-            render: (value) => value
-                ? <span className="rounded-md border border-cyan-900/40 bg-cyan-600/8 px-2 py-0.5 text-xs text-cyan-400">{value as string}</span>
-                : <span className="text-slate-700">—</span>,
+            render: (value) =>
+                value ? (
+                    <span className="rounded-md border border-cyan-900/40 bg-cyan-600/8 px-2 py-0.5 text-xs text-cyan-400">
+                        {value as string}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         { key: 'department', header: '部门', width: 140 },
         { key: 'number', header: '检查人数', width: 100 },
@@ -37,7 +42,12 @@ const config: CrudPageConfig = {
         { key: 'department', label: '部门', type: 'text' },
         { key: 'number', label: '检查人数', type: 'text' },
         { key: 'checkup_date', label: '检查日期', type: 'date' },
-        { key: 'checkup_expiry', label: '体检结果', type: 'textarea', colSpan: 2 },
+        {
+            key: 'checkup_expiry',
+            label: '体检结果',
+            type: 'textarea',
+            colSpan: 2,
+        },
         { key: 'measure', label: '防控措施', type: 'textarea', colSpan: 2 },
         { key: 'annex_url', label: '附件', type: 'file', colSpan: 2 },
     ],

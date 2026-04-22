@@ -16,9 +16,13 @@ const teamsConfig: CrudPageConfig = {
             render: (val) => {
                 const s = val ? String(val) : '';
 
-                return s
-                    ? <span title={s}>{s.length > 20 ? s.slice(0, 20) + '…' : s}</span>
-                    : <span className="text-slate-700">—</span>;
+                return s ? (
+                    <span title={s}>
+                        {s.length > 20 ? s.slice(0, 20) + '…' : s}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                );
             },
         },
         { key: 'team_number', header: '队伍人数', width: 100 },
@@ -63,9 +67,13 @@ const suppliesConfig: CrudPageConfig = {
             render: (val) => {
                 const s = val ? String(val) : '';
 
-                return s
-                    ? <span title={s}>{s.length > 30 ? s.slice(0, 30) + '…' : s}</span>
-                    : <span className="text-slate-700">—</span>;
+                return s ? (
+                    <span title={s}>
+                        {s.length > 30 ? s.slice(0, 30) + '…' : s}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                );
             },
         },
     ],
@@ -91,7 +99,12 @@ const drillConfig: CrudPageConfig = {
             key: 'drill_time',
             header: '演练时间',
             width: 110,
-            render: (val) => val ? String(val).slice(0, 10) : <span className="text-slate-700">—</span>,
+            render: (val) =>
+                val ? (
+                    String(val).slice(0, 10)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         { key: 'drill_local', header: '演练地点', width: 130 },
         { key: 'organization_department', header: '组织部门', width: 130 },
@@ -99,7 +112,13 @@ const drillConfig: CrudPageConfig = {
         { key: 'drill_number', header: '参演人数', width: 90 },
     ],
     formFields: [
-        { key: 'name', label: '演练名称', type: 'text', required: true, colSpan: 2 },
+        {
+            key: 'name',
+            label: '演练名称',
+            type: 'text',
+            required: true,
+            colSpan: 2,
+        },
         { key: 'drill_time', label: '演练时间', type: 'date' },
         { key: 'drill_local', label: '演练地点', type: 'text' },
         { key: 'organization_department', label: '组织部门', type: 'text' },
@@ -177,7 +196,10 @@ export default function EmergencyIndex() {
                                     : 'border-transparent text-slate-500 hover:text-slate-300'
                             }`}
                         >
-                            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                            <Icon
+                                className="h-4 w-4 shrink-0"
+                                strokeWidth={1.5}
+                            />
                             {tab.label}
                         </button>
                     );

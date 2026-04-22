@@ -10,7 +10,7 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!$request->user()) {
+        if (! $request->user()) {
             return response()->json([
                 'status' => 'error',
                 'code' => 401,
@@ -18,7 +18,7 @@ class RoleMiddleware
             ], 401);
         }
 
-        if (!$request->user()->hasAnyRole(...$roles)) {
+        if (! $request->user()->hasAnyRole(...$roles)) {
             return response()->json([
                 'status' => 'error',
                 'code' => 403,

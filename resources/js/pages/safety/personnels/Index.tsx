@@ -1,7 +1,18 @@
 import { Head } from '@inertiajs/react';
 import {
-    Loader2, Save, Plus, Pencil, Trash2, X, AlertTriangle,
-    Users, ShieldCheck, Flame, HardHat, Download, Upload,
+    Loader2,
+    Save,
+    Plus,
+    Pencil,
+    Trash2,
+    X,
+    AlertTriangle,
+    Users,
+    ShieldCheck,
+    Flame,
+    HardHat,
+    Download,
+    Upload,
 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { DetailButton } from '@/components/shared/DetailButton';
@@ -12,6 +23,7 @@ import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/types/api-error';
 import type { ApiResponse, PaginatedData } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -41,9 +53,16 @@ interface CertStatus {
 }
 
 const EMPTY_STATS: PersonnelStats = {
-    total_people: 0, staff: 0, service: 0, manager: 0,
-    high_school_diploma: 0, safety_engineer: 0, safety_engineering_major: 0,
-    fire_engineer: 0, security_officer: 0, other: 0,
+    total_people: 0,
+    staff: 0,
+    service: 0,
+    manager: 0,
+    high_school_diploma: 0,
+    safety_engineer: 0,
+    safety_engineering_major: 0,
+    fire_engineer: 0,
+    security_officer: 0,
+    other: 0,
 };
 
 // Certificate status types
@@ -63,7 +82,9 @@ const FIRE_CERT_TYPES = [
 export default function PersonnelsIndex() {
     const { activeCompany } = useScope();
     const companyId = activeCompany?.id;
-    const [activeTab, setActiveTab] = useState<'safety-mgmt' | 'special-op' | 'fire-control'>('safety-mgmt');
+    const [activeTab, setActiveTab] = useState<
+        'safety-mgmt' | 'special-op' | 'fire-control'
+    >('safety-mgmt');
 
     return (
         <>
@@ -71,14 +92,29 @@ export default function PersonnelsIndex() {
 
             <div className="mb-6">
                 <h1 className="text-xl font-bold text-slate-100">人员管理</h1>
-                <p className="mt-0.5 text-xs text-slate-600">管理企业人员信息、专业资质及持证情况</p>
+                <p className="mt-0.5 text-xs text-slate-600">
+                    管理企业人员信息、专业资质及持证情况
+                </p>
             </div>
 
             <div className="space-y-6">
                 <EmploymentStatsSection companyId={companyId} />
-                <CertStatusSection companyId={companyId} types={SAFETY_CERT_TYPES} title="安全生产三类人员持证情况" />
-                <CertStatusSection companyId={companyId} types={FIRE_CERT_TYPES} title="消防人员持证情况" icon="fire" />
-                <StaffSubModulesSection companyId={companyId} activeTab={activeTab} onTabChange={setActiveTab} />
+                <CertStatusSection
+                    companyId={companyId}
+                    types={SAFETY_CERT_TYPES}
+                    title="安全生产三类人员持证情况"
+                />
+                <CertStatusSection
+                    companyId={companyId}
+                    types={FIRE_CERT_TYPES}
+                    title="消防人员持证情况"
+                    icon="fire"
+                />
+                <StaffSubModulesSection
+                    companyId={companyId}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
             </div>
         </>
     );
@@ -86,7 +122,11 @@ export default function PersonnelsIndex() {
 
 // ── Section 1 & 2: Employment Statistics ─────────────────────────
 
-function EmploymentStatsSection({ companyId }: { companyId: number | undefined }) {
+function EmploymentStatsSection({
+    companyId,
+}: {
+    companyId: number | undefined;
+}) {
     const [stats, setStats] = useState<PersonnelStats>(EMPTY_STATS);
     const [savedStats, setSavedStats] = useState<PersonnelStats>(EMPTY_STATS);
     const [recordId, setRecordId] = useState<number | null>(null);
@@ -101,27 +141,30 @@ function EmploymentStatsSection({ companyId }: { companyId: number | undefined }
 
     useEffect(() => {
         if (!companyId) {
-return;
-}
+            return;
+        }
 
         setLoading(true);
         api.get<ApiResponse<PaginatedData<PersonnelStats>>>('/personnels', {
             params: { company_id: companyId, per_page: 1 },
-        }).then(({ data: res }) => {
-            const first = res.data?.data?.[0];
+        })
+            .then(({ data: res }) => {
+                const first = res.data?.data?.[0];
 
-            if (first) {
-                setStats(first);
-                setSavedStats(first);
-                setRecordId((first as any).id ?? null);
-            }
-        }).catch(() => {}).finally(() => setLoading(false));
+                if (first) {
+                    setStats(first);
+                    setSavedStats(first);
+                    setRecordId((first as any).id ?? null);
+                }
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
     }, [companyId]);
 
     const handleSave = async () => {
         if (!companyId) {
-return;
-}
+            return;
+        }
 
         setSaving(true);
         setError('');
@@ -132,7 +175,9 @@ return;
             if (recordId) {
                 await api.put(`/personnels/${recordId}`, payload);
             } else {
-                const { data: res } = await api.post<ApiResponse<{ id: number }>>('/personnels', payload);
+                const { data: res } = await api.post<
+                    ApiResponse<{ id: number }>
+                >('/personnels', payload);
                 setRecordId((res.data as any).id);
             }
 
@@ -140,8 +185,8 @@ return;
             setSaved(true);
             setEditMode(false);
             setTimeout(() => setSaved(false), 2500);
-        } catch (err: any) {
-            setError(err.response?.data?.message ?? '保存失败，请重试');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, '保存失败，请重试'));
         } finally {
             setSaving(false);
         }
@@ -175,13 +220,19 @@ return;
                     取消
                 </button>
             )}
-            <SaveButton saving={saving} saved={saved} disabled={loading} onClick={handleSave} />
+            <SaveButton
+                saving={saving}
+                saved={saved}
+                disabled={loading}
+                onClick={handleSave}
+            />
         </div>
     ) : (
         <button
             onClick={() => {
- setEditMode(true); setError(''); 
-}}
+                setEditMode(true);
+                setError('');
+            }}
             className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200"
         >
             <Pencil className="h-3 w-3" />
@@ -196,19 +247,48 @@ return;
             action={!loading ? actionButtons : undefined}
         >
             {error && <ErrorBanner>{error}</ErrorBanner>}
-            {loading ? <LoadingRow /> : (
+            {loading ? (
+                <LoadingRow />
+            ) : (
                 <div className="space-y-5">
                     {/* Basic employment */}
                     <div>
-                        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <p className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                             基本用工信息
                         </p>
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                            <StatField label="从业人员总数" field={isEditing ? num('total_people') : val('total_people')} />
-                            <StatField label="合同制员工" field={isEditing ? num('staff') : val('staff')} />
-                            <StatField label="劳务派遣人员" field={isEditing ? num('service') : val('service')} />
-                            <StatField label="管理人员" field={isEditing ? num('manager') : val('manager')} />
-                            <StatField label="高中及以上学历" field={isEditing ? num('high_school_diploma') : val('high_school_diploma')} />
+                            <StatField
+                                label="从业人员总数"
+                                field={
+                                    isEditing
+                                        ? num('total_people')
+                                        : val('total_people')
+                                }
+                            />
+                            <StatField
+                                label="合同制员工"
+                                field={isEditing ? num('staff') : val('staff')}
+                            />
+                            <StatField
+                                label="劳务派遣人员"
+                                field={
+                                    isEditing ? num('service') : val('service')
+                                }
+                            />
+                            <StatField
+                                label="管理人员"
+                                field={
+                                    isEditing ? num('manager') : val('manager')
+                                }
+                            />
+                            <StatField
+                                label="高中及以上学历"
+                                field={
+                                    isEditing
+                                        ? num('high_school_diploma')
+                                        : val('high_school_diploma')
+                                }
+                            />
                         </div>
                     </div>
 
@@ -216,15 +296,46 @@ return;
 
                     {/* Professional personnel */}
                     <div>
-                        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <p className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                             专业人员信息
                         </p>
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                            <StatField label="注册安全工程师" field={isEditing ? num('safety_engineer') : val('safety_engineer')} />
-                            <StatField label="安全工程专业人员" field={isEditing ? num('safety_engineering_major') : val('safety_engineering_major')} />
-                            <StatField label="注册消防工程师" field={isEditing ? num('fire_engineer') : val('fire_engineer')} />
-                            <StatField label="安全管理人员" field={isEditing ? num('security_officer') : val('security_officer')} />
-                            <StatField label="其他人员" field={isEditing ? num('other') : val('other')} />
+                            <StatField
+                                label="注册安全工程师"
+                                field={
+                                    isEditing
+                                        ? num('safety_engineer')
+                                        : val('safety_engineer')
+                                }
+                            />
+                            <StatField
+                                label="安全工程专业人员"
+                                field={
+                                    isEditing
+                                        ? num('safety_engineering_major')
+                                        : val('safety_engineering_major')
+                                }
+                            />
+                            <StatField
+                                label="注册消防工程师"
+                                field={
+                                    isEditing
+                                        ? num('fire_engineer')
+                                        : val('fire_engineer')
+                                }
+                            />
+                            <StatField
+                                label="安全管理人员"
+                                field={
+                                    isEditing
+                                        ? num('security_officer')
+                                        : val('security_officer')
+                                }
+                            />
+                            <StatField
+                                label="其他人员"
+                                field={isEditing ? num('other') : val('other')}
+                            />
                         </div>
                     </div>
                 </div>
@@ -256,38 +367,52 @@ function CertStatusSection({
 
     const fetchRows = useCallback(() => {
         if (!companyId) {
-return;
-}
+            return;
+        }
 
         setLoading(true);
         // Fetch all types in one call via multiple requests, merge results
         Promise.all(
             typeIds.map((t) =>
-                api.get<ApiResponse<PaginatedData<CertStatus>>>('/certificate-statuses', {
-                    params: { company_id: companyId, type: t, per_page: 1 },
-                }).then(({ data: res }) => res.data?.data?.[0] ?? null)
-            )
-        ).then((results) => {
-            // Merge fetched records with defaults
-            const merged = types.map((t, idx) => {
-                const existing = results[idx];
+                api
+                    .get<ApiResponse<PaginatedData<CertStatus>>>(
+                        '/certificate-statuses',
+                        {
+                            params: {
+                                company_id: companyId,
+                                type: t,
+                                per_page: 1,
+                            },
+                        },
+                    )
+                    .then(({ data: res }) => res.data?.data?.[0] ?? null),
+            ),
+        )
+            .then((results) => {
+                // Merge fetched records with defaults
+                const merged = types.map((t, idx) => {
+                    const existing = results[idx];
 
-                return existing ?? {
-                    type: t.type,
-                    name: t.name,
-                    should_obtain_people: null,
-                    already_obtain_people: null,
-                    no_obtain_people: '',
-                    train_people: null,
-                };
-            });
-            setRows(merged);
-        }).catch(() => {}).finally(() => setLoading(false));
+                    return (
+                        existing ?? {
+                            type: t.type,
+                            name: t.name,
+                            should_obtain_people: null,
+                            already_obtain_people: null,
+                            no_obtain_people: '',
+                            train_people: null,
+                        }
+                    );
+                });
+                setRows(merged);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
     }, [companyId]);
 
     useEffect(() => {
- fetchRows(); 
-}, [fetchRows]);
+        fetchRows();
+    }, [fetchRows]);
 
     const openEdit = (row: CertStatus) => {
         setEditingRow({ ...row });
@@ -296,25 +421,32 @@ return;
 
     const handleSave = async () => {
         if (!editingRow || !companyId) {
-return;
-}
+            return;
+        }
 
         setSaving(true);
         setError('');
 
         try {
-            const payload = { ...editingRow, company_id: companyId, name: editingRow.name };
+            const payload = {
+                ...editingRow,
+                company_id: companyId,
+                name: editingRow.name,
+            };
 
             if (editingRow.id) {
-                await api.put(`/certificate-statuses/${editingRow.id}`, payload);
+                await api.put(
+                    `/certificate-statuses/${editingRow.id}`,
+                    payload,
+                );
             } else {
                 await api.post('/certificate-statuses', payload);
             }
 
             setEditingRow(null);
             fetchRows();
-        } catch (err: any) {
-            setError(err.response?.data?.message ?? '保存失败，请重试');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, '保存失败，请重试'));
         } finally {
             setSaving(false);
         }
@@ -325,15 +457,33 @@ return;
     return (
         <SectionCard
             title={title}
-            icon={icon === 'fire' ? <Flame className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+            icon={
+                icon === 'fire' ? (
+                    <Flame className="h-4 w-4" />
+                ) : (
+                    <ShieldCheck className="h-4 w-4" />
+                )
+            }
         >
-            {loading ? <LoadingRow /> : (
+            {loading ? (
+                <LoadingRow />
+            ) : (
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-blue-900/20">
-                                {['类别', '已取证人数', '应取证人数', '未取证说明', '培训人数', '操作'].map((h) => (
-                                    <th key={h} className="pb-2 pr-4 text-left text-xs font-medium uppercase tracking-wide text-slate-500 last:pr-0">
+                                {[
+                                    '类别',
+                                    '已取证人数',
+                                    '应取证人数',
+                                    '未取证说明',
+                                    '培训人数',
+                                    '操作',
+                                ].map((h) => (
+                                    <th
+                                        key={h}
+                                        className="pr-4 pb-2 text-left text-xs font-medium tracking-wide text-slate-500 uppercase last:pr-0"
+                                    >
                                         {h}
                                     </th>
                                 ))}
@@ -341,16 +491,31 @@ return;
                         </thead>
                         <tbody>
                             {rows.map((row) => (
-                                <tr key={row.type} className="border-b border-blue-900/10 last:border-0">
-                                    <td className="py-3 pr-4 font-medium text-slate-300">{typeName(row.type)}</td>
-                                    <td className="py-3 pr-4 text-slate-400">{row.already_obtain_people ?? <Dash />}</td>
-                                    <td className="py-3 pr-4 text-slate-400">{row.should_obtain_people ?? <Dash />}</td>
-                                    <td className="max-w-[180px] py-3 pr-4 text-slate-400">
-                                        {row.no_obtain_people
-                                            ? <span className="block truncate">{row.no_obtain_people}</span>
-                                            : <Dash />}
+                                <tr
+                                    key={row.type}
+                                    className="border-b border-blue-900/10 last:border-0"
+                                >
+                                    <td className="py-3 pr-4 font-medium text-slate-300">
+                                        {typeName(row.type)}
                                     </td>
-                                    <td className="py-3 pr-4 text-slate-400">{row.train_people ?? <Dash />}</td>
+                                    <td className="py-3 pr-4 text-slate-400">
+                                        {row.already_obtain_people ?? <Dash />}
+                                    </td>
+                                    <td className="py-3 pr-4 text-slate-400">
+                                        {row.should_obtain_people ?? <Dash />}
+                                    </td>
+                                    <td className="max-w-[180px] py-3 pr-4 text-slate-400">
+                                        {row.no_obtain_people ? (
+                                            <span className="block truncate">
+                                                {row.no_obtain_people}
+                                            </span>
+                                        ) : (
+                                            <Dash />
+                                        )}
+                                    </td>
+                                    <td className="py-3 pr-4 text-slate-400">
+                                        {row.train_people ?? <Dash />}
+                                    </td>
                                     <td className="py-3">
                                         <button
                                             onClick={() => openEdit(row)}
@@ -369,13 +534,19 @@ return;
             {/* Edit modal */}
             {editingRow && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEditingRow(null)} />
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setEditingRow(null)}
+                    />
                     <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl">
                         <div className="flex items-center justify-between border-b border-blue-900/30 px-5 py-4">
                             <h2 className="text-sm font-semibold text-slate-100">
                                 编辑持证情况 — {typeName(editingRow.type)}
                             </h2>
-                            <button onClick={() => setEditingRow(null)} className="text-slate-600 hover:text-slate-300">
+                            <button
+                                onClick={() => setEditingRow(null)}
+                                className="text-slate-600 hover:text-slate-300"
+                            >
                                 <X className="h-4 w-4" />
                             </button>
                         </div>
@@ -383,20 +554,47 @@ return;
                             {error && <ErrorBanner>{error}</ErrorBanner>}
                             <ModalField label="已取证人数">
                                 <NumberInput
-                                    value={editingRow.already_obtain_people ?? 0}
-                                    onChange={(v) => setEditingRow((r) => r && { ...r, already_obtain_people: v })}
+                                    value={
+                                        editingRow.already_obtain_people ?? 0
+                                    }
+                                    onChange={(v) =>
+                                        setEditingRow(
+                                            (r) =>
+                                                r && {
+                                                    ...r,
+                                                    already_obtain_people: v,
+                                                },
+                                        )
+                                    }
                                 />
                             </ModalField>
                             <ModalField label="应取证人数">
                                 <NumberInput
                                     value={editingRow.should_obtain_people ?? 0}
-                                    onChange={(v) => setEditingRow((r) => r && { ...r, should_obtain_people: v })}
+                                    onChange={(v) =>
+                                        setEditingRow(
+                                            (r) =>
+                                                r && {
+                                                    ...r,
+                                                    should_obtain_people: v,
+                                                },
+                                        )
+                                    }
                                 />
                             </ModalField>
                             <ModalField label="未取证说明">
                                 <textarea
                                     value={editingRow.no_obtain_people}
-                                    onChange={(e) => setEditingRow((r) => r && { ...r, no_obtain_people: e.target.value })}
+                                    onChange={(e) =>
+                                        setEditingRow(
+                                            (r) =>
+                                                r && {
+                                                    ...r,
+                                                    no_obtain_people:
+                                                        e.target.value,
+                                                },
+                                        )
+                                    }
                                     rows={2}
                                     placeholder="说明未取证原因或情况"
                                     className={inputClass + ' resize-none'}
@@ -405,7 +603,12 @@ return;
                             <ModalField label="培训人数">
                                 <NumberInput
                                     value={editingRow.train_people ?? 0}
-                                    onChange={(v) => setEditingRow((r) => r && { ...r, train_people: v })}
+                                    onChange={(v) =>
+                                        setEditingRow(
+                                            (r) =>
+                                                r && { ...r, train_people: v },
+                                        )
+                                    }
                                 />
                             </ModalField>
                         </div>
@@ -419,9 +622,11 @@ return;
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/30 disabled:opacity-50 disabled:pointer-events-none"
+                                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/30 disabled:pointer-events-none disabled:opacity-50"
                             >
-                                {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                {saving && (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                )}
                                 {saving ? '保存中...' : '保存'}
                             </button>
                         </div>
@@ -448,17 +653,36 @@ function StaffSubModulesSection({
     const [safetyMgmtTypes, setSafetyMgmtTypes] = useState<SelectOption[]>([]);
 
     useEffect(() => {
-        api.get<ApiResponse<{ data: { id: number; title: string }[] }>>('/safety-management-types')
+        api.get<ApiResponse<{ data: { id: number; title: string }[] }>>(
+            '/safety-management-types',
+        )
             .then(({ data: res }) => {
-                setSafetyMgmtTypes((res.data?.data ?? []).map((t) => ({ value: t.id, label: t.title })));
+                setSafetyMgmtTypes(
+                    (res.data?.data ?? []).map((t) => ({
+                        value: t.id,
+                        label: t.title,
+                    })),
+                );
             })
             .catch(() => {});
     }, []);
 
     const tabs: { id: SubTab; label: string; icon: React.ReactNode }[] = [
-        { id: 'safety-mgmt', label: '安全管理人员', icon: <ShieldCheck className="h-3.5 w-3.5" /> },
-        { id: 'special-op', label: '特种作业及设备操作人员', icon: <HardHat className="h-3.5 w-3.5" /> },
-        { id: 'fire-control', label: '消防控制室人员', icon: <Flame className="h-3.5 w-3.5" /> },
+        {
+            id: 'safety-mgmt',
+            label: '安全管理人员',
+            icon: <ShieldCheck className="h-3.5 w-3.5" />,
+        },
+        {
+            id: 'special-op',
+            label: '特种作业及设备操作人员',
+            icon: <HardHat className="h-3.5 w-3.5" />,
+        },
+        {
+            id: 'fire-control',
+            label: '消防控制室人员',
+            icon: <Flame className="h-3.5 w-3.5" />,
+        },
     ];
 
     return (
@@ -472,7 +696,7 @@ function StaffSubModulesSection({
                         className={cn(
                             'flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors',
                             activeTab === tab.id
-                                ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                                ? 'border border-blue-500/30 bg-blue-600/20 text-blue-300'
                                 : 'text-slate-500 hover:text-slate-300',
                         )}
                     >
@@ -491,11 +715,16 @@ function StaffSubModulesSection({
                         {
                             key: 'safety_management_type_id',
                             header: '人员类型',
-                            valueGetter: (row) => (row.safety_management_type as any)?.title,
+                            valueGetter: (row) =>
+                                (row.safety_management_type as any)?.title,
                         },
                         { key: 'cert_title', header: '证书名称' },
                         { key: 'cert_number', header: '证书编号' },
-                        { key: 'valid_period', header: '有效期', format: (v) => v ? String(v).slice(0, 10) : '' },
+                        {
+                            key: 'valid_period',
+                            header: '有效期',
+                            format: (v) => (v ? String(v).slice(0, 10) : ''),
+                        },
                     ]}
                     formFields={[
                         { key: 'name', label: '姓名', required: true },
@@ -521,7 +750,11 @@ function StaffSubModulesSection({
                         { key: 'name', header: '姓名' },
                         { key: 'cert_title', header: '证书名称' },
                         { key: 'cert_number', header: '证书编号' },
-                        { key: 'valid_period', header: '有效期', format: (v) => v ? String(v).slice(0, 10) : '' },
+                        {
+                            key: 'valid_period',
+                            header: '有效期',
+                            format: (v) => (v ? String(v).slice(0, 10) : ''),
+                        },
                     ]}
                     formFields={[
                         { key: 'name', label: '姓名', required: true },
@@ -540,7 +773,11 @@ function StaffSubModulesSection({
                         { key: 'name', header: '姓名' },
                         { key: 'cert_title', header: '证书名称' },
                         { key: 'cert_number', header: '证书编号' },
-                        { key: 'valid_period', header: '有效期', format: (v) => v ? String(v).slice(0, 10) : '' },
+                        {
+                            key: 'valid_period',
+                            header: '有效期',
+                            format: (v) => (v ? String(v).slice(0, 10) : ''),
+                        },
                     ]}
                     formFields={[
                         { key: 'name', label: '姓名', required: true },
@@ -587,7 +824,9 @@ function StaffTable({
     columns: TableColumn[];
     formFields: FormFieldDef[];
 }) {
-    const { data, loading, reload, total } = useApiList<Record<string, unknown>>({
+    const { data, loading, reload, total } = useApiList<
+        Record<string, unknown>
+    >({
         endpoint,
         defaultParams: companyId ? { company_id: companyId } : {},
         enabled: !!companyId,
@@ -613,8 +852,8 @@ function StaffTable({
     const initForm = () => {
         const f: Record<string, string> = {};
         formFields.forEach((f2) => {
- f[f2.key] = ''; 
-});
+            f[f2.key] = '';
+        });
 
         return f;
     };
@@ -631,7 +870,10 @@ function StaffTable({
         const f: Record<string, string> = {};
         formFields.forEach((f2) => {
             const raw = row[f2.key] ?? '';
-            f[f2.key] = f2.type === 'date' && raw ? String(raw).slice(0, 10) : String(raw);
+            f[f2.key] =
+                f2.type === 'date' && raw
+                    ? String(raw).slice(0, 10)
+                    : String(raw);
         });
         setForm(f);
         setError('');
@@ -640,19 +882,22 @@ function StaffTable({
 
     const handleSave = async () => {
         if (!companyId) {
-return;
-}
+            return;
+        }
 
         setSaving(true);
         setError('');
 
         try {
-            const payload: Record<string, unknown> = { ...form, company_id: companyId };
+            const payload: Record<string, unknown> = {
+                ...form,
+                company_id: companyId,
+            };
             // clean empty strings to null for date/optional fields
             formFields.forEach((f2) => {
                 if (payload[f2.key] === '') {
-payload[f2.key] = null;
-}
+                    payload[f2.key] = null;
+                }
             });
 
             if (editingId) {
@@ -663,8 +908,8 @@ payload[f2.key] = null;
 
             setDialogOpen(false);
             reload();
-        } catch (err: any) {
-            setError(err.response?.data?.message ?? '操作失败，请重试');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, '操作失败，请重试'));
         } finally {
             setSaving(false);
         }
@@ -672,8 +917,8 @@ payload[f2.key] = null;
 
     const handleDelete = async () => {
         if (!deleteId) {
-return;
-}
+            return;
+        }
 
         await crud.remove(deleteId);
         setDeleteId(null);
@@ -683,13 +928,19 @@ return;
 
     const handleDownloadTemplate = async () => {
         try {
-            const response = await api.get(`${endpoint}/template`, { responseType: 'blob' });
+            const response = await api.get(`${endpoint}/template`, {
+                responseType: 'blob',
+            });
             const url = window.URL.createObjectURL(response.data);
             const link = document.createElement('a');
             link.href = url;
             const disposition = response.headers['content-disposition'] ?? '';
-            const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-            const filename = match ? decodeURIComponent(match[1].replace(/['"]/g, '')) : '导入模板.xlsx';
+            const match = disposition.match(
+                /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
+            );
+            const filename = match
+                ? decodeURIComponent(match[1].replace(/['"]/g, ''))
+                : '导入模板.xlsx';
             link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
@@ -702,8 +953,8 @@ return;
 
     const handleImportFile = async (file: File) => {
         if (!companyId || !file) {
-return;
-}
+            return;
+        }
 
         setImporting(true);
         setImportError('');
@@ -716,8 +967,8 @@ return;
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             reload();
-        } catch (err: any) {
-            setImportError(err.response?.data?.message ?? '导入失败，请重试');
+        } catch (err: unknown) {
+            setImportError(getErrorMessage(err, '导入失败，请重试'));
         } finally {
             setImporting(false);
 
@@ -730,7 +981,9 @@ return;
     return (
         <div>
             <div className="mb-3 flex items-center justify-between">
-                <p className="text-xs text-slate-600">共 <span className="text-slate-400">{total}</span> 条记录</p>
+                <p className="text-xs text-slate-600">
+                    共 <span className="text-slate-400">{total}</span> 条记录
+                </p>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handleDownloadTemplate}
@@ -742,9 +995,13 @@ return;
                     <button
                         onClick={() => importInputRef.current?.click()}
                         disabled={importing}
-                        className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-xs font-medium text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:opacity-50 disabled:pointer-events-none"
+                        className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-xs font-medium text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:pointer-events-none disabled:opacity-50"
                     >
-                        {importing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                        {importing ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                            <Upload className="h-3.5 w-3.5" />
+                        )}
                         {importing ? '导入中...' : '导入'}
                     </button>
                     <input
@@ -756,8 +1013,8 @@ return;
                             const file = e.target.files?.[0];
 
                             if (file) {
- handleImportFile(file); 
-}
+                                handleImportFile(file);
+                            }
                         }}
                     />
                     {canCreate && (
@@ -771,7 +1028,11 @@ return;
                     )}
                 </div>
             </div>
-            {importError && <div className="mb-3"><ErrorBanner>{importError}</ErrorBanner></div>}
+            {importError && (
+                <div className="mb-3">
+                    <ErrorBanner>{importError}</ErrorBanner>
+                </div>
+            )}
 
             {loading ? (
                 <LoadingRow />
@@ -785,33 +1046,59 @@ return;
                         <thead>
                             <tr className="border-b border-blue-900/20">
                                 {columns.map((col) => (
-                                    <th key={col.key} className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    <th
+                                        key={col.key}
+                                        className="px-4 py-2.5 text-left text-xs font-medium tracking-wide text-slate-500 uppercase"
+                                    >
                                         {col.header}
                                     </th>
                                 ))}
-                                <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">操作</th>
+                                <th className="px-4 py-2.5 text-left text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    操作
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             {data.map((row) => (
-                                <tr key={row.id as number} className="border-b border-blue-900/10 last:border-0">
+                                <tr
+                                    key={row.id as number}
+                                    className="border-b border-blue-900/10 last:border-0"
+                                >
                                     {columns.map((col) => (
-                                        <td key={col.key} className="px-4 py-3 text-slate-300">
+                                        <td
+                                            key={col.key}
+                                            className="px-4 py-3 text-slate-300"
+                                        >
                                             {col.format
-                                                ? col.format(col.valueGetter ? col.valueGetter(row) : row[col.key]) || <Dash />
+                                                ? col.format(
+                                                      col.valueGetter
+                                                          ? col.valueGetter(row)
+                                                          : row[col.key],
+                                                  ) || <Dash />
                                                 : (() => {
- const v = col.valueGetter ? col.valueGetter(row) : row[col.key];
+                                                      const v = col.valueGetter
+                                                          ? col.valueGetter(row)
+                                                          : row[col.key];
 
- return v != null ? String(v) : <Dash />; 
-})()}
+                                                      return v != null ? (
+                                                          String(v)
+                                                      ) : (
+                                                          <Dash />
+                                                      );
+                                                  })()}
                                         </td>
                                     ))}
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-0.5">
-                                            <DetailButton row={row} onOpen={detail.openDetail} />
+                                            <DetailButton
+                                                row={row}
+                                                onOpen={detail.openDetail}
+                                            />
                                             {canUpdate && (
                                                 <button
-                                                    onClick={() => openEdit(row)}
+                                                    onClick={() =>
+                                                        openEdit(row)
+                                                    }
                                                     className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
                                                 >
                                                     <Pencil className="h-3.5 w-3.5" />
@@ -820,8 +1107,15 @@ return;
                                             {canDelete && (
                                                 <button
                                                     onClick={() => {
-                                                        setDeleteId(row.id as number);
-                                                        setDeleteName(String(row.name ?? row.id));
+                                                        setDeleteId(
+                                                            row.id as number,
+                                                        );
+                                                        setDeleteName(
+                                                            String(
+                                                                row.name ??
+                                                                    row.id,
+                                                            ),
+                                                        );
                                                     }}
                                                     className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
                                                 >
@@ -842,42 +1136,69 @@ return;
                 title="人员详情"
                 data={detail.data}
                 onClose={detail.close}
-                labels={Object.fromEntries(formFields.map((field) => [field.key, field.label]))}
+                labels={Object.fromEntries(
+                    formFields.map((field) => [field.key, field.label]),
+                )}
             />
 
             {/* Create/Edit modal */}
             {dialogOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDialogOpen(false)} />
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setDialogOpen(false)}
+                    />
                     <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl">
                         <div className="flex items-center justify-between border-b border-blue-900/30 px-5 py-4">
                             <h2 className="text-sm font-semibold text-slate-100">
                                 {editingId ? '编辑' : '新增'}人员
                             </h2>
-                            <button onClick={() => setDialogOpen(false)} className="text-slate-600 hover:text-slate-300">
+                            <button
+                                onClick={() => setDialogOpen(false)}
+                                className="text-slate-600 hover:text-slate-300"
+                            >
                                 <X className="h-4 w-4" />
                             </button>
                         </div>
                         <div className="space-y-4 p-5">
                             {error && <ErrorBanner>{error}</ErrorBanner>}
                             {formFields.map((field) => (
-                                <ModalField key={field.key} label={field.label} required={field.required}>
+                                <ModalField
+                                    key={field.key}
+                                    label={field.label}
+                                    required={field.required}
+                                >
                                     {field.type === 'select' ? (
                                         <select
                                             value={form[field.key] ?? ''}
-                                            onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
+                                            onChange={(e) =>
+                                                setForm((f) => ({
+                                                    ...f,
+                                                    [field.key]: e.target.value,
+                                                }))
+                                            }
                                             className={inputClass}
                                         >
                                             <option value="">请选择</option>
                                             {field.options?.map((opt) => (
-                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                <option
+                                                    key={opt.value}
+                                                    value={opt.value}
+                                                >
+                                                    {opt.label}
+                                                </option>
                                             ))}
                                         </select>
                                     ) : (
                                         <input
                                             type={field.type ?? 'text'}
                                             value={form[field.key] ?? ''}
-                                            onChange={(e) => setForm((f) => ({ ...f, [field.key]: e.target.value }))}
+                                            onChange={(e) =>
+                                                setForm((f) => ({
+                                                    ...f,
+                                                    [field.key]: e.target.value,
+                                                }))
+                                            }
                                             className={inputClass}
                                         />
                                     )}
@@ -894,9 +1215,11 @@ return;
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/30 disabled:opacity-50 disabled:pointer-events-none"
+                                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/30 disabled:pointer-events-none disabled:opacity-50"
                             >
-                                {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                {saving && (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                )}
                                 {saving ? '保存中...' : '保存'}
                             </button>
                         </div>
@@ -907,15 +1230,33 @@ return;
             {/* Delete confirm */}
             {deleteId !== null && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setDeleteId(null)}
+                    />
                     <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl">
                         <div className="p-6">
                             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                                 <Trash2 className="h-5 w-5 text-red-400" />
                             </div>
-                            <h2 className="mb-1 text-base font-semibold text-slate-100">确认删除</h2>
+                            <h2 className="mb-1 text-base font-semibold text-slate-100">
+                                确认删除
+                            </h2>
                             <p className="text-sm text-slate-500">
-                                确定要删除{deleteName ? <> &ldquo;<span className="font-medium text-slate-300">{deleteName}</span>&rdquo;</> : '这条记录'}吗？
+                                确定要删除
+                                {deleteName ? (
+                                    <>
+                                        {' '}
+                                        &ldquo;
+                                        <span className="font-medium text-slate-300">
+                                            {deleteName}
+                                        </span>
+                                        &rdquo;
+                                    </>
+                                ) : (
+                                    '这条记录'
+                                )}
+                                吗？
                             </p>
                         </div>
                         <div className="flex justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
@@ -928,9 +1269,11 @@ return;
                             <button
                                 onClick={handleDelete}
                                 disabled={crud.loading}
-                                className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/25 disabled:opacity-50 disabled:pointer-events-none"
+                                className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/25 disabled:pointer-events-none disabled:opacity-50"
                             >
-                                {crud.loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                {crud.loading && (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                )}
                                 确认删除
                             </button>
                         </div>
@@ -971,16 +1314,30 @@ function SectionCard({
     );
 }
 
-function StatField({ label, field }: { label: string; field: React.ReactNode }) {
+function StatField({
+    label,
+    field,
+}: {
+    label: string;
+    field: React.ReactNode;
+}) {
     return (
         <div>
-            <label className="mb-1.5 block text-xs text-slate-500">{label}</label>
+            <label className="mb-1.5 block text-xs text-slate-500">
+                {label}
+            </label>
             {field}
         </div>
     );
 }
 
-function NumberInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+function NumberInput({
+    value,
+    onChange,
+}: {
+    value: number;
+    onChange: (v: number) => void;
+}) {
     return (
         <input
             type="number"
@@ -1011,7 +1368,7 @@ function ModalField({
 }) {
     return (
         <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
+            <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                 {label}
                 {required && <span className="ml-1 text-blue-500">*</span>}
             </label>
@@ -1037,7 +1394,11 @@ function SaveButton({
             disabled={saving || disabled}
             className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-3 py-1.5 text-xs font-medium text-blue-300 transition-all hover:bg-blue-600/25 disabled:pointer-events-none disabled:opacity-50"
         >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+                <Save className="h-3.5 w-3.5" />
+            )}
             {saving ? '保存中...' : saved ? '已保存 ✓' : '保存'}
         </button>
     );

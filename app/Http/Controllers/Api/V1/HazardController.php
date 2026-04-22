@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreHazardRequest;
+use App\Http\Requests\Api\V1\UpdateHazardRequest;
 use App\Models\Hazard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreHazardRequest;
-use App\Http\Requests\Api\V1\UpdateHazardRequest;
 
 class HazardController extends Controller
 {
@@ -16,7 +16,7 @@ class HazardController extends Controller
         $query = Hazard::query();
 
         if ($request->filled('title')) {
-            $query->where('title', 'like', '%' . $request->title . '%');
+            $query->where('title', 'like', '%'.$request->title.'%');
         }
 
         $data = $query->orderByDesc('id')
@@ -29,7 +29,7 @@ class HazardController extends Controller
     {
         $data = Hazard::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('危险有害因素不存在');
         }
 
@@ -48,7 +48,7 @@ class HazardController extends Controller
     {
         $hazard = Hazard::find($id);
 
-        if (!$hazard) {
+        if (! $hazard) {
             return $this->notFound('危险有害因素不存在');
         }
         $data = $request->validated();
@@ -61,7 +61,7 @@ class HazardController extends Controller
     {
         $hazard = Hazard::find($id);
 
-        if (!$hazard) {
+        if (! $hazard) {
             return $this->notFound('危险有害因素不存在');
         }
 

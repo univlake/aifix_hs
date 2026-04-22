@@ -24,9 +24,14 @@ const config: CrudPageConfig = {
             key: 'type',
             header: '职业危害因素',
             width: 140,
-            render: (value) => value
-                ? <span className="rounded-md border border-violet-900/40 bg-violet-600/8 px-2 py-0.5 text-xs text-violet-400">{value as string}</span>
-                : <span className="text-slate-700">—</span>,
+            render: (value) =>
+                value ? (
+                    <span className="rounded-md border border-violet-900/40 bg-violet-600/8 px-2 py-0.5 text-xs text-violet-400">
+                        {value as string}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         { key: 'number', header: '接触人数', width: 100 },
         {
@@ -35,14 +40,21 @@ const config: CrudPageConfig = {
             width: 100,
             render: (value) => {
                 if (!value) {
-return <span className="text-slate-700">—</span>;
-}
+                    return <span className="text-slate-700">—</span>;
+                }
 
-                const color = value === '已申报'
-                    ? 'border-emerald-500/20 bg-emerald-600/8 text-emerald-400'
-                    : 'border-slate-700/50 bg-slate-700/20 text-slate-500';
+                const color =
+                    value === '已申报'
+                        ? 'border-emerald-500/20 bg-emerald-600/8 text-emerald-400'
+                        : 'border-slate-700/50 bg-slate-700/20 text-slate-500';
 
-                return <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${color}`}>{value as string}</span>;
+                return (
+                    <span
+                        className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${color}`}
+                    >
+                        {value as string}
+                    </span>
+                );
             },
         },
         { key: 'declare_date', header: '申报日期', width: 120 },

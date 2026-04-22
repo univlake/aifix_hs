@@ -17,7 +17,7 @@ class MajorHazardMapController extends Controller
         // TODO: 实现公司树过滤 + 重大危险源关联查询
         $list = Company::query()
             ->when($request->title, function ($query) use ($request) {
-                $query->where('title', 'like', '%' . $request->title . '%');
+                $query->where('title', 'like', '%'.$request->title.'%');
             })
             ->where('status', 1)
             ->with('majorHazards')

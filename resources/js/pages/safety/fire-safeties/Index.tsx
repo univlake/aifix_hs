@@ -17,9 +17,14 @@ const config: CrudPageConfig = {
             key: 'type',
             header: '评价或检测类型',
             width: 150,
-            render: (value) => value
-                ? <span className="rounded-md border border-red-900/40 bg-red-600/8 px-2 py-0.5 text-xs text-red-400">{value as string}</span>
-                : <span className="text-slate-700">—</span>,
+            render: (value) =>
+                value ? (
+                    <span className="rounded-md border border-red-900/40 bg-red-600/8 px-2 py-0.5 text-xs text-red-400">
+                        {value as string}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             key: 'skill_unit_id',
@@ -28,7 +33,11 @@ const config: CrudPageConfig = {
             render: (_, row) => {
                 const unit = row.skill_unit as { name?: string } | null;
 
-                return unit?.name ? String(unit.name) : <span className="text-slate-700">—</span>;
+                return unit?.name ? (
+                    String(unit.name)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                );
             },
         },
         {
@@ -36,16 +45,27 @@ const config: CrudPageConfig = {
             header: '资质证书',
             width: 160,
             render: (_, row) => {
-                const kid = row.skill_unit_kid as { qualification_name?: string } | null;
+                const kid = row.skill_unit_kid as {
+                    qualification_name?: string;
+                } | null;
 
-                return kid?.qualification_name ? String(kid.qualification_name) : <span className="text-slate-700">—</span>;
+                return kid?.qualification_name ? (
+                    String(kid.qualification_name)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                );
             },
         },
         {
             key: 'valid_period',
             header: '报告有效期',
             width: 120,
-            render: (val) => (val ? String(val).slice(0, 10) : <span className="text-slate-700">—</span>),
+            render: (val) =>
+                val ? (
+                    String(val).slice(0, 10)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             key: 'annex_url',
@@ -67,7 +87,13 @@ const config: CrudPageConfig = {
         },
     ],
     formFields: [
-        { key: 'name', label: '名称', type: 'text', required: true, colSpan: 2 },
+        {
+            key: 'name',
+            label: '名称',
+            type: 'text',
+            required: true,
+            colSpan: 2,
+        },
         {
             key: 'type',
             label: '评价或检测类型',

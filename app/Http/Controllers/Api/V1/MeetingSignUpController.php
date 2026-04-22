@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreMeetingSignUpRequest;
+use App\Http\Requests\Api\V1\UpdateMeetingSignUpRequest;
 use App\Models\MeetingSignUp;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreMeetingSignUpRequest;
-use App\Http\Requests\Api\V1\UpdateMeetingSignUpRequest;
 
 class MeetingSignUpController extends Controller
 {
@@ -33,7 +33,7 @@ class MeetingSignUpController extends Controller
     {
         $data = MeetingSignUp::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('会议报名不存在');
         }
 
@@ -55,7 +55,7 @@ class MeetingSignUpController extends Controller
     {
         $record = MeetingSignUp::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('会议报名不存在');
         }
         $data = $request->validated();
@@ -69,7 +69,7 @@ class MeetingSignUpController extends Controller
     {
         $record = MeetingSignUp::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('会议报名不存在');
         }
 

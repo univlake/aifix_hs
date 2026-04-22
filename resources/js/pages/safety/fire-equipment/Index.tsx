@@ -14,7 +14,12 @@ const config: CrudPageConfig = {
         { key: 'title', label: '名称', type: 'text', required: true },
         { key: 'specification', label: '规格型号', type: 'text' },
         { key: 'quantity', label: '数量', type: 'number' },
-        { key: 'company_id', label: '所属单位', type: 'select', optionsEndpoint: '/companies' },
+        {
+            key: 'company_id',
+            label: '所属单位',
+            type: 'select',
+            optionsEndpoint: '/companies',
+        },
     ],
     searchField: 'title',
     searchPlaceholder: '搜索器材名称...',

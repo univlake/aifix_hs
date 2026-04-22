@@ -9,8 +9,6 @@ use App\Http\Controllers\Api\V1\AssessmentTemplatesController;
 use App\Http\Controllers\Api\V1\CheckStatisticsController;
 use App\Http\Controllers\Api\V1\DailyChecksController;
 use App\Http\Controllers\Api\V1\DailyCheckTemplatesController;
-use App\Http\Controllers\Api\V1\DoubleChecksController;
-use App\Http\Controllers\Api\V1\DoubleCheckTemplatesController;
 use App\Http\Controllers\Api\V1\NormChecksController;
 use App\Http\Controllers\Api\V1\SystemChecksController;
 use Illuminate\Support\Facades\Route;
@@ -48,38 +46,6 @@ Route::middleware('permission:daily-checks.update')->group(function () {
 });
 Route::middleware('permission:daily-checks.delete')->group(function () {
     Route::delete('/daily-checks/destroy-form', [DailyChecksController::class, 'destroyForm']);
-});
-
-// ── 双重预防检查模板 ─────────────────────────────────────────────────────
-Route::middleware('permission:double-check-templates.list')->group(function () {
-    Route::get('/double-check-templates', [DoubleCheckTemplatesController::class, 'index']);
-    Route::get('/double-check-templates/{id}', [DoubleCheckTemplatesController::class, 'show']);
-});
-Route::middleware('permission:double-check-templates.create')->group(function () {
-    Route::post('/double-check-templates', [DoubleCheckTemplatesController::class, 'store']);
-});
-Route::middleware('permission:double-check-templates.update')->group(function () {
-    Route::put('/double-check-templates/{id}', [DoubleCheckTemplatesController::class, 'update']);
-    Route::patch('/double-check-templates/{id}', [DoubleCheckTemplatesController::class, 'update']);
-});
-Route::middleware('permission:double-check-templates.delete')->group(function () {
-    Route::delete('/double-check-templates/{id}', [DoubleCheckTemplatesController::class, 'destroy']);
-});
-
-// ── 双重预防检查 ─────────────────────────────────────────────────────
-Route::middleware('permission:double-checks.list')->group(function () {
-    Route::get('/double-checks', [DoubleChecksController::class, 'index']);
-    Route::get('/double-checks/{id}', [DoubleChecksController::class, 'show']);
-});
-Route::middleware('permission:double-checks.create')->group(function () {
-    Route::post('/double-checks', [DoubleChecksController::class, 'store']);
-});
-Route::middleware('permission:double-checks.update')->group(function () {
-    Route::put('/double-checks/{id}', [DoubleChecksController::class, 'update']);
-    Route::patch('/double-checks/{id}', [DoubleChecksController::class, 'update']);
-});
-Route::middleware('permission:double-checks.delete')->group(function () {
-    Route::delete('/double-checks/{id}', [DoubleChecksController::class, 'destroy']);
 });
 
 // ── 系统检查 ─────────────────────────────────────────────────────

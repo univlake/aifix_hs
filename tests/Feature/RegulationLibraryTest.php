@@ -12,7 +12,7 @@ describe('RegulationLibrary API', function () {
             ]);
 
             $response = $this->actingAs($user, 'api')
-                ->getJson('/api/v1/regulation-libraries?company_id=' . $company->id);
+                ->getJson('/api/v1/regulation-libraries?company_id='.$company->id);
 
             $response->assertOk()
                 ->assertJsonStructure(['status', 'data' => ['data' => [['id']]]]);

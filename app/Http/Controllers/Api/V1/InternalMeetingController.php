@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreInternalMeetingRequest;
+use App\Http\Requests\Api\V1\UpdateInternalMeetingRequest;
 use App\Models\InternalMeeting;
 use App\Models\InternalMeetingKid;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\Api\V1\StoreInternalMeetingRequest;
-use App\Http\Requests\Api\V1\UpdateInternalMeetingRequest;
 
 class InternalMeetingController extends Controller
 {
@@ -22,7 +22,7 @@ class InternalMeetingController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->with('internalMeetingKid.join_user')
@@ -36,7 +36,7 @@ class InternalMeetingController extends Controller
     {
         $data = InternalMeeting::with('internalMeetingKid.join_user')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('内部会议不存在');
         }
 
@@ -74,7 +74,7 @@ class InternalMeetingController extends Controller
     {
         $record = InternalMeeting::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('内部会议不存在');
         }
         $data = $request->validated();
@@ -106,7 +106,7 @@ class InternalMeetingController extends Controller
     {
         $record = InternalMeeting::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('内部会议不存在');
         }
 

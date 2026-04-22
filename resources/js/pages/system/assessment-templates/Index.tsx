@@ -1,6 +1,15 @@
 import { Head } from '@inertiajs/react';
 import {
-    AlertTriangle, ChevronDown, ChevronRight, ClipboardList, Copy, Loader2, Pencil, Plus, Trash2, X,
+    AlertTriangle,
+    ChevronDown,
+    ChevronRight,
+    ClipboardList,
+    Copy,
+    Loader2,
+    Pencil,
+    Plus,
+    Trash2,
+    X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '@/lib/api';
@@ -36,7 +45,8 @@ const KIND_META: Record<TemplateKind, { label: string; endpoint: string }> = {
 
 const KIND_ORDER: TemplateKind[] = ['daily', 'accident', 'add_points'];
 
-const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
+const inputCls =
+    'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
 const selectCls = cn(inputCls, 'cursor-pointer appearance-none');
 
 // ── Helpers ────────────────────────────────────────────────────────
@@ -59,12 +69,17 @@ export default function AssessmentTemplatesIndex() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [copyOpen, setCopyOpen] = useState(false);
-    const [editTarget, setEditTarget] = useState<{ node: TemplateNode | null; parent: TemplateNode | null } | null>(null);
+    const [editTarget, setEditTarget] = useState<{
+        node: TemplateNode | null;
+        parent: TemplateNode | null;
+    } | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<TemplateNode | null>(null);
 
     const loadYears = useCallback(async () => {
         try {
-            const res = await api.get<ApiResponse<number[]>>('/assessment-templates/years');
+            const res = await api.get<ApiResponse<number[]>>(
+                '/assessment-templates/years',
+            );
             setKnownYears(res.data.data ?? []);
         } catch {
             setKnownYears([]);
@@ -76,7 +91,10 @@ export default function AssessmentTemplatesIndex() {
         setError('');
 
         try {
-            const res = await api.get<ApiResponse<TemplateNode[]>>(KIND_META[kind].endpoint, { params: { year } });
+            const res = await api.get<ApiResponse<TemplateNode[]>>(
+                KIND_META[kind].endpoint,
+                { params: { year } },
+            );
             setTree(res.data.data ?? []);
         } catch (err: unknown) {
             const e = err as { response?: { data?: { message?: string } } };
@@ -96,7 +114,12 @@ export default function AssessmentTemplatesIndex() {
     }, [loadTree]);
 
     const yearOptions = useMemo(() => {
-        const set = new Set<number>([...knownYears, currentYear(), currentYear() + 1, year]);
+        const set = new Set<number>([
+            ...knownYears,
+            currentYear(),
+            currentYear() + 1,
+            year,
+        ]);
 
         return Array.from(set).sort((a, b) => b - a);
     }, [knownYears, year]);
@@ -154,28 +177,48 @@ export default function AssessmentTemplatesIndex() {
                             <ClipboardList className="h-4 w-4 text-blue-400" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-semibold text-slate-100">考核模板管理</h1>
-                            <p className="text-sm text-slate-500">按年度维护日常考核、事故考核与加分项的评分模板</p>
+                            <h1 className="text-xl font-semibold text-slate-100">
+                                考核模板管理
+                            </h1>
+                            <p className="text-sm text-slate-500">
+                                按年度维护日常考核、事故考核与加分项的评分模板
+                            </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <label className="text-xs text-slate-400">年度</label>
-                        <select className={cn(selectCls, 'w-32')} value={String(year)} onChange={(e) => setYear(Number(e.target.value))}>
-                            {yearOptions.map((y) => <option key={y} value={y} className="bg-[#0d1530]">{y}</option>)}
+                        <select
+                            className={cn(selectCls, 'w-32')}
+                            value={String(year)}
+                            onChange={(e) => setYear(Number(e.target.value))}
+                        >
+                            {yearOptions.map((y) => (
+                                <option
+                                    key={y}
+                                    value={y}
+                                    className="bg-[#0d1530]"
+                                >
+                                    {y}
+                                </option>
+                            ))}
                         </select>
                         <button
                             type="button"
                             onClick={() => setCopyOpen(true)}
                             className="flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-600/15 px-4 py-2 text-sm font-medium text-violet-300 transition-colors hover:bg-violet-600/25"
                         >
-                            <Copy className="h-4 w-4" />从上一年度复制
+                            <Copy className="h-4 w-4" />
+                            从上一年度复制
                         </button>
                         <button
                             type="button"
-                            onClick={() => setEditTarget({ node: null, parent: null })}
+                            onClick={() =>
+                                setEditTarget({ node: null, parent: null })
+                            }
                             className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-colors hover:bg-blue-600/25"
                         >
-                            <Plus className="h-4 w-4" />新增条目
+                            <Plus className="h-4 w-4" />
+                            新增条目
                         </button>
                     </div>
                 </header>
@@ -191,7 +234,9 @@ export default function AssessmentTemplatesIndex() {
                                 onClick={() => setKind(k)}
                                 className={cn(
                                     'border-b-2 px-4 py-2 text-sm font-medium transition-colors',
-                                    active ? 'border-blue-500 text-blue-300' : 'border-transparent text-slate-500 hover:text-slate-300',
+                                    active
+                                        ? 'border-blue-500 text-blue-300'
+                                        : 'border-transparent text-slate-500 hover:text-slate-300',
                                 )}
                             >
                                 {KIND_META[k].label}
@@ -202,7 +247,8 @@ export default function AssessmentTemplatesIndex() {
 
                 {error && (
                     <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
-                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />{error}
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                        {error}
                     </div>
                 )}
 
@@ -210,15 +256,23 @@ export default function AssessmentTemplatesIndex() {
                 <div className="overflow-hidden rounded-xl border border-blue-900/40 bg-[#070d1f]">
                     <div className="flex items-center justify-between border-b border-blue-900/30 px-4 py-2.5">
                         <p className="text-xs text-slate-500">
-                            {year} 年 · {KIND_META[kind].label} · <span className="text-slate-400">一级 {totals.roots} 项 / 共 {totals.all} 项</span>
+                            {year} 年 · {KIND_META[kind].label} ·{' '}
+                            <span className="text-slate-400">
+                                一级 {totals.roots} 项 / 共 {totals.all} 项
+                            </span>
                         </p>
                     </div>
                     {loading ? (
-                        <div className="flex items-center justify-center py-16"><Loader2 className="h-5 w-5 animate-spin text-blue-400" /></div>
+                        <div className="flex items-center justify-center py-16">
+                            <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
+                        </div>
                     ) : tree.length === 0 ? (
                         <div className="py-16 text-center text-sm text-slate-600">
                             {year} 年度 {KIND_META[kind].label} 暂无数据
-                            <p className="mt-2 text-xs text-slate-700">可点击右上角 &ldquo;从上一年度复制&rdquo; 或 &ldquo;新增条目&rdquo; 开始创建</p>
+                            <p className="mt-2 text-xs text-slate-700">
+                                可点击右上角 &ldquo;从上一年度复制&rdquo; 或
+                                &ldquo;新增条目&rdquo; 开始创建
+                            </p>
                         </div>
                     ) : (
                         <div className="divide-y divide-blue-900/20">
@@ -226,9 +280,13 @@ export default function AssessmentTemplatesIndex() {
                                 <TreeRow
                                     key={node.id}
                                     node={node}
-                                    onEdit={(n, parent) => setEditTarget({ node: n, parent })}
+                                    onEdit={(n, parent) =>
+                                        setEditTarget({ node: n, parent })
+                                    }
                                     onDelete={(n) => setDeleteTarget(n)}
-                                    onAddChild={(parent) => setEditTarget({ node: null, parent })}
+                                    onAddChild={(parent) =>
+                                        setEditTarget({ node: null, parent })
+                                    }
                                 />
                             ))}
                         </div>
@@ -269,7 +327,12 @@ export default function AssessmentTemplatesIndex() {
 // ── Tree row ──────────────────────────────────────────────────────
 
 function TreeRow({
-    node, parent = null, depth = 0, onEdit, onDelete, onAddChild,
+    node,
+    parent = null,
+    depth = 0,
+    onEdit,
+    onDelete,
+    onAddChild,
 }: {
     node: TemplateNode;
     parent?: TemplateNode | null;
@@ -294,17 +357,33 @@ function TreeRow({
                     disabled={!hasChildren}
                     className={cn(
                         'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-500 transition-colors',
-                        hasChildren ? 'hover:bg-blue-600/10 hover:text-blue-300' : 'invisible',
+                        hasChildren
+                            ? 'hover:bg-blue-600/10 hover:text-blue-300'
+                            : 'invisible',
                     )}
                 >
-                    {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    {expanded ? (
+                        <ChevronDown className="h-3.5 w-3.5" />
+                    ) : (
+                        <ChevronRight className="h-3.5 w-3.5" />
+                    )}
                 </button>
 
-                <div className="flex-1 min-w-0">
-                    <p className="whitespace-pre-wrap text-sm text-slate-200">{node.title}</p>
+                <div className="min-w-0 flex-1">
+                    <p className="text-sm whitespace-pre-wrap text-slate-200">
+                        {node.title}
+                    </p>
                     <p className="mt-0.5 text-[11px] text-slate-600">
                         层级 L{node.level} · 排序 {node.sort}
-                        {node.score_range && <> · 分值 <span className="text-emerald-400/80">{node.score_range}</span></>}
+                        {node.score_range && (
+                            <>
+                                {' '}
+                                · 分值{' '}
+                                <span className="text-emerald-400/80">
+                                    {node.score_range}
+                                </span>
+                            </>
+                        )}
                         {hasChildren && <> · 子项 {children.length}</>}
                     </p>
                 </div>
@@ -359,7 +438,11 @@ function TreeRow({
 // ── Edit modal (add / edit node) ──────────────────────────────────
 
 function EditModal({
-    target, year, kind, onClose, onSaved,
+    target,
+    year,
+    kind,
+    onClose,
+    onSaved,
 }: {
     target: { node: TemplateNode | null; parent: TemplateNode | null } | null;
     year: number;
@@ -411,10 +494,14 @@ function EditModal({
 
         try {
             if (isEdit && target.node) {
-                await api.put(`${KIND_META[kind].endpoint}/${target.node.id}`, payload);
+                await api.put(
+                    `${KIND_META[kind].endpoint}/${target.node.id}`,
+                    payload,
+                );
             } else {
                 await api.post(KIND_META[kind].endpoint, payload);
             }
+
             onSaved();
         } catch (err: unknown) {
             const e = err as { response?: { data?: { message?: string } } };
@@ -427,7 +514,13 @@ function EditModal({
     return (
         <Dialog onClose={onClose}>
             <DialogHeader
-                title={isEdit ? '编辑考核项' : parent ? `在 ${parent.title.slice(0, 18)}${parent.title.length > 18 ? '…' : ''} 下新增子项` : '新增一级考核项'}
+                title={
+                    isEdit
+                        ? '编辑考核项'
+                        : parent
+                          ? `在 ${parent.title.slice(0, 18)}${parent.title.length > 18 ? '…' : ''} 下新增子项`
+                          : '新增一级考核项'
+                }
                 subtitle={`${KIND_META[kind].label} · ${year} 年 · 层级 L${level}`}
                 onClose={onClose}
             />
@@ -435,7 +528,8 @@ function EditModal({
                 <div className="space-y-4">
                     {error && (
                         <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
-                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />{error}
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                            {error}
                         </div>
                     )}
                     <Field label="条目标题" required>
@@ -448,16 +542,31 @@ function EditModal({
                     </Field>
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="排序">
-                            <input type="number" className={inputCls} value={sort} onChange={(e) => setSort(e.target.value)} />
+                            <input
+                                type="number"
+                                className={inputCls}
+                                value={sort}
+                                onChange={(e) => setSort(e.target.value)}
+                            />
                         </Field>
                         <Field label="分值范围">
-                            <input className={inputCls} value={score} onChange={(e) => setScore(e.target.value)} placeholder="例如 3 或 0-5" />
+                            <input
+                                className={inputCls}
+                                value={score}
+                                onChange={(e) => setScore(e.target.value)}
+                                placeholder="例如 3 或 0-5"
+                            />
                         </Field>
                     </div>
                 </div>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                <button onClick={onClose} className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">取消</button>
+                <button
+                    onClick={onClose}
+                    className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                >
+                    取消
+                </button>
                 <button
                     onClick={submit}
                     disabled={saving}
@@ -474,7 +583,11 @@ function EditModal({
 // ── Copy modal ────────────────────────────────────────────────────
 
 function CopyModal({
-    open, onClose, onCopied, knownYears, defaultTarget,
+    open,
+    onClose,
+    onCopied,
+    knownYears,
+    defaultTarget,
 }: {
     open: boolean;
     onClose: () => void;
@@ -484,14 +597,19 @@ function CopyModal({
 }) {
     const [fromYear, setFromYear] = useState<number>(defaultTarget - 1);
     const [toYear, setToYear] = useState<number>(defaultTarget);
-    const [kinds, setKinds] = useState<Record<TemplateKind, boolean>>({ daily: true, accident: true, add_points: true });
+    const [kinds, setKinds] = useState<Record<TemplateKind, boolean>>({
+        daily: true,
+        accident: true,
+        add_points: true,
+    });
     const [overwrite, setOverwrite] = useState(false);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         if (open) {
-            const fallbackFrom = knownYears.find((y) => y < defaultTarget) ?? defaultTarget - 1;
+            const fallbackFrom =
+                knownYears.find((y) => y < defaultTarget) ?? defaultTarget - 1;
             setFromYear(fallbackFrom);
             setToYear(defaultTarget);
             setKinds({ daily: true, accident: true, add_points: true });
@@ -504,9 +622,15 @@ function CopyModal({
         return null;
     }
 
-    const sourceOptions = Array.from(new Set([...knownYears])).sort((a, b) => b - a);
-    const targetOptions = Array.from(new Set([defaultTarget, currentYear(), currentYear() + 1, toYear])).sort((a, b) => b - a);
-    const selectedKinds = (Object.keys(kinds) as TemplateKind[]).filter((k) => kinds[k]);
+    const sourceOptions = Array.from(new Set([...knownYears])).sort(
+        (a, b) => b - a,
+    );
+    const targetOptions = Array.from(
+        new Set([defaultTarget, currentYear(), currentYear() + 1, toYear]),
+    ).sort((a, b) => b - a);
+    const selectedKinds = (Object.keys(kinds) as TemplateKind[]).filter(
+        (k) => kinds[k],
+    );
 
     const submit = async () => {
         if (fromYear === toYear) {
@@ -525,12 +649,15 @@ function CopyModal({
         setError('');
 
         try {
-            const res = await api.post<ApiResponse<CopySummary>>('/assessment-templates/copy', {
-                from_year: fromYear,
-                to_year: toYear,
-                kinds: selectedKinds,
-                overwrite,
-            });
+            const res = await api.post<ApiResponse<CopySummary>>(
+                '/assessment-templates/copy',
+                {
+                    from_year: fromYear,
+                    to_year: toYear,
+                    kinds: selectedKinds,
+                    overwrite,
+                },
+            );
             onCopied(res.data.data);
         } catch (err: unknown) {
             const e = err as { response?: { data?: { message?: string } } };
@@ -542,36 +669,88 @@ function CopyModal({
 
     return (
         <Dialog onClose={onClose}>
-            <DialogHeader title="从上一年度复制考核模板" subtitle="一键拷贝三张模板表到目标年度" onClose={onClose} />
+            <DialogHeader
+                title="从上一年度复制考核模板"
+                subtitle="一键拷贝三张模板表到目标年度"
+                onClose={onClose}
+            />
             <div className="flex-1 overflow-y-auto p-6">
                 <div className="space-y-4">
                     {error && (
                         <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
-                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />{error}
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                            {error}
                         </div>
                     )}
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="源年度" required>
-                            <select className={selectCls} value={String(fromYear)} onChange={(e) => setFromYear(Number(e.target.value))}>
-                                {sourceOptions.length === 0 && <option value={fromYear} className="bg-[#0d1530]">{fromYear}</option>}
-                                {sourceOptions.map((y) => <option key={y} value={y} className="bg-[#0d1530]">{y}</option>)}
+                            <select
+                                className={selectCls}
+                                value={String(fromYear)}
+                                onChange={(e) =>
+                                    setFromYear(Number(e.target.value))
+                                }
+                            >
+                                {sourceOptions.length === 0 && (
+                                    <option
+                                        value={fromYear}
+                                        className="bg-[#0d1530]"
+                                    >
+                                        {fromYear}
+                                    </option>
+                                )}
+                                {sourceOptions.map((y) => (
+                                    <option
+                                        key={y}
+                                        value={y}
+                                        className="bg-[#0d1530]"
+                                    >
+                                        {y}
+                                    </option>
+                                ))}
                             </select>
                         </Field>
                         <Field label="目标年度" required>
-                            <select className={selectCls} value={String(toYear)} onChange={(e) => setToYear(Number(e.target.value))}>
-                                {targetOptions.map((y) => <option key={y} value={y} className="bg-[#0d1530]">{y}</option>)}
+                            <select
+                                className={selectCls}
+                                value={String(toYear)}
+                                onChange={(e) =>
+                                    setToYear(Number(e.target.value))
+                                }
+                            >
+                                {targetOptions.map((y) => (
+                                    <option
+                                        key={y}
+                                        value={y}
+                                        className="bg-[#0d1530]"
+                                    >
+                                        {y}
+                                    </option>
+                                ))}
                             </select>
                         </Field>
                     </div>
                     <Field label="复制范围">
                         <div className="flex flex-wrap gap-2">
                             {KIND_ORDER.map((k) => (
-                                <label key={k} className={cn('flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition-colors',
-                                    kinds[k] ? 'border-blue-500/40 bg-blue-600/10 text-blue-300' : 'border-blue-900/40 bg-[#070d1f] text-slate-500')}>
+                                <label
+                                    key={k}
+                                    className={cn(
+                                        'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition-colors',
+                                        kinds[k]
+                                            ? 'border-blue-500/40 bg-blue-600/10 text-blue-300'
+                                            : 'border-blue-900/40 bg-[#070d1f] text-slate-500',
+                                    )}
+                                >
                                     <input
                                         type="checkbox"
                                         checked={kinds[k]}
-                                        onChange={(e) => setKinds((prev) => ({ ...prev, [k]: e.target.checked }))}
+                                        onChange={(e) =>
+                                            setKinds((prev) => ({
+                                                ...prev,
+                                                [k]: e.target.checked,
+                                            }))
+                                        }
                                         className="h-3.5 w-3.5 accent-blue-500"
                                     />
                                     {KIND_META[k].label}
@@ -580,7 +759,12 @@ function CopyModal({
                         </div>
                     </Field>
                     <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-400">
-                        <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} className="h-3.5 w-3.5 accent-red-500" />
+                        <input
+                            type="checkbox"
+                            checked={overwrite}
+                            onChange={(e) => setOverwrite(e.target.checked)}
+                            className="h-3.5 w-3.5 accent-red-500"
+                        />
                         覆盖目标年度已有数据（将先清空目标年度对应表）
                     </label>
                     <p className="text-[11px] text-slate-600">
@@ -589,13 +773,22 @@ function CopyModal({
                 </div>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                <button onClick={onClose} className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">取消</button>
+                <button
+                    onClick={onClose}
+                    className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                >
+                    取消
+                </button>
                 <button
                     onClick={submit}
                     disabled={submitting}
                     className="flex items-center gap-2 rounded-lg border border-violet-500/30 bg-violet-600/20 px-4 py-2 text-sm font-medium text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
                 >
-                    {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
+                    {submitting ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                    )}
                     开始复制
                 </button>
             </div>
@@ -605,10 +798,19 @@ function CopyModal({
 
 // ── Shared dialog primitives ──────────────────────────────────────
 
-function Dialog({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+function Dialog({
+    children,
+    onClose,
+}: {
+    children: React.ReactNode;
+    onClose: () => void;
+}) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={onClose}
+            />
             <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl">
                 {children}
             </div>
@@ -616,25 +818,49 @@ function Dialog({ children, onClose }: { children: React.ReactNode; onClose: () 
     );
 }
 
-function DialogHeader({ title, subtitle, onClose }: { title: string; subtitle?: string; onClose: () => void }) {
+function DialogHeader({
+    title,
+    subtitle,
+    onClose,
+}: {
+    title: string;
+    subtitle?: string;
+    onClose: () => void;
+}) {
     return (
         <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
             <div>
-                <h2 className="text-base font-semibold text-slate-100">{title}</h2>
-                {subtitle && <p className="mt-0.5 text-xs text-slate-600">{subtitle}</p>}
+                <h2 className="text-base font-semibold text-slate-100">
+                    {title}
+                </h2>
+                {subtitle && (
+                    <p className="mt-0.5 text-xs text-slate-600">{subtitle}</p>
+                )}
             </div>
-            <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-white/5 hover:text-slate-300">
+            <button
+                onClick={onClose}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-white/5 hover:text-slate-300"
+            >
                 <X className="h-4 w-4" />
             </button>
         </div>
     );
 }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({
+    label,
+    required,
+    children,
+}: {
+    label: string;
+    required?: boolean;
+    children: React.ReactNode;
+}) {
     return (
         <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
-                {label}{required && <span className="ml-0.5 text-red-400">*</span>}
+            <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                {label}
+                {required && <span className="ml-0.5 text-red-400">*</span>}
             </label>
             {children}
         </div>
@@ -642,7 +868,12 @@ function Field({ label, required, children }: { label: string; required?: boolea
 }
 
 function ConfirmModal({
-    title, message, confirmLabel, onConfirm, onCancel, danger,
+    title,
+    message,
+    confirmLabel,
+    onConfirm,
+    onCancel,
+    danger,
 }: {
     title: string;
     message: string;
@@ -666,21 +897,46 @@ function ConfirmModal({
     return (
         <Dialog onClose={onCancel}>
             <div className="p-6">
-                <div className={cn('mb-4 flex h-11 w-11 items-center justify-center rounded-xl border', danger ? 'border-red-500/30 bg-red-600/10' : 'border-blue-500/30 bg-blue-600/10')}>
-                    <AlertTriangle className={cn('h-5 w-5', danger ? 'text-red-400' : 'text-blue-400')} />
+                <div
+                    className={cn(
+                        'mb-4 flex h-11 w-11 items-center justify-center rounded-xl border',
+                        danger
+                            ? 'border-red-500/30 bg-red-600/10'
+                            : 'border-blue-500/30 bg-blue-600/10',
+                    )}
+                >
+                    <AlertTriangle
+                        className={cn(
+                            'h-5 w-5',
+                            danger ? 'text-red-400' : 'text-blue-400',
+                        )}
+                    />
                 </div>
-                <h2 className="mb-1 text-base font-semibold text-slate-100">{title}</h2>
+                <h2 className="mb-1 text-base font-semibold text-slate-100">
+                    {title}
+                </h2>
                 <p className="text-sm text-slate-500">{message}</p>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                <button onClick={onCancel} className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">取消</button>
+                <button
+                    onClick={onCancel}
+                    className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                >
+                    取消
+                </button>
                 <button
                     onClick={handle}
                     disabled={submitting}
-                    className={cn('flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50',
-                        danger ? 'border border-red-500/30 bg-red-600/15 text-red-400 hover:bg-red-600/25' : 'border border-blue-500/30 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30')}
+                    className={cn(
+                        'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50',
+                        danger
+                            ? 'border border-red-500/30 bg-red-600/15 text-red-400 hover:bg-red-600/25'
+                            : 'border border-blue-500/30 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30',
+                    )}
                 >
-                    {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    {submitting && (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    )}
                     {confirmLabel}
                 </button>
             </div>

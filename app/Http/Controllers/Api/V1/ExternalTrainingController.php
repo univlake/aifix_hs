@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreExternalTrainingRequest;
+use App\Http\Requests\Api\V1\UpdateExternalTrainingRequest;
 use App\Models\ExternalTraining;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreExternalTrainingRequest;
-use App\Http\Requests\Api\V1\UpdateExternalTrainingRequest;
 
 class ExternalTrainingController extends Controller
 {
@@ -20,7 +20,7 @@ class ExternalTrainingController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->orderBy('id', 'desc')
@@ -33,7 +33,7 @@ class ExternalTrainingController extends Controller
     {
         $data = ExternalTraining::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('外部培训不存在');
         }
 
@@ -55,7 +55,7 @@ class ExternalTrainingController extends Controller
     {
         $record = ExternalTraining::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('外部培训不存在');
         }
         $data = $request->validated();
@@ -69,7 +69,7 @@ class ExternalTrainingController extends Controller
     {
         $record = ExternalTraining::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('外部培训不存在');
         }
 

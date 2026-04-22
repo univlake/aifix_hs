@@ -8,7 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('oauth_refresh_tokens')) return;
+        if (Schema::hasTable('oauth_refresh_tokens')) {
+            return;
+        }
 
         Schema::create('oauth_refresh_tokens', function (Blueprint $table) {
             $table->char('id', 80)->primary();

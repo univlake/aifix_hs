@@ -30,13 +30,23 @@ const config: CrudPageConfig = {
             key: 'automation_type',
             header: '自动化程度',
             width: 200,
-            render: (value) => value
-                ? <span className="inline-flex items-center rounded-md border border-slate-700/50 bg-slate-700/20 px-2 py-0.5 text-xs text-slate-400">{value as string}</span>
-                : <span className="text-slate-700">—</span>,
+            render: (value) =>
+                value ? (
+                    <span className="inline-flex items-center rounded-md border border-slate-700/50 bg-slate-700/20 px-2 py-0.5 text-xs text-slate-400">
+                        {value as string}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
     ],
     formFields: [
-        { key: 'equipment_name', label: '设施名称', type: 'text', required: true },
+        {
+            key: 'equipment_name',
+            label: '设施名称',
+            type: 'text',
+            required: true,
+        },
         {
             key: 'special_type',
             label: '设施类型',

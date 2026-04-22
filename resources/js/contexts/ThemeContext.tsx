@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useState,
+    useCallback,
+} from 'react';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -16,6 +22,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 function getAutoTheme(): 'light' | 'dark' {
     const h = new Date().getHours();
+
     return h >= 6 && h < 18 ? 'light' : 'dark';
 }
 
@@ -30,9 +37,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         () => (localStorage.getItem('app-theme') as ThemeMode) ?? 'dark',
     );
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
-        const saved = (localStorage.getItem('app-theme') as ThemeMode) ?? 'dark';
+        const saved =
+            (localStorage.getItem('app-theme') as ThemeMode) ?? 'dark';
         const resolved = saved === 'auto' ? getAutoTheme() : saved;
         applyThemeClass(resolved);
+
         return resolved;
     });
 
@@ -44,6 +53,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (mode !== 'auto') {
             applyAndSet(mode);
+
             return;
         }
 

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreProductionStandardizationRequest;
+use App\Http\Requests\Api\V1\UpdateProductionStandardizationRequest;
 use App\Models\ProductionStandardization;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreProductionStandardizationRequest;
-use App\Http\Requests\Api\V1\UpdateProductionStandardizationRequest;
 
 class ProductionStandardizationController extends Controller
 {
@@ -44,7 +44,7 @@ class ProductionStandardizationController extends Controller
     {
         $record = ProductionStandardization::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('安全生产标准化不存在');
         }
         $data = $request->validated();

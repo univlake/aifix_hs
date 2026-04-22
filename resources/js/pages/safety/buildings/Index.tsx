@@ -13,7 +13,12 @@ const config: CrudPageConfig = {
     ],
     formFields: [
         { key: 'title', label: '名称', type: 'text', required: true },
-        { key: 'structure', label: '结构类型', type: 'text', placeholder: '如：钢筋混凝土、砖混、钢结构' },
+        {
+            key: 'structure',
+            label: '结构类型',
+            type: 'text',
+            placeholder: '如：钢筋混凝土、砖混、钢结构',
+        },
         { key: 'area', label: '面积', type: 'text', placeholder: '如：1200㎡' },
         {
             key: 'fire_class',

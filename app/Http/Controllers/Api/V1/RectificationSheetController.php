@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreRectificationSheetRequest;
+use App\Http\Requests\Api\V1\UpdateRectificationSheetRequest;
 use App\Models\RectificationSheet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreRectificationSheetRequest;
-use App\Http\Requests\Api\V1\UpdateRectificationSheetRequest;
 
 class RectificationSheetController extends Controller
 {
@@ -32,7 +32,7 @@ class RectificationSheetController extends Controller
     {
         $data = RectificationSheet::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('整改单不存在');
         }
 
@@ -53,7 +53,7 @@ class RectificationSheetController extends Controller
     {
         $rectificationSheet = RectificationSheet::find($id);
 
-        if (!$rectificationSheet) {
+        if (! $rectificationSheet) {
             return $this->notFound('整改单不存在');
         }
         $data = $request->validated();
@@ -66,7 +66,7 @@ class RectificationSheetController extends Controller
     {
         $rectificationSheet = RectificationSheet::find($id);
 
-        if (!$rectificationSheet) {
+        if (! $rectificationSheet) {
             return $this->notFound('整改单不存在');
         }
 

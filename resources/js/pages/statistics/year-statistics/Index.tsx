@@ -40,7 +40,8 @@ export function pickYearKids(y: YearStatistic): YearStatisticKidRow[] {
 
 // ── Helpers ───────────────────────────────────────────────────────
 
-const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
+const inputCls =
+    'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
 
 function yearOf(d: string | null | undefined): string {
     return d ? String(d).slice(0, 4) : '—';
@@ -66,29 +67,42 @@ export function YearStatisticsPage({ pidMode = false }: PageProps = {}) {
     const [editing, setEditing] = useState<YearStatistic | null>(null);
     const [viewing, setViewing] = useState<YearStatistic | null>(null);
 
-    const fetchRows = useCallback(async (p: number) => {
-        if (!companyId) return;
-        setLoading(true);
-        try {
-            const params: Record<string, string | number> = pidMode
-                ? { pid: companyId, page: p, per_page: 15 }
-                : { company_id: companyId, page: p, per_page: 15 };
-            const res = await api.get<ApiResponse<PaginatedData<YearStatistic>>>('/year-statistics', { params });
-            setRows(res.data.data.data);
-            setLastPage(res.data.data.last_page);
-            setPage(res.data.data.current_page);
-        } finally {
-            setLoading(false);
-        }
-    }, [companyId, pidMode]);
+    const fetchRows = useCallback(
+        async (p: number) => {
+            if (!companyId) {
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const params: Record<string, string | number> = pidMode
+                    ? { pid: companyId, page: p, per_page: 15 }
+                    : { company_id: companyId, page: p, per_page: 15 };
+                const res = await api.get<
+                    ApiResponse<PaginatedData<YearStatistic>>
+                >('/year-statistics', { params });
+                setRows(res.data.data.data);
+                setLastPage(res.data.data.last_page);
+                setPage(res.data.data.current_page);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [companyId, pidMode],
+    );
 
     useEffect(() => {
         fetchRows(1);
     }, [companyId, fetchRows]);
 
     const submittedThisYear = useMemo(() => {
-        if (pidMode) return false;
+        if (pidMode) {
+            return false;
+        }
+
         const y = String(new Date().getFullYear());
+
         return rows.some((r) => yearOf(r.created_at) === y);
     }, [rows, pidMode]);
 
@@ -96,8 +110,8 @@ export function YearStatisticsPage({ pidMode = false }: PageProps = {}) {
     const subtitle = pidMode
         ? '查看下属企业上报的年度安全生产数据。'
         : isBloc
-            ? '填报年度安全生产数据（按本企业及所辖下级汇总，每年限一份，可修改）。'
-            : '填报年度安全生产数据（每年限一份，可修改）。';
+          ? '填报年度安全生产数据（按本企业及所辖下级汇总，每年限一份，可修改）。'
+          : '填报年度安全生产数据（每年限一份，可修改）。';
 
     return (
         <>
@@ -105,50 +119,96 @@ export function YearStatisticsPage({ pidMode = false }: PageProps = {}) {
             <div className="space-y-4 p-4">
                 <header className="flex items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-xl font-semibold text-slate-100">{title}</h1>
+                        <h1 className="text-xl font-semibold text-slate-100">
+                            {title}
+                        </h1>
                         <p className="text-sm text-slate-400">{subtitle}</p>
                     </div>
                     {!pidMode && (
                         <button
                             type="button"
-                            onClick={() => { setEditing(null); setFormOpen(true); }}
+                            onClick={() => {
+                                setEditing(null);
+                                setFormOpen(true);
+                            }}
                             disabled={!companyId || submittedThisYear}
-                            title={submittedThisYear ? '本年度已填报，请前往编辑' : ''}
+                            title={
+                                submittedThisYear
+                                    ? '本年度已填报，请前往编辑'
+                                    : ''
+                            }
                             className="inline-flex min-w-[140px] items-center justify-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-6 py-2.5 text-sm font-medium text-blue-200 transition-colors hover:bg-blue-600/30 disabled:opacity-40"
                         >
-                            <Plus className="h-4 w-4" />填报当年年报
+                            <Plus className="h-4 w-4" />
+                            填报当年年报
                         </button>
                     )}
                 </header>
 
                 <div className="overflow-hidden rounded-xl border border-blue-900/40 bg-[#070d1f]">
                     <table className="min-w-full text-sm">
-                        <thead className="bg-blue-950/40 text-left text-xs uppercase tracking-wide text-slate-400">
+                        <thead className="bg-blue-950/40 text-left text-xs tracking-wide text-slate-400 uppercase">
                             <tr>
-                                <th className="px-4 py-3 w-20">年度</th>
-                                {pidMode && <th className="px-4 py-3 w-48">企业</th>}
+                                <th className="w-20 px-4 py-3">年度</th>
+                                {pidMode && (
+                                    <th className="w-48 px-4 py-3">企业</th>
+                                )}
                                 <th className="px-4 py-3">企业名称</th>
-                                <th className="px-4 py-3 w-40">企业分类</th>
-                                <th className="px-4 py-3 w-28">安全费用</th>
-                                <th className="px-4 py-3 w-28">消防费用</th>
-                                <th className="px-4 py-3 text-right w-48">操作</th>
+                                <th className="w-40 px-4 py-3">企业分类</th>
+                                <th className="w-28 px-4 py-3">安全费用</th>
+                                <th className="w-28 px-4 py-3">消防费用</th>
+                                <th className="w-48 px-4 py-3 text-right">
+                                    操作
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-blue-900/30">
                             {loading && (
-                                <tr><td colSpan={pidMode ? 7 : 6} className="px-4 py-6 text-center text-slate-500"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
+                                <tr>
+                                    <td
+                                        colSpan={pidMode ? 7 : 6}
+                                        className="px-4 py-6 text-center text-slate-500"
+                                    >
+                                        <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                                    </td>
+                                </tr>
                             )}
                             {!loading && rows.length === 0 && (
-                                <tr><td colSpan={pidMode ? 7 : 6} className="px-4 py-6 text-center text-slate-500">暂无年报数据</td></tr>
+                                <tr>
+                                    <td
+                                        colSpan={pidMode ? 7 : 6}
+                                        className="px-4 py-6 text-center text-slate-500"
+                                    >
+                                        暂无年报数据
+                                    </td>
+                                </tr>
                             )}
                             {rows.map((r) => (
-                                <tr key={r.id} className="text-slate-200 hover:bg-blue-950/30">
-                                    <td className="px-4 py-3">{yearOf(r.created_at)}</td>
-                                    {pidMode && <td className="px-4 py-3 text-slate-400">{r.company?.title ?? `企业 #${r.company_id}`}</td>}
-                                    <td className="px-4 py-3">{r.company_name ?? '—'}</td>
-                                    <td className="px-4 py-3 text-slate-400">{r.enterprise_type ?? '—'}</td>
-                                    <td className="px-4 py-3 text-slate-400">{r.safety_funding ?? '—'}</td>
-                                    <td className="px-4 py-3 text-slate-400">{r.fire_fighting ?? '—'}</td>
+                                <tr
+                                    key={r.id}
+                                    className="text-slate-200 hover:bg-blue-950/30"
+                                >
+                                    <td className="px-4 py-3">
+                                        {yearOf(r.created_at)}
+                                    </td>
+                                    {pidMode && (
+                                        <td className="px-4 py-3 text-slate-400">
+                                            {r.company?.title ??
+                                                `企业 #${r.company_id}`}
+                                        </td>
+                                    )}
+                                    <td className="px-4 py-3">
+                                        {r.company_name ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-slate-400">
+                                        {r.enterprise_type ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-slate-400">
+                                        {r.safety_funding ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-slate-400">
+                                        {r.fire_fighting ?? '—'}
+                                    </td>
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-1">
                                             <button
@@ -156,12 +216,16 @@ export function YearStatisticsPage({ pidMode = false }: PageProps = {}) {
                                                 onClick={() => setViewing(r)}
                                                 className="inline-flex items-center gap-1 rounded-lg border border-blue-500/30 bg-blue-600/10 px-3 py-1 text-xs text-blue-300 transition-colors hover:bg-blue-600/20"
                                             >
-                                                <Eye className="h-3.5 w-3.5" />详情
+                                                <Eye className="h-3.5 w-3.5" />
+                                                详情
                                             </button>
                                             {!pidMode && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => { setEditing(r); setFormOpen(true); }}
+                                                    onClick={() => {
+                                                        setEditing(r);
+                                                        setFormOpen(true);
+                                                    }}
                                                     title="编辑"
                                                     className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
                                                 >
@@ -178,9 +242,23 @@ export function YearStatisticsPage({ pidMode = false }: PageProps = {}) {
 
                 {lastPage > 1 && (
                     <div className="flex items-center justify-end gap-2 text-xs text-slate-400">
-                        <button onClick={() => fetchRows(page - 1)} disabled={page <= 1} className="rounded border border-blue-900/40 px-2 py-1 disabled:opacity-40">上一页</button>
-                        <span>{page} / {lastPage}</span>
-                        <button onClick={() => fetchRows(page + 1)} disabled={page >= lastPage} className="rounded border border-blue-900/40 px-2 py-1 disabled:opacity-40">下一页</button>
+                        <button
+                            onClick={() => fetchRows(page - 1)}
+                            disabled={page <= 1}
+                            className="rounded border border-blue-900/40 px-2 py-1 disabled:opacity-40"
+                        >
+                            上一页
+                        </button>
+                        <span>
+                            {page} / {lastPage}
+                        </span>
+                        <button
+                            onClick={() => fetchRows(page + 1)}
+                            disabled={page >= lastPage}
+                            className="rounded border border-blue-900/40 px-2 py-1 disabled:opacity-40"
+                        >
+                            下一页
+                        </button>
                     </div>
                 )}
             </div>
@@ -190,12 +268,24 @@ export function YearStatisticsPage({ pidMode = false }: PageProps = {}) {
                     companyId={companyId}
                     companyName={activeCompany?.title ?? ''}
                     initial={editing}
-                    onClose={() => { setFormOpen(false); setEditing(null); }}
-                    onSaved={async () => { setFormOpen(false); setEditing(null); await fetchRows(page); }}
+                    onClose={() => {
+                        setFormOpen(false);
+                        setEditing(null);
+                    }}
+                    onSaved={async () => {
+                        setFormOpen(false);
+                        setEditing(null);
+                        await fetchRows(page);
+                    }}
                 />
             )}
 
-            {viewing && <YearDetailsModal draft={viewing} onClose={() => setViewing(null)} />}
+            {viewing && (
+                <YearDetailsModal
+                    draft={viewing}
+                    onClose={() => setViewing(null)}
+                />
+            )}
         </>
     );
 }
@@ -226,7 +316,13 @@ interface YearStuffResponse {
     kids?: YearStatisticKidRow[];
 }
 
-function YearFormModal({ companyId, companyName, initial, onClose, onSaved }: YearFormModalProps) {
+function YearFormModal({
+    companyId,
+    companyName,
+    initial,
+    onClose,
+    onSaved,
+}: YearFormModalProps) {
     const targetCompanyId = initial?.company_id ?? companyId;
     const [form, setForm] = useState({
         company_name: initial?.company_name ?? companyName,
@@ -234,24 +330,41 @@ function YearFormModal({ companyId, companyName, initial, onClose, onSaved }: Ye
         enterprise_type: initial?.enterprise_type ?? '',
         safety_funding: initial?.safety_funding ?? '',
         fire_fighting: initial?.fire_fighting ?? '',
-        compliance_time: initial?.compliance_time ? String(initial.compliance_time).slice(0, 10) : '',
-        revaluation_time: initial?.revaluation_time ? String(initial.revaluation_time).slice(0, 10) : '',
+        compliance_time: initial?.compliance_time
+            ? String(initial.compliance_time).slice(0, 10)
+            : '',
+        revaluation_time: initial?.revaluation_time
+            ? String(initial.revaluation_time).slice(0, 10)
+            : '',
     });
-    const [slKids, setSlKids] = useState<YearStatisticKidRow[]>(initial ? pickYearKids(initial).filter((k) => k.type === 1) : []);
-    const [xfKids, setXfKids] = useState<YearStatisticKidRow[]>(initial ? pickYearKids(initial).filter((k) => k.type === 2) : []);
+    const [slKids, setSlKids] = useState<YearStatisticKidRow[]>(
+        initial ? pickYearKids(initial).filter((k) => k.type === 1) : [],
+    );
+    const [xfKids, setXfKids] = useState<YearStatisticKidRow[]>(
+        initial ? pickYearKids(initial).filter((k) => k.type === 2) : [],
+    );
     const [saving, setSaving] = useState(false);
     const [stuffing, setStuffing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const update = <K extends keyof typeof form>(k: K, v: string) => setForm((p) => ({ ...p, [k]: v }));
+    const update = <K extends keyof typeof form>(k: K, v: string) =>
+        setForm((p) => ({ ...p, [k]: v }));
 
     useEffect(() => {
-        if (initial) return;
+        if (initial) {
+            return;
+        }
+
         let ignore = false;
         setStuffing(true);
-        api.get<ApiResponse<YearStuffResponse>>('/year-statistics/stuff', { params: { company_id: targetCompanyId } })
+        api.get<ApiResponse<YearStuffResponse>>('/year-statistics/stuff', {
+            params: { company_id: targetCompanyId },
+        })
             .then((res) => {
-                if (ignore) return;
+                if (ignore) {
+                    return;
+                }
+
                 const d = res.data.data;
                 setForm({
                     company_name: d.company_name ?? '',
@@ -259,21 +372,35 @@ function YearFormModal({ companyId, companyName, initial, onClose, onSaved }: Ye
                     enterprise_type: d.enterprise_type ?? '',
                     safety_funding: String(d.safety_funding ?? ''),
                     fire_fighting: String(d.fire_fighting ?? ''),
-                    compliance_time: d.compliance_time ? String(d.compliance_time).slice(0, 10) : '',
-                    revaluation_time: d.revaluation_time ? String(d.revaluation_time).slice(0, 10) : '',
+                    compliance_time: d.compliance_time
+                        ? String(d.compliance_time).slice(0, 10)
+                        : '',
+                    revaluation_time: d.revaluation_time
+                        ? String(d.revaluation_time).slice(0, 10)
+                        : '',
                 });
                 const kids = d.kids ?? [];
                 setSlKids(kids.filter((k) => k.type === 1));
                 setXfKids(kids.filter((k) => k.type === 2));
             })
-            .catch(() => { /* keep blanks */ })
-            .finally(() => { if (!ignore) setStuffing(false); });
-        return () => { ignore = true; };
+            .catch(() => {
+                /* keep blanks */
+            })
+            .finally(() => {
+                if (!ignore) {
+                    setStuffing(false);
+                }
+            });
+
+        return () => {
+            ignore = true;
+        };
     }, [targetCompanyId, initial]);
 
     const save = async () => {
         setSaving(true);
         setError(null);
+
         try {
             const payload = {
                 ...form,
@@ -285,14 +412,19 @@ function YearFormModal({ companyId, companyName, initial, onClose, onSaved }: Ye
                     ...xfKids.map((k) => ({ ...k, type: 2 })),
                 ],
             };
+
             if (initial) {
                 await api.put(`/year-statistics/${initial.id}`, payload);
             } else {
                 await api.post('/year-statistics', payload);
             }
+
             onSaved();
         } catch (e) {
-            const err = e as { response?: { data?: { message?: string } }; message?: string };
+            const err = e as {
+                response?: { data?: { message?: string } };
+                message?: string;
+            };
             setError(err.response?.data?.message ?? err.message ?? '保存失败');
         } finally {
             setSaving(false);
@@ -300,50 +432,152 @@ function YearFormModal({ companyId, companyName, initial, onClose, onSaved }: Ye
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-            <div className="flex w-full max-w-3xl max-h-[90vh] flex-col rounded-xl border border-blue-900/40 bg-[#050915] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={onClose}
+        >
+            <div
+                className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl border border-blue-900/40 bg-[#050915] shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <header className="flex items-center justify-between border-b border-blue-900/30 px-5 py-3">
                     <h3 className="text-sm font-semibold text-slate-100">
                         {initial ? '编辑年报' : '填报当年年报'}
-                        {stuffing && <Loader2 className="ml-2 inline h-3.5 w-3.5 animate-spin text-slate-500" />}
+                        {stuffing && (
+                            <Loader2 className="ml-2 inline h-3.5 w-3.5 animate-spin text-slate-500" />
+                        )}
                     </h3>
-                    <button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X className="h-4 w-4" /></button>
+                    <button
+                        onClick={onClose}
+                        className="text-slate-500 hover:text-slate-300"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-5 space-y-5">
+                <div className="flex-1 space-y-5 overflow-y-auto p-5">
                     <section>
-                        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">企业基本信息</h4>
+                        <h4 className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                            企业基本信息
+                        </h4>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            <Field label="企业名称"><input className={inputCls} value={form.company_name} onChange={(e) => update('company_name', e.target.value)} /></Field>
-                            <Field label="企业分类"><input className={inputCls} value={form.enterprise_type} onChange={(e) => update('enterprise_type', e.target.value)} /></Field>
-                            <Field label="地址"><input className={inputCls} value={form.base_area} onChange={(e) => update('base_area', e.target.value)} /></Field>
-                            <Field label="标准化达标时间"><input type="date" className={inputCls} value={form.compliance_time} onChange={(e) => update('compliance_time', e.target.value)} /></Field>
-                            <Field label="标准化复评时间"><input type="date" className={inputCls} value={form.revaluation_time} onChange={(e) => update('revaluation_time', e.target.value)} /></Field>
+                            <Field label="企业名称">
+                                <input
+                                    className={inputCls}
+                                    value={form.company_name}
+                                    onChange={(e) =>
+                                        update('company_name', e.target.value)
+                                    }
+                                />
+                            </Field>
+                            <Field label="企业分类">
+                                <input
+                                    className={inputCls}
+                                    value={form.enterprise_type}
+                                    onChange={(e) =>
+                                        update(
+                                            'enterprise_type',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
+                            <Field label="地址">
+                                <input
+                                    className={inputCls}
+                                    value={form.base_area}
+                                    onChange={(e) =>
+                                        update('base_area', e.target.value)
+                                    }
+                                />
+                            </Field>
+                            <Field label="标准化达标时间">
+                                <input
+                                    type="date"
+                                    className={inputCls}
+                                    value={form.compliance_time}
+                                    onChange={(e) =>
+                                        update(
+                                            'compliance_time',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
+                            <Field label="标准化复评时间">
+                                <input
+                                    type="date"
+                                    className={inputCls}
+                                    value={form.revaluation_time}
+                                    onChange={(e) =>
+                                        update(
+                                            'revaluation_time',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
                         </div>
                     </section>
 
                     <section>
-                        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">费用</h4>
+                        <h4 className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                            费用
+                        </h4>
                         <div className="grid gap-3 sm:grid-cols-2">
-                            <Field label="安全费用"><input className={inputCls} value={form.safety_funding} onChange={(e) => update('safety_funding', e.target.value)} /></Field>
-                            <Field label="消防费用"><input className={inputCls} value={form.fire_fighting} onChange={(e) => update('fire_fighting', e.target.value)} /></Field>
+                            <Field label="安全费用">
+                                <input
+                                    className={inputCls}
+                                    value={form.safety_funding}
+                                    onChange={(e) =>
+                                        update('safety_funding', e.target.value)
+                                    }
+                                />
+                            </Field>
+                            <Field label="消防费用">
+                                <input
+                                    className={inputCls}
+                                    value={form.fire_fighting}
+                                    onChange={(e) =>
+                                        update('fire_fighting', e.target.value)
+                                    }
+                                />
+                            </Field>
                         </div>
                     </section>
 
-                    <KidsSection title="三类人员达标情况" items={slKids} setItems={setSlKids} />
-                    <KidsSection title="消防持证情况" items={xfKids} setItems={setXfKids} />
+                    <KidsSection
+                        title="三类人员达标情况"
+                        items={slKids}
+                        setItems={setSlKids}
+                    />
+                    <KidsSection
+                        title="消防持证情况"
+                        items={xfKids}
+                        setItems={setXfKids}
+                    />
                 </div>
 
-                {error && <p className="px-5 pb-2 text-xs text-red-400">{error}</p>}
+                {error && (
+                    <p className="px-5 pb-2 text-xs text-red-400">{error}</p>
+                )}
 
                 <footer className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-5 py-3">
-                    <button onClick={onClose} className="rounded-lg border border-blue-900/40 px-3 py-1.5 text-xs text-slate-300 hover:bg-blue-900/20">取消</button>
+                    <button
+                        onClick={onClose}
+                        className="rounded-lg border border-blue-900/40 px-3 py-1.5 text-xs text-slate-300 hover:bg-blue-900/20"
+                    >
+                        取消
+                    </button>
                     <button
                         onClick={save}
                         disabled={saving}
                         className="inline-flex items-center gap-1 rounded-lg border border-blue-500/30 bg-blue-600/20 px-3 py-1.5 text-xs text-blue-200 hover:bg-blue-600/30 disabled:opacity-40"
                     >
-                        {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}保存
+                        {saving && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        )}
+                        保存
                     </button>
                 </footer>
             </div>
@@ -351,7 +585,13 @@ function YearFormModal({ companyId, companyName, initial, onClose, onSaved }: Ye
     );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) {
     return (
         <label className="block text-xs text-slate-400">
             <span className="mb-1 block">{label}</span>
@@ -360,10 +600,34 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     );
 }
 
-function KidsSection({ title, items, setItems }: { title: string; items: YearStatisticKidRow[]; setItems: (items: YearStatisticKidRow[]) => void }) {
-    const addRow = () => setItems([...items, { name: '', type: 1, should_obtain_people: null, already_obtain_people: null, no_obtain_people: '', train_people: null }]);
-    const removeRow = (i: number) => setItems(items.filter((_, idx) => idx !== i));
-    const updateField = (i: number, k: keyof YearStatisticKidRow, v: string | number | null) => {
+function KidsSection({
+    title,
+    items,
+    setItems,
+}: {
+    title: string;
+    items: YearStatisticKidRow[];
+    setItems: (items: YearStatisticKidRow[]) => void;
+}) {
+    const addRow = () =>
+        setItems([
+            ...items,
+            {
+                name: '',
+                type: 1,
+                should_obtain_people: null,
+                already_obtain_people: null,
+                no_obtain_people: '',
+                train_people: null,
+            },
+        ]);
+    const removeRow = (i: number) =>
+        setItems(items.filter((_, idx) => idx !== i));
+    const updateField = (
+        i: number,
+        k: keyof YearStatisticKidRow,
+        v: string | number | null,
+    ) => {
         const next = items.slice();
         next[i] = { ...next[i], [k]: v } as YearStatisticKidRow;
         setItems(next);
@@ -372,25 +636,103 @@ function KidsSection({ title, items, setItems }: { title: string; items: YearSta
     return (
         <section>
             <div className="mb-2 flex items-center justify-between">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</h4>
-                <button type="button" onClick={addRow} className="inline-flex items-center gap-1 rounded border border-blue-500/30 bg-blue-600/10 px-2 py-1 text-xs text-blue-300 hover:bg-blue-600/20">
-                    <Plus className="h-3 w-3" />新增
+                <h4 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                    {title}
+                </h4>
+                <button
+                    type="button"
+                    onClick={addRow}
+                    className="inline-flex items-center gap-1 rounded border border-blue-500/30 bg-blue-600/10 px-2 py-1 text-xs text-blue-300 hover:bg-blue-600/20"
+                >
+                    <Plus className="h-3 w-3" />
+                    新增
                 </button>
             </div>
-            {items.length === 0 && <p className="text-xs text-slate-600">暂无记录</p>}
+            {items.length === 0 && (
+                <p className="text-xs text-slate-600">暂无记录</p>
+            )}
             <div className="space-y-2">
                 {items.map((row, i) => (
-                    <div key={i} className="rounded-lg border border-blue-900/40 bg-[#070d1f] p-3">
+                    <div
+                        key={i}
+                        className="rounded-lg border border-blue-900/40 bg-[#070d1f] p-3"
+                    >
                         <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
                             <span>条目 #{i + 1}</span>
-                            <button type="button" onClick={() => removeRow(i)} className="rounded p-1 text-red-400 hover:bg-red-600/10"><Trash2 className="h-3.5 w-3.5" /></button>
+                            <button
+                                type="button"
+                                onClick={() => removeRow(i)}
+                                className="rounded p-1 text-red-400 hover:bg-red-600/10"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </button>
                         </div>
                         <div className="grid gap-2 sm:grid-cols-3">
-                            <input className={inputCls} placeholder="名称" value={row.name ?? ''} onChange={(e) => updateField(i, 'name', e.target.value)} />
-                            <input type="number" className={inputCls} placeholder="应取证人数" value={row.should_obtain_people ?? ''} onChange={(e) => updateField(i, 'should_obtain_people', e.target.value ? Number(e.target.value) : null)} />
-                            <input type="number" className={inputCls} placeholder="已取证人数" value={row.already_obtain_people ?? ''} onChange={(e) => updateField(i, 'already_obtain_people', e.target.value ? Number(e.target.value) : null)} />
-                            <input type="number" className={inputCls} placeholder="培训人数" value={row.train_people ?? ''} onChange={(e) => updateField(i, 'train_people', e.target.value ? Number(e.target.value) : null)} />
-                            <input className={cn(inputCls, 'sm:col-span-2')} placeholder="未取证人数说明" value={row.no_obtain_people ?? ''} onChange={(e) => updateField(i, 'no_obtain_people', e.target.value)} />
+                            <input
+                                className={inputCls}
+                                placeholder="名称"
+                                value={row.name ?? ''}
+                                onChange={(e) =>
+                                    updateField(i, 'name', e.target.value)
+                                }
+                            />
+                            <input
+                                type="number"
+                                className={inputCls}
+                                placeholder="应取证人数"
+                                value={row.should_obtain_people ?? ''}
+                                onChange={(e) =>
+                                    updateField(
+                                        i,
+                                        'should_obtain_people',
+                                        e.target.value
+                                            ? Number(e.target.value)
+                                            : null,
+                                    )
+                                }
+                            />
+                            <input
+                                type="number"
+                                className={inputCls}
+                                placeholder="已取证人数"
+                                value={row.already_obtain_people ?? ''}
+                                onChange={(e) =>
+                                    updateField(
+                                        i,
+                                        'already_obtain_people',
+                                        e.target.value
+                                            ? Number(e.target.value)
+                                            : null,
+                                    )
+                                }
+                            />
+                            <input
+                                type="number"
+                                className={inputCls}
+                                placeholder="培训人数"
+                                value={row.train_people ?? ''}
+                                onChange={(e) =>
+                                    updateField(
+                                        i,
+                                        'train_people',
+                                        e.target.value
+                                            ? Number(e.target.value)
+                                            : null,
+                                    )
+                                }
+                            />
+                            <input
+                                className={cn(inputCls, 'sm:col-span-2')}
+                                placeholder="未取证人数说明"
+                                value={row.no_obtain_people ?? ''}
+                                onChange={(e) =>
+                                    updateField(
+                                        i,
+                                        'no_obtain_people',
+                                        e.target.value,
+                                    )
+                                }
+                            />
                         </div>
                     </div>
                 ))}
@@ -417,23 +759,47 @@ export function YearDetailsModal({ draft, onClose }: YearDetailsModalProps) {
             <div className="flex h-full w-full max-w-2xl flex-col overflow-hidden border-l border-blue-900/40 bg-[#070d1f] shadow-2xl">
                 <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
                     <div>
-                        <h2 className="text-base font-semibold text-slate-100">年报详情 · {yearOf(draft.created_at)}</h2>
-                        <p className="mt-0.5 text-xs text-slate-600">{draft.company?.title ?? '仅展示记录信息'}</p>
+                        <h2 className="text-base font-semibold text-slate-100">
+                            年报详情 · {yearOf(draft.created_at)}
+                        </h2>
+                        <p className="mt-0.5 text-xs text-slate-600">
+                            {draft.company?.title ?? '仅展示记录信息'}
+                        </p>
                     </div>
-                    <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 hover:text-slate-300">
+                    <button
+                        onClick={onClose}
+                        className="rounded-lg p-1.5 text-slate-500 hover:text-slate-300"
+                    >
                         <X className="h-4 w-4" />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                <div className="flex-1 space-y-5 overflow-y-auto p-6">
                     <div className="space-y-4">
                         <Row label="企业名称" value={draft.company_name} />
                         <Row label="企业分类" value={draft.enterprise_type} />
                         <Row label="地址" value={draft.base_area} />
                         <Row label="安全费用" value={draft.safety_funding} />
                         <Row label="消防费用" value={draft.fire_fighting} />
-                        <Row label="标准化达标时间" value={draft.compliance_time ? String(draft.compliance_time).slice(0, 10) : null} />
-                        <Row label="标准化复评时间" value={draft.revaluation_time ? String(draft.revaluation_time).slice(0, 10) : null} />
+                        <Row
+                            label="标准化达标时间"
+                            value={
+                                draft.compliance_time
+                                    ? String(draft.compliance_time).slice(0, 10)
+                                    : null
+                            }
+                        />
+                        <Row
+                            label="标准化复评时间"
+                            value={
+                                draft.revaluation_time
+                                    ? String(draft.revaluation_time).slice(
+                                          0,
+                                          10,
+                                      )
+                                    : null
+                            }
+                        />
                     </div>
 
                     <KidList title="三类人员达标情况" items={slKids} />
@@ -444,29 +810,74 @@ export function YearDetailsModal({ draft, onClose }: YearDetailsModalProps) {
     );
 }
 
-function Row({ label, value }: { label: string; value: string | null | undefined }) {
+function Row({
+    label,
+    value,
+}: {
+    label: string;
+    value: string | null | undefined;
+}) {
     return (
         <div>
-            <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-            <p className="text-sm leading-relaxed text-slate-300">{value && String(value).length ? value : '—'}</p>
+            <p className="mb-1.5 text-xs font-medium tracking-wide text-slate-500 uppercase">
+                {label}
+            </p>
+            <p className="text-sm leading-relaxed text-slate-300">
+                {value && String(value).length ? value : '—'}
+            </p>
         </div>
     );
 }
 
-function KidList({ title, items }: { title: string; items: YearStatisticKidRow[] }) {
+function KidList({
+    title,
+    items,
+}: {
+    title: string;
+    items: YearStatisticKidRow[];
+}) {
     return (
         <section>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">{title} ({items.length})</p>
-            {items.length === 0 ? <p className="text-sm text-slate-600">—</p> : (
+            <p className="mb-2 text-xs font-medium tracking-wide text-slate-500 uppercase">
+                {title} ({items.length})
+            </p>
+            {items.length === 0 ? (
+                <p className="text-sm text-slate-600">—</p>
+            ) : (
                 <div className="space-y-2">
                     {items.map((k, i) => (
-                        <div key={k.id ?? i} className="rounded-lg border border-blue-900/30 bg-[#0b1226] p-3 text-xs text-slate-300">
-                            <div className="font-medium text-slate-200">{k.name ?? '—'}</div>
+                        <div
+                            key={k.id ?? i}
+                            className="rounded-lg border border-blue-900/30 bg-[#0b1226] p-3 text-xs text-slate-300"
+                        >
+                            <div className="font-medium text-slate-200">
+                                {k.name ?? '—'}
+                            </div>
                             <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5">
-                                <div><span className="text-slate-500">应取证：</span>{k.should_obtain_people ?? '—'}</div>
-                                <div><span className="text-slate-500">已取证：</span>{k.already_obtain_people ?? '—'}</div>
-                                <div><span className="text-slate-500">培训人数：</span>{k.train_people ?? '—'}</div>
-                                <div><span className="text-slate-500">未取证说明：</span>{k.no_obtain_people ?? '—'}</div>
+                                <div>
+                                    <span className="text-slate-500">
+                                        应取证：
+                                    </span>
+                                    {k.should_obtain_people ?? '—'}
+                                </div>
+                                <div>
+                                    <span className="text-slate-500">
+                                        已取证：
+                                    </span>
+                                    {k.already_obtain_people ?? '—'}
+                                </div>
+                                <div>
+                                    <span className="text-slate-500">
+                                        培训人数：
+                                    </span>
+                                    {k.train_people ?? '—'}
+                                </div>
+                                <div>
+                                    <span className="text-slate-500">
+                                        未取证说明：
+                                    </span>
+                                    {k.no_obtain_people ?? '—'}
+                                </div>
                             </div>
                         </div>
                     ))}

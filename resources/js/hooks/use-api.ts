@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import api from '@/lib/api';
-import type { ApiResponse, PaginatedData } from '@/types/models';
 import { getErrorMessage, isAbortedRequest } from '@/types/api-error';
+import type { ApiResponse, PaginatedData } from '@/types/models';
 
 interface UseApiListOptions {
     endpoint: string;
@@ -42,7 +42,8 @@ export function useApiList<T = Record<string, unknown>>({
         total: 0,
     });
     const [page, setPage] = useState(1);
-    const [params, setParams] = useState<Record<string, unknown>>(defaultParams);
+    const [params, setParams] =
+        useState<Record<string, unknown>>(defaultParams);
     const abortRef = useRef<AbortController | null>(null);
 
     // When defaultParams changes after mount (e.g. activeCompany loads asynchronously),
@@ -52,10 +53,18 @@ export function useApiList<T = Record<string, unknown>>({
     useEffect(() => {
         if (isFirstParamsRun.current) {
             isFirstParamsRun.current = false;
+
             return;
         }
-        if (!enabled) return;
-        const newParams = JSON.parse(defaultParamsKey) as Record<string, unknown>;
+
+        if (!enabled) {
+            return;
+        }
+
+        const newParams = JSON.parse(defaultParamsKey) as Record<
+            string,
+            unknown
+        >;
         setParams(newParams);
         fetchList(1, newParams);
     }, [defaultParamsKey, enabled]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -66,11 +75,19 @@ export function useApiList<T = Record<string, unknown>>({
             const controller = new AbortController();
             abortRef.current = controller;
 
-            const effectiveParams = overrideParams !== undefined ? overrideParams : params;
+            const effectiveParams =
+                overrideParams !== undefined ? overrideParams : params;
             setState((s) => ({ ...s, loading: true, error: null }));
+
             try {
-                const { data: res } = await api.get<ApiResponse<PaginatedData<T>>>(endpoint, {
-                    params: { per_page: defaultPerPage, page: p, ...effectiveParams },
+                const { data: res } = await api.get<
+                    ApiResponse<PaginatedData<T>>
+                >(endpoint, {
+                    params: {
+                        per_page: defaultPerPage,
+                        page: p,
+                        ...effectiveParams,
+                    },
                     signal: controller.signal,
                 });
                 const meta = res.data;
@@ -84,7 +101,10 @@ export function useApiList<T = Record<string, unknown>>({
                     total: meta.total,
                 });
             } catch (err: unknown) {
-                if (isAbortedRequest(err)) return;
+                if (isAbortedRequest(err)) {
+                    return;
+                }
+
                 setState((s) => ({
                     ...s,
                     loading: false,
@@ -100,8 +120,12 @@ export function useApiList<T = Record<string, unknown>>({
     // that only the scoped fetch fires (otherwise this effect's stale `params`
     // closure would race and win, showing unfiltered data).
     useEffect(() => {
-        if (!enabled) return;
+        if (!enabled) {
+            return;
+        }
+
         fetchList(page);
+
         return () => abortRef.current?.abort();
     }, [page, endpoint]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -129,34 +153,49 @@ export function useApiList<T = Record<string, unknown>>({
 
 // ── 单条记录操作 ──────────────────────────────────────────────
 
-interface UseApiItemOptions<T> {
+interface UseApiItemOptions {
     endpoint: string;
     id?: number | string;
 }
 
-export function useApiItem<T = Record<string, unknown>>({ endpoint, id }: UseApiItemOptions<T>) {
+export function useApiItem<T = Record<string, unknown>>({
+    endpoint,
+    id,
+}: UseApiItemOptions) {
     const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetch = useCallback(async (itemId?: number | string) => {
-        const targetId = itemId ?? id;
-        if (!targetId) return;
-        setLoading(true);
-        setError(null);
-        try {
-            const { data: res } = await api.get<ApiResponse<T>>(`${endpoint}/${targetId}`);
-            setData(res.data);
-        } catch (err: unknown) {
-            setError(getErrorMessage(err));
-        } finally {
-            setLoading(false);
-        }
-    }, [endpoint, id]);
+    const fetch = useCallback(
+        async (itemId?: number | string) => {
+            const targetId = itemId ?? id;
+
+            if (!targetId) {
+                return;
+            }
+
+            setLoading(true);
+            setError(null);
+
+            try {
+                const { data: res } = await api.get<ApiResponse<T>>(
+                    `${endpoint}/${targetId}`,
+                );
+                setData(res.data);
+            } catch (err: unknown) {
+                setError(getErrorMessage(err));
+            } finally {
+                setLoading(false);
+            }
+        },
+        [endpoint, id],
+    );
 
     useEffect(() => {
-        if (id) fetch();
-    }, [id, fetch]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (id) {
+            fetch();
+        }
+    }, [id, fetch]);
 
     return { data, loading, error, fetch, setData };
 }
@@ -167,10 +206,17 @@ export function useApiCrud(endpoint: string) {
     const [loading, setLoading] = useState(false);
 
     const create = useCallback(
-        async <T = Record<string, unknown>>(payload: Record<string, unknown>): Promise<T | null> => {
+        async <T = Record<string, unknown>>(
+            payload: Record<string, unknown>,
+        ): Promise<T | null> => {
             setLoading(true);
+
             try {
-                const { data: res } = await api.post<ApiResponse<T>>(endpoint, payload);
+                const { data: res } = await api.post<ApiResponse<T>>(
+                    endpoint,
+                    payload,
+                );
+
                 return res.data;
             } finally {
                 setLoading(false);
@@ -180,10 +226,18 @@ export function useApiCrud(endpoint: string) {
     );
 
     const update = useCallback(
-        async <T = Record<string, unknown>>(id: number | string, payload: Record<string, unknown>): Promise<T | null> => {
+        async <T = Record<string, unknown>>(
+            id: number | string,
+            payload: Record<string, unknown>,
+        ): Promise<T | null> => {
             setLoading(true);
+
             try {
-                const { data: res } = await api.put<ApiResponse<T>>(`${endpoint}/${id}`, payload);
+                const { data: res } = await api.put<ApiResponse<T>>(
+                    `${endpoint}/${id}`,
+                    payload,
+                );
+
                 return res.data;
             } finally {
                 setLoading(false);
@@ -195,8 +249,10 @@ export function useApiCrud(endpoint: string) {
     const remove = useCallback(
         async (id: number | string): Promise<boolean> => {
             setLoading(true);
+
             try {
                 await api.delete(`${endpoint}/${id}`);
+
                 return true;
             } finally {
                 setLoading(false);
