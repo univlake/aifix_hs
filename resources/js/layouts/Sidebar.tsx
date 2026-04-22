@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Activity,
     ChevronRight,
     LayoutDashboard,
     Building2,
