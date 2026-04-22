@@ -12,10 +12,18 @@ import {
     Navigation,
     Check,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { GeoRangeDrawerModal } from '@/components/map/GeoRangeDrawerModal';
-import { LatLngPickerModal } from '@/components/map/LatLngPickerModal';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
+
+// Map modals are lazy-loaded — they pull in Leaflet (~148 KB) which is
+// otherwise added to every initial page load even though the modals are
+// rarely opened.
+const LatLngPickerModal = lazy(() =>
+    import('@/components/map/LatLngPickerModal').then((m) => ({ default: m.LatLngPickerModal })),
+);
+const GeoRangeDrawerModal = lazy(() =>
+    import('@/components/map/GeoRangeDrawerModal').then((m) => ({ default: m.GeoRangeDrawerModal })),
+);
 import api from '@/lib/api';
 import { getErrorMessage } from '@/types/api-error';
 
@@ -155,25 +163,33 @@ export default function CurrentEnterprise() {
         <>
             <Head title="当前企业" />
 
-            {/* Map modals */}
-            <LatLngPickerModal
-                open={latlngOpen}
-                onClose={() => setLatlngOpen(false)}
-                value={{ lat: form.dimension, lng: form.longitude }}
-                onConfirm={(lat, lng) => {
-                    setField('dimension', lat);
-                    setField('longitude', lng);
-                }}
-            />
-            <GeoRangeDrawerModal
-                open={geoRangeOpen}
-                onClose={() => setGeoRangeOpen(false)}
-                center={{ lat: form.dimension, lng: form.longitude }}
-                value={form.geographic_range}
-                onConfirm={(coords) =>
-                    setField('geographic_range', JSON.stringify(coords))
-                }
-            />
+            {/* Map modals — lazy-loaded, only mounted when first opened. */}
+            {latlngOpen && (
+                <Suspense fallback={null}>
+                    <LatLngPickerModal
+                        open={latlngOpen}
+                        onClose={() => setLatlngOpen(false)}
+                        value={{ lat: form.dimension, lng: form.longitude }}
+                        onConfirm={(lat, lng) => {
+                            setField('dimension', lat);
+                            setField('longitude', lng);
+                        }}
+                    />
+                </Suspense>
+            )}
+            {geoRangeOpen && (
+                <Suspense fallback={null}>
+                    <GeoRangeDrawerModal
+                        open={geoRangeOpen}
+                        onClose={() => setGeoRangeOpen(false)}
+                        center={{ lat: form.dimension, lng: form.longitude }}
+                        value={form.geographic_range}
+                        onConfirm={(coords) =>
+                            setField('geographic_range', JSON.stringify(coords))
+                        }
+                    />
+                </Suspense>
+            )}
 
             {/* Page header */}
             <div className="mb-8 flex items-start justify-between">

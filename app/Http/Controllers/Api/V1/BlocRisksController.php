@@ -108,94 +108,61 @@ class BlocRisksController extends Controller
         return $this->success($inherent->toArray());
     }
 
-    // 集团段风险指数变化图
+    // 集团段风险指数变化图（最近 7 天）
     public function getRiskLog(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'company_id' => 'required',
         ], [
             'company_id.required' => '企业id不能为空',
-        ]
-        );
+        ]);
         if ($validator->fails()) {
             return $this->failed($validator->errors()->first());
         }
-        // 首先获取下属企业符合条件（审核通过+生产端）的id
+
         $companies = Company::query()->where('id', $request->company_id)->with('companies', function ($query) {
             $query->where('status', 1);
         })->first();
         $company_ids = $this->ascTree($companies);
-        // 下属企业数量
         $count_num = count($company_ids);
-        // 第七天
-        $day_7 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 1)->where('date', date('Ymd', strtotime('-6 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-        $day_7_1 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 2)->where('date', date('Ymd', strtotime('-6 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
 
-        $data[0] = ['title' => date('Ymd', strtotime('-6 days')),
-            'inherent_risk_num' => $this->calculate($day_7, $count_num)[0],
-            'inherent_risk_grade' => $this->calculate($day_7, $count_num)[1],
-            'float_risk_num' => $this->calculate($day_7_1, $count_num)[0],
-            'float_risk_grade' => $this->calculate($day_7_1, $count_num)[1]];
+        // Build the 7 day-codes (oldest first → today last) the chart needs.
+        $dates = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $dates[] = date('Ymd', strtotime("-{$i} days"));
+        }
 
-        // 第六天
-        $day_6 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 1)->where('date', date('Ymd', strtotime('-5 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-        $day_6_1 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 2)->where('date', date('Ymd', strtotime('-5 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
+        // Two bulk queries (one per type) covering all 7 days, grouped by date+grade.
+        // Replaces 14 separate single-day queries the legacy version issued.
+        $rows = RiskLog::query()
+            ->whereIn('company_id', $company_ids)
+            ->whereIn('date', $dates)
+            ->select('date', 'type', 'risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))
+            ->groupBy(['date', 'type', 'risk_grade'])
+            ->get();
 
-        $data[1] = ['title' => date('Ymd', strtotime('-5 days')),
-            'inherent_risk_num' => $this->calculate($day_6, $count_num)[0],
-            'inherent_risk_grade' => $this->calculate($day_6, $count_num)[1],
-            'float_risk_num' => $this->calculate($day_6_1, $count_num)[0],
-            'float_risk_grade' => $this->calculate($day_6_1, $count_num)[1]];
+        // Bucket by date+type for O(1) lookup.
+        $bucketed = [];
+        foreach ($rows as $row) {
+            $bucketed[(int) $row->date][(int) $row->type][] = $row;
+        }
 
-        // 第七天
-        $day_5 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 1)->where('date', date('Ymd', strtotime('-4 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-        $day_5_1 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 2)->where('date', date('Ymd', strtotime('-4 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
+        $data = [];
+        foreach ($dates as $idx => $dateCode) {
+            $inherentRows = collect($bucketed[(int) $dateCode][1] ?? []);
+            $floatRows = collect($bucketed[(int) $dateCode][2] ?? []);
 
-        $data[2] = ['title' => date('Ymd', strtotime('-4 days')),
-            'inherent_risk_num' => $this->calculate($day_5, $count_num)[0],
-            'inherent_risk_grade' => $this->calculate($day_5, $count_num)[1],
-            'float_risk_num' => $this->calculate($day_5_1, $count_num)[0],
-            'float_risk_grade' => $this->calculate($day_5_1, $count_num)[1]];
+            [$inherentNum, $inherentGrade] = $this->calculate($inherentRows, $count_num);
+            [$floatNum, $floatGrade] = $this->calculate($floatRows, $count_num);
 
-        // 第七天
-        $day_4 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 1)->where('date', date('Ymd', strtotime('-3 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-        $day_4_1 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 2)->where('date', date('Ymd', strtotime('-3 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-
-        $data[3] = ['title' => date('Ymd', strtotime('-3 days')),
-            'inherent_risk_num' => $this->calculate($day_4, $count_num)[0],
-            'inherent_risk_grade' => $this->calculate($day_4, $count_num)[1],
-            'float_risk_num' => $this->calculate($day_4_1, $count_num)[0],
-            'float_risk_grade' => $this->calculate($day_4_1, $count_num)[1]];
-
-        // 第七天
-        $day_3 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 1)->where('date', date('Ymd', strtotime('-2 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-        $day_3_1 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 2)->where('date', date('Ymd', strtotime('-2 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-
-        $data[4] = ['title' => date('Ymd', strtotime('-2 days')),
-            'inherent_risk_num' => $this->calculate($day_3, $count_num)[0],
-            'inherent_risk_grade' => $this->calculate($day_3, $count_num)[1],
-            'float_risk_num' => $this->calculate($day_3_1, $count_num)[0],
-            'float_risk_grade' => $this->calculate($day_3_1, $count_num)[1]];
-
-        // 第七天
-        $day_2 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 1)->where('date', date('Ymd', strtotime('-1 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-        $day_2_1 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 2)->where('date', date('Ymd', strtotime('-1 days')))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-
-        $data[5] = ['title' => date('Ymd', strtotime('-1 days')),
-            'inherent_risk_num' => $this->calculate($day_2, $count_num)[0],
-            'inherent_risk_grade' => $this->calculate($day_2, $count_num)[1],
-            'float_risk_num' => $this->calculate($day_2_1, $count_num)[0],
-            'float_risk_grade' => $this->calculate($day_2_1, $count_num)[1]];
-
-        // 第七天
-        $day_1 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 1)->where('date', date('Ymd'))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-        $day_1_1 = RiskLog::query()->whereIn('company_id', $company_ids)->where('type', 2)->where('date', date('Ymd'))->select('risk_grade', DB::raw('count(*) as num'), DB::raw('SUM(risk_num) as risk_num'))->groupBy('risk_grade')->get();
-
-        $data[6] = ['title' => date('Ymd'),
-            'inherent_risk_num' => $this->calculate($day_1, $count_num)[0],
-            'inherent_risk_grade' => $this->calculate($day_1, $count_num)[1],
-            'float_risk_num' => $this->calculate($day_1_1, $count_num)[0],
-            'float_risk_grade' => $this->calculate($day_1_1, $count_num)[1]];
+            $data[$idx] = [
+                'title' => $dateCode,
+                'inherent_risk_num' => $inherentNum,
+                'inherent_risk_grade' => $inherentGrade,
+                'float_risk_num' => $floatNum,
+                'float_risk_grade' => $floatGrade,
+            ];
+        }
 
         return $this->success($data);
     }
@@ -250,31 +217,54 @@ class BlocRisksController extends Controller
     // 企业整改排序
     public function hiddenDangerSort(Request $request)
     {
-        // 首先获取下属企业符合条件（审核通过+生产端）的id
         $companies = Company::query()->where('id', $request->company_id)->with('companies', function ($query) {
             $query->where('status', 1);
         })->first();
         $company_ids = $this->ascTree($companies);
 
-        $data = [];
-        foreach ($company_ids as $k => $items) {
-            $monthly_investigation = MonthlyInvestigation::query()->where('company_id', $items)->count();
-            $monthly_investigation_old = MonthlyInvestigation::query()->where('company_id', $items)->where('updated_at', 'NOT LIKE', date('Y-m-d'))->count();
-            $monthly_investigation_result = MonthlyInvestigation::query()->where('company_id', $items)->where('correct_result', '已整改')->count();
-            $monthly_investigation_result_old = MonthlyInvestigation::query()->where('company_id', $items)->where('updated_at', 'NOT LIKE', date('Y-m-d'))->where('correct_result', '已整改')->count();
-            $data[$k]['company_name'] = Company::query()->where('id', $items)->value('title');
-            if ($monthly_investigation && $monthly_investigation_result) {
-                $data[$k]['monthly_investigation_scale'] = round($monthly_investigation_result / $monthly_investigation, 2) * 100;
-            } else {
-                $data[$k]['monthly_investigation_scale'] = 0;
-            }
-            if ($monthly_investigation_old && $monthly_investigation_result_old) {
-                $data[$k]['jqr'] = round($monthly_investigation_result / $monthly_investigation, 2) * 100 - round($monthly_investigation_result_old / $monthly_investigation_old, 2) * 100;
-            } else {
-                $data[$k]['jqr'] = 0;
-            }
+        if (empty($company_ids)) {
+            return $this->success([]);
+        }
 
-            $data[$k]['company_id'] = $items;
+        $today = date('Y-m-d');
+
+        // Single conditional-aggregate query covering all 4 stats per company.
+        // Replaces 4N queries (4 per company in the legacy loop).
+        $stats = MonthlyInvestigation::query()
+            ->whereIn('company_id', $company_ids)
+            ->select(
+                'company_id',
+                DB::raw('COUNT(*) as total'),
+                DB::raw("SUM(CASE WHEN updated_at NOT LIKE '{$today}%' THEN 1 ELSE 0 END) as total_old"),
+                DB::raw("SUM(CASE WHEN correct_result = '已整改' THEN 1 ELSE 0 END) as resolved"),
+                DB::raw("SUM(CASE WHEN correct_result = '已整改' AND updated_at NOT LIKE '{$today}%' THEN 1 ELSE 0 END) as resolved_old"),
+            )
+            ->groupBy('company_id')
+            ->get()
+            ->keyBy('company_id');
+
+        // Single titles lookup instead of one Company::value() per company.
+        $titles = Company::query()->whereIn('id', $company_ids)->pluck('title', 'id');
+
+        $data = [];
+        foreach ($company_ids as $k => $cid) {
+            $row = $stats->get($cid);
+            $total = (int) ($row->total ?? 0);
+            $totalOld = (int) ($row->total_old ?? 0);
+            $resolved = (int) ($row->resolved ?? 0);
+            $resolvedOld = (int) ($row->resolved_old ?? 0);
+
+            $scale = ($total && $resolved) ? round($resolved / $total, 2) * 100 : 0;
+            $jqr = ($totalOld && $resolvedOld)
+                ? $scale - round($resolvedOld / $totalOld, 2) * 100
+                : 0;
+
+            $data[$k] = [
+                'company_name' => (string) ($titles[$cid] ?? ''),
+                'monthly_investigation_scale' => $scale,
+                'jqr' => $jqr,
+                'company_id' => $cid,
+            ];
         }
 
         $monthly_investigation_scale = array_column($data, 'monthly_investigation_scale');
