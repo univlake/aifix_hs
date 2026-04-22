@@ -9,6 +9,7 @@ import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -68,6 +69,10 @@ function emptyConstitute(): Constitute {
 export default function MajorHazardsIndex() {
     const { activeCompany } = useScope();
     const companyId = activeCompany?.id;
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('major-hazards.create');
+    const canUpdate = canWrite('major-hazards.update');
+    const canDelete = canWrite('major-hazards.delete');
 
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<MajorHazard>({
@@ -237,12 +242,16 @@ return <span className="text-slate-700">—</span>;
             cell: ({ row }: any) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton row={row.original} onOpen={detail.openDetail} />
-                    <ActionBtn variant="edit" title="编辑" onClick={() => openEdit(row.original)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                    </ActionBtn>
-                    <ActionBtn variant="delete" title="删除" onClick={() => setDeleteItem(row.original)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </ActionBtn>
+                    {canUpdate && (
+                        <ActionBtn variant="edit" title="编辑" onClick={() => openEdit(row.original)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                        </ActionBtn>
+                    )}
+                    {canDelete && (
+                        <ActionBtn variant="delete" title="删除" onClick={() => setDeleteItem(row.original)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </ActionBtn>
+                    )}
                 </div>
             ),
         },
@@ -256,12 +265,12 @@ return <span className="text-slate-700">—</span>;
                     <h1 className="text-xl font-bold text-slate-100">重大危险源</h1>
                     <p className="mt-0.5 text-xs text-slate-600">共 <span className="font-medium text-slate-400">{total}</span> 条记录</p>
                 </div>
-                <button
+                {canCreate && (<button
                     onClick={openCreate}
                     className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95"
                 >
                     <Plus className="h-4 w-4" />新增危险源
-                </button>
+                </button>)}
             </div>
 
             <DataTable

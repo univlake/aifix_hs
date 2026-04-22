@@ -12,6 +12,7 @@ import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -599,6 +600,10 @@ function FilingPermissionsSection({ companyId }: { companyId: number }) {
         });
 
     const crud = useApiCrud('/filing-permissions');
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('filing-permissions.create');
+    const canUpdate = canWrite('filing-permissions.update');
+    const canDelete = canWrite('filing-permissions.delete');
     const [recordTypes, setRecordTypes] = useState<RecordType[]>([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -711,20 +716,24 @@ return;
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton row={row.original} onOpen={detail.openDetail} />
-                    <button
-                        onClick={() => openEdit(row.original)}
-                        title="编辑"
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        onClick={() => setDeleteId(row.original.id)}
-                        title="删除"
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-600/10 hover:text-red-400"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {canUpdate && (
+                        <button
+                            onClick={() => openEdit(row.original)}
+                            title="编辑"
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {canDelete && (
+                        <button
+                            onClick={() => setDeleteId(row.original.id)}
+                            title="删除"
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-600/10 hover:text-red-400"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    )}
                 </div>
             ),
         },
@@ -736,13 +745,15 @@ return;
                 <p className="text-xs text-slate-500">
                     共 <span className="font-medium text-slate-300">{total}</span> 条记录
                 </p>
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"
-                >
-                    <Plus className="h-4 w-4" />
-                    新增
-                </button>
+                {canCreate && (
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"
+                    >
+                        <Plus className="h-4 w-4" />
+                        新增
+                    </button>
+                )}
             </div>
 
             <DataTable

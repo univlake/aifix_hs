@@ -9,6 +9,7 @@ import { OssVideoUploadField } from '@/components/shared/OssVideoUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -89,6 +90,17 @@ export interface CrudPageConfig {
     enableDetail?: boolean;
     /** Override the title shown in the detail modal header. */
     detailTitle?: string;
+    /**
+     * Permission names controlling which actions the user can perform. When omitted,
+     * no client-side gate is applied (backend 403 is the only line of defence).
+     * Conventionally `{module}.{list|create|update|delete}`; see docs/permissions-audit.md.
+     */
+    permissions?: {
+        list?: string;
+        create?: string;
+        update?: string;
+        delete?: string;
+    };
 }
 
 interface PaginatedResponse<T> {
@@ -121,12 +133,23 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         filterFields = [],
         enableDetail = false,
         detailTitle,
+        permissions: pagePermissions,
     } = config;
 
     const { activeCompany, isSubordinate, rootCompany } = useScope();
+    const { can } = usePermission();
     const companyId = activeCompany?.id;
-    const globalReadOnly = forceReadOnly ?? false;
+
+    // Rule 1: when an upper-level enterprise drills into a subordinate company,
+    // all write operations are hidden regardless of the user's permissions.
+    const globalReadOnly = (forceReadOnly ?? false) || isSubordinate;
     const readOnly = globalReadOnly;
+
+    // Rule 3: hide action buttons the user doesn't have permission for.
+    // When `permissions.{action}` is omitted, we fall back to allowed (= existing behaviour).
+    const canCreate = !readOnly && (pagePermissions?.create ? can(pagePermissions.create) : true);
+    const canUpdate = !readOnly && (pagePermissions?.update ? can(pagePermissions.update) : true);
+    const canDelete = !readOnly && (pagePermissions?.delete ? can(pagePermissions.delete) : true);
 
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<Record<string, unknown>>({
@@ -613,7 +636,7 @@ el.indeterminate = somePageSelected && !allPageSelected;
     };
 
     const tableColumns: ColumnDef<Record<string, unknown>>[] = [
-        ...(copyEndpoint && !readOnly ? [checkboxColumn] : []),
+        ...(copyEndpoint && canCreate ? [checkboxColumn] : []),
         ...colDefs.map((col) => ({
             accessorKey: col.key,
             header: col.header,
@@ -634,42 +657,45 @@ return <span className="text-slate-700">—</span>;
         })),
     ];
 
-    if (!globalReadOnly) {
+    const showActionsColumn = enableDetail || canUpdate || canDelete;
+    if (showActionsColumn) {
+        const actionCount = (enableDetail ? 1 : 0) + (canUpdate ? 1 : 0) + (canDelete ? 1 : 0);
         tableColumns.push({
             id: 'actions',
             header: '操作',
-            size: enableDetail ? 156 : 88,
+            size: actionCount >= 3 ? 156 : actionCount === 2 ? 112 : 68,
             cell: ({ row }) => {
                 const rowCompanyId = row.original.company_id as number | undefined;
-                const canEditRow = !isSubordinate
-                    || rowCompanyId === undefined
-                    || rowCompanyId === rootCompany?.id;
+                // Row may still be locked even if the page is editable — when the row belongs
+                // to a different company (only possible in bloc drill-downs; isSubordinate is
+                // already folded into globalReadOnly above).
+                const rowBelongsToUs = rowCompanyId === undefined || rowCompanyId === rootCompany?.id;
 
                 return (
                     <div className="flex items-center gap-0.5">
                         {enableDetail && (
                             <DetailButton row={row.original} onOpen={detail.openDetail} />
                         )}
-                        {canEditRow && (
-                            <>
-                                <ActionButton
-                                    onClick={() => openEdit(row.original)}
-                                    variant="edit"
-                                    title="编辑"
-                                >
-                                    <Pencil className="h-3.5 w-3.5" />
-                                </ActionButton>
-                                <ActionButton
-                                    onClick={() => {
-                                        setDeleteId(row.original[idKey] as number);
-                                        setDeleteLabel(String(row.original[labelKey] ?? row.original[idKey] ?? ''));
-                                    }}
-                                    variant="delete"
-                                    title="删除"
-                                >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </ActionButton>
-                            </>
+                        {canUpdate && rowBelongsToUs && (
+                            <ActionButton
+                                onClick={() => openEdit(row.original)}
+                                variant="edit"
+                                title="编辑"
+                            >
+                                <Pencil className="h-3.5 w-3.5" />
+                            </ActionButton>
+                        )}
+                        {canDelete && rowBelongsToUs && (
+                            <ActionButton
+                                onClick={() => {
+                                    setDeleteId(row.original[idKey] as number);
+                                    setDeleteLabel(String(row.original[labelKey] ?? row.original[idKey] ?? ''));
+                                }}
+                                variant="delete"
+                                title="删除"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </ActionButton>
                         )}
                     </div>
                 );
@@ -691,7 +717,7 @@ return <span className="text-slate-700">—</span>;
                         条记录
                     </p>
                 </div>
-                {!isSubordinate && !globalReadOnly && (
+                {canCreate && (
                     <button
                         onClick={openCreate}
                         className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95"
@@ -754,7 +780,7 @@ return null;
                             );
                         })}
                         {copyMsg && <span className="text-xs text-blue-400">{copyMsg}</span>}
-                        {copyEndpoint && !readOnly && selectedIds.size > 0 && (
+                        {copyEndpoint && canCreate && selectedIds.size > 0 && (
                             <button
                                 onClick={handleCopy}
                                 disabled={copyLoading}
@@ -773,7 +799,7 @@ return null;
                                 下载模板
                             </button>
                         )}
-                        {importEndpoint && !readOnly && (
+                        {importEndpoint && canCreate && (
                             <>
                                 <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportFile} />
                                 <button

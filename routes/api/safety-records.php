@@ -123,32 +123,14 @@ Route::middleware('permission:certificate-statuses.delete')->group(function () {
     Route::delete('/certificate-statuses/{id}', [CertificateStatusController::class, 'destroy']);
 });
 
-// ── 消防控制室人员 (uses elimination_control_staff table) ────────────
-Route::middleware('permission:fire-control-room-personnels.create')->group(function () {
-    Route::get('/fire-control-room-personnels/template', [EliminationControlStaffController::class, 'template']);
-    Route::post('/fire-control-room-personnels/import', [EliminationControlStaffController::class, 'import']);
-});
-Route::middleware('permission:fire-control-room-personnels.list')->group(function () {
-    Route::get('/fire-control-room-personnels', [EliminationControlStaffController::class, 'index']);
-    Route::get('/fire-control-room-personnels/{id}', [EliminationControlStaffController::class, 'show']);
-});
-Route::middleware('permission:fire-control-room-personnels.create')->group(function () {
-    Route::post('/fire-control-room-personnels', [EliminationControlStaffController::class, 'store']);
-});
-Route::middleware('permission:fire-control-room-personnels.update')->group(function () {
-    Route::put('/fire-control-room-personnels/{id}', [EliminationControlStaffController::class, 'update']);
-    Route::patch('/fire-control-room-personnels/{id}', [EliminationControlStaffController::class, 'update']);
-});
-Route::middleware('permission:fire-control-room-personnels.delete')->group(function () {
-    Route::delete('/fire-control-room-personnels/{id}', [EliminationControlStaffController::class, 'destroy']);
-});
-
-// ── 淘汰控制人员 ─────────────────────────────────────────────────────
+// ── 消控/淘汰控制人员（统一使用 elimination-control-staff，已合并原 fire-control-room-personnels 路径）────────────
 Route::middleware('permission:elimination-control-staff.list')->group(function () {
     Route::get('/elimination-control-staff', [EliminationControlStaffController::class, 'index']);
     Route::get('/elimination-control-staff/{id}', [EliminationControlStaffController::class, 'show']);
 });
 Route::middleware('permission:elimination-control-staff.create')->group(function () {
+    Route::get('/elimination-control-staff/template', [EliminationControlStaffController::class, 'template']);
+    Route::post('/elimination-control-staff/import', [EliminationControlStaffController::class, 'import']);
     Route::post('/elimination-control-staff', [EliminationControlStaffController::class, 'store']);
 });
 Route::middleware('permission:elimination-control-staff.update')->group(function () {

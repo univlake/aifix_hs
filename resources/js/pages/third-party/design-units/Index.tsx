@@ -9,6 +9,7 @@ import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 
 interface DesignUnitRow {
     id: number;
@@ -40,6 +41,10 @@ export default function DesignUnitsIndex() {
     const { activeCompany, isSubordinate } = useScope();
     const companyId = activeCompany?.id;
     const readOnly = isSubordinate;
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('design-units.create');
+    const canUpdate = canWrite('design-units.update');
+    const canDelete = canWrite('design-units.delete');
 
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<DesignUnitRow>({
@@ -153,14 +158,14 @@ return;
         },
     ];
 
-    if (!readOnly) {
+    if (canUpdate || canDelete) {
         columns.push({
             id: 'actions', header: '操作', size: 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton row={row.original} onOpen={detail.openDetail} />
-                    <button onClick={() => openEdit(row.original)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"><Pencil className="h-3.5 w-3.5" /></button>
-                    <button onClick={() => setDeleteItem(row.original)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
+                    {canUpdate && <button onClick={() => openEdit(row.original)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"><Pencil className="h-3.5 w-3.5" /></button>}
+                    {canDelete && <button onClick={() => setDeleteItem(row.original)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>}
                 </div>
             ),
         });
@@ -174,7 +179,7 @@ return;
                     <h1 className="text-xl font-bold text-slate-100">设计单位</h1>
                     <p className="mt-0.5 text-xs text-slate-600">共 <span className="font-medium text-slate-400">{total}</span> 条记录</p>
                 </div>
-                {!readOnly && (
+                {canCreate && (
                     <button onClick={openCreate} className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95">
                         <Plus className="h-4 w-4" />新增设计单位
                     </button>

@@ -10,7 +10,6 @@ use App\Http\Controllers\Api\V1\MonthlyInvestigationController;
 use App\Http\Controllers\Api\V1\RectificationSheetController;
 use App\Http\Controllers\Api\V1\RiskDistributionMapController;
 use App\Http\Controllers\Api\V1\RiskLogController;
-use App\Http\Controllers\Api\V1\RiskMaxValueController;
 use Illuminate\Support\Facades\Route;
 
 // ── 隐患信息 ─────────────────────────────────────────────────────
@@ -111,22 +110,6 @@ Route::middleware('permission:float-risk-logs.update')->group(function () {
 });
 Route::middleware('permission:float-risk-logs.delete')->group(function () {
     Route::delete('/float-risk-logs/{id}', [FloatRiskLogController::class, 'destroy']);
-});
-
-// ── 风险最大值 ─────────────────────────────────────────────────────
-Route::middleware('permission:risk-max-values.list')->group(function () {
-    Route::get('/risk-max-values', [RiskMaxValueController::class, 'index']);
-    Route::get('/risk-max-values/{id}', [RiskMaxValueController::class, 'show']);
-});
-Route::middleware('permission:risk-max-values.create')->group(function () {
-    Route::post('/risk-max-values', [RiskMaxValueController::class, 'store']);
-});
-Route::middleware('permission:risk-max-values.update')->group(function () {
-    Route::put('/risk-max-values/{id}', [RiskMaxValueController::class, 'update']);
-    Route::patch('/risk-max-values/{id}', [RiskMaxValueController::class, 'update']);
-});
-Route::middleware('permission:risk-max-values.delete')->group(function () {
-    Route::delete('/risk-max-values/{id}', [RiskMaxValueController::class, 'destroy']);
 });
 
 // ── 风险分布图 ─────────────────────────────────────────────────────

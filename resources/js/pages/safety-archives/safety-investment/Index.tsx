@@ -11,6 +11,7 @@ import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -106,6 +107,10 @@ function InvestmentPlansTab({ companyId }: { companyId: number }) {
         });
 
     const crud = useApiCrud('/security-investments');
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('security-investments.create');
+    const canUpdate = canWrite('security-investments.update');
+    const canDelete = canWrite('security-investments.delete');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -222,18 +227,22 @@ return;
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton row={row.original} onOpen={detail.openDetail} />
-                    <button
-                        onClick={() => openEdit(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        onClick={() => setDeleteId(row.original.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {canUpdate && (
+                        <button
+                            onClick={() => openEdit(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {canDelete && (
+                        <button
+                            onClick={() => setDeleteId(row.original.id)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    )}
                 </div>
             ),
         },
@@ -245,13 +254,15 @@ return;
                 <p className="text-xs text-slate-500">
                     共 <span className="font-medium text-slate-300">{total}</span> 条记录
                 </p>
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 hover:border-blue-400/50 hover:bg-blue-600/25"
-                >
-                    <Plus className="h-4 w-4" />
-                    新增计划
-                </button>
+                {canCreate && (
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 hover:border-blue-400/50 hover:bg-blue-600/25"
+                    >
+                        <Plus className="h-4 w-4" />
+                        新增计划
+                    </button>
+                )}
             </div>
 
             <DataTable
@@ -394,6 +405,10 @@ function FundingExecutionsTab({ companyId }: { companyId: number }) {
         });
 
     const crud = useApiCrud('/funding-executions');
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('funding-executions.create');
+    const canUpdate = canWrite('funding-executions.update');
+    const canDelete = canWrite('funding-executions.delete');
 
     // Load available investment plans for the select
     const [plans, setPlans] = useState<SecurityInvestment[]>([]);
@@ -532,18 +547,22 @@ return;
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton row={row.original} onOpen={detail.openDetail} />
-                    <button
-                        onClick={() => openEdit(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        onClick={() => setDeleteId(row.original.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {canUpdate && (
+                        <button
+                            onClick={() => openEdit(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {canDelete && (
+                        <button
+                            onClick={() => setDeleteId(row.original.id)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    )}
                 </div>
             ),
         },
@@ -555,13 +574,15 @@ return;
                 <p className="text-xs text-slate-500">
                     共 <span className="font-medium text-slate-300">{total}</span> 条记录
                 </p>
-                <button
-                    onClick={openCreate}
-                    className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 hover:border-blue-400/50 hover:bg-blue-600/25"
-                >
-                    <Plus className="h-4 w-4" />
-                    新增执行记录
-                </button>
+                {canCreate && (
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 hover:border-blue-400/50 hover:bg-blue-600/25"
+                    >
+                        <Plus className="h-4 w-4" />
+                        新增执行记录
+                    </button>
+                )}
             </div>
 
             <DataTable

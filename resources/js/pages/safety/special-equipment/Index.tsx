@@ -11,6 +11,7 @@ import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -127,6 +128,10 @@ export default function SpecialEquipmentIndex() {
     const { activeCompany, isSubordinate } = useScope();
     const companyId = activeCompany?.id;
     const readOnly = isSubordinate;
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('special-equipment.create');
+    const canUpdate = canWrite('special-equipment.update');
+    const canDelete = canWrite('special-equipment.delete');
 
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<SpecialEquipmentRow>({
@@ -464,23 +469,24 @@ el.indeterminate = somePageSelected && !allPageSelected;
                     onOpen={detail.openDetail}
                     className="flex h-8 min-w-[64px] items-center justify-center gap-1 rounded-md px-3 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
                 />
-                {!readOnly && (
-                    <>
-                        <button
-                            onClick={() => openEdit(row.original)}
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                        >
-                            <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                            onClick={() => {
- setDeleteId(row.original.id); setDeleteLabel(row.original.equipment_name ?? ''); 
-}}
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                    </>
+                {canUpdate && (
+                    <button
+                        onClick={() => openEdit(row.original)}
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                    >
+                        <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                )}
+                {canDelete && (
+                    <button
+                        onClick={() => {
+                            setDeleteId(row.original.id);
+                            setDeleteLabel(row.original.equipment_name ?? '');
+                        }}
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                 )}
             </div>
         ),
@@ -507,7 +513,7 @@ el.indeterminate = somePageSelected && !allPageSelected;
             {actionMsg && (
                 <span className="text-xs text-blue-400">{actionMsg}</span>
             )}
-            {selectedIds.size > 0 && !readOnly && (
+            {selectedIds.size > 0 && canCreate && (
                 <button
                     onClick={handleCopy}
                     disabled={copying}
@@ -524,7 +530,7 @@ el.indeterminate = somePageSelected && !allPageSelected;
                 <Download className="h-3.5 w-3.5" />
                 下载模板
             </button>
-            {!readOnly && (
+            {canCreate && (
                 <>
                     <button
                         onClick={() => importRef.current?.click()}
@@ -561,7 +567,7 @@ el.indeterminate = somePageSelected && !allPageSelected;
                         共 <span className="font-medium text-slate-400">{total}</span> 条记录
                     </p>
                 </div>
-                {!readOnly && (
+                {canCreate && (
                     <button
                         onClick={openCreate}
                         className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"

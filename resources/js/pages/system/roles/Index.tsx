@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/data-table/DataTable';
 import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, ShieldCheck, Check, Minus } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, ShieldCheck, Check, Minus, Search, Sparkles } from 'lucide-react';
 import api from '@/lib/api';
 import type { ApiResponse } from '@/types/models';
 
@@ -24,6 +24,86 @@ const ACTION_LABELS: Record<string, string> = {
     manage: '管理', view: '查看', review: '审核', assign: '分配',
     tree: '树形', portrait: '画像', file: '文件上传', oss: 'OSS上传',
 };
+
+// ── Role templates ────────────────────────────────────────────────
+// Clickable presets that pre-select a curated bundle of module prefixes.
+// `modules` is matched against the permission's module prefix (the part before
+// the first dot). `actions` optionally limits which actions are selected; when
+// omitted, all actions for that module are included.
+
+interface RoleTemplate {
+    key: string;
+    label: string;
+    description: string;
+    /** Module prefixes to include. e.g. 'hazards' matches 'hazards.list/create/etc.' */
+    modules: string[];
+    /** If set, only include permissions whose action (suffix) is in this list. */
+    actions?: string[];
+}
+
+const ROLE_TEMPLATES: RoleTemplate[] = [
+    {
+        key: 'hse-manager',
+        label: 'HSE 经理',
+        description: '风险 / 隐患 / 三同时 / 安全评价 / 应急演练 — 全部 CRUD',
+        modules: [
+            'hazards', 'monthly-investigations', 'rectification-sheets', 'hidden-danger-infos',
+            'three-togethers', 'assess-detects', 'risk-logs', 'inherent-risk-logs', 'float-risk-logs',
+            'emergency-drills', 'emergency-teams', 'emergency-supplies', 'expert-inspections',
+        ],
+    },
+    {
+        key: 'equipment-manager',
+        label: '设备主管',
+        description: '特种设备、危险设备、消防器材/设施 — 全部 CRUD',
+        modules: [
+            'special-equipment', 'special-equipment-staff', 'dangerous-equipment',
+            'fire-equipment', 'fire-facilities',
+        ],
+    },
+    {
+        key: 'health-officer',
+        label: '职业健康员',
+        description: '健康档案 / 职业危害 / 健康检查 / 职业病报告',
+        modules: [
+            'health-files', 'health-checkups', 'health-reports',
+            'occupational-hazards', 'hygiene-evaluations',
+        ],
+    },
+    {
+        key: 'training-coordinator',
+        label: '培训管理员',
+        description: '内部/外部/其他培训 + 培训资料与视频',
+        modules: [
+            'internal-trainings', 'external-trainings', 'other-trainings',
+            'training-classes', 'training-class-infos', 'training-files', 'training-videos',
+            'internal-meetings',
+        ],
+    },
+    {
+        key: 'read-only-auditor',
+        label: '只读审计员',
+        description: '全业务模块查阅权限，不可写',
+        modules: [
+            'hazards', 'monthly-investigations', 'assess-detects',
+            'accident-bulletins', 'internal-meetings', 'internal-trainings',
+            'special-equipment', 'dangerous-equipment', 'hazardous-chemicals',
+            'major-hazards', 'personnels', 'buildings',
+            'companies', 'users',
+        ],
+        actions: ['list', 'view'],
+    },
+    {
+        key: 'task-operator',
+        label: '任务执行员',
+        description: '接收并反馈上级下发的会议 / 通知 / 报送',
+        modules: [
+            'meetings', 'meeting-sign-ups', 'office-notifies', 'new-notifies',
+            'information-drafts', 'month-statistics', 'year-statistics',
+            'accident-bulletins',
+        ],
+    },
+];
 
 function formatModule(name: string): string {
     return name.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -49,6 +129,7 @@ export default function RolesIndex() {
 
     const [roleName, setRoleName] = useState('');
     const [selectedPerms, setSelectedPerms] = useState<Set<string>>(new Set());
+    const [permSearch, setPermSearch] = useState('');
 
     const loadRoles = () => {
         setLoadingRoles(true);
@@ -69,6 +150,7 @@ export default function RolesIndex() {
         setFormError('');
         setRoleName('');
         setSelectedPerms(new Set());
+        setPermSearch('');
         setEditingRole(null);
         setDialogMode('create');
     };
@@ -77,8 +159,23 @@ export default function RolesIndex() {
         setFormError('');
         setRoleName(role.name);
         setSelectedPerms(new Set(role.permissions.map((p) => p.name)));
+        setPermSearch('');
         setEditingRole(role);
         setDialogMode('edit');
+    };
+
+    const applyTemplate = (tpl: RoleTemplate) => {
+        const all: string[] = [];
+        for (const module of tpl.modules) {
+            const modulePerms = grouped[module] ?? [];
+            for (const p of modulePerms) {
+                const action = p.name.split('.').slice(1).join('.');
+                if (!tpl.actions || tpl.actions.includes(action)) {
+                    all.push(p.name);
+                }
+            }
+        }
+        setSelectedPerms(new Set(all));
     };
 
     const handleSubmit = async () => {
@@ -256,6 +353,30 @@ export default function RolesIndex() {
                         </Field>
                     )}
 
+                    {/* Role templates — clickable presets */}
+                    <div>
+                        <div className="mb-2 flex items-center gap-2">
+                            <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+                            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                                快速模板
+                                <span className="ml-2 font-normal text-slate-700">一键预选常用权限组合，应用后可继续微调</span>
+                            </label>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                            {ROLE_TEMPLATES.map((tpl) => (
+                                <button
+                                    key={tpl.key}
+                                    type="button"
+                                    onClick={() => applyTemplate(tpl)}
+                                    title={tpl.description}
+                                    className="rounded-md border border-violet-500/25 bg-violet-600/8 px-2 py-1 text-[11px] text-violet-300 transition-colors hover:border-violet-400/40 hover:bg-violet-600/15"
+                                >
+                                    {tpl.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div>
                         <div className="mb-2 flex items-center justify-between">
                             <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -285,11 +406,22 @@ export default function RolesIndex() {
                                 </button>
                             </div>
                         </div>
+                        <div className="relative mb-2">
+                            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
+                            <input
+                                type="search"
+                                placeholder="搜索模块或权限关键词（如：隐患、training、hazards.list）"
+                                value={permSearch}
+                                onChange={(e) => setPermSearch(e.target.value)}
+                                className="w-full rounded-lg border border-blue-900/40 bg-[#070d1f] py-1.5 pl-8 pr-3 text-xs text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20"
+                            />
+                        </div>
                         <PermissionMatrix
                             grouped={grouped}
                             selected={selectedPerms}
                             onToggle={togglePerm}
                             onToggleModule={toggleModule}
+                            searchQuery={permSearch}
                         />
                     </div>
                 </div>
@@ -323,25 +455,59 @@ function PermissionMatrix({
     selected,
     onToggle,
     onToggleModule,
+    searchQuery = '',
 }: {
     grouped: GroupedPermissions;
     selected: Set<string>;
     onToggle: (name: string) => void;
     onToggleModule: (module: string, selectAll: boolean) => void;
+    searchQuery?: string;
 }) {
-    const modules = useMemo(() => Object.keys(grouped).sort(), [grouped]);
+    const q = searchQuery.trim().toLowerCase();
 
-    if (modules.length === 0) {
+    // Filter modules/permissions by search query. A module is shown if its name
+    // matches OR any of its permissions match (by permission name or action label).
+    const filtered = useMemo(() => {
+        const allModules = Object.keys(grouped).sort();
+        if (!q) return allModules.map((m) => ({ module: m, perms: grouped[m] }));
+
+        return allModules
+            .map((module) => {
+                const moduleMatches = module.toLowerCase().includes(q) || formatModule(module).toLowerCase().includes(q);
+                const perms = grouped[module].filter((p) => {
+                    if (moduleMatches) return true;
+                    const action = p.name.split('.').slice(1).join('.');
+                    return p.name.toLowerCase().includes(q) || formatAction(action).toLowerCase().includes(q);
+                });
+
+                return { module, perms, moduleMatches };
+            })
+            .filter(({ perms, moduleMatches }) => moduleMatches || perms.length > 0)
+            .map(({ module, perms, moduleMatches }) => ({
+                module,
+                // If module name itself matched, show all perms; otherwise show the filtered subset.
+                perms: moduleMatches ? grouped[module] : perms,
+            }));
+    }, [grouped, q]);
+
+    if (Object.keys(grouped).length === 0) {
         return <div className="py-6 text-center text-xs text-slate-700">加载权限列表中...</div>;
+    }
+
+    if (filtered.length === 0) {
+        return <div className="py-6 text-center text-xs text-slate-700">未找到匹配的权限</div>;
     }
 
     return (
         <div className="max-h-[42vh] overflow-y-auto space-y-1 pr-1">
-            {modules.map((module) => {
-                const perms = grouped[module];
-                const selectedCount = perms.filter((p) => selected.has(p.name)).length;
-                const allSelected = selectedCount === perms.length;
+            {filtered.map(({ module, perms: displayPerms }) => {
+                // Module-level toggle operates on ALL perms in the module (not just the
+                // filtered subset), so select-all is unambiguous.
+                const allPerms = grouped[module];
+                const selectedCount = allPerms.filter((p) => selected.has(p.name)).length;
+                const allSelected = selectedCount === allPerms.length;
                 const someSelected = selectedCount > 0 && !allSelected;
+                const perms = displayPerms;
 
                 return (
                     <div key={module} className="rounded-lg border border-blue-900/25 bg-[#070d1f]/60 px-3 py-2">
@@ -366,7 +532,7 @@ function PermissionMatrix({
                             </button>
                             <span className="text-xs font-medium text-slate-400">{formatModule(module)}</span>
                             <span className="text-[10px] text-slate-700 ml-auto">
-                                {selectedCount}/{perms.length}
+                                {selectedCount}/{allPerms.length}
                             </span>
                         </div>
                         <div className="flex flex-wrap gap-1 pl-6">

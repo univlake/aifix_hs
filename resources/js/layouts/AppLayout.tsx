@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { useAuth } from '@/hooks/use-auth';
 import { ScopeProvider, useScope } from '@/contexts/ScopeContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { Sidebar } from './Sidebar';
+import { Sidebar, getRoutePermission } from './Sidebar';
 import { Header } from './Header';
 import { Shield, ArrowLeft } from 'lucide-react';
 
@@ -20,7 +20,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
 }
 
 function AppLayoutInner({ children }: AppLayoutProps) {
-    const { isLoading, isAuthenticated } = useAuth();
+    const { isLoading, isAuthenticated, hasPermission } = useAuth();
+    const { url } = usePage();
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
     useEffect(() => {
@@ -28,6 +29,23 @@ function AppLayoutInner({ children }: AppLayoutProps) {
             router.visit('/login');
         }
     }, [isLoading, isAuthenticated]);
+
+    // Rule 3 at the route level: if the user navigates (or pastes a URL) to a
+    // page they don't have permission for, bounce them to /dashboard. Runs after
+    // auth finishes loading so we don't redirect while permissions are empty.
+    useEffect(() => {
+        if (isLoading || !isAuthenticated) return;
+
+        const pathname = url.split('?')[0] ?? url;
+        const required = getRoutePermission(pathname);
+        if (!required) return;
+
+        const perms = Array.isArray(required) ? required : [required];
+        const allowed = perms.some((p) => hasPermission(p));
+        if (!allowed && pathname !== '/dashboard') {
+            router.visit('/dashboard');
+        }
+    }, [url, isLoading, isAuthenticated, hasPermission]);
 
     if (isLoading) {
         return (

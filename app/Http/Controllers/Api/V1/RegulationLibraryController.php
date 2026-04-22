@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\StoreRegulationLibraryRequest;
+use App\Http\Requests\Api\V1\UpdateRegulationLibraryRequest;
 use App\Models\RegulationLibrary;
 use App\Models\RegulationLibraryType;
 use Illuminate\Http\JsonResponse;
@@ -58,7 +59,7 @@ class RegulationLibraryController extends Controller
         return $this->success($regulationLibrary);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateRegulationLibraryRequest $request, int $id): JsonResponse
     {
         $regulationLibrary = RegulationLibrary::find($id);
 

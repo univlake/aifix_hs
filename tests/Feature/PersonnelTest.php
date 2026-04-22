@@ -19,8 +19,7 @@ describe('Personnel API', function () {
         });
 
         it('filters by company_id', function () {
-            [$user] = createUserWithCompany();
-            $company1 = Company::factory()->create();
+            [$user, $company1] = createUserWithCompany();
             $company2 = Company::factory()->create();
             Personnel::factory()->count(2)->create(['company_id' => $company1->id]);
             Personnel::factory()->create(['company_id' => $company2->id]);

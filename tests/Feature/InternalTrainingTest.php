@@ -45,6 +45,7 @@ describe('InternalTraining API', function () {
             $response = $this->actingAs($user, 'api')
                 ->postJson('/api/v1/internal-trainings', [
                     'company_id' => $company->id,
+                    'training_type' => '安全培训',
                 ]);
 
             $response->assertOk();
@@ -56,6 +57,7 @@ describe('InternalTraining API', function () {
             $response = $this->actingAs($user, 'api')
                 ->postJson('/api/v1/internal-trainings', [
                     'company_id' => $company->id,
+                    'training_type' => '安全培训',
                 ]);
 
             $response->assertStatus(403);

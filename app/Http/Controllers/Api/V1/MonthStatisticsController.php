@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\StoreMonthStatisticsRequest;
+use App\Http\Requests\Api\V1\UpdateMonthStatisticsRequest;
 use App\Models\AccidentBulletin;
 use App\Models\AccidentBulletinKid;
 use App\Models\Company;
@@ -148,7 +149,7 @@ class MonthStatisticsController extends Controller
         return $this->success($data);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateMonthStatisticsRequest $request, int $id): JsonResponse
     {
         $monthStatistic = MonthStatistic::find($id);
 

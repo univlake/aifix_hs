@@ -9,6 +9,7 @@ import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -60,6 +61,10 @@ const EMPTY_FORM: FormData = {
 
 export default function SafetyAssessmentIndex() {
     const { activeCompany } = useScope();
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('assess-detects.create');
+    const canUpdate = canWrite('assess-detects.update');
+    const canDelete = canWrite('assess-detects.delete');
     const companyId = activeCompany?.id;
 
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
@@ -213,18 +218,23 @@ return;
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton row={row.original} onOpen={detail.openDetail} />
-                    <ActionBtn onClick={() => openEdit(row.original)} title="编辑" variant="edit">
-                        <Pencil className="h-3.5 w-3.5" />
-                    </ActionBtn>
-                    <ActionBtn
-                        onClick={() => {
- setDeleteId(row.original.id); setDeleteLabel(row.original.name); 
-}}
-                        title="删除"
-                        variant="delete"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </ActionBtn>
+                    {canUpdate && (
+                        <ActionBtn onClick={() => openEdit(row.original)} title="编辑" variant="edit">
+                            <Pencil className="h-3.5 w-3.5" />
+                        </ActionBtn>
+                    )}
+                    {canDelete && (
+                        <ActionBtn
+                            onClick={() => {
+                                setDeleteId(row.original.id);
+                                setDeleteLabel(row.original.name);
+                            }}
+                            title="删除"
+                            variant="delete"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </ActionBtn>
+                    )}
                 </div>
             ),
         },
@@ -249,9 +259,11 @@ return;
                         共 <span className="font-medium text-slate-400">{total}</span> 条记录
                     </p>
                 </div>
-                <button onClick={openCreate} className={primaryBtn}>
-                    <Plus className="h-4 w-4" />新增记录
-                </button>
+                {canCreate && (
+                    <button onClick={openCreate} className={primaryBtn}>
+                        <Plus className="h-4 w-4" />新增记录
+                    </button>
+                )}
             </div>
 
             <DataTable

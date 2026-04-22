@@ -8,6 +8,7 @@ import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiCrud, useApiList } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -63,6 +64,10 @@ export default function ConfinedSpaceIndex() {
     const { activeCompany, isSubordinate } = useScope();
     const companyId = activeCompany?.id;
     const readOnly = isSubordinate;
+    const { canWrite } = usePermission();
+    const canCreate = !readOnly && canWrite('space-works.create');
+    const canUpdate = !readOnly && canWrite('space-works.update');
+    const canDelete = !readOnly && canWrite('space-works.delete');
 
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<SpaceWorkRow>({
@@ -274,21 +279,21 @@ export default function ConfinedSpaceIndex() {
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton row={row.original} onOpen={detail.openDetail} />
-                    {!readOnly && (
-                        <>
-                            <button
-                                onClick={() => openEdit(row.original)}
-                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                            >
-                                <Pencil className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                                onClick={() => setDeleteItem(row.original)}
-                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                            >
-                                <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                        </>
+                    {canUpdate && (
+                        <button
+                            onClick={() => openEdit(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {canDelete && (
+                        <button
+                            onClick={() => setDeleteItem(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                     )}
                 </div>
             ),
@@ -320,7 +325,7 @@ export default function ConfinedSpaceIndex() {
                         共 <span className="font-medium text-slate-400">{total}</span> 条记录
                     </p>
                 </div>
-                {!readOnly && (
+                {canCreate && (
                     <button
                         onClick={openCreate}
                         className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"

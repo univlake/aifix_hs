@@ -7,6 +7,7 @@ import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse, User, Role } from '@/types/models';
@@ -23,6 +24,10 @@ export default function UsersIndex() {
     const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
         useApiList<User>({ endpoint: '/users' });
     const crud = useApiCrud('/users');
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('users.create');
+    const canUpdate = canWrite('users.update');
+    const canDelete = canWrite('users.delete');
 
     const [dialogMode, setDialogMode] = useState<DialogMode>(null);
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -221,17 +226,24 @@ return <span className="text-slate-700">—</span>;
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton row={row.original} onOpen={detail.openDetail} />
-                    <ActionBtn onClick={() => openEdit(row.original)} title="编辑" variant="edit">
-                        <Pencil className="h-3.5 w-3.5" />
-                    </ActionBtn>
-                    <ActionBtn onClick={() => openPassword(row.original)} title="重置密码" variant="edit">
-                        <KeyRound className="h-3.5 w-3.5" />
-                    </ActionBtn>
-                    <ActionBtn onClick={() => {
- setDeleteId(row.original.id); setDeleteLabel(row.original.username); 
-}} title="删除" variant="delete">
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </ActionBtn>
+                    {canUpdate && (
+                        <ActionBtn onClick={() => openEdit(row.original)} title="编辑" variant="edit">
+                            <Pencil className="h-3.5 w-3.5" />
+                        </ActionBtn>
+                    )}
+                    {canUpdate && (
+                        <ActionBtn onClick={() => openPassword(row.original)} title="重置密码" variant="edit">
+                            <KeyRound className="h-3.5 w-3.5" />
+                        </ActionBtn>
+                    )}
+                    {canDelete && (
+                        <ActionBtn onClick={() => {
+                            setDeleteId(row.original.id);
+                            setDeleteLabel(row.original.username);
+                        }} title="删除" variant="delete">
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </ActionBtn>
+                    )}
                 </div>
             ),
         },
@@ -272,9 +284,11 @@ return <span className="text-slate-700">—</span>;
                     <h1 className="text-xl font-bold text-slate-100">账号管理</h1>
                     <p className="mt-0.5 text-xs text-slate-600">共 <span className="font-medium text-slate-400">{total}</span> 个用户</p>
                 </div>
-                <button onClick={openCreate} className={primaryBtn}>
-                    <Plus className="h-4 w-4" />新增用户
-                </button>
+                {canCreate && (
+                    <button onClick={openCreate} className={primaryBtn}>
+                        <Plus className="h-4 w-4" />新增用户
+                    </button>
+                )}
             </div>
 
             <DataTable

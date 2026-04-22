@@ -88,13 +88,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'certificate-statuses.update',
             'certificate-statuses.delete',
 
-            // 消防控制室人员
-            'fire-control-room-personnels.list',
-            'fire-control-room-personnels.create',
-            'fire-control-room-personnels.update',
-            'fire-control-room-personnels.delete',
-
-            // 淘汰控制人员
+            // 淘汰控制人员（含原「消防控制室人员」— 已合并路径）
             'elimination-control-staff.list',
             'elimination-control-staff.create',
             'elimination-control-staff.update',
@@ -397,12 +391,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'float-risk-logs.update',
             'float-risk-logs.delete',
 
-            // 风险最大值
-            'risk-max-values.list',
-            'risk-max-values.create',
-            'risk-max-values.update',
-            'risk-max-values.delete',
-
             // 风险分布图 (无删除)
             'risk-distribution-maps.list',
             'risk-distribution-maps.create',
@@ -515,7 +503,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'online-inspection.list',
 
             // 可见性统计
-            'visible.list',
 
             // 重点监管企业
             'focus-companies.list',

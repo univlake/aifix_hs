@@ -23,7 +23,7 @@ describe('Company API', function () {
             Company::factory()->create(['title' => '其他公司']);
 
             $response = $this->actingAs($user, 'api')
-                ->getJson('/api/v1/companies?title=' . urlencode('测试企业'));
+                ->getJson('/api/v1/companies?title='.urlencode('测试企业'));
 
             $response->assertOk()
                 ->assertJsonCount(2, 'data.data');
@@ -200,8 +200,10 @@ describe('Company API', function () {
 
     describe('Review', function () {
         it('allows reviewer to approve company', function () {
-            [$reviewer] = createReviewerWithCompany();
-            $pendingCompany = Company::factory()->pending()->create();
+            [$reviewer, $reviewerCompany] = createReviewerWithCompany();
+            // CompanyPolicy::review requires the pending company to be a direct
+            // child (or grandchild) of the reviewer's company.
+            $pendingCompany = Company::factory()->pending()->create(['pid' => $reviewerCompany->id]);
 
             $response = $this->actingAs($reviewer, 'api')
                 ->postJson("/api/v1/companies/{$pendingCompany->id}/review", [

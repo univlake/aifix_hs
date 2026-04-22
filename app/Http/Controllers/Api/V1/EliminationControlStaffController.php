@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class EliminationControlStaffController extends Controller
 {
     /**
-     * 淘汰控制人员列表
+     * 消防控制人员列表
      */
     public function index(Request $request): JsonResponse
     {
@@ -33,21 +33,21 @@ class EliminationControlStaffController extends Controller
     }
 
     /**
-     * 淘汰控制人员详情
+     * 消防控制人员详情
      */
     public function show(int $id): JsonResponse
     {
         $record = EliminationControlStaff::find($id);
 
         if (! $record) {
-            return $this->notFound('淘汰控制人员不存在');
+            return $this->notFound('消防控制人员不存在');
         }
 
         return $this->success($record);
     }
 
     /**
-     * 创建淘汰控制人员
+     * 创建消防控制人员
      */
     public function store(StoreEliminationControlStaffRequest $request): JsonResponse
     {
@@ -61,14 +61,14 @@ class EliminationControlStaffController extends Controller
     }
 
     /**
-     * 更新淘汰控制人员
+     * 更新消防控制人员
      */
     public function update(UpdateEliminationControlStaffRequest $request, int $id): JsonResponse
     {
         $record = EliminationControlStaff::find($id);
 
         if (! $record) {
-            return $this->notFound('淘汰控制人员不存在');
+            return $this->notFound('消防控制人员不存在');
         }
         $data = $request->validated();
         $data['last_user_id'] = auth()->id() ?? 0;
@@ -85,7 +85,7 @@ class EliminationControlStaffController extends Controller
         $record = EliminationControlStaff::find($id);
 
         if (! $record) {
-            return $this->notFound('淘汰控制人员不存在');
+            return $this->notFound('消防控制人员不存在');
         }
 
         $record->delete();

@@ -9,6 +9,7 @@ import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse, PaginatedData } from '@/types/models';
@@ -533,7 +534,7 @@ function StaffSubModulesSection({
 
             {activeTab === 'fire-control' && (
                 <StaffTable
-                    endpoint="/fire-control-room-personnels"
+                    endpoint="/elimination-control-staff"
                     companyId={companyId}
                     columns={[
                         { key: 'name', header: '姓名' },
@@ -592,6 +593,11 @@ function StaffTable({
         enabled: !!companyId,
     });
     const crud = useApiCrud(endpoint);
+    const permModule = endpoint.replace(/^\//, '');
+    const { canWrite } = usePermission();
+    const canCreate = canWrite(`${permModule}.create`);
+    const canUpdate = canWrite(`${permModule}.update`);
+    const canDelete = canWrite(`${permModule}.delete`);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [form, setForm] = useState<Record<string, string>>({});
@@ -754,13 +760,15 @@ return;
 }
                         }}
                     />
-                    <button
-                        onClick={openCreate}
-                        className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-600/25"
-                    >
-                        <Plus className="h-3.5 w-3.5" />
-                        新增
-                    </button>
+                    {canCreate && (
+                        <button
+                            onClick={openCreate}
+                            className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-600/25"
+                        >
+                            <Plus className="h-3.5 w-3.5" />
+                            新增
+                        </button>
+                    )}
                 </div>
             </div>
             {importError && <div className="mb-3"><ErrorBanner>{importError}</ErrorBanner></div>}
@@ -801,21 +809,25 @@ return;
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-0.5">
                                             <DetailButton row={row} onOpen={detail.openDetail} />
-                                            <button
-                                                onClick={() => openEdit(row)}
-                                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                                            >
-                                                <Pencil className="h-3.5 w-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setDeleteId(row.id as number);
-                                                    setDeleteName(String(row.name ?? row.id));
-                                                }}
-                                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </button>
+                                            {canUpdate && (
+                                                <button
+                                                    onClick={() => openEdit(row)}
+                                                    className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                </button>
+                                            )}
+                                            {canDelete && (
+                                                <button
+                                                    onClick={() => {
+                                                        setDeleteId(row.id as number);
+                                                        setDeleteName(String(row.name ?? row.id));
+                                                    }}
+                                                    className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 import { useScope, type ScopeCompany, type ScopeMode } from '@/contexts/ScopeContext';
+import { usePermission } from '@/hooks/use-permission';
 import {
     ChevronRight,
     LayoutDashboard,
@@ -62,6 +63,8 @@ interface NavItem {
     icon?: React.ComponentType<{ className?: string }>;
     /** Interacts with / reports to a superior enterprise */
     upstream?: boolean;
+    /** Any one of these permissions shows the item. Omit for always-visible items (e.g. Dashboard). */
+    permission?: string | string[];
     children?: NavItem[];
 }
 
@@ -88,7 +91,7 @@ const navSections: NavSection[] = [
     {
         mode: 'produce',
         items: [
-            { title: '企业信息', href: '/enterprise/current', icon: Building2 },
+            { title: '企业信息', href: '/enterprise/current', icon: Building2, permission: 'companies.list' },
         ],
     },
     {
@@ -99,11 +102,11 @@ const navSections: NavSection[] = [
                 title: '安全档案',
                 icon: FolderOpen,
                 children: [
-                    { title: '安全生产组织架构', href: '/safety-archives/org-structure' },
-                    { title: '人员管理', href: '/safety/personnels' },
-                    { title: '安全资质管理', href: '/safety-archives/qualifications' },
-                    { title: '建筑物及构筑物', href: '/safety/buildings' },
-                    { title: '安全投入', href: '/safety-archives/safety-investment' },
+                    { title: '安全生产组织架构', href: '/safety-archives/org-structure', permission: 'safety-architectures.list' },
+                    { title: '人员管理', href: '/safety/personnels', permission: 'personnels.list' },
+                    { title: '安全资质管理', href: '/safety-archives/qualifications', permission: 'filing-permissions.list' },
+                    { title: '建筑物及构筑物', href: '/safety/buildings', permission: 'buildings.list' },
+                    { title: '安全投入', href: '/safety-archives/safety-investment', permission: 'security-investments.list' },
                 ],
             },
         ],
@@ -116,8 +119,8 @@ const navSections: NavSection[] = [
                 title: '设备信息',
                 icon: Cog,
                 children: [
-                    { title: '特种设备', href: '/safety/special-equipment' },
-                    { title: '重大危险设备', href: '/equipment/major-hazardous' },
+                    { title: '特种设备', href: '/safety/special-equipment', permission: 'special-equipment.list' },
+                    { title: '重大危险设备', href: '/equipment/major-hazardous', permission: 'dangerous-equipment.list' },
                 ],
             },
         ],
@@ -130,8 +133,8 @@ const navSections: NavSection[] = [
                 title: '危险物质',
                 icon: FlaskConical,
                 children: [
-                    { title: '危险化学品', href: '/safety/hazardous-chemicals' },
-                    { title: '重大危险源', href: '/safety/major-hazards' },
+                    { title: '危险化学品', href: '/safety/hazardous-chemicals', permission: 'hazardous-chemicals.list' },
+                    { title: '重大危险源', href: '/safety/major-hazards', permission: 'major-hazards.list' },
                 ],
             },
         ],
@@ -144,9 +147,9 @@ const navSections: NavSection[] = [
                 title: '工艺信息',
                 icon: GitMerge,
                 children: [
-                    { title: '重点监管危险工艺', href: '/process/key-hazardous' },
-                    { title: '较大危险工艺', href: '/process/hazardous' },
-                    { title: '有限空间辨识', href: '/space-work/space-works' },
+                    { title: '重点监管危险工艺', href: '/process/key-hazardous', permission: 'major-hazardous-processes.list' },
+                    { title: '较大危险工艺', href: '/process/hazardous', permission: 'hazardous-processes.list' },
+                    { title: '有限空间辨识', href: '/space-work/space-works', permission: 'space-works.list' },
                 ],
             },
         ],
@@ -159,13 +162,13 @@ const navSections: NavSection[] = [
                 title: '风险管理',
                 icon: ShieldAlert,
                 children: [
-                    { title: '风险源管理', href: '/risk/hazards' },
-                    { title: '隐患管理', href: '/risk/monthly-investigation' },
-                    { title: '作业管理', href: '/safety/job-management' },
-                    { title: '三同时管理', href: '/space-work/three-togethers' },
-                    { title: '安全评价与检测', href: '/risk/safety-assessment' },
-                    { title: '风险监测预警', href: '/risk/risk-warning' },
-                    { title: '专家检查', href: '/risk/expert-inspection', upstream: true },
+                    { title: '风险源管理', href: '/risk/hazards', permission: 'hazards.list' },
+                    { title: '隐患管理', href: '/risk/monthly-investigation', permission: 'monthly-investigations.list' },
+                    { title: '作业管理', href: '/safety/job-management', permission: 'job-management.list' },
+                    { title: '三同时管理', href: '/space-work/three-togethers', permission: 'three-togethers.list' },
+                    { title: '安全评价与检测', href: '/risk/safety-assessment', permission: 'assess-detects.list' },
+                    { title: '风险监测预警', href: '/risk/risk-warning', permission: 'risk-logs.list' },
+                    { title: '专家检查', href: '/risk/expert-inspection', upstream: true, permission: 'expert-inspections.list' },
                 ],
             },
         ],
@@ -178,8 +181,8 @@ const navSections: NavSection[] = [
                 title: '会议培训',
                 icon: CalendarDays,
                 children: [
-                    { title: '内部会议', href: '/meeting/internal-meetings' },
-                    { title: '教育培训', href: '/training/education' },
+                    { title: '内部会议', href: '/meeting/internal-meetings', permission: 'internal-meetings.list' },
+                    { title: '教育培训', href: '/training/education', permission: ['internal-trainings.list', 'external-trainings.list', 'other-trainings.list'] },
                 ],
             },
         ],
@@ -192,9 +195,9 @@ const navSections: NavSection[] = [
                 title: '第三方管理',
                 icon: Users2,
                 children: [
-                    { title: '设计单位', href: '/third-party/design-units' },
-                    { title: '施工单位', href: '/third-party/construction-units' },
-                    { title: '技术服务单位', href: '/third-party/technical-services' },
+                    { title: '设计单位', href: '/third-party/design-units', permission: 'design-units.list' },
+                    { title: '施工单位', href: '/third-party/construction-units', permission: 'evaluation-units.list' },
+                    { title: '技术服务单位', href: '/third-party/technical-services', permission: 'skill-units.list' },
                 ],
             },
         ],
@@ -207,11 +210,11 @@ const navSections: NavSection[] = [
                 title: '职业健康',
                 icon: Stethoscope,
                 children: [
-                    { title: '健康档案', href: '/health/health-files' },
-                    { title: '职业危害因素清单', href: '/health/occupational-hazards' },
-                    { title: '健康检查', href: '/health/health-checkups' },
-                    { title: '职业健康评估检测', href: '/health/hygiene-evaluations' },
-                    { title: '职业病报告', href: '/health/disease-report' },
+                    { title: '健康档案', href: '/health/health-files', permission: 'health-files.list' },
+                    { title: '职业危害因素清单', href: '/health/occupational-hazards', permission: 'occupational-hazards.list' },
+                    { title: '健康检查', href: '/health/health-checkups', permission: 'health-checkups.list' },
+                    { title: '职业健康评估检测', href: '/health/hygiene-evaluations', permission: 'hygiene-evaluations.list' },
+                    { title: '职业病报告', href: '/health/disease-report', permission: 'health-reports.list' },
                 ],
             },
         ],
@@ -224,9 +227,9 @@ const navSections: NavSection[] = [
                 title: '消防安全',
                 icon: Flame,
                 children: [
-                    { title: '消防安全管理', href: '/safety/fire-safeties' },
-                    { title: '消防器材', href: '/fire/equipment' },
-                    { title: '消防设施', href: '/fire/facilities' },
+                    { title: '消防安全管理', href: '/safety/fire-safeties', permission: 'fire-safeties.list' },
+                    { title: '消防器材', href: '/fire/equipment', permission: 'fire-equipment.list' },
+                    { title: '消防设施', href: '/fire/facilities', permission: 'fire-facilities.list' },
                 ],
             },
         ],
@@ -239,8 +242,8 @@ const navSections: NavSection[] = [
                 title: '事故应急',
                 icon: AlertOctagon,
                 children: [
-                    { title: '事故上报', href: '/accident/report', upstream: true },
-                    { title: '应急管理', href: '/accident/emergency' },
+                    { title: '事故上报', href: '/accident/report', upstream: true, permission: 'accident-bulletins.list' },
+                    { title: '应急管理', href: '/accident/emergency', permission: ['emergency-teams.list', 'emergency-supplies.list', 'emergency-drills.list'] },
                 ],
             },
         ],
@@ -253,11 +256,11 @@ const navSections: NavSection[] = [
                 title: '任务管理',
                 icon: ClipboardList,
                 children: [
-                    { title: '会议', href: '/meeting/meetings', upstream: true },
-                    { title: '通知公告', href: '/tasks/notices', upstream: true },
-                    { title: '信息稿件管理', href: '/tasks/manuscripts', upstream: true },
-                    { title: '月度数据上报', href: '/tasks/monthly-report', upstream: true },
-                    { title: '年度数据上报', href: '/tasks/annual-report', upstream: true },
+                    { title: '会议', href: '/meeting/meetings', upstream: true, permission: 'meetings.list' },
+                    { title: '通知公告', href: '/tasks/notices', upstream: true, permission: ['office-notifies.list', 'new-notifies.list'] },
+                    { title: '信息稿件管理', href: '/tasks/manuscripts', upstream: true, permission: 'information-drafts.list' },
+                    { title: '月度数据上报', href: '/tasks/monthly-report', upstream: true, permission: 'month-statistics.list' },
+                    { title: '年度数据上报', href: '/tasks/annual-report', upstream: true, permission: 'year-statistics.list' },
                 ],
             },
         ],
@@ -265,7 +268,7 @@ const navSections: NavSection[] = [
     {
         mode: 'produce',
         items: [
-            { title: '变更管理', href: '/change-management', icon: RefreshCw },
+            { title: '变更管理', href: '/change-management', icon: RefreshCw, permission: 'change-manages.list' },
         ],
     },
     {
@@ -276,8 +279,8 @@ const navSections: NavSection[] = [
                 title: '知识管理',
                 icon: Library,
                 children: [
-                    { title: '法律法规库', href: '/regulation/libraries' },
-                    { title: '检查表库', href: '/knowledge/checklists' },
+                    { title: '法律法规库', href: '/regulation/libraries', permission: 'regulation-libraries.list' },
+                    { title: '检查表库', href: '/knowledge/checklists', permission: 'checklist-libraries.list' },
                 ],
             },
         ],
@@ -286,21 +289,21 @@ const navSections: NavSection[] = [
         label: '年度考核',
         mode: 'produce',
         items: [
-            { title: '考核填报', href: '/assessment/filing', icon: Award, upstream: true },
+            { title: '考核填报', href: '/assessment/filing', icon: Award, upstream: true, permission: 'add-points.list' },
         ],
     },
     {
         label: '培训中心',
         mode: 'produce',
         items: [
-            { title: '培训资料', href: '/training/training-files', icon: BookOpen },
-            { title: '培训视频', href: '/training/training-videos', icon: GraduationCap },
+            { title: '培训资料', href: '/training/training-files', icon: BookOpen, permission: 'training-files.list' },
+            { title: '培训视频', href: '/training/training-videos', icon: GraduationCap, permission: 'training-videos.list' },
         ],
     },
     {
         mode: 'produce',
         items: [
-            { title: '账号管理', href: '/system/users', icon: UserCircle },
+            { title: '账号管理', href: '/system/users', icon: UserCircle, permission: 'users.list' },
         ],
     },
 
@@ -316,10 +319,10 @@ const navSections: NavSection[] = [
                 title: '企业管理',
                 icon: Building2,
                 children: [
-                    { title: '当前企业', href: '/enterprise/current', icon: Building2 },
-                    { title: '下级企业', href: '/enterprise/subsidiaries', icon: GitBranch },
-                    { title: '企业审批', href: '/enterprise/approval', icon: BadgeCheck },
-                    { title: '企业分组', href: '/enterprise/grouping', icon: Layers },
+                    { title: '当前企业', href: '/enterprise/current', icon: Building2, permission: 'companies.list' },
+                    { title: '下级企业', href: '/enterprise/subsidiaries', icon: GitBranch, permission: 'companies.list' },
+                    { title: '企业审批', href: '/enterprise/approval', icon: BadgeCheck, permission: 'companies.review' },
+                    { title: '企业分组', href: '/enterprise/grouping', icon: Layers, permission: 'companies.update' },
                 ],
             },
         ],
@@ -328,43 +331,43 @@ const navSections: NavSection[] = [
         label: '风险监测',
         mode: 'bloc',
         items: [
-            { title: '企业分布图', href: '/risk-monitoring/enterprise-map', icon: Map },
-            { title: '重大危险源分布图', href: '/risk-monitoring/hazard-map', icon: Radar },
-            { title: '在线巡检', href: '/risk-monitoring/online-inspection', icon: ScanLine },
-            { title: '风险监控', href: '/risk-monitoring/risk-monitor', icon: Activity },
-            { title: '特种设备数据统计', href: '/risk-monitoring/special-equipment', icon: Cog },
+            { title: '企业分布图', href: '/risk-monitoring/enterprise-map', icon: Map, permission: 'risk-distribution-maps.list' },
+            { title: '重大危险源分布图', href: '/risk-monitoring/hazard-map', icon: Radar, permission: 'major-hazards.list' },
+            { title: '在线巡检', href: '/risk-monitoring/online-inspection', icon: ScanLine, permission: 'online-inspection.list' },
+            { title: '风险监控', href: '/risk-monitoring/risk-monitor', icon: Activity, permission: 'bloc-risks.list' },
+            { title: '特种设备数据统计', href: '/risk-monitoring/special-equipment', icon: Cog, permission: 'special-equipment.list' },
         ],
     },
     {
         label: '风险管控',
         mode: 'bloc',
         items: [
-            { title: '隐患管理', href: '/risk-control/monthly-investigation', icon: AlertTriangle },
-            { title: '专家检查', href: '/risk-control/expert-inspection', icon: UserCheck },
+            { title: '隐患管理', href: '/risk-control/monthly-investigation', icon: AlertTriangle, permission: 'monthly-investigations.list' },
+            { title: '专家检查', href: '/risk-control/expert-inspection', icon: UserCheck, permission: 'expert-inspections.list' },
         ],
     },
     {
         label: '内部会议',
         mode: 'bloc',
         items: [
-            { title: '内部会议', href: '/meeting/internal-meetings', icon: CalendarDays },
+            { title: '内部会议', href: '/meeting/internal-meetings', icon: CalendarDays, permission: 'internal-meetings.list' },
         ],
     },
     {
         label: '教育培训',
         mode: 'bloc',
         items: [
-            { title: '内部培训', href: '/training/internal-trainings', icon: GraduationCap },
-            { title: '外部培训', href: '/training/external-trainings', icon: BookOpen },
-            { title: '相关方培训', href: '/management/training/relevant-party', icon: Users2 },
+            { title: '内部培训', href: '/training/internal-trainings', icon: GraduationCap, permission: 'internal-trainings.list' },
+            { title: '外部培训', href: '/training/external-trainings', icon: BookOpen, permission: 'external-trainings.list' },
+            { title: '相关方培训', href: '/management/training/relevant-party', icon: Users2, permission: 'other-trainings.list' },
         ],
     },
     {
         label: '知识管理',
         mode: 'bloc',
         items: [
-            { title: '法律法规库', href: '/regulation/libraries', icon: Library },
-            { title: '检查表库', href: '/management/knowledge/checklists', icon: ClipboardCheck },
+            { title: '法律法规库', href: '/regulation/libraries', icon: Library, permission: 'regulation-libraries.list' },
+            { title: '检查表库', href: '/management/knowledge/checklists', icon: ClipboardCheck, permission: 'checklist-libraries.list' },
         ],
     },
     {
@@ -375,9 +378,9 @@ const navSections: NavSection[] = [
                 title: '任务管理',
                 icon: ClipboardList,
                 children: [
-                    { title: '会议通知', href: '/management/tasks/meeting-notices' },
-                    { title: '通知公告', href: '/management/tasks/notices' },
-                    { title: '信息稿件管理', href: '/management/tasks/manuscripts' },
+                    { title: '会议通知', href: '/management/tasks/meeting-notices', permission: 'meetings.list' },
+                    { title: '通知公告', href: '/management/tasks/notices', permission: ['office-notifies.list', 'new-notifies.list'] },
+                    { title: '信息稿件管理', href: '/management/tasks/manuscripts', permission: 'information-drafts.list' },
                 ],
             },
         ],
@@ -386,14 +389,14 @@ const navSections: NavSection[] = [
         label: '事故应急管理',
         mode: 'bloc',
         items: [
-            { title: '事故应急管理', href: '/management/accidents/management', icon: Siren },
-            { title: '事故上报', href: '/management/accidents/report', icon: AlertOctagon },
+            { title: '事故应急管理', href: '/management/accidents/management', icon: Siren, permission: ['emergency-teams.list', 'emergency-drills.list'] },
+            { title: '事故上报', href: '/management/accidents/report', icon: AlertOctagon, permission: 'accident-bulletins.list' },
         ],
     },
     {
         mode: 'bloc',
         items: [
-            { title: '专家库', href: '/management/experts', icon: Users },
+            { title: '专家库', href: '/management/experts', icon: Users, permission: 'bloc-experts.list' },
         ],
     },
     {
@@ -404,9 +407,9 @@ const navSections: NavSection[] = [
                 title: '年度考核',
                 icon: Trophy,
                 children: [
-                    { title: '考核填报', href: '/management/assessment/filing' },
-                    { title: '考核评分', href: '/management/assessment/scoring' },
-                    { title: '考核汇总', href: '/management/assessment/summary' },
+                    { title: '考核填报', href: '/management/assessment/filing', permission: 'add-points.list' },
+                    { title: '考核评分', href: '/management/assessment/scoring', permission: 'add-points.update' },
+                    { title: '考核汇总', href: '/management/assessment/summary', permission: 'add-points.list' },
                 ],
             },
         ],
@@ -419,11 +422,11 @@ const navSections: NavSection[] = [
                 title: '数据统计',
                 icon: BarChart3,
                 children: [
-                    { title: '月度数据上报', href: '/statistics/month-statistics' },
-                    { title: '年度数据上报', href: '/statistics/year-statistics' },
-                    { title: '月度报表统计', href: '/management/statistics/monthly-stats' },
-                    { title: '年度报表统计', href: '/management/statistics/annual-stats' },
-                    { title: '通知公告反馈统计', href: '/management/statistics/notice-stats' },
+                    { title: '月度数据上报', href: '/statistics/month-statistics', permission: 'month-statistics.list' },
+                    { title: '年度数据上报', href: '/statistics/year-statistics', permission: 'year-statistics.list' },
+                    { title: '月度报表统计', href: '/management/statistics/monthly-stats', permission: 'month-statistics.list' },
+                    { title: '年度报表统计', href: '/management/statistics/annual-stats', permission: 'year-statistics.list' },
+                    { title: '通知公告反馈统计', href: '/management/statistics/notice-stats', permission: ['office-notifies.list', 'new-notifies.list'] },
                 ],
             },
         ],
@@ -436,10 +439,10 @@ const navSections: NavSection[] = [
                 title: '培训中心',
                 icon: GraduationCap,
                 children: [
-                    { title: '上传资料', href: '/management/training-center/upload-materials' },
-                    { title: '培训资料', href: '/training/training-files' },
-                    { title: '上传视频', href: '/management/training-center/upload-videos' },
-                    { title: '培训视频', href: '/training/training-videos' },
+                    { title: '上传资料', href: '/management/training-center/upload-materials', permission: 'training-files.create' },
+                    { title: '培训资料', href: '/training/training-files', permission: 'training-files.list' },
+                    { title: '上传视频', href: '/management/training-center/upload-videos', permission: 'training-videos.create' },
+                    { title: '培训视频', href: '/training/training-videos', permission: 'training-videos.list' },
                 ],
             },
         ],
@@ -448,26 +451,61 @@ const navSections: NavSection[] = [
         label: '系统管理',
         mode: 'bloc',
         items: [
-            { title: '账号管理', href: '/system/users', icon: UserCircle },
-            { title: '角色管理', href: '/system/roles', icon: Shield },
-            { title: '权限管理', href: '/system/permissions', icon: Settings },
-            { title: '考核模板管理', href: '/system/assessment-templates', icon: ClipboardList },
+            { title: '账号管理', href: '/system/users', icon: UserCircle, permission: 'users.list' },
+            { title: '角色管理', href: '/system/roles', icon: Shield, permission: 'roles.list' },
+            { title: '权限管理', href: '/system/permissions', icon: Settings, permission: 'permissions.list' },
+            { title: '考核模板管理', href: '/system/assessment-templates', icon: ClipboardList, permission: 'add-points-templates.list' },
             {
                 title: '基础数据',
                 icon: Database,
                 children: [
-                    { title: '企业类型', href: '/system/enterprise-types' },
-                    { title: '经营类型', href: '/system/operational-types' },
-                    { title: '工艺类型', href: '/system/process-types' },
-                    { title: '备案/许可类型', href: '/system/record-types' },
-                    { title: '特种设备类型', href: '/system/special-types' },
-                    { title: '作业类型', href: '/system/space-work-types' },
-                    { title: '安全管理人员类型', href: '/system/safety-management-types' },
+                    { title: '企业类型', href: '/system/enterprise-types', permission: 'base-data.view' },
+                    { title: '经营类型', href: '/system/operational-types', permission: 'base-data.view' },
+                    { title: '工艺类型', href: '/system/process-types', permission: 'base-data.view' },
+                    { title: '备案/许可类型', href: '/system/record-types', permission: 'base-data.view' },
+                    { title: '特种设备类型', href: '/system/special-types', permission: 'base-data.view' },
+                    { title: '作业类型', href: '/system/space-work-types', permission: 'base-data.view' },
+                    { title: '安全管理人员类型', href: '/system/safety-management-types', permission: 'base-data.view' },
                 ],
             },
         ],
     },
 ];
+
+// ── Route permission lookup ──────────────────────────────────────
+// Flatten navSections into a `href → permission(s)` map so AppLayout can guard
+// direct-URL access (user types /system/roles but lacks roles.list → redirect).
+// Keeping this next to navSections so the two stay in sync.
+
+function collectPermissions(items: NavItem[], into: Record<string, string | string[]>): void {
+    for (const item of items) {
+        if (item.href && item.permission) {
+            into[item.href] = item.permission;
+        }
+        if (item.children) {
+            collectPermissions(item.children, into);
+        }
+    }
+}
+
+const routePermissionMap: Record<string, string | string[]> = (() => {
+    const map: Record<string, string | string[]> = {};
+    for (const section of navSections) {
+        collectPermissions(section.items, map);
+    }
+
+    return map;
+})();
+
+/**
+ * Returns the permission(s) required to view `pathname`, or null if the path
+ * is not guarded (e.g. dashboard, public pages, or unknown routes).
+ */
+export function getRoutePermission(pathname: string): string | string[] | null {
+    const normalized = pathname.replace(/\/+$/, '') || '/';
+
+    return routePermissionMap[normalized] ?? null;
+}
 
 // ── Nav components ────────────────────────────────────────────────
 
@@ -714,10 +752,35 @@ interface SidebarProps {
 
 export function Sidebar({ open }: SidebarProps) {
     const { mode, isReady } = useScope();
+    const { hasAny } = usePermission();
 
     if (!open) return null;
 
-    const visibleSections = navSections.filter((s) => !s.mode || s.mode === mode);
+    const isItemAllowed = (item: NavItem): boolean => {
+        if (!item.permission) return true;
+        const perms = Array.isArray(item.permission) ? item.permission : [item.permission];
+
+        return hasAny(perms);
+    };
+
+    const filterItems = (items: NavItem[]): NavItem[] =>
+        items
+            .map((item) => {
+                if (item.children) {
+                    const kids = filterItems(item.children);
+                    if (kids.length === 0) return null;
+
+                    return { ...item, children: kids };
+                }
+
+                return isItemAllowed(item) ? item : null;
+            })
+            .filter((i): i is NavItem => i !== null);
+
+    const visibleSections = navSections
+        .filter((s) => !s.mode || s.mode === mode)
+        .map((s) => ({ ...s, items: filterItems(s.items) }))
+        .filter((s) => s.items.length > 0);
 
     return (
         <aside className="hidden h-screen w-56 shrink-0 flex-col border-r border-blue-900/30 bg-[#060c1a] md:flex">

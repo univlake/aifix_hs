@@ -8,47 +8,86 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Reads the X-Scope-Company-Id header sent by the frontend scope context.
+ * Enforces "a user can only query companies inside their own hierarchy".
  *
- * When present:
- *  1. Loads the requested company.
- *  2. Confirms the authenticated user's company is an ancestor-or-equal of the
- *     requested scope company (hierarchy ownership check).
- *  3. Binds the resolved company via app()->instance('scope.company', $company)
- *     so controllers can call app('scope.company') to get the active scope.
+ * Reads two inputs (either or both may be present):
+ *  - Header:       X-Scope-Company-Id (set by the frontend scope switcher)
+ *  - Query/body:   company_id         (the filter most list/show controllers accept)
  *
- * When absent the middleware is a complete no-op — existing behaviour is
- * preserved and controllers fall back to the user's own company.
+ * For each id present, confirms the authenticated user's company is an
+ * ancestor-or-equal of the target. A mismatch returns 403 immediately.
+ *
+ * When a valid scope is resolved, binds it via app()->instance('scope.company', $company)
+ * so controllers can read the active scope without re-fetching.
+ *
+ * Routes that don't receive either input (e.g. /api/v1/users when the caller
+ * genuinely wants global data) are unaffected — the middleware is a no-op.
  */
 class ValidateScopeCompany
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $scopeId = $request->header('X-Scope-Company-Id');
-
-        if (! $scopeId || ! is_numeric($scopeId)) {
-            return $next($request);
-        }
-
         $user = $request->user();
 
         if (! $user) {
             return $next($request);
         }
 
-        $scopeCompany = Company::find((int) $scopeId);
+        $ownCompanyId = (int) ($user->company_id ?? 0);
 
-        if (! $scopeCompany) {
-            return response()->json(['message' => '无效的企业范围'], 403);
+        if (! $ownCompanyId) {
+            return $next($request);
         }
 
-        if (! $this->isInHierarchy((int) $user->company_id, $scopeCompany)) {
-            return response()->json(['message' => '无权访问该企业数据'], 403);
-        }
+        $candidateIds = $this->extractCompanyIds($request);
 
-        app()->instance('scope.company', $scopeCompany);
+        foreach ($candidateIds as $candidateId) {
+            $target = Company::find($candidateId);
+
+            if (! $target) {
+                return response()->json(['message' => '无效的企业范围'], 403);
+            }
+
+            if (! $this->isInHierarchy($ownCompanyId, $target)) {
+                return response()->json(['message' => '无权访问该企业数据'], 403);
+            }
+
+            // Bind the most specific scope resolved (prefer header over query).
+            app()->instance('scope.company', $target);
+        }
 
         return $next($request);
+    }
+
+    /**
+     * We enforce ownership only for values that come from the client-controlled
+     * "filter" surface — the X-Scope-Company-Id header and the company_id QUERY
+     * parameter (used on GET list/show endpoints).
+     *
+     * We deliberately do NOT validate company_id in POST/PUT/PATCH BODIES: those
+     * are legitimate admin operations (assigning a user to any company, moving a
+     * record cross-tenant, etc.) which are governed by the per-module *.create /
+     * *.update permission, not by hierarchy scope.
+     *
+     * @return array<int>
+     */
+    private function extractCompanyIds(Request $request): array
+    {
+        $ids = [];
+
+        $header = $request->header('X-Scope-Company-Id');
+
+        if (is_numeric($header)) {
+            $ids[] = (int) $header;
+        }
+
+        $queryValue = $request->query('company_id');
+
+        if (is_string($queryValue) && is_numeric($queryValue)) {
+            $ids[] = (int) $queryValue;
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /**

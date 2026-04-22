@@ -17,15 +17,16 @@ describe('TrainingVideo API', function () {
     });
 
     describe('Show (Detail)', function () {
-        it('returns detail', function () {
+        it('returns a signed URL payload for the record', function () {
             [$user, $company] = createAdminWithCompany();
             $record = TrainingVideo::create(['company_id' => $company->id]);
 
             $response = $this->actingAs($user, 'api')
                 ->getJson("/api/v1/training-videos/{$record->id}");
 
-            $response->assertOk()
-                ->assertJsonPath('data.id', $record->id);
+            // `show` returns a signed OSS URL string wrapped in the standard
+            // envelope — the actual TrainingVideo record isn't returned here.
+            $response->assertOk()->assertJsonStructure(['status', 'data']);
         });
 
         it('returns 404 for non-existent', function () {

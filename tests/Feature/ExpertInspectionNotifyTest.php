@@ -9,7 +9,7 @@ use App\Models\User;
 describe('Expert inspection notifications', function () {
     it('companyNotifications surfaces only rows with notify_company_time <= now()', function () {
         [$user, $parent] = createAdminWithCompany();
-        $check = Company::factory()->create();
+        $check = Company::factory()->create(['pid' => $parent->id]);
         $inspection = ExpertInspection::create(['title' => '2024 专家检查', 'company_id' => $parent->id]);
 
         // notify_company_time in the future → hidden.
@@ -46,7 +46,7 @@ describe('Expert inspection notifications', function () {
 
     it('companyNotifications carries the assigned experts on each card', function () {
         [$user, $parent] = createAdminWithCompany();
-        $check = Company::factory()->create();
+        $check = Company::factory()->create(['pid' => $parent->id]);
         $expert = User::factory()->create(['nickname' => '张三']);
         $inspection = ExpertInspection::create(['title' => 'x', 'company_id' => $parent->id]);
         $row = ExpertCompany::create([
@@ -93,7 +93,7 @@ describe('Expert inspection notifications', function () {
 
     it('my-check-inspections on the company side only returns plans whose notify time has passed', function () {
         [$user, $parent] = createAdminWithCompany();
-        $check = Company::factory()->create();
+        $check = Company::factory()->create(['pid' => $parent->id]);
         $inspection = ExpertInspection::create(['title' => 'x', 'company_id' => $parent->id]);
 
         ExpertCompany::create(['expert_inspection_id' => $inspection->id, 'check_company_id' => $check->id, 'company_id' => $parent->id, 'notify_company_time' => now()->addDay(), 'status' => 0]);
@@ -109,8 +109,8 @@ describe('Expert inspection notifications', function () {
 
     it('my-check-inspections unions expert-side rows immediately regardless of notify time', function () {
         [$user, $parent] = createAdminWithCompany();
-        $userCompany = Company::factory()->create();
-        $otherCompany = Company::factory()->create();
+        $userCompany = Company::factory()->create(['pid' => $parent->id]);
+        $otherCompany = Company::factory()->create(['pid' => $parent->id]);
         $inspection = ExpertInspection::create(['title' => 'x', 'company_id' => $parent->id]);
 
         // Company-side row: not yet due — hidden on that side.

@@ -3,6 +3,15 @@
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+
+// /api/v1/login is rate-limited to 5 requests / minute / IP. Since tests share
+// the 127.0.0.1 loopback IP, the limiter accumulates hits across tests and the
+// 6th+ request returns 429 (which surfaces as auth failure). Reset between tests.
+beforeEach(function () {
+    RateLimiter::clear('login:127.0.0.1');
+    RateLimiter::clear('login:'.request()->ip());
+});
 
 describe('Auth API', function () {
     describe('Login', function () {

@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreAssessDetectRequest;
+use App\Http\Requests\Api\V1\UpdateAssessDetectRequest;
 use App\Models\AssessDetect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreAssessDetectRequest;
 
 class AssessDetectController extends Controller
 {
@@ -17,7 +18,7 @@ class AssessDetectController extends Controller
         $list = AssessDetect::query()
             ->where('company_id', $request->company_id)
             ->when($request->name, function ($query) use ($request) {
-                $query->where('name', 'like', '%' . $request->name . '%');
+                $query->where('name', 'like', '%'.$request->name.'%');
             })
             ->with(['skillUnit', 'skillUnitKid'])
             ->orderBy('id', 'desc')
@@ -30,7 +31,7 @@ class AssessDetectController extends Controller
     {
         $data = AssessDetect::query()->with(['skillUnit', 'skillUnitKid'])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('安全评价和检测信息不存在');
         }
 
@@ -48,11 +49,11 @@ class AssessDetectController extends Controller
         return $this->success($assessDetect);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateAssessDetectRequest $request, int $id): JsonResponse
     {
         $assessDetect = AssessDetect::find($id);
 
-        if (!$assessDetect) {
+        if (! $assessDetect) {
             return $this->notFound('安全评价和检测信息不存在');
         }
 
@@ -71,7 +72,7 @@ class AssessDetectController extends Controller
     {
         $assessDetect = AssessDetect::find($id);
 
-        if (!$assessDetect) {
+        if (! $assessDetect) {
             return $this->notFound('安全评价和检测信息不存在');
         }
 

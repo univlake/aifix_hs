@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreFilingPermissionsRequest;
+use App\Http\Requests\Api\V1\UpdateFilingPermissionsRequest;
 use App\Models\FilingPermission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreFilingPermissionsRequest;
 
 class FilingPermissionsController extends Controller
 {
@@ -27,7 +28,7 @@ class FilingPermissionsController extends Controller
     {
         $data = FilingPermission::query()->with('recordType')->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('备案/许可信息不存在');
         }
 
@@ -45,11 +46,11 @@ class FilingPermissionsController extends Controller
         return $this->success($filingPermission);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateFilingPermissionsRequest $request, int $id): JsonResponse
     {
         $filingPermission = FilingPermission::find($id);
 
-        if (!$filingPermission) {
+        if (! $filingPermission) {
             return $this->notFound('备案/许可信息不存在');
         }
 
@@ -68,7 +69,7 @@ class FilingPermissionsController extends Controller
     {
         $filingPermission = FilingPermission::find($id);
 
-        if (!$filingPermission) {
+        if (! $filingPermission) {
             return $this->notFound('备案/许可信息不存在');
         }
 

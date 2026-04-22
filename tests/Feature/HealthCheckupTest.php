@@ -8,7 +8,7 @@ describe('HealthCheckup API', function () {
             [$user, $company] = createAdminWithCompany();
             HealthCheckup::create([
                 'company_id' => $company->id,
-                'type' => '在岗检查',
+                'type' => '岗中',
             ]);
 
             $response = $this->actingAs($user, 'api')
@@ -24,14 +24,14 @@ describe('HealthCheckup API', function () {
             [$user, $company] = createAdminWithCompany();
             $record = HealthCheckup::create([
                 'company_id' => $company->id,
-                'type' => '离岗检查',
+                'type' => '岗后',
             ]);
 
             $response = $this->actingAs($user, 'api')
                 ->getJson("/api/v1/health-checkups/{$record->id}");
 
             $response->assertOk()
-                ->assertJsonPath('data.type', '离岗检查');
+                ->assertJsonPath('data.type', '岗后');
         });
 
         it('returns 404 for non-existent', function () {
@@ -51,7 +51,7 @@ describe('HealthCheckup API', function () {
             $response = $this->actingAs($user, 'api')
                 ->postJson('/api/v1/health-checkups', [
                     'company_id' => $company->id,
-                    'type' => '入职检查',
+                    'type' => '岗前',
                 ]);
 
             $response->assertOk();
@@ -63,7 +63,7 @@ describe('HealthCheckup API', function () {
             $response = $this->actingAs($user, 'api')
                 ->postJson('/api/v1/health-checkups', [
                     'company_id' => $company->id,
-                    'type' => '越权',
+                    'type' => '岗前',
                 ]);
 
             $response->assertStatus(403);
@@ -84,11 +84,11 @@ describe('HealthCheckup API', function () {
             [$user, $company] = createAdminWithCompany();
             $record = HealthCheckup::create([
                 'company_id' => $company->id,
-                'type' => '旧类型',
+                'type' => '岗前',
             ]);
 
             $response = $this->actingAs($user, 'api')
-                ->putJson("/api/v1/health-checkups/{$record->id}", ['type' => '新类型']);
+                ->putJson("/api/v1/health-checkups/{$record->id}", ['type' => '岗中']);
 
             $response->assertOk();
         });
@@ -97,7 +97,7 @@ describe('HealthCheckup API', function () {
             [$user, $company] = createUserWithCompany();
             $record = HealthCheckup::create([
                 'company_id' => $company->id,
-                'type' => '测试',
+                'type' => '岗前',
             ]);
 
             $response = $this->actingAs($user, 'api')
@@ -112,7 +112,7 @@ describe('HealthCheckup API', function () {
             [$user, $company] = createAdminWithCompany();
             $record = HealthCheckup::create([
                 'company_id' => $company->id,
-                'type' => '待删除',
+                'type' => '岗前',
             ]);
 
             $response = $this->actingAs($user, 'api')
@@ -125,7 +125,7 @@ describe('HealthCheckup API', function () {
             [$user, $company] = createUserWithCompany();
             $record = HealthCheckup::create([
                 'company_id' => $company->id,
-                'type' => '测试',
+                'type' => '岗前',
             ]);
 
             $response = $this->actingAs($user, 'api')

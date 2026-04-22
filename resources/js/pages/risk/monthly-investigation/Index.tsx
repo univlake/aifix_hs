@@ -9,6 +9,7 @@ import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { useDetailDrawer } from '@/hooks/use-detail-drawer';
+import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -225,6 +226,10 @@ function rowToForm(row: Investigation): FormState {
 
 export default function MonthlyInvestigationIndex() {
     const { activeCompany, isSubordinate } = useScope();
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('monthly-investigations.create');
+    const canUpdate = canWrite('monthly-investigations.update');
+    const canDelete = canWrite('monthly-investigations.delete');
     const companyId = activeCompany?.id;
 
     const [filterType, setFilterType] = useState('');
@@ -434,21 +439,21 @@ export default function MonthlyInvestigationIndex() {
             return (
                 <div className="flex items-center gap-0.5">
                     <DetailButton row={row.original} onOpen={detail.openDetail} />
-                    {row.original.company_id === companyId && (
-                        <>
-                    <button
-                        onClick={() => openEdit(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        onClick={() => setDeleteItem(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                        </>
+                    {row.original.company_id === companyId && canUpdate && (
+                        <button
+                            onClick={() => openEdit(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {row.original.company_id === companyId && canDelete && (
+                        <button
+                            onClick={() => setDeleteItem(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                     )}
                 </div>
             );
@@ -497,7 +502,7 @@ export default function MonthlyInvestigationIndex() {
                         共 <span className="font-medium text-slate-400">{total}</span> 条记录
                     </p>
                 </div>
-                {!isSubordinate && (
+                {canCreate && (
                     <button
                         onClick={openCreate}
                         className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"

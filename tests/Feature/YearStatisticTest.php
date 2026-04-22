@@ -9,7 +9,7 @@ describe('YearStatistic API', function () {
             YearStatistic::create(['company_id' => $company->id]);
 
             $response = $this->actingAs($user, 'api')
-                ->getJson('/api/v1/year-statistics');
+                ->getJson('/api/v1/year-statistics?company_id='.$company->id);
 
             $response->assertOk()
                 ->assertJsonStructure(['status', 'data' => ['data' => [['id']]]]);

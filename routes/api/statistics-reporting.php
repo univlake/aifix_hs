@@ -22,7 +22,6 @@ use App\Http\Controllers\Api\V1\RegulationLibraryController;
 use App\Http\Controllers\Api\V1\RisksController;
 use App\Http\Controllers\Api\V1\SpecialEquipmentStatisticsController;
 use App\Http\Controllers\Api\V1\TodosController;
-use App\Http\Controllers\Api\V1\VisibleController;
 use App\Http\Controllers\Api\V1\YearStatisticsController;
 use Illuminate\Support\Facades\Route;
 
@@ -212,11 +211,6 @@ Route::middleware('permission:online-inspection.list')->group(function () {
     Route::get('/online-inspection-monthly-investigation', [OnlineInspectionController::class, 'monthlyInvestigation']);
     Route::get('/online-inspection-monthly-investigation-expand', [OnlineInspectionController::class, 'monthlyInvestigationExpand']);
     Route::get('/online-inspection-production-standardization', [OnlineInspectionController::class, 'productionStandardization']);
-});
-
-// ── 可见性统计 ─────────────────────────────────────────────────────
-Route::middleware('permission:visible.list')->group(function () {
-    Route::get('/visible', [VisibleController::class, 'index']);
 });
 
 // ── 重点监管企业 ─────────────────────────────────────────────────────

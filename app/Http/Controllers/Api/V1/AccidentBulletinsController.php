@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\StoreAccidentBulletinsRequest;
+use App\Http\Requests\Api\V1\UpdateAccidentBulletinsRequest;
 use App\Models\AccidentBulletin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -76,7 +77,7 @@ class AccidentBulletinsController extends Controller
         return $this->success($data);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateAccidentBulletinsRequest $request, int $id): JsonResponse
     {
         $accidentBulletin = AccidentBulletin::find($id);
 

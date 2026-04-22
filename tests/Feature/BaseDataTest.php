@@ -9,35 +9,38 @@ use App\Models\User;
 describe('BaseData API', function () {
     it('returns enterprise types', function () {
         [$user] = createUserWithCompany();
+        $before = EnterpriseType::count();
         EnterpriseType::factory()->count(3)->create();
 
         $response = $this->actingAs($user, 'api')
-            ->getJson('/api/v1/enterprise-types');
+            ->getJson('/api/v1/enterprise-types?per_page=200');
 
         $response->assertOk()
-            ->assertJsonCount(3, 'data');
+            ->assertJsonCount($before + 3, 'data.data');
     });
 
     it('returns operational types', function () {
         [$user] = createUserWithCompany();
+        $before = OperationalType::count();
         OperationalType::factory()->count(2)->create();
 
         $response = $this->actingAs($user, 'api')
-            ->getJson('/api/v1/operational-types');
+            ->getJson('/api/v1/operational-types?per_page=200');
 
         $response->assertOk()
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount($before + 2, 'data.data');
     });
 
     it('returns record types', function () {
         [$user] = createUserWithCompany();
+        $before = RecordType::count();
         RecordType::factory()->count(4)->create();
 
         $response = $this->actingAs($user, 'api')
-            ->getJson('/api/v1/record-types');
+            ->getJson('/api/v1/record-types?per_page=200');
 
         $response->assertOk()
-            ->assertJsonCount(4, 'data');
+            ->assertJsonCount($before + 4, 'data.data');
     });
 
     it('rejects unauthenticated requests', function () {

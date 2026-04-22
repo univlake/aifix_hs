@@ -27,9 +27,13 @@ Route::middleware('permission:base-data.view')->group(function () {
     Route::get('/dangerous-craft-types', [DangerousCraftTypeController::class, 'index']);
     Route::get('/regulation-library-types', [RegulationLibraryTypeController::class, 'index']);
     Route::get('/training-class-types', [TrainingClassTypeController::class, 'index']);
+    Route::get('/report-configs', [ReportConfigController::class, 'index']);
+});
+
+// 检查表库 — 使用独立权限命名（checklist-libraries.*）以与前端 gate 对齐
+Route::middleware('permission:checklist-libraries.list')->group(function () {
     Route::get('/checklist-libraries', [ChecklistLibraryController::class, 'index']);
     Route::get('/checklist-libraries/export', [ChecklistLibraryController::class, 'export']);
-    Route::get('/report-configs', [ReportConfigController::class, 'index']);
 });
 
 Route::middleware('permission:base-data.manage')->group(function () {
@@ -93,15 +97,20 @@ Route::middleware('permission:base-data.manage')->group(function () {
     Route::patch('/training-class-types/{id}', [TrainingClassTypeController::class, 'update']);
     Route::delete('/training-class-types/{id}', [TrainingClassTypeController::class, 'destroy']);
 
-    // 检查表库
-    Route::post('/checklist-libraries', [ChecklistLibraryController::class, 'store']);
-    Route::put('/checklist-libraries/{id}', [ChecklistLibraryController::class, 'update']);
-    Route::patch('/checklist-libraries/{id}', [ChecklistLibraryController::class, 'update']);
-    Route::delete('/checklist-libraries/{id}', [ChecklistLibraryController::class, 'destroy']);
-
     // 上报配置
     Route::post('/report-configs', [ReportConfigController::class, 'store']);
     Route::put('/report-configs/{id}', [ReportConfigController::class, 'update']);
     Route::patch('/report-configs/{id}', [ReportConfigController::class, 'update']);
     Route::delete('/report-configs/{id}', [ReportConfigController::class, 'destroy']);
+});
+
+Route::middleware('permission:checklist-libraries.create')->group(function () {
+    Route::post('/checklist-libraries', [ChecklistLibraryController::class, 'store']);
+});
+Route::middleware('permission:checklist-libraries.update')->group(function () {
+    Route::put('/checklist-libraries/{id}', [ChecklistLibraryController::class, 'update']);
+    Route::patch('/checklist-libraries/{id}', [ChecklistLibraryController::class, 'update']);
+});
+Route::middleware('permission:checklist-libraries.delete')->group(function () {
+    Route::delete('/checklist-libraries/{id}', [ChecklistLibraryController::class, 'destroy']);
 });
