@@ -9,87 +9,174 @@
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
-    /* Blue tech palette */
-    --color-background: #070d1f;
-    --color-foreground: #e2e8f0;
-    --color-card: #0d1530;
-    --color-card-foreground: #e2e8f0;
-    --color-popover: #0d1530;
-    --color-popover-foreground: #e2e8f0;
+    /* Blue tech palette — aligned with the new surface tokens below */
+    --color-background: #0f172a;
+    --color-foreground: #f1f5f9;
+    --color-card: #162135;
+    --color-card-foreground: #f1f5f9;
+    --color-popover: #162135;
+    --color-popover-foreground: #f1f5f9;
     --color-primary: #3b82f6;
     --color-primary-foreground: #ffffff;
     --color-secondary: #1e3a5f;
-    --color-secondary-foreground: #93c5fd;
-    --color-muted: #0f1e3d;
-    --color-muted-foreground: #64748b;
+    --color-secondary-foreground: #bfdbfe;
+    --color-muted: #1c2742;
+    --color-muted-foreground: #94a3b8;
     --color-accent: #1e3a5f;
-    --color-accent-foreground: #93c5fd;
+    --color-accent-foreground: #bfdbfe;
     --color-destructive: #ef4444;
     --color-destructive-foreground: #ffffff;
-    --color-border: #1e3a5f;
-    --color-input: #0f1e3d;
+    --color-border: #243351;
+    --color-input: #1c2742;
     --color-ring: #3b82f6;
-    --color-sidebar-background: #060c1a;
-    --color-sidebar-foreground: #cbd5e1;
+    --color-sidebar-background: #0c1426;
+    --color-sidebar-foreground: #d1dae8;
     --color-sidebar-primary: #3b82f6;
     --color-sidebar-primary-foreground: #ffffff;
-    --color-sidebar-accent: #0f1e3d;
-    --color-sidebar-accent-foreground: #93c5fd;
-    --color-sidebar-border: #1e3a5f;
+    --color-sidebar-accent: #1c2742;
+    --color-sidebar-accent-foreground: #bfdbfe;
+    --color-sidebar-border: #243351;
     --color-sidebar-ring: #3b82f6;
 
     --radius: 0.5rem;
 }
 
-/* CSS variables for runtime use */
+/*
+ * ═════════════════════════════════════════════════════════════════
+ *  Theme tokens
+ *
+ *  Two themes share the same variable names; the HTML root's class
+ *  (`html.light` vs default) swaps the palette. Tuned 2026-04-22 to:
+ *
+ *  DARK
+ *    · raise surface lightness from near-black (#070d1f) to slate-900
+ *      family so white text doesn't halate / ghost ("halation fatigue")
+ *    · brighten muted/secondary text ~+10% L to preserve contrast after
+ *      the surface got lighter; net result = higher perceived contrast,
+ *      lower eye fatigue (WCAG contrast stays ≥ 7:1 for body text)
+ *
+ *  LIGHT
+ *    · neutral-warm surfaces (slate-50 → white) instead of cold cyan
+ *    · distinct button intent colors (primary-blue / success-emerald /
+ *      warning-amber / danger-rose) for clear affordance on white bg
+ *    · text hierarchy tightened: body is slate-900, muted slate-500
+ * ═════════════════════════════════════════════════════════════════
+ */
+
+/* DARK (default) — raised surfaces + brighter muted text */
 :root {
-    --background: 220 50% 8%;
-    --foreground: 213 31% 91%;
-    --card: 220 50% 11%;
-    --card-foreground: 213 31% 91%;
-    --popover: 220 50% 11%;
-    --popover-foreground: 213 31% 91%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 96%;
+    --card: 220 33% 16%;
+    --card-foreground: 210 40% 96%;
+    --popover: 220 33% 16%;
+    --popover-foreground: 210 40% 96%;
     --primary: 213 94% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 68% 25%;
-    --secondary-foreground: 214 68% 80%;
-    --muted: 220 50% 14%;
-    --muted-foreground: 215 20% 45%;
-    --accent: 214 68% 25%;
-    --accent-foreground: 214 68% 80%;
+    --secondary: 214 55% 28%;
+    --secondary-foreground: 214 95% 85%;
+    --muted: 220 30% 19%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 214 55% 28%;
+    --accent-foreground: 214 95% 85%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 68% 25%;
-    --input: 220 50% 14%;
+    --border: 218 36% 24%;
+    --input: 220 30% 19%;
     --ring: 213 94% 60%;
     --radius: 0.5rem;
 
-    /* Surface tokens — dark defaults */
-    --surface-base: #070d1f;
-    --surface-sidebar: #060c1a;
-    --surface-card: #0d1530;
-    --surface-input: #070d1f;
-    --surface-input-2: #0a1428;
-    --surface-muted: #0f1e3d;
-    --text-base: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --border-subtle: rgba(30, 58, 95, 0.5);
+    /* Surface tokens — dark */
+    --surface-base: #0f172a; /* was #070d1f — slate-900, gentler */
+    --surface-sidebar: #0c1426; /* was #060c1a — slightly darker than base */
+    --surface-card: #162135; /* was #0d1530 — more visible elevation */
+    --surface-input: #111a2e;
+    --surface-input-2: #1a243d;
+    --surface-muted: #1c2742;
+    --text-base: #f1f5f9; /* was #e2e8f0 — slate-100 (brighter) */
+    --text-secondary: #cbd5e1; /* was #94a3b8 — much brighter for readability */
+    --text-muted: #94a3b8; /* was #64748b — was too dim to read comfortably */
+    --border-subtle: rgba(59, 130, 246, 0.2);
+
+    /* Intent tokens — buttons + badges */
+    --intent-primary: #3b82f6;
+    --intent-primary-soft: rgba(59, 130, 246, 0.15);
+    --intent-primary-border: rgba(59, 130, 246, 0.3);
+    --intent-primary-text: #93c5fd;
+
+    --intent-success: #10b981;
+    --intent-success-soft: rgba(16, 185, 129, 0.15);
+    --intent-success-border: rgba(16, 185, 129, 0.3);
+    --intent-success-text: #6ee7b7;
+
+    --intent-warning: #f59e0b;
+    --intent-warning-soft: rgba(245, 158, 11, 0.15);
+    --intent-warning-border: rgba(245, 158, 11, 0.3);
+    --intent-warning-text: #fcd34d;
+
+    --intent-danger: #ef4444;
+    --intent-danger-soft: rgba(239, 68, 68, 0.15);
+    --intent-danger-border: rgba(239, 68, 68, 0.3);
+    --intent-danger-text: #fca5a5;
+
     color-scheme: dark;
 }
 
+/* LIGHT — warm neutrals + strong button intents */
 html.light {
-    /* Surface tokens — cool minimal tech light theme */
-    --surface-base: #eef3f8;
-    --surface-sidebar: #e6edf5;
-    --surface-card: #f8fbfe;
-    --surface-input: #f4f8fc;
-    --surface-input-2: #eaf0f7;
-    --surface-muted: #dde7f1;
-    --text-base: #0f172a;
-    --text-secondary: #243447;
-    --text-muted: #5f7288;
-    --border-subtle: rgba(73, 107, 142, 0.22);
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 215 25% 27%;
+    --muted: 210 40% 94%;
+    --muted-foreground: 215 16% 40%;
+    --accent: 214 32% 91%;
+    --accent-foreground: 215 25% 27%;
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 86%;
+    --input: 210 40% 94%;
+    --ring: 217 91% 48%;
+
+    /* Surface tokens — light */
+    --surface-base: #f8fafc; /* slate-50 (was cool cyan #eef3f8) */
+    --surface-sidebar: #ffffff; /* pure white for max separation from content */
+    --surface-card: #ffffff;
+    --surface-input: #f1f5f9; /* slate-100 */
+    --surface-input-2: #e2e8f0; /* slate-200 */
+    --surface-muted: #e2e8f0;
+    --text-base: #0f172a; /* slate-900 */
+    --text-secondary: #334155; /* slate-700 — stronger than before */
+    --text-muted: #64748b; /* slate-500 */
+    --border-subtle: rgba(148, 163, 184, 0.35);
+
+    /* Intent tokens — solid saturated colors for clear affordance on white */
+    --intent-primary: #2563eb; /* blue-600 */
+    --intent-primary-soft: rgba(37, 99, 235, 0.1);
+    --intent-primary-border: rgba(37, 99, 235, 0.25);
+    --intent-primary-text: #1d4ed8; /* blue-700 */
+
+    --intent-success: #059669; /* emerald-600 */
+    --intent-success-soft: rgba(5, 150, 105, 0.1);
+    --intent-success-border: rgba(5, 150, 105, 0.25);
+    --intent-success-text: #047857; /* emerald-700 */
+
+    --intent-warning: #d97706; /* amber-600 */
+    --intent-warning-soft: rgba(217, 119, 6, 0.1);
+    --intent-warning-border: rgba(217, 119, 6, 0.3);
+    --intent-warning-text: #b45309; /* amber-700 */
+
+    --intent-danger: #dc2626; /* red-600 */
+    --intent-danger-soft: rgba(220, 38, 38, 0.08);
+    --intent-danger-border: rgba(220, 38, 38, 0.25);
+    --intent-danger-text: #b91c1c; /* red-700 */
+
     color-scheme: light;
 }
 
@@ -115,23 +202,28 @@ html.light ::placeholder {
     opacity: 1;
 }
 
-/* ── Light mode: structural backgrounds ────────────────────────── */
-html.light .bg-\[\#070d1f\] {
+/* ── Structural backgrounds — always token-backed ─────────────────
+ * The UI hardcodes the original dark-theme hex values (bg-[#070d1f] etc.).
+ * Rather than rewrite ~100 files, we hijack those Tailwind classes and
+ * route them through the CSS surface tokens. Swapping themes swaps the
+ * tokens; the hex classes stay put.
+ * ─────────────────────────────────────────────────────────────── */
+.bg-\[\#070d1f\] {
     background-color: var(--surface-base) !important;
 }
-html.light .bg-\[\#070d1f\]\/60 {
-    background-color: #e3ebf3 !important;
+.bg-\[\#070d1f\]\/60 {
+    background-color: color-mix(in srgb, var(--surface-base) 60%, transparent) !important;
 }
-html.light .bg-\[\#060c1a\] {
+.bg-\[\#060c1a\] {
     background-color: var(--surface-sidebar) !important;
 }
-html.light .bg-\[\#0d1530\] {
+.bg-\[\#0d1530\] {
     background-color: var(--surface-card) !important;
 }
-html.light .bg-\[\#0a1428\] {
+.bg-\[\#0a1428\] {
     background-color: var(--surface-input-2) !important;
 }
-html.light .bg-\[\#0f1e3d\] {
+.bg-\[\#0f1e3d\] {
     background-color: var(--surface-muted) !important;
 }
 
@@ -158,12 +250,118 @@ html.light .text-slate-700 {
     color: #31465d !important;
 }
 
-/* Blue accent text: cleaner cyan-blue for light backgrounds */
+/* Blue accent text — saturate + darken for light backgrounds */
 html.light .text-blue-300 {
-    color: #0f5f8f !important;
+    color: var(--intent-primary-text) !important;
 }
 html.light .text-blue-400 {
-    color: #1672a8 !important;
+    color: var(--intent-primary) !important;
+}
+html.light .text-emerald-300,
+html.light .text-emerald-400 {
+    color: var(--intent-success-text) !important;
+}
+html.light .text-amber-300,
+html.light .text-amber-400 {
+    color: var(--intent-warning-text) !important;
+}
+html.light .text-red-300,
+html.light .text-red-400 {
+    color: var(--intent-danger-text) !important;
+}
+html.light .text-violet-300,
+html.light .text-violet-400 {
+    color: #6d28d9 !important;
+}
+html.light .text-orange-300,
+html.light .text-orange-400 {
+    color: #c2410c !important;
+}
+
+/* ── Light mode: button / badge surfaces — more saturation ─────── */
+html.light .bg-blue-600\/5 {
+    background-color: rgba(37, 99, 235, 0.05) !important;
+}
+html.light .bg-blue-600\/8 {
+    background-color: rgba(37, 99, 235, 0.07) !important;
+}
+html.light .bg-blue-600\/10 {
+    background-color: rgba(37, 99, 235, 0.08) !important;
+}
+html.light .bg-blue-600\/15 {
+    background-color: rgba(37, 99, 235, 0.1) !important;
+}
+html.light .bg-blue-600\/20 {
+    background-color: rgba(37, 99, 235, 0.14) !important;
+}
+html.light .bg-blue-600\/25 {
+    background-color: rgba(37, 99, 235, 0.18) !important;
+}
+html.light .bg-blue-600\/30 {
+    background-color: rgba(37, 99, 235, 0.22) !important;
+}
+
+html.light .bg-emerald-600\/8,
+html.light .bg-emerald-600\/10 {
+    background-color: rgba(5, 150, 105, 0.08) !important;
+}
+html.light .bg-emerald-600\/15 {
+    background-color: rgba(5, 150, 105, 0.12) !important;
+}
+html.light .bg-emerald-600\/20 {
+    background-color: rgba(5, 150, 105, 0.16) !important;
+}
+html.light .bg-emerald-600\/25 {
+    background-color: rgba(5, 150, 105, 0.2) !important;
+}
+
+html.light .bg-amber-600\/10 {
+    background-color: rgba(217, 119, 6, 0.08) !important;
+}
+html.light .bg-amber-600\/15 {
+    background-color: rgba(217, 119, 6, 0.12) !important;
+}
+html.light .bg-amber-600\/20 {
+    background-color: rgba(217, 119, 6, 0.18) !important;
+}
+
+html.light .bg-red-600\/8,
+html.light .bg-red-600\/10 {
+    background-color: rgba(220, 38, 38, 0.07) !important;
+}
+html.light .bg-red-600\/15 {
+    background-color: rgba(220, 38, 38, 0.11) !important;
+}
+html.light .bg-red-600\/25 {
+    background-color: rgba(220, 38, 38, 0.16) !important;
+}
+
+html.light .bg-violet-600\/10,
+html.light .bg-violet-600\/15 {
+    background-color: rgba(109, 40, 217, 0.1) !important;
+}
+
+html.light .bg-orange-600\/10 {
+    background-color: rgba(194, 65, 12, 0.08) !important;
+}
+
+/* ── Light mode: colored button borders — tight, saturated ─────── */
+html.light .border-blue-500\/30,
+html.light .border-blue-500\/40 {
+    border-color: var(--intent-primary-border) !important;
+}
+html.light .border-emerald-500\/25,
+html.light .border-emerald-500\/30,
+html.light .border-emerald-500\/40 {
+    border-color: var(--intent-success-border) !important;
+}
+html.light .border-amber-500\/30,
+html.light .border-amber-500\/40 {
+    border-color: var(--intent-warning-border) !important;
+}
+html.light .border-red-500\/30,
+html.light .border-red-500\/40 {
+    border-color: var(--intent-danger-border) !important;
 }
 
 /* ── Light mode: borders → restrained steel-blue palette ───────── */
@@ -218,19 +416,35 @@ html.light ::-webkit-scrollbar-thumb:hover {
     background: #6b89a7;
 }
 
-/* Scrollbar */
+/* Scrollbar — theme-aware via CSS tokens */
 ::-webkit-scrollbar {
     width: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: #0d1530;
+    background: var(--surface-card);
 }
 ::-webkit-scrollbar-thumb {
-    background: #1e3a5f;
+    background: var(--border-subtle);
     border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #3b82f6;
+    background: var(--intent-primary);
+}
+
+/* Modal overlay — lighter in light mode for less jarring darkening */
+html.light .bg-black\/60 {
+    background-color: rgba(30, 41, 59, 0.4) !important; /* slate-800 @ 40% */
+}
+
+/* Focus ring — theme-aware */
+*:focus-visible {
+    outline: 2px solid var(--intent-primary);
+    outline-offset: 2px;
+}
+
+/* Link color — subtle but distinguishable */
+html.light a:not([class*='text-']) {
+    color: var(--intent-primary-text);
 }
 
 /* Grid background pattern */
