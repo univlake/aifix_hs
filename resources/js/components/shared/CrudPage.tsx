@@ -12,6 +12,7 @@ import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { getApiPayload, getErrorMessage } from '@/types/api-error';
 import type { ApiResponse } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -370,13 +371,13 @@ return;
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             reload();
-        } catch (err: any) {
-            const rowErrors = err.response?.data?.data?.row_errors;
+        } catch (err: unknown) {
+            const rowErrors = getApiPayload<{ row_errors?: Array<{ row: number; errors: string[] }> }>(err)?.row_errors;
 
             if (rowErrors) {
                 setImportError(rowErrors);
             } else {
-                setImportError([{ row: 0, errors: [err.response?.data?.message ?? '导入失败'] }]);
+                setImportError([{ row: 0, errors: [getErrorMessage(err, '导入失败')] }]);
             }
         } finally {
             setImportLoading(false);
@@ -442,8 +443,8 @@ return;
             reload();
             setCopyMsg(`已复制 ${selectedIds.size} 条记录`);
             setTimeout(() => setCopyMsg(''), 3000);
-        } catch (err: any) {
-            setCopyMsg(err.response?.data?.message ?? '复制失败');
+        } catch (err: unknown) {
+            setCopyMsg(getErrorMessage(err, '复制失败'));
             setTimeout(() => setCopyMsg(''), 3000);
         } finally {
             setCopyLoading(false);
@@ -578,8 +579,8 @@ payload[field.key] = null;
 
             setDialogOpen(false);
             reload();
-        } catch (err: any) {
-            setFormError(err.response?.data?.message ?? '操作失败，请重试');
+        } catch (err: unknown) {
+            setFormError(getErrorMessage(err, '操作失败，请重试'));
         } finally {
             setFormLoading(false);
         }

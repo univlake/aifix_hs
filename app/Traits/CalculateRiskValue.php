@@ -58,7 +58,6 @@ trait CalculateRiskValue
 
         // ── Reset today's logs ───────────────────────────────────────────────
         try {
-            DB::table('risk_max_values')->truncate();
             RiskLog::whereDate('created_at', $today)->delete();
             FloatRiskLog::whereDate('created_at', $today)->delete();
             InherentRiskLog::whereDate('created_at', $today)->delete();
@@ -111,7 +110,7 @@ trait CalculateRiskValue
         $threeTotalCounts = ThreeTogether::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
         $threeOverCounts = ThreeTogether::whereIn('company_id', $companyIds)->where('status', 4)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
         $skillUnitTotal = SkillUnit::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id');
-        $skillUnitQualified = SkillUnit::whereIn('company_id', $companyIds)->has('skillUnitKids')->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
+        $skillUnitQualified = SkillUnit::whereIn('company_id', $companyIds)->has('kids')->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
         $evalUnitTotal = EvaluationUnit::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id');
         $evalUnitQualified = EvaluationUnit::whereIn('company_id', $companyIds)->where('is_qualification', 1)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
         $evalUnitAgreement = EvaluationUnit::whereIn('company_id', $companyIds)->whereNotNull('agreement_annex_url')->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
@@ -211,12 +210,6 @@ trait CalculateRiskValue
 
             $riskMaxRows[] = $row;
             $riskMaxByCid[$cid] = $row;
-        }
-
-        // Bulk insert risk_max_values
-        $insertRows = array_map(fn ($r) => array_merge($r, ['created_at' => $now, 'updated_at' => $now]), $riskMaxRows);
-        foreach (array_chunk($insertRows, 500) as $chunk) {
-            DB::table('risk_max_values')->insert($chunk);
         }
 
         // Compute global MAX values in PHP — no repeated DB queries needed

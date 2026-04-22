@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import api from '@/lib/api';
 import type { ApiResponse, PaginatedData } from '@/types/models';
+import { getErrorMessage, isAbortedRequest } from '@/types/api-error';
 
 interface UseApiListOptions {
     endpoint: string;
@@ -82,12 +83,12 @@ export function useApiList<T = Record<string, unknown>>({
                     per_page: meta.per_page,
                     total: meta.total,
                 });
-            } catch (err: any) {
-                if (err.name === 'CanceledError') return;
+            } catch (err: unknown) {
+                if (isAbortedRequest(err)) return;
                 setState((s) => ({
                     ...s,
                     loading: false,
-                    error: err.response?.data?.message ?? err.message ?? '请求失败',
+                    error: getErrorMessage(err),
                 }));
             }
         },
@@ -146,8 +147,8 @@ export function useApiItem<T = Record<string, unknown>>({ endpoint, id }: UseApi
         try {
             const { data: res } = await api.get<ApiResponse<T>>(`${endpoint}/${targetId}`);
             setData(res.data);
-        } catch (err: any) {
-            setError(err.response?.data?.message ?? err.message);
+        } catch (err: unknown) {
+            setError(getErrorMessage(err));
         } finally {
             setLoading(false);
         }

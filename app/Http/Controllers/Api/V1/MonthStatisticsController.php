@@ -323,23 +323,27 @@ class MonthStatisticsController extends Controller
             ->whereIn('company_id', $companyIds)
             ->sum('total_people'));
 
-        $safetyMeeting = InternalMeeting::query()
+        // Collapse 2 InternalMeeting type-counts into one CASE-WHEN aggregate.
+        $meetingRow = InternalMeeting::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('created_at', $year)->whereMonth('created_at', $month)
-            ->where('type', '安全例会')->count();
-        $fireMeeting = InternalMeeting::query()
-            ->whereIn('company_id', $companyIds)
-            ->whereYear('created_at', $year)->whereMonth('created_at', $month)
-            ->where('type', '消防例会')->count();
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN type = '安全例会' THEN 1 ELSE 0 END), 0) AS safety_meeting,
+                COALESCE(SUM(CASE WHEN type = '消防例会' THEN 1 ELSE 0 END), 0) AS fire_meeting
+            ")->first();
+        $safetyMeeting = (int) ($meetingRow->safety_meeting ?? 0);
+        $fireMeeting = (int) ($meetingRow->fire_meeting ?? 0);
 
-        $safetyCheck = MonthlyInvestigation::query()
+        // Collapse 2 MonthlyInvestigation type-counts (on created_at) into one CASE-WHEN aggregate.
+        $checkRow = MonthlyInvestigation::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('created_at', $year)->whereMonth('created_at', $month)
-            ->where('type', '!=', '消防')->count();
-        $fireCheck = MonthlyInvestigation::query()
-            ->whereIn('company_id', $companyIds)
-            ->whereYear('created_at', $year)->whereMonth('created_at', $month)
-            ->where('type', '消防')->count();
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN type != '消防' THEN 1 ELSE 0 END), 0) AS safety_check,
+                COALESCE(SUM(CASE WHEN type = '消防' THEN 1 ELSE 0 END), 0) AS fire_check
+            ")->first();
+        $safetyCheck = (int) ($checkRow->safety_check ?? 0);
+        $fireCheck = (int) ($checkRow->fire_check ?? 0);
 
         $safetyFunding = (int) FundingExecution::query()
             ->whereIn('company_id', $companyIds)
@@ -392,39 +396,28 @@ class MonthStatisticsController extends Controller
         $fireEmCount = (int) ($drills['消防安全']->cnt ?? 0);
         $fireEmNum = (int) ($drills['消防安全']->num ?? 0);
 
-        $someHidden = MonthlyInvestigation::query()
+        // Collapse 8 MonthlyInvestigation conditional counts (on inv_time) into one CASE-WHEN aggregate.
+        $invRow = MonthlyInvestigation::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('level', '一般隐患')->count();
-        $someRectify = MonthlyInvestigation::query()
-            ->whereIn('company_id', $companyIds)
-            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('level', '一般隐患')->where('correct_result', '!=', '未整改')->count();
-        $bigHidden = MonthlyInvestigation::query()
-            ->whereIn('company_id', $companyIds)
-            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('level', '重大隐患')->count();
-        $bigRectify = MonthlyInvestigation::query()
-            ->whereIn('company_id', $companyIds)
-            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('level', '重大隐患')->where('correct_result', '!=', '未整改')->count();
-        $governCount = MonthlyInvestigation::query()
-            ->whereIn('company_id', $companyIds)
-            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('level', '重大隐患')->where('is_govern', 1)->count();
-
-        $fireDanger = MonthlyInvestigation::query()
-            ->whereIn('company_id', $companyIds)
-            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('type', '消防')->count();
-        $fireLaw = MonthlyInvestigation::query()
-            ->whereIn('company_id', $companyIds)
-            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('is_fire_fighting', 1)->count();
-        $fireLawRectify = MonthlyInvestigation::query()
-            ->whereIn('company_id', $companyIds)
-            ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('is_fire_fighting', 1)->where('correct_result', '!=', '未整改')->count();
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN level = '一般隐患' THEN 1 ELSE 0 END), 0) AS some_hidden,
+                COALESCE(SUM(CASE WHEN level = '一般隐患' AND correct_result != '未整改' THEN 1 ELSE 0 END), 0) AS some_rectify,
+                COALESCE(SUM(CASE WHEN level = '重大隐患' THEN 1 ELSE 0 END), 0) AS big_hidden,
+                COALESCE(SUM(CASE WHEN level = '重大隐患' AND correct_result != '未整改' THEN 1 ELSE 0 END), 0) AS big_rectify,
+                COALESCE(SUM(CASE WHEN level = '重大隐患' AND is_govern = 1 THEN 1 ELSE 0 END), 0) AS govern_count,
+                COALESCE(SUM(CASE WHEN type = '消防' THEN 1 ELSE 0 END), 0) AS fire_danger,
+                COALESCE(SUM(CASE WHEN is_fire_fighting = 1 THEN 1 ELSE 0 END), 0) AS fire_law,
+                COALESCE(SUM(CASE WHEN is_fire_fighting = 1 AND correct_result != '未整改' THEN 1 ELSE 0 END), 0) AS fire_law_rectify
+            ")->first();
+        $someHidden = (int) ($invRow->some_hidden ?? 0);
+        $someRectify = (int) ($invRow->some_rectify ?? 0);
+        $bigHidden = (int) ($invRow->big_hidden ?? 0);
+        $bigRectify = (int) ($invRow->big_rectify ?? 0);
+        $governCount = (int) ($invRow->govern_count ?? 0);
+        $fireDanger = (int) ($invRow->fire_danger ?? 0);
+        $fireLaw = (int) ($invRow->fire_law ?? 0);
+        $fireLawRectify = (int) ($invRow->fire_law_rectify ?? 0);
 
         $accidentCount = AccidentBulletin::query()
             ->whereIn('company_id', $companyIds)
