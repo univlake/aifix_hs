@@ -6,10 +6,12 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -593,6 +595,7 @@ function FilingPermissionsSection({ companyId }: { companyId: number }) {
         useApiList<FilingPermission>({
             endpoint: '/filing-permissions',
             defaultParams: { company_id: companyId },
+            enabled: !!companyId,
         });
 
     const crud = useApiCrud('/filing-permissions');
@@ -600,7 +603,8 @@ function FilingPermissionsSection({ companyId }: { companyId: number }) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
-    const [detailItem, setDetailItem] = useState<FilingPermission | null>(null);
+    const detail = useDetailDrawer<FilingPermission>();
+    const detailItem = detail.data;
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
     const emptyForm = {
@@ -706,13 +710,7 @@ return;
             size: 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => setDetailItem(row.original)}
-                        title="详情"
-                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
-                    >
-                        详情
-                    </button>
+                    <DetailButton row={row.original} onOpen={detail.openDetail} />
                     <button
                         onClick={() => openEdit(row.original)}
                         title="编辑"
@@ -756,10 +754,10 @@ return;
             />
 
             <ObjectDetailDrawer
-                open={!!detailItem}
+                open={detail.open}
                 title="备案/许可证详情"
                 data={detailItem as Record<string, unknown> | null}
-                onClose={() => setDetailItem(null)}
+                onClose={detail.close}
                 labels={{
                     record_type: '备案/许可类型',
                     title: '类型名称',

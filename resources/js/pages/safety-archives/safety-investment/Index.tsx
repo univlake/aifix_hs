@@ -6,9 +6,11 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -100,13 +102,15 @@ function InvestmentPlansTab({ companyId }: { companyId: number }) {
         useApiList<SecurityInvestment>({
             endpoint: '/security-investments',
             defaultParams: { company_id: companyId },
+            enabled: !!companyId,
         });
 
     const crud = useApiCrud('/security-investments');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
-    const [detailItem, setDetailItem] = useState<SecurityInvestment | null>(null);
+    const detail = useDetailDrawer<SecurityInvestment>();
+    const detailItem = detail.data;
     const [formError, setFormError] = useState('');
     const [formLoading, setFormLoading] = useState(false);
 
@@ -217,12 +221,7 @@ return;
             size: 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => setDetailItem(row.original)}
-                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
-                    >
-                        详情
-                    </button>
+                    <DetailButton row={row.original} onOpen={detail.openDetail} />
                     <button
                         onClick={() => openEdit(row.original)}
                         className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
@@ -264,10 +263,10 @@ return;
             />
 
             <ObjectDetailDrawer
-                open={!!detailItem}
+                open={detail.open}
                 title="安全投入计划详情"
                 data={detailItem as Record<string, unknown> | null}
-                onClose={() => setDetailItem(null)}
+                onClose={detail.close}
                 labels={{
                     year: '年份',
                     type: '类型',
@@ -391,6 +390,7 @@ function FundingExecutionsTab({ companyId }: { companyId: number }) {
         useApiList<FundingExecution>({
             endpoint: '/funding-executions',
             defaultParams: { company_id: companyId },
+            enabled: !!companyId,
         });
 
     const crud = useApiCrud('/funding-executions');
@@ -408,7 +408,8 @@ function FundingExecutionsTab({ companyId }: { companyId: number }) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
-    const [detailItem, setDetailItem] = useState<FundingExecution | null>(null);
+    const detail = useDetailDrawer<FundingExecution>();
+    const detailItem = detail.data;
     const [formError, setFormError] = useState('');
     const [formLoading, setFormLoading] = useState(false);
 
@@ -530,12 +531,7 @@ return;
             size: 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => setDetailItem(row.original)}
-                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
-                    >
-                        详情
-                    </button>
+                    <DetailButton row={row.original} onOpen={detail.openDetail} />
                     <button
                         onClick={() => openEdit(row.original)}
                         className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
@@ -577,10 +573,10 @@ return;
             />
 
             <ObjectDetailDrawer
-                open={!!detailItem}
+                open={detail.open}
                 title="经费执行记录详情"
                 data={detailItem as Record<string, unknown> | null}
-                onClose={() => setDetailItem(null)}
+                onClose={detail.close}
                 labels={{
                     year: '年份',
                     security_investment: '关联计划',

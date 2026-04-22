@@ -64,6 +64,7 @@ export default function DangerousEquipmentIndex() {
         useApiList<DangerousEquipmentRow>({
             endpoint: '/dangerous-equipment',
             defaultParams: companyId ? { company_id: companyId } : {},
+            enabled: !!companyId,
         });
     const crud = useApiCrud('/dangerous-equipment');
 

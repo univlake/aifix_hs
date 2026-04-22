@@ -4,9 +4,11 @@ import {
     Users, ShieldCheck, Flame, HardHat, Download, Upload,
 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse, PaginatedData } from '@/types/models';
@@ -587,6 +589,7 @@ function StaffTable({
     const { data, loading, reload, total } = useApiList<Record<string, unknown>>({
         endpoint,
         defaultParams: companyId ? { company_id: companyId } : {},
+        enabled: !!companyId,
     });
     const crud = useApiCrud(endpoint);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -596,7 +599,7 @@ function StaffTable({
     const [error, setError] = useState('');
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteName, setDeleteName] = useState('');
-    const [detailRow, setDetailRow] = useState<Record<string, unknown> | null>(null);
+    const detail = useDetailDrawer<Record<string, unknown>>();
     const [importing, setImporting] = useState(false);
     const [importError, setImportError] = useState('');
     const importInputRef = useRef<HTMLInputElement>(null);
@@ -797,12 +800,7 @@ return;
                                     ))}
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-0.5">
-                                            <button
-                                                onClick={() => setDetailRow(row)}
-                                                className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
-                                            >
-                                                详情
-                                            </button>
+                                            <DetailButton row={row} onOpen={detail.openDetail} />
                                             <button
                                                 onClick={() => openEdit(row)}
                                                 className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
@@ -828,10 +826,10 @@ return;
             )}
 
             <ObjectDetailDrawer
-                open={!!detailRow}
+                open={detail.open}
                 title="人员详情"
-                data={detailRow}
-                onClose={() => setDetailRow(null)}
+                data={detail.data}
+                onClose={detail.close}
                 labels={Object.fromEntries(formFields.map((field) => [field.key, field.label]))}
             />
 

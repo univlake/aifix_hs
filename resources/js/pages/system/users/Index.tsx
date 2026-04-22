@@ -1,10 +1,12 @@
 import { Head } from '@inertiajs/react';
 import type {ColumnDef} from '@tanstack/react-table';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, KeyRound, ShieldCheck, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, KeyRound, ShieldCheck } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse, User, Role } from '@/types/models';
@@ -24,7 +26,7 @@ export default function UsersIndex() {
 
     const [dialogMode, setDialogMode] = useState<DialogMode>(null);
     const [editingUser, setEditingUser] = useState<User | null>(null);
-    const [detailUser, setDetailUser] = useState<User | null>(null);
+    const detail = useDetailDrawer<User>();
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteLabel, setDeleteLabel] = useState('');
     const [formLoading, setFormLoading] = useState(false);
@@ -218,14 +220,7 @@ return <span className="text-slate-700">—</span>;
             id: 'actions', header: '操作', size: 152,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => setDetailUser(row.original)}
-                        className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
-                        title="详情"
-                    >
-                        <Eye className="h-3.5 w-3.5" />
-                        <span>详情</span>
-                    </button>
+                    <DetailButton row={row.original} onOpen={detail.openDetail} />
                     <ActionBtn onClick={() => openEdit(row.original)} title="编辑" variant="edit">
                         <Pencil className="h-3.5 w-3.5" />
                     </ActionBtn>
@@ -295,10 +290,10 @@ return <span className="text-slate-700">—</span>;
             />
 
             <ObjectDetailDrawer
-                open={!!detailUser}
+                open={detail.open}
                 title="账号详情"
-                data={detailUser as Record<string, unknown> | null}
-                onClose={() => setDetailUser(null)}
+                data={detail.data as Record<string, unknown> | null}
+                onClose={detail.close}
                 labels={{
                     username: '用户名',
                     nickname: '昵称',

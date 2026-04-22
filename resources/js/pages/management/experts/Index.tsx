@@ -49,6 +49,7 @@ export default function ExpertsIndex() {
     } = useApiList<Expert>({
         endpoint: '/bloc-experts',
         defaultParams: companyId ? { company_id: companyId } : {},
+        enabled: !!companyId,
     });
 
     const handleSearch = (e: React.FormEvent) => {

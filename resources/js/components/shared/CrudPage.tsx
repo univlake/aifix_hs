@@ -1,12 +1,14 @@
 import { Head } from '@inertiajs/react';
 import type {ColumnDef} from '@tanstack/react-table';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, Download, FileDown, Copy, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, Download, FileDown, Copy } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DetailButton } from '@/components/shared/DetailButton';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { OssVideoUploadField } from '@/components/shared/OssVideoUploadField';
 import { useScope } from '@/contexts/ScopeContext';
-import { useApiItem, useApiList, useApiCrud } from '@/hooks/use-api';
+import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -133,9 +135,10 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                 ...(companyScoped && companyId ? { company_id: companyId } : {}),
                 ...(extraParams ?? {}),
             },
+            enabled: companyScoped ? !!companyId : true,
         });
     const crud = useApiCrud(endpoint);
-    const detailItem = useApiItem<Record<string, unknown>>({ endpoint });
+    const detail = useDetailDrawer<Record<string, unknown>>({ endpoint, idKey, prefetch: true });
 
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -154,7 +157,6 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     const [copyMsg, setCopyMsg] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
     const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
-    const [detailOpen, setDetailOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Load dynamic select options (scoped to current company)
@@ -509,11 +511,6 @@ params[k] = v;
         setDialogOpen(true);
     };
 
-    const openDetail = async (row: Record<string, unknown>) => {
-        setDetailOpen(true);
-        await detailItem.fetch(row[idKey] as number | string);
-    };
-
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
@@ -651,14 +648,7 @@ return <span className="text-slate-700">—</span>;
                 return (
                     <div className="flex items-center gap-0.5">
                         {enableDetail && (
-                            <button
-                                onClick={() => void openDetail(row.original)}
-                                className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
-                                title="详情"
-                            >
-                                <Eye className="h-3.5 w-3.5" />
-                                <span>详情</span>
-                            </button>
+                            <DetailButton row={row.original} onOpen={detail.openDetail} />
                         )}
                         {canEditRow && (
                             <>
@@ -883,9 +873,9 @@ return null;
                 </div>
             </Modal>
 
-            {detailOpen && (
+            {detail.open && (
                 <div className="fixed inset-0 z-50 flex">
-                    <div className="flex-1 bg-black/50" onClick={() => setDetailOpen(false)} />
+                    <div className="flex-1 bg-black/50" onClick={detail.close} />
                     <div className="flex h-full w-full max-w-xl flex-col overflow-hidden border-l border-blue-900/40 bg-[#070d1f] shadow-2xl">
                         <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
                             <div>
@@ -897,7 +887,7 @@ return null;
                                 </p>
                             </div>
                             <button
-                                onClick={() => setDetailOpen(false)}
+                                onClick={detail.close}
                                 className="rounded-lg p-1.5 text-slate-500 hover:text-slate-300"
                             >
                                 <X className="h-4 w-4" />
@@ -905,37 +895,41 @@ return null;
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-6">
-                            {detailItem.loading && (
+                            {detail.loading && (
                                 <div className="flex h-40 items-center justify-center">
                                     <Loader2 className="h-5 w-5 animate-spin text-blue-400" />
                                 </div>
                             )}
 
-                            {!detailItem.loading && detailItem.error && (
+                            {!detail.loading && detail.error && (
                                 <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
                                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                                    {detailItem.error}
+                                    {detail.error}
                                 </div>
                             )}
 
-                            {!detailItem.loading && !detailItem.error && detailItem.data && (
-                                <div className={cn(
-                                    'grid gap-4',
-                                    formFields.some((f) => f.colSpan === 2) ? 'md:grid-cols-2' : 'grid-cols-1',
-                                )}>
-                                    {formFields.map((field) => (
-                                        <div
-                                            key={field.key}
-                                            className={field.colSpan === 2 ? 'md:col-span-2' : ''}
-                                        >
-                                            <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
-                                                {field.label}
-                                            </p>
-                                            {renderDetailField(field, detailItem.data)}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            {!detail.loading && !detail.error && detail.data && (() => {
+                                const detailData = detail.data;
+
+                                return (
+                                    <div className={cn(
+                                        'grid gap-4',
+                                        formFields.some((f) => f.colSpan === 2) ? 'md:grid-cols-2' : 'grid-cols-1',
+                                    )}>
+                                        {formFields.map((field) => (
+                                            <div
+                                                key={field.key}
+                                                className={field.colSpan === 2 ? 'md:col-span-2' : ''}
+                                            >
+                                                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+                                                    {field.label}
+                                                </p>
+                                                {renderDetailField(field, detailData)}
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>

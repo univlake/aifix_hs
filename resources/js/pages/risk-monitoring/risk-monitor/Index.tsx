@@ -12,6 +12,9 @@ import {
     ShieldAlert,
     BarChart3,
     ClipboardCheck,
+    Star,
+    Plus,
+    X,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -54,6 +57,20 @@ interface HazardItem {
     company_name: string;
     monthly_investigation_scale: number;
     jqr: number;
+}
+
+interface FocusItem {
+    id: number;
+    focus_id: number;
+    company_id: number;
+    company?: {
+        id: number;
+        title: string;
+        inherent_risk?: number | string | null;
+        inherent_risk_grade?: string | null;
+        float_risk?: number | string | null;
+        float_risk_grade?: string | null;
+    } | null;
 }
 
 // ── Grade config ───────────────────────────────────────────────────
@@ -117,9 +134,10 @@ export default function RiskMonitor() {
     const [riskLog, setRiskLog] = useState<DayLog[]>([]);
     const [subCompanies, setSubCompanies] = useState<SubCompany[]>([]);
     const [hazardSort, setHazardSort] = useState<HazardItem[]>([]);
+    const [focusList, setFocusList] = useState<FocusItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [rankTab, setRankTab] = useState<'inherent' | 'float' | 'hazard'>('inherent');
+    const [rankTab, setRankTab] = useState<'inherent' | 'float' | 'hazard' | 'focus'>('inherent');
 
     const fetchAll = useCallback(() => {
         if (!rootCompany?.id) return;
@@ -138,7 +156,8 @@ export default function RiskMonitor() {
             // Fetch sub-companies directly for rankings — always has current risk values
             api.get('/companies', { params: { pid: cid, per_page: 200 } }),
             api.get('/bloc-hidden-danger-sort', { params }),
-        ]).then(([iNum, fNum, iStats, fStats, log, subs, hSort]) => {
+            api.get('/focus-companies', { params: { company_id: cid, per_page: 100 } }),
+        ]).then(([iNum, fNum, iStats, fStats, log, subs, hSort, focus]) => {
             setInherentNum(iNum.data.data);
             setFloatNum(fNum.data.data);
             setInherentStats(iStats.data.data ?? []);
@@ -146,11 +165,18 @@ export default function RiskMonitor() {
             setRiskLog(log.data.data ?? []);
             setSubCompanies(subs.data.data?.data ?? []);
             setHazardSort(hSort.data.data ?? []);
+            setFocusList(focus.data.data?.data ?? []);
         }).catch(() => setError('加载风险数据失败'))
           .finally(() => setLoading(false));
     }, [rootCompany?.id]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
+
+    const refreshFocus = useCallback(async () => {
+        if (!rootCompany?.id) return;
+        const res = await api.get('/focus-companies', { params: { company_id: rootCompany.id, per_page: 100 } });
+        setFocusList(res.data.data?.data ?? []);
+    }, [rootCompany?.id]);
 
     // Build sorted rankings from live company data (always current, not today-only like RiskLog)
     const inherentSort = [...subCompanies]
@@ -283,9 +309,10 @@ export default function RiskMonitor() {
                         <div className="border-b border-blue-900/40 px-3 py-2">
                             <div className="flex rounded-lg border border-blue-900/30 bg-[#070d1f] p-0.5">
                                 {([
-                                    { key: 'inherent', label: '固有' },
-                                    { key: 'float', label: '浮动' },
-                                    { key: 'hazard', label: '隐患' },
+                                    { key: 'inherent', label: '固有排名' },
+                                    { key: 'float', label: '浮动排名' },
+                                    { key: 'hazard', label: '隐患排名' },
+                                    { key: 'focus', label: '重点关注' },
                                 ] as const).map(({ key, label }) => (
                                     <button
                                         key={key}
@@ -295,7 +322,7 @@ export default function RiskMonitor() {
                                             rankTab === key ? 'bg-blue-600/25 text-blue-300' : 'text-slate-500 hover:text-slate-300',
                                         )}
                                     >
-                                        {label}排名
+                                        {label}
                                     </button>
                                 ))}
                             </div>
@@ -310,6 +337,13 @@ export default function RiskMonitor() {
                                 </div>
                             ) : rankTab === 'hazard' ? (
                                 <HazardRankList items={hazardSort} />
+                            ) : rankTab === 'focus' ? (
+                                <FocusList
+                                    items={focusList}
+                                    subCompanies={subCompanies}
+                                    rootCompanyId={rootCompany?.id ?? 0}
+                                    onChange={refreshFocus}
+                                />
                             ) : activeSort.length === 0 ? (
                                 <div className="px-5 py-14 text-center">
                                     <Building2 className="mx-auto mb-2 h-8 w-8 text-slate-800" />
@@ -452,5 +486,171 @@ function HazardRankList({ items }: { items: HazardItem[] }) {
                 );
             })}
         </div>
+    );
+}
+
+function FocusList({
+    items,
+    subCompanies,
+    rootCompanyId,
+    onChange,
+}: {
+    items: FocusItem[];
+    subCompanies: SubCompany[];
+    rootCompanyId: number;
+    onChange: () => void | Promise<void>;
+}) {
+    const [showPicker, setShowPicker] = useState(false);
+    const [query, setQuery] = useState('');
+    const [addingId, setAddingId] = useState<number | null>(null);
+    const [confirmId, setConfirmId] = useState<number | null>(null);
+    const [removingId, setRemovingId] = useState<number | null>(null);
+
+    const focusedIds = new Set(items.map((i) => i.focus_id));
+    const q = query.trim().toLowerCase();
+    const candidates = subCompanies
+        .filter((c) => !focusedIds.has(c.id))
+        .filter((c) => !q || c.title.toLowerCase().includes(q));
+
+    const add = async (focusId: number) => {
+        if (!rootCompanyId) return;
+        setAddingId(focusId);
+        try {
+            await api.post('/focus-companies', { company_id: rootCompanyId, focus_id: focusId });
+            await onChange();
+        } finally {
+            setAddingId(null);
+        }
+    };
+
+    const remove = async (id: number) => {
+        setRemovingId(id);
+        try {
+            await api.delete(`/focus-companies/${id}`);
+            await onChange();
+        } finally {
+            setRemovingId(null);
+            setConfirmId(null);
+        }
+    };
+
+    return (
+        <>
+            <div className="border-b border-blue-900/20 p-2">
+                {!showPicker ? (
+                    <button
+                        onClick={() => setShowPicker(true)}
+                        className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-[11px] text-slate-400 hover:border-blue-500/40 hover:text-blue-300"
+                    >
+                        <Plus className="h-3 w-3" />
+                        添加关注企业
+                    </button>
+                ) : (
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="search"
+                                placeholder="搜索企业..."
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                autoFocus
+                                className="flex-1 rounded-md border border-blue-900/40 bg-[#070d1f] px-2 py-1 text-xs text-slate-200 placeholder:text-slate-600 focus:border-blue-500/40 focus:outline-none"
+                            />
+                            <button
+                                onClick={() => { setShowPicker(false); setQuery(''); }}
+                                className="text-[11px] text-slate-500 hover:text-slate-300"
+                            >
+                                收起
+                            </button>
+                        </div>
+                        <div className="max-h-44 space-y-1 overflow-y-auto">
+                            {candidates.length === 0 ? (
+                                <p className="py-2 text-center text-[11px] text-slate-600">
+                                    {q ? '未找到匹配企业' : '所有下级企业已关注'}
+                                </p>
+                            ) : (
+                                candidates.slice(0, 50).map((c) => (
+                                    <button
+                                        key={c.id}
+                                        onClick={() => add(c.id)}
+                                        disabled={addingId != null}
+                                        className="flex w-full items-center justify-between gap-2 rounded-md border border-blue-900/30 bg-[#070d1f] px-2.5 py-1.5 text-left text-xs text-slate-300 hover:border-blue-500/40 hover:bg-[#0a1329] disabled:opacity-50"
+                                    >
+                                        <span className="truncate">{c.title}</span>
+                                        <span className="shrink-0 text-blue-400">
+                                            {addingId === c.id ? '添加中…' : '+ 关注'}
+                                        </span>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {items.length === 0 ? (
+                <div className="px-5 py-10 text-center">
+                    <Star className="mx-auto mb-2 h-8 w-8 text-slate-800" />
+                    <p className="text-sm text-slate-600">暂无重点关注企业</p>
+                </div>
+            ) : (
+                <div className="divide-y divide-blue-900/20">
+                    {items.map((item) => {
+                        const c = item.company;
+                        return (
+                            <div key={item.id} className="px-4 py-3 hover:bg-blue-600/5 transition-colors">
+                                <div className="mb-2 flex items-center gap-2 min-w-0">
+                                    <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />
+                                    <p className="flex-1 truncate text-xs text-slate-300">{c?.title ?? `企业#${item.focus_id}`}</p>
+                                    {confirmId === item.id ? (
+                                        <div className="flex shrink-0 items-center gap-1 text-[10px]">
+                                            <button
+                                                onClick={() => remove(item.id)}
+                                                disabled={removingId === item.id}
+                                                className="rounded border border-red-500/30 bg-red-600/15 px-1.5 py-0.5 text-red-300 hover:bg-red-600/25 disabled:opacity-50"
+                                            >
+                                                {removingId === item.id ? '取消中…' : '确认取消'}
+                                            </button>
+                                            <button
+                                                onClick={() => setConfirmId(null)}
+                                                disabled={removingId === item.id}
+                                                className="rounded px-1.5 py-0.5 text-slate-500 hover:text-slate-300 disabled:opacity-50"
+                                            >
+                                                返回
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setConfirmId(item.id)}
+                                            className="shrink-0 rounded text-slate-600 hover:text-red-400"
+                                            title="取消关注"
+                                        >
+                                            <X className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="ml-5 grid grid-cols-2 gap-2 text-[10px]">
+                                    <div>
+                                        <p className="mb-0.5 text-[9px] uppercase tracking-wider text-slate-600">固有</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <GradeBadge grade={c?.inherent_risk_grade ?? undefined} />
+                                            <span className="font-mono text-slate-400">{c?.inherent_risk != null ? Number(c.inherent_risk) : '—'}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="mb-0.5 text-[9px] uppercase tracking-wider text-slate-600">浮动</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <GradeBadge grade={c?.float_risk_grade ?? undefined} />
+                                            <span className="font-mono text-slate-400">{c?.float_risk != null ? Number(c.float_risk) : '—'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+        </>
     );
 }

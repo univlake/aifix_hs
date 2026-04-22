@@ -1,12 +1,14 @@
 import { Head } from '@inertiajs/react';
 import type {ColumnDef} from '@tanstack/react-table';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import { cn } from '@/lib/utils';
 
 interface ConstructionUnitRow {
@@ -65,13 +67,15 @@ export default function ConstructionUnitsIndex() {
         useApiList<ConstructionUnitRow>({
             endpoint: '/evaluation-units',
             defaultParams: companyId ? { company_id: companyId } : {},
+            enabled: !!companyId,
         });
     const crud = useApiCrud('/evaluation-units');
 
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [detailItem, setDetailItem] = useState<ConstructionUnitRow | null>(null);
+    const detail = useDetailDrawer<ConstructionUnitRow>();
+    const detailItem = detail.data;
     const [deleteItem, setDeleteItem] = useState<ConstructionUnitRow | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -197,7 +201,7 @@ return;
             id: 'actions', header: '操作', size: 144,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
-                    <button onClick={() => setDetailItem(row.original)} className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"><Eye className="h-3.5 w-3.5" /><span>详情</span></button>
+                    <DetailButton row={row.original} onOpen={detail.openDetail} />
                     <button onClick={() => openEdit(row.original)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"><Pencil className="h-3.5 w-3.5" /></button>
                     <button onClick={() => setDeleteItem(row.original)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
                 </div>
@@ -236,10 +240,10 @@ return;
                 pagination={{ current_page, last_page, per_page, total }} onPageChange={goToPage} />
 
             <ObjectDetailDrawer
-                open={!!detailItem}
+                open={detail.open}
                 title="施工单位详情"
                 data={detailData as Record<string, unknown> | null}
-                onClose={() => setDetailItem(null)}
+                onClose={detail.close}
                 labels={{
                     name: '单位名称',
                     qualification_name: '资质名称',

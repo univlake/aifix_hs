@@ -1,11 +1,13 @@
 import { Head } from '@inertiajs/react';
 import type {ColumnDef} from '@tanstack/react-table';
-import { Eye, Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -70,13 +72,15 @@ export default function KeyHazardousProcessIndex() {
         useApiList<ProcessRow>({
             endpoint: '/major-hazardous-processes',
             defaultParams: companyId ? { company_id: companyId } : {},
+            enabled: !!companyId,
         });
     const crud = useApiCrud('/major-hazardous-processes');
 
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [detailItem, setDetailItem] = useState<ProcessRow | null>(null);
+    const detail = useDetailDrawer<ProcessRow>();
+    const detailItem = detail.data;
     const [deleteItem, setDeleteItem] = useState<ProcessRow | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -271,11 +275,7 @@ return <span className="text-slate-700">—</span>;
         size: readOnly ? 76 : 144,
         cell: ({ row }) => (
             <div className="flex items-center gap-0.5">
-                <button onClick={() => setDetailItem(row.original)}
-                    className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300">
-                    <Eye className="h-3.5 w-3.5" />
-                    <span>详情</span>
-                </button>
+                <DetailButton row={row.original} onOpen={detail.openDetail} />
                 {!readOnly && (
                     <>
                         <button onClick={() => openEdit(row.original)}
@@ -335,10 +335,10 @@ return <span className="text-slate-700">—</span>;
             />
 
             <ObjectDetailDrawer
-                open={!!detailItem}
+                open={detail.open}
                 title="重点监管危险工艺详情"
                 data={detailData as Record<string, unknown> | null}
-                onClose={() => setDetailItem(null)}
+                onClose={detail.close}
                 labels={{
                     name: '工艺名称',
                     dangerous_craft_type: '危险工艺类型',

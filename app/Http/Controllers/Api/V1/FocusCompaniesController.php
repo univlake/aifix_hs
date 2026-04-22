@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreFocusCompaniesRequest;
 use App\Models\FocusCompany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreFocusCompaniesRequest;
 
 class FocusCompaniesController extends Controller
 {
@@ -22,7 +22,7 @@ class FocusCompaniesController extends Controller
             $query->where('focus_id', $request->focus_id);
         }
 
-        $list = $query->with(['company:id,title'])
+        $list = $query->with(['company:id,title,inherent_risk,inherent_risk_grade,float_risk,float_risk_grade'])
             ->orderByDesc('id')
             ->paginate($request->get('per_page', 15));
 
@@ -44,7 +44,7 @@ class FocusCompaniesController extends Controller
     {
         $record = FocusCompany::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('关注企业不存在');
         }
 

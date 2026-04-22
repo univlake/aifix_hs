@@ -6,6 +6,13 @@ interface UseApiListOptions {
     endpoint: string;
     defaultPerPage?: number;
     defaultParams?: Record<string, unknown>;
+    /**
+     * When false, skip fetching entirely. Use this to defer the initial request
+     * until prerequisites (e.g. the active company id from useScope) are resolved.
+     * The initial `loading` state stays true while disabled so the UI shows a skeleton
+     * instead of flashing unfiltered data.
+     */
+    enabled?: boolean;
 }
 
 interface ListState<T> {
@@ -22,6 +29,7 @@ export function useApiList<T = Record<string, unknown>>({
     endpoint,
     defaultPerPage = 15,
     defaultParams = {},
+    enabled = true,
 }: UseApiListOptions) {
     const [state, setState] = useState<ListState<T>>({
         data: [],
@@ -45,10 +53,11 @@ export function useApiList<T = Record<string, unknown>>({
             isFirstParamsRun.current = false;
             return;
         }
+        if (!enabled) return;
         const newParams = JSON.parse(defaultParamsKey) as Record<string, unknown>;
         setParams(newParams);
         fetchList(1, newParams);
-    }, [defaultParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [defaultParamsKey, enabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const fetchList = useCallback(
         async (p = page, overrideParams?: Record<string, unknown>) => {
@@ -85,7 +94,12 @@ export function useApiList<T = Record<string, unknown>>({
         [endpoint, page, params, defaultPerPage],
     );
 
+    // Mount / page / endpoint changes. `enabled` is intentionally NOT a dep —
+    // the false→true transition is handled by the defaultParams effect above so
+    // that only the scoped fetch fires (otherwise this effect's stale `params`
+    // closure would race and win, showing unfiltered data).
     useEffect(() => {
+        if (!enabled) return;
         fetchList(page);
         return () => abortRef.current?.abort();
     }, [page, endpoint]); // eslint-disable-line react-hooks/exhaustive-deps

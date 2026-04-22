@@ -2,13 +2,15 @@ import { Head } from '@inertiajs/react';
 import type {ColumnDef} from '@tanstack/react-table';
 import {
     Plus, Pencil, Trash2, X, AlertTriangle, Loader2,
-    Download, Upload, FileDown, Copy, Eye,
+    Download, Upload, FileDown, Copy,
 } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -130,6 +132,7 @@ export default function SpecialEquipmentIndex() {
         useApiList<SpecialEquipmentRow>({
             endpoint: '/special-equipment',
             defaultParams: companyId ? { company_id: companyId } : {},
+            enabled: !!companyId,
         });
     const crud = useApiCrud('/special-equipment');
 
@@ -140,7 +143,8 @@ export default function SpecialEquipmentIndex() {
     // Dialog state
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [detailItem, setDetailItem] = useState<SpecialEquipmentRow | null>(null);
+    const detail = useDetailDrawer<SpecialEquipmentRow>();
+    const detailItem = detail.data;
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleteLabel, setDeleteLabel] = useState('');
     const [formLoading, setFormLoading] = useState(false);
@@ -455,13 +459,11 @@ el.indeterminate = somePageSelected && !allPageSelected;
         size: readOnly ? 96 : 164,
         cell: ({ row }) => (
             <div className="flex items-center gap-0.5">
-                <button
-                    onClick={() => setDetailItem(row.original)}
+                <DetailButton
+                    row={row.original}
+                    onOpen={detail.openDetail}
                     className="flex h-8 min-w-[64px] items-center justify-center gap-1 rounded-md px-3 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300"
-                >
-                    <Eye className="h-3.5 w-3.5" />
-                    <span>详情</span>
-                </button>
+                />
                 {!readOnly && (
                     <>
                         <button
@@ -594,10 +596,10 @@ el.indeterminate = somePageSelected && !allPageSelected;
             />
 
             <ObjectDetailDrawer
-                open={!!detailItem}
+                open={detail.open}
                 title="特种设备详情"
                 data={detailItem as Record<string, unknown> | null}
-                onClose={() => setDetailItem(null)}
+                onClose={detail.close}
                 labels={{
                     equipment_name: '设备名称',
                     special_type: '设备类型',

@@ -1,12 +1,14 @@
 import { Head } from '@inertiajs/react';
 import {
-    Plus, Pencil, Trash2, X, AlertTriangle, Loader2, ShieldAlert, Eye,
+    Plus, Pencil, Trash2, X, AlertTriangle, Loader2, ShieldAlert,
 } from 'lucide-react';
 import { useState } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -71,13 +73,15 @@ export default function MajorHazardsIndex() {
         useApiList<MajorHazard>({
             endpoint: '/major-hazards',
             defaultParams: companyId ? { company_id: companyId } : {},
+            enabled: !!companyId,
         });
     const crud = useApiCrud('/major-hazards');
 
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [detailItem, setDetailItem] = useState<MajorHazard | null>(null);
+    const detail = useDetailDrawer<MajorHazard>();
+    const detailItem = detail.data;
     const [deleteItem, setDeleteItem] = useState<MajorHazard | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -232,10 +236,7 @@ return <span className="text-slate-700">—</span>;
             size: 144,
             cell: ({ row }: any) => (
                 <div className="flex items-center gap-0.5">
-                    <button onClick={() => setDetailItem(row.original)} className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 transition-colors hover:bg-blue-600/10 hover:text-blue-300">
-                        <Eye className="h-3.5 w-3.5" />
-                        <span>详情</span>
-                    </button>
+                    <DetailButton row={row.original} onOpen={detail.openDetail} />
                     <ActionBtn variant="edit" title="编辑" onClick={() => openEdit(row.original)}>
                         <Pencil className="h-3.5 w-3.5" />
                     </ActionBtn>
@@ -277,10 +278,10 @@ return <span className="text-slate-700">—</span>;
             />
 
             <ObjectDetailDrawer
-                open={!!detailItem}
+                open={detail.open}
                 title="重大危险源详情"
                 data={detailItem as Record<string, unknown> | null}
-                onClose={() => setDetailItem(null)}
+                onClose={detail.close}
                 labels={{
                     name: '危险源名称',
                     level: '危险等级',
