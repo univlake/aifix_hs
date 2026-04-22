@@ -112,6 +112,18 @@ class RolesAndPermissionsSeeder extends Seeder
             'evaluation-units.update',
             'evaluation-units.delete',
 
+            // 施工单位
+            'construction-units.list',
+            'construction-units.create',
+            'construction-units.update',
+            'construction-units.delete',
+
+            // 技术服务单位（独立权限；与 skill-units 是不同的资源）
+            'technical-service-units.list',
+            'technical-service-units.create',
+            'technical-service-units.update',
+            'technical-service-units.delete',
+
             // 变更管理
             'change-manages.list',
             'change-manages.create',

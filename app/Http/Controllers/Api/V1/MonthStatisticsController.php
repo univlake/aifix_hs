@@ -16,6 +16,8 @@ use App\Models\InternalMeeting;
 use App\Models\InternalTraining;
 use App\Models\MonthlyInvestigation;
 use App\Models\MonthStatistic;
+use App\Models\MonthStatisticAccident;
+use App\Models\MonthStatisticControl;
 use App\Models\Personnel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,45 +105,17 @@ class MonthStatisticsController extends Controller
             $monthStatistic->last_user_id = auth()->id() ?? 0;
             $monthStatistic->save();
 
-            // Handle govern_hidden_danger children
-            $governItems = $request->input('govern_hidden_danger', []);
-            foreach ($governItems as $v) {
-                $monthStatistic->monthStatisticControl()->create([
-                    'govern_title' => $v['govern_title'] ?? null,
-                    'govern_supplies' => $v['govern_supplies'] ?? null,
-                    'govern_user' => $v['govern_user'] ?? null,
-                    'govern_date' => $v['govern_date'] ?? null,
-                    'govern_text' => $v['govern_text'] ?? null,
-                    'govern_money' => $v['govern_money'] ?? null,
-                    'company_id' => $request->company_id,
-                    'user_id' => auth()->id() ?? 0,
-                    'last_user_id' => auth()->id() ?? 0,
-                ]);
-            }
+            $this->bulkInsertGovernChildren(
+                $monthStatistic->id,
+                (int) $request->company_id,
+                $request->input('govern_hidden_danger', []),
+            );
 
-            // Handle accident_bulletin children
-            $accidentItems = $request->input('accident_bulletin', []);
-            foreach ($accidentItems as $v) {
-                $monthStatistic->monthStatisticAccident()->create([
-                    'happen_time' => $v['happen_time'] ?? null,
-                    'department' => $v['department'] ?? null,
-                    'name' => $v['name'] ?? null,
-                    'sex' => $v['sex'] ?? null,
-                    'age' => $v['age'] ?? null,
-                    'work_type' => $v['work_type'] ?? null,
-                    'work_age' => $v['work_age'] ?? null,
-                    'education_level' => $v['education_level'] ?? null,
-                    'degree_injury' => $v['degree_injury'] ?? null,
-                    'type' => $v['type'] ?? null,
-                    'direct_cause' => $v['direct_cause'] ?? null,
-                    'content' => $v['content'] ?? null,
-                    'days_off' => $v['days_off'] ?? null,
-                    'direct_loss_property' => $v['direct_loss_property'] ?? null,
-                    'company_id' => $request->company_id,
-                    'user_id' => auth()->id() ?? 0,
-                    'last_user_id' => auth()->id() ?? 0,
-                ]);
-            }
+            $this->bulkInsertAccidentChildren(
+                $monthStatistic->id,
+                (int) $request->company_id,
+                $request->input('accident_bulletin', []),
+            );
 
             return $monthStatistic->load(['monthStatisticAccident', 'monthStatisticControl']);
         });
@@ -174,50 +148,18 @@ class MonthStatisticsController extends Controller
             $monthStatistic->last_user_id = auth()->id() ?? 0;
             $monthStatistic->save();
 
-            // Re-create govern children if provided
+            $companyId = (int) ($request->company_id ?? $monthStatistic->company_id);
+
             $governItems = $request->input('govern_hidden_danger');
             if ($governItems !== null) {
                 $monthStatistic->monthStatisticControl()->delete();
-                foreach ($governItems as $v) {
-                    $monthStatistic->monthStatisticControl()->create([
-                        'govern_title' => $v['govern_title'] ?? null,
-                        'govern_supplies' => $v['govern_supplies'] ?? null,
-                        'govern_user' => $v['govern_user'] ?? null,
-                        'govern_date' => $v['govern_date'] ?? null,
-                        'govern_text' => $v['govern_text'] ?? null,
-                        'govern_money' => $v['govern_money'] ?? null,
-                        'company_id' => $request->company_id ?? $monthStatistic->company_id,
-                        'user_id' => auth()->id() ?? 0,
-                        'last_user_id' => auth()->id() ?? 0,
-                    ]);
-                }
+                $this->bulkInsertGovernChildren($monthStatistic->id, $companyId, $governItems);
             }
 
-            // Re-create accident children if provided
             $accidentItems = $request->input('accident_bulletin');
             if ($accidentItems !== null) {
                 $monthStatistic->monthStatisticAccident()->delete();
-                foreach ($accidentItems as $v) {
-                    $monthStatistic->monthStatisticAccident()->create([
-                        'happen_time' => $v['happen_time'] ?? null,
-                        'department' => $v['department'] ?? null,
-                        'name' => $v['name'] ?? null,
-                        'sex' => $v['sex'] ?? null,
-                        'age' => $v['age'] ?? null,
-                        'work_type' => $v['work_type'] ?? null,
-                        'work_age' => $v['work_age'] ?? null,
-                        'education_level' => $v['education_level'] ?? null,
-                        'degree_injury' => $v['degree_injury'] ?? null,
-                        'type' => $v['type'] ?? null,
-                        'direct_cause' => $v['direct_cause'] ?? null,
-                        'content' => $v['content'] ?? null,
-                        'days_off' => $v['days_off'] ?? null,
-                        'direct_loss_property' => $v['direct_loss_property'] ?? null,
-                        'company_id' => $request->company_id ?? $monthStatistic->company_id,
-                        'user_id' => auth()->id() ?? 0,
-                        'last_user_id' => auth()->id() ?? 0,
-                    ]);
-                }
+                $this->bulkInsertAccidentChildren($monthStatistic->id, $companyId, $accidentItems);
             }
 
             return $monthStatistic->fresh(['monthStatisticAccident', 'monthStatisticControl']);
@@ -237,6 +179,86 @@ class MonthStatisticsController extends Controller
         $record->delete();
 
         return $this->message('删除成功');
+    }
+
+    /**
+     * Bulk-insert govern-plan children. Bypasses Eloquent events (no per-row activity log
+     * for child snapshots — the parent MonthStatistic already records the activity), saving
+     * N round-trips when a report has many entries.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    protected function bulkInsertGovernChildren(int $monthStatisticId, int $companyId, array $items): void
+    {
+        if (empty($items)) {
+            return;
+        }
+
+        $now = now();
+        $userId = auth()->id() ?? 0;
+        $rows = [];
+
+        foreach ($items as $v) {
+            $rows[] = [
+                'govern_title' => $v['govern_title'] ?? null,
+                'govern_supplies' => $v['govern_supplies'] ?? null,
+                'govern_user' => $v['govern_user'] ?? null,
+                'govern_date' => $v['govern_date'] ?? null,
+                'govern_text' => $v['govern_text'] ?? null,
+                'govern_money' => $v['govern_money'] ?? null,
+                'month_statistic_id' => $monthStatisticId,
+                'company_id' => $companyId,
+                'user_id' => $userId,
+                'last_user_id' => $userId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        MonthStatisticControl::insert($rows);
+    }
+
+    /**
+     * Bulk-insert accident-bulletin children. See bulkInsertGovernChildren() for rationale.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    protected function bulkInsertAccidentChildren(int $monthStatisticId, int $companyId, array $items): void
+    {
+        if (empty($items)) {
+            return;
+        }
+
+        $now = now();
+        $userId = auth()->id() ?? 0;
+        $rows = [];
+
+        foreach ($items as $v) {
+            $rows[] = [
+                'happen_time' => $v['happen_time'] ?? null,
+                'department' => $v['department'] ?? null,
+                'name' => $v['name'] ?? null,
+                'sex' => $v['sex'] ?? null,
+                'age' => $v['age'] ?? null,
+                'work_type' => $v['work_type'] ?? null,
+                'work_age' => $v['work_age'] ?? null,
+                'education_level' => $v['education_level'] ?? null,
+                'degree_injury' => $v['degree_injury'] ?? null,
+                'type' => $v['type'] ?? null,
+                'direct_cause' => $v['direct_cause'] ?? null,
+                'content' => $v['content'] ?? null,
+                'days_off' => $v['days_off'] ?? null,
+                'direct_loss_property' => $v['direct_loss_property'] ?? null,
+                'month_statistic_id' => $monthStatisticId,
+                'company_id' => $companyId,
+                'user_id' => $userId,
+                'last_user_id' => $userId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        MonthStatisticAccident::insert($rows);
     }
 
     /**

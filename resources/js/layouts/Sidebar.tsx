@@ -196,8 +196,8 @@ const navSections: NavSection[] = [
                 icon: Users2,
                 children: [
                     { title: '设计单位', href: '/third-party/design-units', permission: 'design-units.list' },
-                    { title: '施工单位', href: '/third-party/construction-units', permission: 'evaluation-units.list' },
-                    { title: '技术服务单位', href: '/third-party/technical-services', permission: 'skill-units.list' },
+                    { title: '施工单位', href: '/third-party/construction-units', permission: 'construction-units.list' },
+                    { title: '技术服务单位', href: '/third-party/technical-services', permission: 'technical-service-units.list' },
                 ],
             },
         ],

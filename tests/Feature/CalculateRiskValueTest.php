@@ -10,24 +10,21 @@ use App\Models\RiskLog;
  * Characterization test for App\Traits\CalculateRiskValue.
  *
  * Locks down the public outputs (risk_logs / inherent_risk_logs / float_risk_logs
- * + Company.inherent_risk / float_risk fields) so that planned cleanup of the
- * dead `risk_max_values` write path can be validated as behavior-preserving.
- *
- * Do NOT assert on the `risk_max_values` table here — its writes are scheduled
- * for removal and the table will be dropped. Asserting on it would block the
- * very cleanup this test is meant to safeguard.
+ * + Company.inherent_risk / float_risk fields) so changes to the trait can be
+ * validated as behavior-preserving.
  */
 describe('CalculateRiskValue trait via risk:calculate command', function () {
-    it('produces deterministic logs for a single produce company with no related data', function () {
+    it('produces deterministic logs for a brand-new produce company with null prior risk values', function () {
         $company = Company::factory()->create([
             'title' => 'Char-Test Produce Co',
             'enterprise_type_id' => null,
             'is_produce' => 1,
             'is_bloc' => 0,
             'status' => 1,
-            // Trait writes $company->inherent_risk into risk_logs.old_risk_num (NOT NULL); start at 0.
-            'inherent_risk' => 0,
-            'float_risk' => 0,
+            // Brand-new company: prior risk fields are null. Trait must accept null
+            // (post-fix, risk_logs.old_risk_num is nullable to match Company schema).
+            'inherent_risk' => null,
+            'float_risk' => null,
             'inherent_risk_grade' => '',
             'float_risk_grade' => '',
         ]);
@@ -100,13 +97,72 @@ describe('CalculateRiskValue trait via risk:calculate command', function () {
         expect(RiskLog::where('content', 'characterization-test')->count())->toBe(0);
     });
 
+    it('averages subordinate produce-company risk into a parent bloc company', function () {
+        // Bloc with 2 subordinate produce companies that already have risk values.
+        $bloc = Company::factory()->create([
+            'title' => 'Bloc HQ',
+            'is_bloc' => 1,
+            'is_produce' => 0,
+            'status' => 1,
+            'pid' => 0,
+        ]);
+
+        Company::factory()->create([
+            'title' => 'Sub A',
+            'pid' => $bloc->id,
+            'is_produce' => 1,
+            'status' => 1,
+            'inherent_risk' => 6.0,
+            'float_risk' => 8.0,
+            'inherent_risk_grade' => '橙',
+            'float_risk_grade' => '橙',
+        ]);
+
+        Company::factory()->create([
+            'title' => 'Sub B',
+            'pid' => $bloc->id,
+            'is_produce' => 1,
+            'status' => 1,
+            'inherent_risk' => 4.0,
+            'float_risk' => 12.0,
+            'inherent_risk_grade' => '红',
+            'float_risk_grade' => '黄',
+        ]);
+
+        (new CalculateCompanyRisk)->countRisk('bloc-test');
+
+        $bloc->refresh();
+        // Phase 4 averages the 2 subs (subs themselves are recomputed to ~1.98/5.89 in Phase 2/3 first).
+        // After Phase 2/3 reset their risk to 1.98 / 5.89 (empty data), Phase 4 averages 1.98/5.89 → bloc gets 1.98/5.89.
+        expect((float) $bloc->inherent_risk)->toBe(1.98);
+        expect((float) $bloc->float_risk)->toBe(5.89);
+
+        // Bloc gets 2 risk_logs (type 1 + type 2)
+        $blocLogs = RiskLog::where('company_id', $bloc->id)->where('content', 'bloc-test')->get();
+        expect($blocLogs)->toHaveCount(2);
+    });
+
+    it('does not write a risk_log row for a bloc company that has no produce descendants', function () {
+        $bloc = Company::factory()->create([
+            'title' => 'Empty Bloc',
+            'is_bloc' => 1,
+            'is_produce' => 0,
+            'status' => 1,
+            'pid' => 0,
+        ]);
+
+        (new CalculateCompanyRisk)->countRisk('empty-bloc-test');
+
+        expect(RiskLog::where('company_id', $bloc->id)->count())->toBe(0);
+    });
+
     it('still computes downstream phases when run twice on the same day (today\'s logs are reset)', function () {
         $company = Company::factory()->create([
             'title' => 'Double-Run Co',
             'is_produce' => 1,
             'status' => 1,
-            'inherent_risk' => 0,
-            'float_risk' => 0,
+            'inherent_risk' => null,
+            'float_risk' => null,
             'inherent_risk_grade' => '',
             'float_risk_grade' => '',
         ]);
