@@ -33,6 +33,18 @@ interface InspectionRef {
     end_date: string | null;
 }
 
+interface ExpertBrief {
+    id: number;
+    nickname: string | null;
+    phone?: string | null;
+}
+
+interface ExpertInspectionUserBrief {
+    id: number;
+    expert_user?: ExpertBrief | null;
+    expertUser?: ExpertBrief | null;
+}
+
 interface CompanyNotifyItem {
     id: number;
     expert_inspection_id: number;
@@ -40,6 +52,8 @@ interface CompanyNotifyItem {
     check_company_time: string | null;
     expert_inspection?: InspectionRef | null;
     expertInspection?: InspectionRef | null;
+    expert_inspection_users?: ExpertInspectionUserBrief[];
+    expertInspectionUsers?: ExpertInspectionUserBrief[];
 }
 
 interface ExpertCompanyRef {
@@ -380,6 +394,10 @@ export default function Dashboard() {
                         <div className="space-y-2.5">
                             {companyNotifs.map((item) => {
                                 const ins = pickInspection(item);
+                                const users = item.expert_inspection_users ?? item.expertInspectionUsers ?? [];
+                                const expertNames = users
+                                    .map((u) => (u.expert_user ?? u.expertUser)?.nickname)
+                                    .filter((n): n is string => !!n);
 
                                 return (
                                     <div key={`c-${item.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-amber-500/25 bg-amber-600/5 p-3">
@@ -397,6 +415,15 @@ export default function Dashboard() {
                                                     <Clock className="h-3 w-3" />检查：{item.check_company_time ?? '—'}
                                                 </span>
                                             </div>
+                                            {expertNames.length > 0 && (
+                                                <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-slate-500">
+                                                    <UserCheck className="h-3 w-3 text-slate-500" />
+                                                    <span>专家：</span>
+                                                    {expertNames.map((n, i) => (
+                                                        <span key={`${item.id}-exp-${i}`} className="rounded bg-blue-900/30 px-1.5 py-0 text-[10px] text-blue-200">{n}</span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <button
                                             onClick={() => confirmCompany(item.id)}

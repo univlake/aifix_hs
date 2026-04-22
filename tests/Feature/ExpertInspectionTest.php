@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Company;
 use App\Models\ExpertCompany;
 use App\Models\ExpertInspection;
 use App\Models\ExpertInspectionUser;
@@ -22,7 +23,7 @@ describe('ExpertInspection API', function () {
 
         it('includes inspections where current user is assigned as expert when expert_user_id is passed', function () {
             [$user, $company] = createAdminWithCompany();
-            $otherCompany = \App\Models\Company::factory()->create();
+            $otherCompany = Company::factory()->create();
 
             // Inspection belonging to the user's own company — always visible
             $ownInspection = ExpertInspection::create([
@@ -199,34 +200,34 @@ describe('ExpertInspection API', function () {
     });
 
     describe('Company Notifications', function () {
-        it('returns pending items; null notify_company_time counts as immediate', function () {
+        it('returns only pending rows whose notify_company_time has arrived', function () {
             [$user, $company] = createAdminWithCompany();
             $inspection = ExpertInspection::create([
                 'company_id' => $company->id,
                 'title' => '通知测试',
             ]);
-            // pending with notify time in past
+            // pending with notify time in past — visible
             ExpertCompany::create([
                 'expert_inspection_id' => $inspection->id,
                 'check_company_id' => $company->id,
                 'company_id' => $company->id,
                 'notify_company_time' => now()->subHour(),
             ]);
-            // pending with null notify time — should still be shown (immediate)
+            // pending with null notify time — hidden (not yet scheduled)
             ExpertCompany::create([
                 'expert_inspection_id' => $inspection->id,
                 'check_company_id' => $company->id,
                 'company_id' => $company->id,
                 'notify_company_time' => null,
             ]);
-            // future notify: should be excluded
+            // future notify: hidden
             ExpertCompany::create([
                 'expert_inspection_id' => $inspection->id,
                 'check_company_id' => $company->id,
                 'company_id' => $company->id,
                 'notify_company_time' => now()->addDay(),
             ]);
-            // already confirmed: should be excluded
+            // already confirmed: hidden
             ExpertCompany::create([
                 'expert_inspection_id' => $inspection->id,
                 'check_company_id' => $company->id,
@@ -238,18 +239,19 @@ describe('ExpertInspection API', function () {
             $response = $this->actingAs($user, 'api')
                 ->getJson("/api/v1/expert-inspection-notifications/company?company_id={$company->id}");
 
-            $response->assertOk()->assertJsonCount(2, 'data');
+            $response->assertOk()->assertJsonCount(1, 'data');
         });
     });
 
     describe('Role-scoped endpoints', function () {
-        it('my-check-inspections returns all expert_companies for a company without permission middleware', function () {
+        it('my-check-inspections returns expert_companies whose notify time has passed without permission middleware', function () {
             [$user, $company] = createUserWithCompany();
             $inspection = ExpertInspection::create(['company_id' => $company->id, 'title' => 'X']);
             ExpertCompany::create([
                 'expert_inspection_id' => $inspection->id,
                 'check_company_id' => $company->id,
                 'company_id' => $company->id,
+                'notify_company_time' => now()->subMinute(),
             ]);
 
             $response = $this->actingAs($user, 'api')

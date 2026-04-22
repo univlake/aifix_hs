@@ -50,14 +50,20 @@ export const authApi = {
         permissions: string[];
     }> {
         const { data } = await api.get<
-            ApiResponse<{
-                user: AuthUser;
+            ApiResponse<AuthUser & {
                 company: { id: number; title: string } | null;
-                roles: Role[];
+                roles: string[];
                 permissions: string[];
             }>
         >('/user-info');
-        return data.data;
+        const { company, roles, permissions, ...user } = data.data;
+
+        return {
+            user: user as AuthUser,
+            company,
+            roles: roles.map((name) => ({ name })) as Role[],
+            permissions,
+        };
     },
 
     /** 公开企业列表 — 注册时选择所属企业，无需认证 */

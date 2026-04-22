@@ -179,7 +179,10 @@ class ExpertInspectionsController extends Controller
     }
 
     /**
-     * 企业端仪表板通知：尚未确认的记录（若 notify_company_time 为空按立即处理）.
+     * 企业端仪表板通知：已到达 notify_company_time 且尚未确认的记录。
+     *
+     * 受检企业的通知由管理员在新增检查时填写的 notify_company_time 自动触发：
+     * 当前时间 >= notify_company_time 即出现在仪表板，无需人工分发。
      */
     public function companyNotifications(Request $request): JsonResponse
     {
@@ -188,11 +191,12 @@ class ExpertInspectionsController extends Controller
         $list = ExpertCompany::query()
             ->where('check_company_id', $request->company_id)
             ->whereNull('confirm_time')
-            ->where(function ($q) {
-                $q->whereNull('notify_company_time')
-                    ->orWhere('notify_company_time', '<=', now());
-            })
-            ->with(['expertInspection:id,title,description,start_date,end_date'])
+            ->whereNotNull('notify_company_time')
+           ->where('notify_company_time', '<=', now())
+            ->with([
+                'expertInspection:id,title,description,start_date,end_date',
+                'expertInspectionUsers.expertUser:id,nickname,phone',
+            ])
             ->orderByDesc('notify_company_time')
             ->get();
 
@@ -200,14 +204,32 @@ class ExpertInspectionsController extends Controller
     }
 
     /**
-     * 受检企业端：本企业所有被指定参与的专家检查记录（不走权限中间件）.
+     * 当前用户相关的检查记录：
+     *   - 本企业被检查（check_company_id = company_id，且已到达 notify_company_time）
+     *   - 本人作为专家被指派（expert_inspection_users.expert_user_id = user_id，立即可见）
+     *   两者并集。
      */
     public function myCheckInspections(Request $request): JsonResponse
     {
         $request->validate(['company_id' => 'required|integer']);
 
+        $companyId = (int) $request->company_id;
+        $expertUserId = $request->get('expert_user_id') ?? $request->get('user_id');
+
         $list = ExpertCompany::query()
-            ->where('check_company_id', $request->company_id)
+            ->where(function ($q) use ($companyId, $expertUserId) {
+                $q->where(function ($qq) use ($companyId) {
+                    $qq->where('check_company_id', $companyId)
+                        ->whereNotNull('notify_company_time')
+                        ->where('notify_company_time', '<=', now());
+                });
+
+                if ($expertUserId) {
+                    $q->orWhereHas('expertInspectionUsers', function ($qq) use ($expertUserId) {
+                        $qq->where('expert_user_id', $expertUserId);
+                    });
+                }
+            })
             ->with([
                 'checkCompany:id,title',
                 'expertInspection:id,title,description,start_date,end_date,company_id',
@@ -220,7 +242,7 @@ class ExpertInspectionsController extends Controller
     }
 
     /**
-     * 专家端：本专家所有被指派的检查记录（不走权限中间件）.
+     * 专家端：本专家所有被指派的检查记录（指派即刻可见）.
      */
     public function myExpertAssignments(Request $request): JsonResponse
     {
@@ -316,7 +338,7 @@ class ExpertInspectionsController extends Controller
     }
 
     /**
-     * 专家端仪表板通知：被指派但尚未确认的检查.
+     * 专家端仪表板通知：已指派但尚未确认的检查（指派即通知）.
      */
     public function expertNotifications(Request $request): JsonResponse
     {

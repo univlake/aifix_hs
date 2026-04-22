@@ -5,7 +5,7 @@ import {
     Trash2, UserCheck, Users, X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { ConfirmRectificationModal } from '@/components/shared/HiddenDangerActionModals';
+import { AnnexUploadEditor, ConfirmRectificationModal, type DangerAnnexItem } from '@/components/shared/HiddenDangerActionModals';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiCrud } from '@/hooks/use-api';
 import { useAuth } from '@/hooks/use-auth';
@@ -114,7 +114,7 @@ interface BlocExpertRow {
 
 // ── Constants ──────────────────────────────────────────────────────
 
-const HIDDEN_TYPE_OPTIONS = ['消防', '机械', '危化品', '职业健康', '电气', '基础管理', '三违'];
+const HIDDEN_TYPE_OPTIONS = ['危化品', '电气', '机械', '安全设施', '消防', '职业卫生', '其他'];
 const HIDDEN_LEVEL_OPTIONS = ['一般隐患', '重大隐患'];
 
 const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
@@ -577,12 +577,14 @@ function DangerModal({
     rootCompanyId: number;
 }) {
     const [form, setForm] = useState<DangerForm>(emptyDanger());
+    const [examineAnnex, setExamineAnnex] = useState<DangerAnnexItem[]>([]);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         if (open) {
             setForm(emptyDanger());
+            setExamineAnnex([]);
             setError('');
         }
     }, [open]);
@@ -617,6 +619,7 @@ return;
                 proposal: form.proposal || null,
                 correct_deadline: form.correct_deadline || null,
                 company_id: rootCompanyId,
+                hiddenExamineAnnex: examineAnnex.filter((a) => a.annex_url),
             });
             onSaved();
         } catch (err: unknown) {
@@ -669,6 +672,7 @@ return;
                     <Field label="整改建议">
                         <textarea className={cn(inputCls, 'resize-none')} rows={2} value={form.proposal} onChange={(e) => set('proposal', e.target.value)} />
                     </Field>
+                    <AnnexUploadEditor value={examineAnnex} onChange={setExamineAnnex} label="隐患排查附件" dir="hidden-danger/examine/" />
                 </div>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
@@ -689,10 +693,11 @@ return;
 // ── Detail drawer ─────────────────────────────────────────────────
 
 function DetailDrawer({
-    inspection, canEdit, onClose, onChanged, rootCompanyId,
+    inspection, canEdit, userId, onClose, onChanged, rootCompanyId,
 }: {
     inspection: Inspection;
     canEdit: boolean;
+    userId: number | null;
     onClose: () => void;
     onChanged: () => void;
     rootCompanyId: number;
@@ -706,6 +711,8 @@ function DetailDrawer({
     const [confirmFor, setConfirmFor] = useState<HiddenDanger | null>(null);
     const [archiving, setArchiving] = useState<number | null>(null);
     const [tab, setTab] = useState<'companies' | 'inspection-notice' | 'rectification-notice' | 'feedback'>('companies');
+
+    const isPlanOwner = inspection.company_id === rootCompanyId;
 
     const refresh = useCallback(async () => {
         setLoading(true);
@@ -748,6 +755,7 @@ return;
         await api.delete(`/expert-inspection-users/${u.id}`);
         refresh();
     };
+
 
     const archiveDanger = async (d: HiddenDanger) => {
         if (!window.confirm('确认对该隐患进行归档？归档后将不可再修改。')) {
@@ -838,6 +846,8 @@ return;
                                         const co = pickCheckCompany(c);
                                         const experts = pickUsers(c);
                                         const ds = dangers.filter((d) => d.check_company_id === c.check_company_id);
+                                        const isExpertOnRow = userId !== null && experts.some((u) => u.expert_user_id === userId);
+                                        const canAddDanger = isActive(inspection) && (canEdit || isExpertOnRow);
 
                                         return (
                                             <div key={c.id} className="rounded-lg border border-blue-900/30 bg-[#070d1f] p-3">
@@ -911,7 +921,7 @@ return;
                                                 <div className="mt-3 border-t border-blue-900/20 pt-3">
                                                     <div className="mb-2 flex items-center justify-between">
                                                         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">现场隐患 ({ds.length})</p>
-                                                        {canEdit && (
+                                                        {canAddDanger && (
                                                             <button
                                                                 onClick={() => setAddDangerFor(c)}
                                                                 className="flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-600/10 px-2 py-0.5 text-[10px] text-amber-400 hover:bg-amber-600/20"
@@ -957,8 +967,8 @@ return;
                                                                                         <CheckCircle2 className="h-2.5 w-2.5" />整改确认
                                                                                     </button>
                                                                                 )}
-                                                                                {/* 确认归档 - group only, after confirmation */}
-                                                                                {isConfirmed && (
+                                                                                {/* 确认归档 - plan-creator enterprise only */}
+                                                                                {isConfirmed && isPlanOwner && (
                                                                                     <button
                                                                                         onClick={() => archiveDanger(d)}
                                                                                         disabled={archiving === d.id}
@@ -1258,7 +1268,8 @@ setSearch(searchInput.trim());
             {detail && (
                 <DetailDrawer
                     inspection={detail}
-                    canEdit={isActive(detail)}
+                    canEdit={isActive(detail) && detail.company_id === companyId}
+                    userId={user?.id ?? null}
                     rootCompanyId={companyId ?? 0}
                     onClose={() => setDetail(null)}
                     onChanged={() => fetchRows(page, search)}

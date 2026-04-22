@@ -16,6 +16,12 @@ class ExpertCompany extends BaseModel
         'last_user_id',
     ];
 
+    protected $casts = [
+        'notify_company_time' => 'datetime',
+        'check_company_time' => 'datetime',
+        'confirm_time' => 'datetime',
+    ];
+
     public function expertInspection()
     {
         return $this->belongsTo(ExpertInspection::class);

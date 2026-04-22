@@ -2,6 +2,7 @@ import { AlertTriangle, CheckCircle2, Loader2, Plus, Wrench, X } from 'lucide-re
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { OssUploadField } from '@/components/shared/OssUploadField';
 
 export interface DangerAnnexItem {
     id?: number;
@@ -73,9 +74,9 @@ function Field({ label, required, children }: { label: string; required?: boolea
     );
 }
 
-function SimpleAnnexEditor({
-    value, onChange, label,
-}: { value: DangerAnnexItem[]; onChange: (v: DangerAnnexItem[]) => void; label: string }) {
+export function AnnexUploadEditor({
+    value, onChange, label, dir,
+}: { value: DangerAnnexItem[]; onChange: (v: DangerAnnexItem[]) => void; label: string; dir?: string }) {
     const add = () => onChange([...value, { annex_url: '', geolocation: '' }]);
     const update = (i: number, k: keyof DangerAnnexItem, v: string) => {
         onChange(value.map((item, idx) => (idx === i ? { ...item, [k]: v } : item)));
@@ -93,24 +94,27 @@ function SimpleAnnexEditor({
             {value.length === 0 ? (
                 <p className="rounded-md border border-dashed border-blue-900/30 py-3 text-center text-[11px] text-slate-600">暂无附件</p>
             ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                     {value.map((item, i) => (
-                        <div key={i} className="flex items-center gap-1.5">
-                            <input
-                                className={cn(inputCls, 'flex-1')}
-                                placeholder="附件URL"
-                                value={item.annex_url}
-                                onChange={(e) => update(i, 'annex_url', e.target.value)}
-                            />
-                            <input
-                                className={cn(inputCls, 'w-32')}
-                                placeholder="位置"
-                                value={item.geolocation ?? ''}
-                                onChange={(e) => update(i, 'geolocation', e.target.value)}
-                            />
-                            <button type="button" onClick={() => remove(i)} className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400">
-                                <X className="h-3.5 w-3.5" />
-                            </button>
+                        <div key={i} className="rounded-md border border-blue-900/30 bg-[#070d1f] p-2.5">
+                            <div className="flex items-start gap-2">
+                                <div className="flex-1 space-y-2">
+                                    <OssUploadField
+                                        value={item.annex_url}
+                                        onChange={(url) => update(i, 'annex_url', url)}
+                                        dir={dir}
+                                    />
+                                    <input
+                                        className={cn(inputCls, 'text-xs')}
+                                        placeholder="位置（可选）"
+                                        value={item.geolocation ?? ''}
+                                        onChange={(e) => update(i, 'geolocation', e.target.value)}
+                                    />
+                                </div>
+                                <button type="button" onClick={() => remove(i)} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400">
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -188,7 +192,7 @@ return;
                     <Field label="整改描述" required>
                         <textarea className={cn(inputCls, 'resize-none')} rows={4} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="描述整改过程、措施和结果" />
                     </Field>
-                    <SimpleAnnexEditor value={annexes} onChange={setAnnexes} label="整改附件" />
+                    <AnnexUploadEditor value={annexes} onChange={setAnnexes} label="整改附件" />
                 </div>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
@@ -255,7 +259,7 @@ export function ConfirmRectificationModal({
                             <p className="mt-1 text-[11px] text-slate-600">整改日期：{danger.correct_date ?? '—'}</p>
                         </div>
                     )}
-                    <SimpleAnnexEditor value={annexes} onChange={setAnnexes} label="复查附件（可选）" />
+                    <AnnexUploadEditor value={annexes} onChange={setAnnexes} label="复查附件（可选）" />
                 </div>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">

@@ -1,10 +1,10 @@
 import { Head } from '@inertiajs/react';
 import {
     AlertTriangle, Bell, CheckCircle2, Eye, FileCheck, FileText,
-    Loader2, MessageSquare, Users, Wrench, X,
+    Loader2, MessageSquare, Plus, Users, Wrench, X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { ConfirmRectificationModal, RectifyModal } from '@/components/shared/HiddenDangerActionModals';
+import { AnnexUploadEditor, ConfirmRectificationModal, type DangerAnnexItem, RectifyModal } from '@/components/shared/HiddenDangerActionModals';
 import { useScope } from '@/contexts/ScopeContext';
 import { useAuth } from '@/hooks/use-auth';
 import api from '@/lib/api';
@@ -22,6 +22,11 @@ interface InspectionRef {
     company_id?: number | null;
 }
 
+interface CheckCompanyRef {
+    id: number;
+    title: string;
+}
+
 interface NotifyItem {
     id: number;
     expert_inspection_id: number;
@@ -32,6 +37,8 @@ interface NotifyItem {
     status: number;
     expert_inspection?: InspectionRef | null;
     expertInspection?: InspectionRef | null;
+    check_company?: CheckCompanyRef | null;
+    checkCompany?: CheckCompanyRef | null;
 }
 
 interface AnnexItem {
@@ -96,10 +103,12 @@ function dangerStatusLabel(d: HiddenDanger): { text: string; cls: string } {
 // ── Dangers drawer ────────────────────────────────────────────────
 
 function DangersDrawer({
-    companyId, inspectionId, role, onClose,
+    companyId, inspectionId, expertCompanyId, planCompanyId, role, onClose,
 }: {
     companyId: number;
     inspectionId: number;
+    expertCompanyId: number | null;
+    planCompanyId: number | null;
     role: { isCheckedCompany: boolean; isExpert: boolean; isGroup: boolean };
     onClose: () => void;
 }) {
@@ -108,6 +117,8 @@ function DangersDrawer({
     const [tab, setTab] = useState<'dangers' | 'inspection-notice' | 'rectification-notice' | 'feedback'>('dangers');
     const [rectifyFor, setRectifyFor] = useState<HiddenDanger | null>(null);
     const [confirmFor, setConfirmFor] = useState<HiddenDanger | null>(null);
+    const [addDangerOpen, setAddDangerOpen] = useState(false);
+    const canRegister = role.isExpert && expertCompanyId !== null && planCompanyId !== null;
 
     const refresh = useCallback(async () => {
         setLoading(true);
@@ -167,8 +178,18 @@ function DangersDrawer({
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6">
-                    {tab === 'dangers' && (
-                        loading ? (
+                    {tab === 'dangers' && (<>
+                        {canRegister && (
+                            <div className="mb-3 flex justify-end">
+                                <button
+                                    onClick={() => setAddDangerOpen(true)}
+                                    className="flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-600/15 px-3 py-1.5 text-xs text-amber-300 hover:bg-amber-600/25"
+                                >
+                                    <Plus className="h-3.5 w-3.5" />登记隐患
+                                </button>
+                            </div>
+                        )}
+                        {loading ? (
                             <div className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-blue-500" /></div>
                         ) : dangers.length === 0 ? (
                             <div className="rounded-lg border border-dashed border-blue-900/30 py-12 text-center text-sm text-slate-600">暂无隐患记录</div>
@@ -238,8 +259,8 @@ function DangersDrawer({
                                     );
                                 })}
                             </div>
-                        )
-                    )}
+                        )}
+                    </>)}
 
                     {tab === 'inspection-notice' && (
                         <div className="py-12 text-center">
@@ -280,9 +301,193 @@ function DangersDrawer({
                 danger={confirmFor}
                 onClose={() => setConfirmFor(null)}
                 onSaved={() => {
- setConfirmFor(null); refresh(); 
+ setConfirmFor(null); refresh();
 }}
             />
+            {canRegister && (
+                <RegisterDangerModal
+                    open={addDangerOpen}
+                    onClose={() => setAddDangerOpen(false)}
+                    inspectionId={inspectionId}
+                    expertCompanyId={expertCompanyId!}
+                    checkCompanyId={companyId}
+                    planCompanyId={planCompanyId!}
+                    onSaved={() => {
+                        setAddDangerOpen(false);
+                        refresh();
+                    }}
+                />
+            )}
+        </div>
+    );
+}
+
+// ── Register-danger modal (expert side) ─────────────────────────
+
+const HIDDEN_TYPE_OPTIONS = ['消防', '机械', '危化品', '职业健康', '电气', '基础管理', '三违'];
+const HIDDEN_LEVEL_OPTIONS = ['一般隐患', '重大隐患'];
+const dangerInputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
+const dangerSelectCls = cn(dangerInputCls, 'cursor-pointer appearance-none');
+
+interface DangerForm {
+    area: string;
+    session: string;
+    description: string;
+    hidden_type: string;
+    hidden_level: string;
+    legalises: string;
+    proposal: string;
+    correct_deadline: string;
+}
+
+const emptyDanger = (): DangerForm => ({
+    area: '', session: '第一轮', description: '', hidden_type: '',
+    hidden_level: '', legalises: '', proposal: '', correct_deadline: '',
+});
+
+function RegisterDangerModal({
+    open, onClose, inspectionId, expertCompanyId, checkCompanyId, planCompanyId, onSaved,
+}: {
+    open: boolean;
+    onClose: () => void;
+    inspectionId: number;
+    expertCompanyId: number;
+    checkCompanyId: number;
+    planCompanyId: number;
+    onSaved: () => void;
+}) {
+    const [form, setForm] = useState<DangerForm>(emptyDanger());
+    const [examineAnnex, setExamineAnnex] = useState<DangerAnnexItem[]>([]);
+    const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (open) {
+            setForm(emptyDanger());
+            setExamineAnnex([]);
+            setError('');
+        }
+    }, [open]);
+
+    if (!open) {
+return null;
+}
+
+    const set = (k: keyof DangerForm, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+    const submit = async () => {
+        if (!form.area || !form.description || !form.hidden_type || !form.hidden_level) {
+            setError('请完整填写场所、描述、类别、等级');
+
+            return;
+        }
+
+        setSubmitting(true);
+        setError('');
+
+        try {
+            await api.post('/hidden-danger-infos', {
+                expert_inspection_id: inspectionId,
+                expert_company_id: expertCompanyId,
+                check_company_id: checkCompanyId,
+                area: form.area,
+                session: form.session || '第一轮',
+                description: form.description,
+                hidden_type: form.hidden_type,
+                hidden_level: form.hidden_level,
+                legalises: form.legalises || null,
+                proposal: form.proposal || null,
+                correct_deadline: form.correct_deadline || null,
+                company_id: planCompanyId,
+                hiddenExamineAnnex: examineAnnex.filter((a) => a.annex_url),
+            });
+            onSaved();
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            setError(e?.response?.data?.message ?? '操作失败');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
+                <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
+                    <div>
+                        <h2 className="text-base font-semibold text-slate-100">登记隐患</h2>
+                        <p className="mt-0.5 text-xs text-slate-600">在本次检查中登记一条现场隐患</p>
+                    </div>
+                    <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-white/5 hover:text-slate-300">
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6">
+                    <div className="space-y-4">
+                        {error && (
+                            <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
+                                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />{error}
+                            </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField label="场所" required>
+                                <input className={dangerInputCls} value={form.area} onChange={(e) => set('area', e.target.value)} />
+                            </FormField>
+                            <FormField label="次数">
+                                <input className={dangerInputCls} value={form.session} onChange={(e) => set('session', e.target.value)} />
+                            </FormField>
+                            <FormField label="隐患类别" required>
+                                <select className={dangerSelectCls} value={form.hidden_type} onChange={(e) => set('hidden_type', e.target.value)}>
+                                    <option value="" className="bg-[#0d1530]">请选择</option>
+                                    {HIDDEN_TYPE_OPTIONS.map((t) => <option key={t} value={t} className="bg-[#0d1530]">{t}</option>)}
+                                </select>
+                            </FormField>
+                            <FormField label="隐患等级" required>
+                                <select className={dangerSelectCls} value={form.hidden_level} onChange={(e) => set('hidden_level', e.target.value)}>
+                                    <option value="" className="bg-[#0d1530]">请选择</option>
+                                    {HIDDEN_LEVEL_OPTIONS.map((l) => <option key={l} value={l} className="bg-[#0d1530]">{l}</option>)}
+                                </select>
+                            </FormField>
+                            <FormField label="整改截止期限">
+                                <input type="date" className={cn(dangerInputCls, 'cursor-pointer')} value={form.correct_deadline} onChange={(e) => set('correct_deadline', e.target.value)} />
+                            </FormField>
+                        </div>
+                        <FormField label="隐患描述" required>
+                            <textarea className={cn(dangerInputCls, 'resize-none')} rows={3} value={form.description} onChange={(e) => set('description', e.target.value)} />
+                        </FormField>
+                        <FormField label="排查依据">
+                            <textarea className={cn(dangerInputCls, 'resize-none')} rows={2} value={form.legalises} onChange={(e) => set('legalises', e.target.value)} />
+                        </FormField>
+                        <FormField label="整改建议">
+                            <textarea className={cn(dangerInputCls, 'resize-none')} rows={2} value={form.proposal} onChange={(e) => set('proposal', e.target.value)} />
+                        </FormField>
+                        <AnnexUploadEditor value={examineAnnex} onChange={setExamineAnnex} label="隐患排查附件" dir="hidden-danger/examine/" />
+                    </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
+                    <button onClick={onClose} className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">取消</button>
+                    <button
+                        onClick={submit}
+                        disabled={submitting}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/30 disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                        {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        保存隐患
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function FormField({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+    return (
+        <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
+                {label}{required && <span className="ml-0.5 text-red-400">*</span>}
+            </label>
+            {children}
         </div>
     );
 }
@@ -323,7 +528,13 @@ export default function ExpertInspectionCompanyView() {
     const [assignments, setAssignments] = useState<ExpertAssignment[]>([]);
     const [loading, setLoading] = useState(false);
     const [confirming, setConfirming] = useState<{ kind: 'company' | 'expert'; id: number } | null>(null);
-    const [detail, setDetail] = useState<{ companyId: number; inspectionId: number; role: { isCheckedCompany: boolean; isExpert: boolean; isGroup: boolean } } | null>(null);
+    const [detail, setDetail] = useState<{
+        companyId: number;
+        inspectionId: number;
+        expertCompanyId: number | null;
+        planCompanyId: number | null;
+        role: { isCheckedCompany: boolean; isExpert: boolean; isGroup: boolean };
+    } | null>(null);
     const [error, setError] = useState('');
 
     const fetchAll = useCallback(async () => {
@@ -340,7 +551,11 @@ return;
                     params: { company_id: companyId },
                 }).then((res) => setItems(res.data.data ?? [])),
                 api.get<ApiResponse<PaginatedData<NotifyItem>>>('/my-check-inspections', {
-                    params: { company_id: companyId, per_page: 100 },
+                    params: {
+                        company_id: companyId,
+                        ...(user?.id ? { expert_user_id: user.id } : {}),
+                        per_page: 100,
+                    },
                 }).then((res) => setHistory(res.data.data.data ?? [])),
             ];
 
@@ -387,12 +602,20 @@ return;
         }
     };
 
-    const openCompanyDetail = (inspectionId: number) => {
+    const openCompanyDetail = (row: NotifyItem) => {
         if (!companyId) {
 return;
 }
 
-        setDetail({ companyId, inspectionId, role: { isCheckedCompany: true, isExpert: false, isGroup: false } });
+        const ins = pickInspection(row);
+
+        setDetail({
+            companyId,
+            inspectionId: row.expert_inspection_id,
+            expertCompanyId: row.id,
+            planCompanyId: ins?.company_id ?? null,
+            role: { isCheckedCompany: true, isExpert: false, isGroup: false },
+        });
     };
 
     const openExpertDetail = (assignment: ExpertAssignment) => {
@@ -402,7 +625,15 @@ return;
 return;
 }
 
-        setDetail({ companyId: ec.check_company_id, inspectionId: ec.expert_inspection_id, role: { isCheckedCompany: false, isExpert: true, isGroup: false } });
+        const ins = ec.expert_inspection ?? ec.expertInspection ?? null;
+
+        setDetail({
+            companyId: ec.check_company_id,
+            inspectionId: ec.expert_inspection_id,
+            expertCompanyId: ec.id,
+            planCompanyId: ins?.company_id ?? null,
+            role: { isCheckedCompany: false, isExpert: true, isGroup: false },
+        });
     };
 
     const pendingExpertNotifs = assignments.filter((a) => !a.confirm_time);
@@ -519,29 +750,31 @@ return;
             {/* Company history */}
             <section>
                 <div className="mb-3 flex items-center gap-2">
-                    <h2 className="text-sm font-semibold text-slate-200">本企业检查记录</h2>
+                    <h2 className="text-sm font-semibold text-slate-200">相关检查记录</h2>
                     <span className="text-[11px] text-slate-600">共 {history.length} 条</span>
                 </div>
                 <div className="overflow-x-auto rounded-xl border border-blue-900/30">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-blue-900/30 bg-[#070d1f]">
-                                {['检查主题', '通知时间', '计划检查时间', '确认时间', '状态', '操作'].map((h, i) => (
+                                {['检查主题', '受检企业', '通知时间', '计划检查时间', '确认时间', '状态', '操作'].map((h, i) => (
                                     <th key={i} className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500">{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
                             {loading && history.length === 0 ? (
-                                <tr><td colSpan={6} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-blue-500" /></td></tr>
+                                <tr><td colSpan={7} className="py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-blue-500" /></td></tr>
                             ) : history.length === 0 ? (
-                                <tr><td colSpan={6} className="py-12 text-center text-sm text-slate-600">暂无记录</td></tr>
+                                <tr><td colSpan={7} className="py-12 text-center text-sm text-slate-600">暂无记录</td></tr>
                             ) : history.map((row) => {
                                 const ins = pickInspection(row);
+                                const cc = row.check_company ?? row.checkCompany ?? null;
 
                                 return (
                                     <tr key={row.id} className="border-b border-blue-900/20 last:border-0 transition-colors hover:bg-white/[0.02]">
                                         <td className="max-w-[240px] truncate px-4 py-2.5 text-slate-200" title={ins?.title ?? ''}>{ins?.title ?? `检查#${row.expert_inspection_id}`}</td>
+                                        <td className="max-w-[200px] truncate px-4 py-2.5 text-xs text-slate-400" title={cc?.title ?? ''}>{cc?.title ?? <span className="text-slate-700">—</span>}</td>
                                         <td className="px-4 py-2.5 text-xs text-slate-400">{row.notify_company_time ?? <span className="text-slate-700">—</span>}</td>
                                         <td className="px-4 py-2.5 text-xs text-slate-400">{row.check_company_time ?? <span className="text-slate-700">—</span>}</td>
                                         <td className="px-4 py-2.5 text-xs text-slate-400">{row.confirm_time ?? <span className="text-slate-700">—</span>}</td>
@@ -552,7 +785,7 @@ return;
                                         </td>
                                         <td className="px-4 py-2.5">
                                             <button
-                                                onClick={() => openCompanyDetail(row.expert_inspection_id)}
+                                                onClick={() => openCompanyDetail(row)}
                                                 className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-blue-400 hover:bg-blue-600/10 hover:text-blue-300"
                                             >
                                                 <Eye className="h-3.5 w-3.5" />检查详情
@@ -570,6 +803,8 @@ return;
                 <DangersDrawer
                     companyId={detail.companyId}
                     inspectionId={detail.inspectionId}
+                    expertCompanyId={detail.expertCompanyId}
+                    planCompanyId={detail.planCompanyId}
                     role={detail.role}
                     onClose={() => setDetail(null)}
                 />
