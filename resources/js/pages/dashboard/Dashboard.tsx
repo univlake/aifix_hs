@@ -4,6 +4,7 @@ import {
     Activity,
     AlertTriangle,
     ArrowRight,
+    Award,
     Bell,
     Building2,
     CalendarDays,
@@ -12,10 +13,12 @@ import {
     ClipboardList,
     Clock,
     FileText,
-    GraduationCap,
+    GitBranch,
     Inbox,
+    Map as MapIcon,
     MapPin,
     Pin,
+    Siren,
     TrendingUp,
     UserCheck,
     Users,
@@ -126,23 +129,66 @@ interface NewNotifyPendingItem {
     newNotify?: NewNotifyRef | null;
 }
 
+interface CompanyDetail {
+    id: number;
+    title: string;
+    address?: string | null;
+    credit_code?: string | null;
+    established?: string | null;
+    supervise_name?: string | null;
+    supervise_tel?: string | null;
+    inherent_risk_grade?: string | null;
+    float_risk_grade?: string | null;
+    enterprise_type?: { id: number; title: string } | null;
+    operational_type?: { id: number; title: string } | null;
+}
 
-const stats = [
-    { title: '企业管理', icon: Building2, href: '/system/companies', color: 'text-blue-400', bg: 'bg-blue-600/15', border: 'border-blue-600/20' },
-    { title: '用户管理', icon: Users, href: '/system/users', color: 'text-violet-400', bg: 'bg-violet-600/15', border: 'border-violet-600/20' },
-    { title: '风险记录', icon: AlertTriangle, href: '/risk/risk-logs', color: 'text-amber-400', bg: 'bg-amber-600/15', border: 'border-amber-600/20' },
-    { title: '隐患排查', icon: ClipboardCheck, href: '/risk/monthly-investigation', color: 'text-emerald-400', bg: 'bg-emerald-600/15', border: 'border-emerald-600/20' },
-    { title: '检查管理', icon: FileText, href: '/inspection/daily-checks', color: 'text-cyan-400', bg: 'bg-cyan-600/15', border: 'border-cyan-600/20' },
-    { title: '培训管理', icon: GraduationCap, href: '/training/training-classes', color: 'text-rose-400', bg: 'bg-rose-600/15', border: 'border-rose-600/20' },
+
+type StatItem = {
+    title: string;
+    icon: React.ComponentType<{ className?: string }>;
+    href: string;
+    color: string;
+    bg: string;
+    border: string;
+};
+
+type QuickLink = { title: string; href: string };
+
+const produceStats: StatItem[] = [
+    { title: '风险源管理', icon: AlertTriangle, href: '/risk/hazards', color: 'text-amber-400', bg: 'bg-amber-600/15', border: 'border-amber-600/20' },
+    { title: '隐患管理', icon: ClipboardCheck, href: '/risk/monthly-investigation', color: 'text-emerald-400', bg: 'bg-emerald-600/15', border: 'border-emerald-600/20' },
+    { title: '专家检查', icon: UserCheck, href: '/risk/expert-inspection', color: 'text-blue-400', bg: 'bg-blue-600/15', border: 'border-blue-600/20' },
+    { title: '事故上报', icon: Siren, href: '/accident/report', color: 'text-rose-400', bg: 'bg-rose-600/15', border: 'border-rose-600/20' },
+    { title: '考核填报', icon: Award, href: '/assessment/filing', color: 'text-violet-400', bg: 'bg-violet-600/15', border: 'border-violet-600/20' },
+    { title: '通知公告', icon: Bell, href: '/tasks/notices', color: 'text-cyan-400', bg: 'bg-cyan-600/15', border: 'border-cyan-600/20' },
 ];
 
-const quickLinks = [
-    { title: '风险记录', href: '/risk/risk-logs' },
-    { title: '隐患排查', href: '/risk/monthly-investigation' },
-    { title: '日常检查', href: '/inspection/daily-checks' },
-    { title: '应急演练', href: '/emergency/emergency-drills' },
-    { title: '月度统计', href: '/statistics/month-statistics' },
+const blocStats: StatItem[] = [
+    { title: '下级企业', icon: GitBranch, href: '/enterprise/subsidiaries', color: 'text-blue-400', bg: 'bg-blue-600/15', border: 'border-blue-600/20' },
+    { title: '企业分布图', icon: MapIcon, href: '/risk-monitoring/enterprise-map', color: 'text-cyan-400', bg: 'bg-cyan-600/15', border: 'border-cyan-600/20' },
+    { title: '风险监控', icon: Activity, href: '/risk-monitoring/risk-monitor', color: 'text-emerald-400', bg: 'bg-emerald-600/15', border: 'border-emerald-600/20' },
+    { title: '隐患管理', icon: AlertTriangle, href: '/risk-control/monthly-investigation', color: 'text-amber-400', bg: 'bg-amber-600/15', border: 'border-amber-600/20' },
+    { title: '专家检查', icon: UserCheck, href: '/risk-control/expert-inspection', color: 'text-violet-400', bg: 'bg-violet-600/15', border: 'border-violet-600/20' },
+    { title: '专家库', icon: Users, href: '/management/experts', color: 'text-rose-400', bg: 'bg-rose-600/15', border: 'border-rose-600/20' },
+];
+
+const produceQuickLinks: QuickLink[] = [
+    { title: '人员管理', href: '/safety/personnels' },
+    { title: '特种设备', href: '/safety/special-equipment' },
+    { title: '应急管理', href: '/accident/emergency' },
+    { title: '教育培训', href: '/training/education' },
+    { title: '信息稿件管理', href: '/tasks/manuscripts' },
     { title: '法律法规库', href: '/regulation/libraries' },
+];
+
+const blocQuickLinks: QuickLink[] = [
+    { title: '通知公告', href: '/management/tasks/notices' },
+    { title: '考核填报', href: '/management/assessment/filing' },
+    { title: '月度数据上报', href: '/statistics/month-statistics' },
+    { title: '事故应急管理', href: '/management/accidents/management' },
+    { title: '法律法规库', href: '/regulation/libraries' },
+    { title: '账号管理', href: '/system/users' },
 ];
 
 function pickInspection<T extends { expert_inspection?: InspectionRef | null; expertInspection?: InspectionRef | null }>(row: T): InspectionRef | null {
@@ -169,10 +215,39 @@ function pickNewNotify(row: NewNotifyPendingItem): NewNotifyRef | null {
     return row.new_notify ?? row.newNotify ?? null;
 }
 
+function InfoRow({
+    icon: Icon,
+    label,
+    value,
+    extra,
+    mono,
+}: {
+    icon: React.ComponentType<{ className?: string }>;
+    label?: string;
+    value?: string | null;
+    extra?: string | null;
+    mono?: boolean;
+}) {
+    if (!value) return null;
+
+    return (
+        <div className="flex items-start gap-2 text-xs text-slate-400">
+            <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-600" />
+            <div className="min-w-0 flex-1">
+                {label && <span className="text-slate-600">{label}：</span>}
+                <span className={`${mono ? 'font-mono text-[11px]' : ''} text-slate-300`}>{value}</span>
+                {extra && <span className="ml-2 text-slate-500">{extra}</span>}
+            </div>
+        </div>
+    );
+}
+
 export default function Dashboard() {
     const { user, company } = useAuth();
-    const { activeCompany } = useScope();
+    const { activeCompany, mode } = useScope();
     const companyId = activeCompany?.id;
+    const stats = mode === 'bloc' ? blocStats : produceStats;
+    const quickLinks = mode === 'bloc' ? blocQuickLinks : produceQuickLinks;
 
     const [companyNotifs, setCompanyNotifs] = useState<CompanyNotifyItem[]>([]);
     const [expertNotifs, setExpertNotifs] = useState<ExpertNotifyItem[]>([]);
@@ -181,6 +256,7 @@ export default function Dashboard() {
     const [newNotifs, setNewNotifs] = useState<NewNotifyPendingItem[]>([]);
     const [manuscripts, setManuscripts] = useState<InformationDraft[]>([]);
     const [manuscriptPending, setManuscriptPending] = useState<InformationDraft[]>([]);
+    const [companyDetail, setCompanyDetail] = useState<CompanyDetail | null>(null);
     const [viewingDraft, setViewingDraft] = useState<InformationDraft | null>(null);
     const [confirming, setConfirming] = useState<{ kind: 'company' | 'expert' | 'meeting' | 'new'; id: number } | null>(null);
 
@@ -207,6 +283,9 @@ export default function Dashboard() {
                 api.get<ApiResponse<InformationDraft[]>>('/information-drafts/dashboard/pending', {
                     params: { company_id: companyId, limit: 10 },
                 }).then((res) => setManuscriptPending(res.data.data ?? [])).catch(() => setManuscriptPending([])),
+                api.get<ApiResponse<CompanyDetail>>(`/companies/${companyId}`)
+                    .then((res) => setCompanyDetail(res.data.data ?? null))
+                    .catch(() => setCompanyDetail(null)),
             );
         }
 
@@ -292,83 +371,132 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Quick stats grid */}
-            <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {stats.map((s) => {
-                    const Icon = s.icon;
-
-                    return (
-                        <Link
-                            key={s.title}
-                            href={s.href}
-                            className={`group relative overflow-hidden rounded-xl border ${s.border} bg-[#0d1530] p-5 transition-all hover:border-opacity-60 hover:bg-[#0d1530]/90`}
-                        >
-                            <div className="absolute inset-0 rounded-xl bg-blue-600/0 transition-all group-hover:bg-blue-600/3" />
-                            <div className="relative flex items-start justify-between">
-                                <div>
-                                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">{s.title}</p>
-                                    <p className="text-2xl font-bold text-slate-300">—</p>
-                                    <p className="mt-1 text-xs text-slate-600 flex items-center gap-1">
-                                        点击查看详细
-                                        <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-                                    </p>
-                                </div>
-                                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${s.bg} border ${s.border}`}>
-                                    <Icon className={`h-5 w-5 ${s.color}`} />
-                                </div>
+            {/* Top row: latest updates + stats + company info */}
+            <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {/* Information drafts */}
+                <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-5">
+                    <div className="mb-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600/15 border border-sky-600/20">
+                                <FileText className="h-4 w-4 text-sky-400" />
                             </div>
-                        </Link>
-                    );
-                })}
-            </div>
-
-            {/* Information drafts */}
-            <div className="mb-8 rounded-xl border border-blue-900/40 bg-[#0d1530] p-6">
-                <div className="mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600/15 border border-sky-600/20">
-                            <FileText className="h-4 w-4 text-sky-400" />
+                            <h2 className="text-sm font-semibold text-slate-200">最新动态</h2>
+                            {manuscripts.length > 0 && (
+                                <span className="rounded-full border border-sky-500/30 bg-sky-600/15 px-2 py-0.5 text-[10px] text-sky-400">{manuscripts.length}</span>
+                            )}
                         </div>
-                        <h2 className="text-sm font-semibold text-slate-200">最新动态</h2>
-                        {manuscripts.length > 0 && (
-                            <span className="rounded-full border border-sky-500/30 bg-sky-600/15 px-2 py-0.5 text-[10px] text-sky-400">{manuscripts.length}</span>
-                        )}
+                        <Link href="/tasks/manuscripts" className="text-xs text-slate-500 transition-colors hover:text-slate-300">
+                            查看全部<ArrowRight className="ml-1 inline h-3 w-3" />
+                        </Link>
                     </div>
-                    <Link href="/tasks/manuscripts" className="text-xs text-slate-500 transition-colors hover:text-slate-300">
-                        查看全部<ArrowRight className="ml-1 inline h-3 w-3" />
-                    </Link>
+                    {manuscripts.length === 0 ? (
+                        <p className="py-4 text-center text-sm text-slate-600">暂无最新动态</p>
+                    ) : (
+                        <ul className="space-y-1.5">
+                            {manuscripts.slice(0, 5).map((m) => {
+                                const isMine = m.company_id === companyId;
+                                const accent = isMine ? 'border-l-emerald-500/60' : 'border-l-blue-500/60';
+
+                                return (
+                                    <li key={m.id}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setViewingDraft(m)}
+                                            className={`flex w-full flex-col gap-0.5 rounded-md border border-blue-900/40 border-l-2 ${accent} bg-[#070d1f] px-3 py-2 text-left transition-colors hover:border-sky-500/40 hover:bg-[#0a1329]`}
+                                            title={`${m.name} · ${m.company_name}`}
+                                        >
+                                            <div className="flex items-center gap-1.5">
+                                                {m.is_top === 1 && <Pin className="h-3 w-3 shrink-0 text-amber-400" />}
+                                                <span className="truncate text-sm text-slate-100">{m.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                                                <span className={`rounded px-1.5 py-0 text-[10px] ${isMine ? 'border border-emerald-500/30 bg-emerald-600/10 text-emerald-400' : 'border border-blue-500/30 bg-blue-600/10 text-blue-300'}`}>
+                                                    {isMine ? '本企业' : '上级'}
+                                                </span>
+                                                <span className="truncate">{m.company_name}</span>
+                                                <span className="ml-auto shrink-0">{String(m.created_at).slice(5, 10)}</span>
+                                            </div>
+                                        </button>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
                 </div>
-                {manuscripts.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-slate-600">暂无最新动态</p>
-                ) : (
-                    <ul className="space-y-1.5">
-                        {manuscripts.map((m) => {
-                            const isMine = m.company_id === companyId;
+
+                {/* Quick stats */}
+                <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-5">
+                    <div className="mb-3 flex items-center gap-2">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-600/15 border border-violet-600/20">
+                            <TrendingUp className="h-4 w-4 text-violet-400" />
+                        </div>
+                        <h2 className="text-sm font-semibold text-slate-200">常用模块</h2>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        {stats.map((s) => {
+                            const Icon = s.icon;
 
                             return (
-                                <li key={m.id}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setViewingDraft(m)}
-                                        className="flex w-full items-center gap-3 rounded-lg border border-blue-900/40 bg-[#070d1f] px-4 py-2.5 text-left transition-colors hover:border-sky-500/40 hover:bg-[#0a1329]"
-                                    >
-                                        {m.is_top === 1 && <Pin className="h-3.5 w-3.5 shrink-0 text-amber-400" />}
-                                        <span className="truncate text-sm font-medium text-slate-100">{m.name}</span>
-                                        <span className={`shrink-0 rounded px-1.5 py-0 text-[10px] ${isMine ? 'border border-emerald-500/30 bg-emerald-600/10 text-emerald-400' : 'border border-blue-500/30 bg-blue-600/10 text-blue-300'}`}>
-                                            {isMine ? '本企业' : '上级发布'}
-                                        </span>
-                                        <span className="ml-auto hidden shrink-0 items-center gap-1 text-[11px] text-slate-500 sm:inline-flex">
-                                            <Building2 className="h-3 w-3" />
-                                            <span className="max-w-[160px] truncate">{m.company_name}</span>
-                                        </span>
-                                        <span className="shrink-0 text-[11px] text-slate-500">{String(m.created_at).slice(0, 10)}</span>
-                                        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-600 transition-transform group-hover:translate-x-0.5" />
-                                    </button>
-                                </li>
+                                <Link
+                                    key={s.title}
+                                    href={s.href}
+                                    className={`group flex items-center gap-2 rounded-lg border ${s.border} bg-[#070d1f] px-2.5 py-2 transition-all hover:bg-[#0a1329]`}
+                                >
+                                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${s.bg} border ${s.border}`}>
+                                        <Icon className={`h-3.5 w-3.5 ${s.color}`} />
+                                    </div>
+                                    <span className="flex-1 truncate text-[13px] font-medium text-slate-200">{s.title}</span>
+                                    <ArrowRight className="h-3 w-3 shrink-0 text-slate-600 transition-transform group-hover:translate-x-0.5" />
+                                </Link>
                             );
                         })}
-                    </ul>
-                )}
+                    </div>
+                </div>
+
+                {/* Company info */}
+                <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-5 md:col-span-2 lg:col-span-1">
+                    <div className="mb-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600/15 border border-blue-600/20">
+                                <Building2 className="h-4 w-4 text-blue-400" />
+                            </div>
+                            <h2 className="text-sm font-semibold text-slate-200">企业信息</h2>
+                        </div>
+                        <Link href="/enterprise/current" className="text-xs text-slate-500 transition-colors hover:text-slate-300">
+                            查看详情<ArrowRight className="ml-1 inline h-3 w-3" />
+                        </Link>
+                    </div>
+                    {companyDetail ? (
+                        <div className="space-y-2.5">
+                            <div>
+                                <p className="truncate text-sm font-semibold text-slate-100" title={companyDetail.title}>{companyDetail.title}</p>
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                    {companyDetail.enterprise_type?.title && (
+                                        <span className="rounded border border-blue-500/30 bg-blue-600/10 px-1.5 py-0 text-[10px] text-blue-300">
+                                            {companyDetail.enterprise_type.title}
+                                        </span>
+                                    )}
+                                    {companyDetail.inherent_risk_grade && (
+                                        <span className="rounded border border-amber-500/30 bg-amber-600/10 px-1.5 py-0 text-[10px] text-amber-300">
+                                            风险：{companyDetail.inherent_risk_grade}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <InfoRow icon={MapPin} value={companyDetail.address} />
+                            <InfoRow icon={FileText} label="信用代码" value={companyDetail.credit_code} mono />
+                            <InfoRow icon={UserCheck} value={companyDetail.supervise_name} extra={companyDetail.supervise_tel} />
+                            <InfoRow icon={CalendarDays} label="成立" value={companyDetail.established?.slice(0, 10)} />
+                        </div>
+                    ) : (
+                        <div className="space-y-2 py-2">
+                            <div className="h-4 w-32 animate-pulse rounded bg-slate-800" />
+                            <div className="h-3 w-full animate-pulse rounded bg-slate-800/60" />
+                            <div className="h-3 w-2/3 animate-pulse rounded bg-slate-800/60" />
+                            <div className="h-3 w-1/2 animate-pulse rounded bg-slate-800/60" />
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">
