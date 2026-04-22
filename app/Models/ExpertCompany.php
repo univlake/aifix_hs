@@ -10,6 +10,8 @@ class ExpertCompany extends BaseModel
         'notify_company_time',
         'check_company_time',
         'confirm_time',
+        'inspection_notice_url',
+        'rectification_sheet_url',
         'status',
         'company_id',
         'user_id',

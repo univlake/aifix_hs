@@ -14,6 +14,9 @@ use App\Models\ExpertInspection;
 use App\Models\ExpertInspectionUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use PhpOffice\PhpWord\TemplateProcessor;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ExpertInspectionsController extends Controller
 {
@@ -27,12 +30,20 @@ class ExpertInspectionsController extends Controller
         if ($companyId && $expertUserId) {
             $query->where(function ($q) use ($companyId, $expertUserId) {
                 $q->where('company_id', $companyId)
+                    ->orWhereHas('expertCompanies', function ($qq) use ($companyId) {
+                        $qq->where('check_company_id', $companyId);
+                    })
                     ->orWhereHas('expertCompanies.expertInspectionUsers', function ($qq) use ($expertUserId) {
                         $qq->where('expert_user_id', $expertUserId);
                     });
             });
         } elseif ($companyId) {
-            $query->where('company_id', $companyId);
+            $query->where(function ($q) use ($companyId) {
+                $q->where('company_id', $companyId)
+                    ->orWhereHas('expertCompanies', function ($qq) use ($companyId) {
+                        $qq->where('check_company_id', $companyId);
+                    });
+            });
         } elseif ($expertUserId) {
             $query->whereHas('expertCompanies.expertInspectionUsers', function ($q) use ($expertUserId) {
                 $q->where('expert_user_id', $expertUserId);
@@ -192,7 +203,7 @@ class ExpertInspectionsController extends Controller
             ->where('check_company_id', $request->company_id)
             ->whereNull('confirm_time')
             ->whereNotNull('notify_company_time')
-           ->where('notify_company_time', '<=', now())
+            ->where('notify_company_time', '<=', now())
             ->with([
                 'expertInspection:id,title,description,start_date,end_date',
                 'expertInspectionUsers.expertUser:id,nickname,phone',
@@ -359,5 +370,107 @@ class ExpertInspectionsController extends Controller
             ->get();
 
         return $this->success($list);
+    }
+
+    // ── 检查通知单 ──────────────────────────────────────────────
+
+    /**
+     * 生成检查通知单 docx（仅检查计划创建企业可操作）。
+     *
+     * 通知单文件保存在 storage/app/inspection-notices/，路径写入 expert_companies.inspection_notice_url，
+     * 受检企业无权访问；检查专家通过下载接口取得。
+     */
+    public function generateInspectionNotice(Request $request, int $id): JsonResponse
+    {
+        $expertCompany = ExpertCompany::query()
+            ->with(['expertInspection', 'checkCompany', 'expertInspectionUsers.expertUser'])
+            ->find($id);
+
+        if (! $expertCompany) {
+            return $this->notFound('检查记录不存在');
+        }
+
+        $user = $request->user();
+        $planCompanyId = $expertCompany->expertInspection?->company_id;
+
+        if ($planCompanyId === null || $planCompanyId !== (int) $user->company_id) {
+            return $this->failed('仅检查计划创建企业可生成通知单');
+        }
+
+        $templatePath = public_path('enterprise_export.docx');
+
+        if (! is_file($templatePath)) {
+            return $this->failed('通知单模板缺失：enterprise_export.docx');
+        }
+
+        $checkCompanyName = $expertCompany->checkCompany?->title ?? '';
+        $expertNames = $expertCompany->expertInspectionUsers
+            ->map(fn ($row) => $row->expertUser?->nickname)
+            ->filter()
+            ->implode('、');
+
+        try {
+            ini_set('pcre.backtrack_limit', '999999999');
+            $processor = new TemplateProcessor($templatePath);
+            $processor->setValue('title', '安全检查通知单');
+            $processor->setValue('company_title', $checkCompanyName);
+            $processor->setValue('user_name', $expertNames);
+            $processor->setValue('content', (string) ($expertCompany->expertInspection?->title ?? ''));
+            $processor->setValue('time', (string) ($expertCompany->check_company_time ?? ''));
+            $processor->setValue('created_time', (string) $expertCompany->created_at);
+
+            $relDir = 'inspection-notices/'.date('Y').'/'.date('m');
+            $absDir = storage_path('app/'.$relDir);
+
+            if (! is_dir($absDir)) {
+                mkdir($absDir, 0755, true);
+            }
+
+            $filename = '检查通知单-'.$checkCompanyName.'-'.date('Ymd').'-'.Str::random(6).'.docx';
+            $relPath = $relDir.'/'.$filename;
+            $processor->saveAs(storage_path('app/'.$relPath));
+        } catch (\Throwable $e) {
+            return $this->failed('生成通知单失败：'.$e->getMessage());
+        }
+
+        $expertCompany->update(['inspection_notice_url' => $relPath]);
+
+        return $this->success($expertCompany->fresh());
+    }
+
+    /**
+     * 下载检查通知单（计划创建企业、已指派专家可下载，受检企业无权访问）。
+     */
+    public function downloadInspectionNotice(Request $request, int $id): BinaryFileResponse|JsonResponse
+    {
+        $expertCompany = ExpertCompany::query()
+            ->with(['expertInspection', 'expertInspectionUsers'])
+            ->find($id);
+
+        if (! $expertCompany) {
+            return $this->notFound('检查记录不存在');
+        }
+
+        $user = $request->user();
+        $planCompanyId = $expertCompany->expertInspection?->company_id;
+        $isOwner = $planCompanyId !== null && $planCompanyId === (int) $user->company_id;
+        $isAssignedExpert = $expertCompany->expertInspectionUsers
+            ->contains(fn ($row) => (int) $row->expert_user_id === (int) $user->id);
+
+        if (! $isOwner && ! $isAssignedExpert) {
+            return $this->failed('无权限下载通知单');
+        }
+
+        if (! $expertCompany->inspection_notice_url) {
+            return $this->failed('通知单尚未生成');
+        }
+
+        $path = storage_path('app/'.$expertCompany->inspection_notice_url);
+
+        if (! is_file($path)) {
+            return $this->failed('通知单文件不存在');
+        }
+
+        return response()->download($path, basename($path));
     }
 }

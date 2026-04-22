@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\MonthStatisticsController;
 use App\Http\Controllers\Api\V1\NoticeStatsController;
 use App\Http\Controllers\Api\V1\OnlineInspectionController;
 use App\Http\Controllers\Api\V1\RectificationSheetCountController;
+use App\Http\Controllers\Api\V1\RectificationSheetsController;
 use App\Http\Controllers\Api\V1\RegulationLibraryController;
 use App\Http\Controllers\Api\V1\RisksController;
 use App\Http\Controllers\Api\V1\SpecialEquipmentStatisticsController;
@@ -91,6 +92,11 @@ Route::get('/my-check-inspections', [ExpertInspectionsController::class, 'myChec
 Route::get('/my-expert-assignments', [ExpertInspectionsController::class, 'myExpertAssignments']);
 Route::post('/expert-inspection-companies/{id}/confirm', [ExpertInspectionsController::class, 'confirmCompany']);
 Route::post('/expert-inspection-users/{id}/confirm', [ExpertInspectionsController::class, 'confirmUser']);
+Route::post('/expert-inspection-companies/{id}/inspection-notice', [ExpertInspectionsController::class, 'generateInspectionNotice']);
+Route::get('/expert-inspection-companies/{id}/inspection-notice', [ExpertInspectionsController::class, 'downloadInspectionNotice']);
+Route::post('/expert-inspection-companies/{id}/rectification-sheet', [RectificationSheetsController::class, 'generate']);
+Route::get('/expert-inspection-companies/{id}/rectification-sheet', [RectificationSheetsController::class, 'download']);
+Route::get('/hazard-statistics', [RectificationSheetsController::class, 'exportStatistics']);
 
 // ── 月度统计 ─────────────────────────────────────────────────────
 Route::middleware('permission:month-statistics.list')->group(function () {

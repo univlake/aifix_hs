@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import {
-    Archive, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Clock, Eye,
-    FileCheck, FileText, Loader2, MessageSquare, Pencil, Plus,
+    Archive, AlertTriangle, BarChart3, CheckCircle2, ChevronLeft, ChevronRight, Clock, Download, Eye,
+    FileCheck, FileDown, FileSpreadsheet, Image as ImageIcon, Loader2, Pencil, Plus,
     Trash2, UserCheck, Users, X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -39,6 +39,7 @@ interface HiddenDanger {
     description: string;
     hidden_type: string;
     hidden_level: string;
+    legalises?: string | null;
     proposal?: string | null;
     correct_deadline?: string | null;
     correct_status: number;
@@ -81,6 +82,8 @@ interface ExpertCompanyRow {
     notify_company_time: string | null;
     check_company_time: string | null;
     confirm_time: string | null;
+    inspection_notice_url: string | null;
+    rectification_sheet_url: string | null;
     status: number;
     check_company?: CheckCompany | null;
     checkCompany?: CheckCompany | null;
@@ -710,7 +713,9 @@ function DetailDrawer({
     const [addDangerFor, setAddDangerFor] = useState<ExpertCompanyRow | null>(null);
     const [confirmFor, setConfirmFor] = useState<HiddenDanger | null>(null);
     const [archiving, setArchiving] = useState<number | null>(null);
-    const [tab, setTab] = useState<'companies' | 'inspection-notice' | 'rectification-notice' | 'feedback'>('companies');
+    const [generatingNotice, setGeneratingNotice] = useState<number | null>(null);
+    const [generatingSheet, setGeneratingSheet] = useState<number | null>(null);
+    const [viewingDanger, setViewingDanger] = useState<HiddenDanger | null>(null);
 
     const isPlanOwner = inspection.company_id === rootCompanyId;
 
@@ -757,6 +762,78 @@ return;
     };
 
 
+    const generateNotice = async (ec: ExpertCompanyRow) => {
+        setGeneratingNotice(ec.id);
+
+        try {
+            await api.post(`/expert-inspection-companies/${ec.id}/inspection-notice`);
+            await refresh();
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            window.alert(e?.response?.data?.message ?? '生成失败');
+        } finally {
+            setGeneratingNotice(null);
+        }
+    };
+
+    const downloadNotice = async (ec: ExpertCompanyRow) => {
+        try {
+            const res = await api.get(`/expert-inspection-companies/${ec.id}/inspection-notice`, {
+                responseType: 'blob',
+            });
+            const blob = new Blob([res.data as BlobPart], {
+                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `检查通知单-${pickCheckCompany(ec)?.title ?? ec.id}.docx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 0);
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            window.alert(e?.response?.data?.message ?? '下载失败');
+        }
+    };
+
+    const generateSheet = async (ec: ExpertCompanyRow) => {
+        setGeneratingSheet(ec.id);
+
+        try {
+            await api.post(`/expert-inspection-companies/${ec.id}/rectification-sheet`);
+            await refresh();
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            window.alert(e?.response?.data?.message ?? '生成失败');
+        } finally {
+            setGeneratingSheet(null);
+        }
+    };
+
+    const downloadSheet = async (ec: ExpertCompanyRow) => {
+        try {
+            const res = await api.get(`/expert-inspection-companies/${ec.id}/rectification-sheet`, {
+                responseType: 'blob',
+            });
+            const blob = new Blob([res.data as BlobPart], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `整改通知单-${pickCheckCompany(ec)?.title ?? ec.id}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 0);
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            window.alert(e?.response?.data?.message ?? '下载失败');
+        }
+    };
+
     const archiveDanger = async (d: HiddenDanger) => {
         if (!window.confirm('确认对该隐患进行归档？归档后将不可再修改。')) {
 return;
@@ -789,42 +866,15 @@ return;
                             <X className="h-4 w-4" />
                         </button>
                     </div>
-                    {/* Tabs */}
-                    <div className="flex items-center gap-0.5 border-b border-blue-900/30 px-6">
-                        {([
-                            { key: 'companies', label: '受检企业', icon: Users, count: companies.length },
-                            { key: 'inspection-notice', label: '检查通知单', icon: FileText, count: 0 },
-                            { key: 'rectification-notice', label: '整改通知单', icon: FileCheck, count: 0 },
-                            { key: 'feedback', label: '反馈情况', icon: MessageSquare, count: 0 },
-                        ] as const).map(({ key, label, icon: Icon }) => {
-                            const active = tab === key;
-
-                            return (
-                                <button
-                                    key={key}
-                                    onClick={() => setTab(key)}
-                                    className={cn(
-                                        'relative flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs transition-colors',
-                                        active
-                                            ? 'border-blue-500 text-blue-300'
-                                            : 'border-transparent text-slate-500 hover:text-slate-300',
-                                    )}
-                                >
-                                    <Icon className="h-3.5 w-3.5" />
-                                    {label}
-                                </button>
-                            );
-                        })}
-                    </div>
-
                     <div className="flex-1 overflow-y-auto p-6">
-                        {tab === 'companies' && (<>
-                        <section className="mb-6">
-                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">检查说明</p>
-                            <p className="text-sm text-slate-300 whitespace-pre-wrap">{inspection.description || <span className="text-slate-600">—</span>}</p>
-                        </section>
+                        {inspection.description && (
+                            <section className="mb-5 rounded-lg border border-blue-900/20 bg-[#070d1f] px-4 py-3">
+                                <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">检查说明</p>
+                                <p className="text-sm text-slate-300 whitespace-pre-wrap">{inspection.description}</p>
+                            </section>
+                        )}
 
-                        <section className="mb-6">
+                        <section>
                             <div className="mb-3 flex items-center justify-between">
                                 <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600">受检企业 ({companies.length})</p>
                                 {canEdit && (
@@ -849,134 +899,177 @@ return;
                                         const isExpertOnRow = userId !== null && experts.some((u) => u.expert_user_id === userId);
                                         const canAddDanger = isActive(inspection) && (canEdit || isExpertOnRow);
 
+                                        const canDownloadNoticeRow = Boolean(c.inspection_notice_url) && (isPlanOwner || isExpertOnRow);
+                                        const canGenerateSheetRow = isPlanOwner || isExpertOnRow;
+
                                         return (
-                                            <div key={c.id} className="rounded-lg border border-blue-900/30 bg-[#070d1f] p-3">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <Users className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-                                                            <p className="truncate text-sm font-medium text-slate-200">{co?.title ?? `企业#${c.check_company_id}`}</p>
-                                                            {c.confirm_time ? (
-                                                                <span className="flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-600/10 px-1.5 py-0.5 text-[10px] text-emerald-400">
-                                                                    <CheckCircle2 className="h-2.5 w-2.5" />已确认
-                                                                </span>
-                                                            ) : (
-                                                                <span className="flex items-center gap-1 rounded border border-amber-500/30 bg-amber-600/10 px-1.5 py-0.5 text-[10px] text-amber-400">
-                                                                    <Clock className="h-2.5 w-2.5" />待确认
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] text-slate-500">
-                                                            <span>通知时间：{c.notify_company_time ?? '—'}</span>
-                                                            <span>检查时间：{c.check_company_time ?? '—'}</span>
-                                                            <span className="col-span-2">确认时间：{c.confirm_time ?? '—'}</span>
-                                                        </div>
-                                                    </div>
-                                                    {canEdit && (
-                                                        <button onClick={() => removeCompany(c)} className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400" title="删除">
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </button>
+                                            <div key={c.id} className="overflow-hidden rounded-xl border border-blue-900/30 bg-[#070d1f]">
+                                                {/* Header: name + status + action toolbar */}
+                                                <div className="flex items-center gap-2 border-b border-blue-900/20 bg-blue-950/25 px-3 py-2">
+                                                    <Users className="h-4 w-4 shrink-0 text-blue-400" />
+                                                    <p className="truncate text-sm font-medium text-slate-200">{co?.title ?? `企业#${c.check_company_id}`}</p>
+                                                    {c.confirm_time ? (
+                                                        <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-600/10 px-1.5 text-[10px] text-emerald-400">
+                                                            <CheckCircle2 className="h-2.5 w-2.5" />已确认
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-600/10 px-1.5 text-[10px] text-amber-400">
+                                                            <Clock className="h-2.5 w-2.5" />待确认
+                                                        </span>
                                                     )}
+                                                    <div className="ml-auto flex items-center gap-0.5">
+                                                        {isPlanOwner && (
+                                                            <button
+                                                                onClick={() => generateNotice(c)}
+                                                                disabled={generatingNotice === c.id}
+                                                                className="flex h-7 w-7 items-center justify-center rounded-md text-blue-400 transition-colors hover:bg-blue-600/15 disabled:opacity-50"
+                                                                title={c.inspection_notice_url ? '重新生成通知单' : '生成通知单'}
+                                                            >
+                                                                {generatingNotice === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+                                                            </button>
+                                                        )}
+                                                        {canDownloadNoticeRow && (
+                                                            <button
+                                                                onClick={() => downloadNotice(c)}
+                                                                className="flex h-7 w-7 items-center justify-center rounded-md text-emerald-400 transition-colors hover:bg-emerald-600/15"
+                                                                title="下载通知单"
+                                                            >
+                                                                <Download className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        )}
+                                                        {canGenerateSheetRow && (
+                                                            <button
+                                                                onClick={() => generateSheet(c)}
+                                                                disabled={generatingSheet === c.id}
+                                                                className="flex h-7 w-7 items-center justify-center rounded-md text-amber-400 transition-colors hover:bg-amber-600/15 disabled:opacity-50"
+                                                                title={c.rectification_sheet_url ? '重新生成整改单' : '生成整改单'}
+                                                            >
+                                                                {generatingSheet === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
+                                                            </button>
+                                                        )}
+                                                        {c.rectification_sheet_url && (
+                                                            <button
+                                                                onClick={() => downloadSheet(c)}
+                                                                className="flex h-7 w-7 items-center justify-center rounded-md text-violet-400 transition-colors hover:bg-violet-600/15"
+                                                                title="下载整改单"
+                                                            >
+                                                                <FileCheck className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        )}
+                                                        {canEdit && (
+                                                            <button
+                                                                onClick={() => removeCompany(c)}
+                                                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-red-600/15 hover:text-red-400"
+                                                                title="删除受检企业"
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
 
-                                                {/* Experts */}
-                                                <div className="mt-3 border-t border-blue-900/20 pt-3">
-                                                    <div className="mb-2 flex items-center justify-between">
-                                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">检查专家 ({experts.length})</p>
+                                                {/* Body */}
+                                                <div className="space-y-3 p-3">
+                                                    {/* Compact meta */}
+                                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                                                        <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />通知 {c.notify_company_time ?? '—'}</span>
+                                                        <span className="text-slate-700">·</span>
+                                                        <span>检查 {c.check_company_time ?? '—'}</span>
+                                                        {c.confirm_time && <><span className="text-slate-700">·</span><span className="text-emerald-500/80">确认 {c.confirm_time}</span></>}
+                                                    </div>
+
+                                                    {/* Experts — inline chip row */}
+                                                    <div className="flex flex-wrap items-center gap-1.5">
+                                                        <span className="text-[11px] text-slate-600">专家：</span>
+                                                        {experts.length === 0 && <span className="text-[11px] text-slate-700">暂无</span>}
+                                                        {experts.map((u) => {
+                                                            const user = pickExpertUser(u);
+
+                                                            return (
+                                                                <span key={u.id} className="group inline-flex items-center gap-1 rounded-md border border-blue-900/40 bg-blue-600/5 px-2 py-0.5 text-[11px] text-slate-300">
+                                                                    {user?.nickname ?? `专家#${u.expert_user_id}`}
+                                                                    {u.confirm_time ? <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" /> : <Clock className="h-2.5 w-2.5 text-amber-400" />}
+                                                                    {canEdit && (
+                                                                        <button onClick={() => removeExpert(u)} className="ml-0.5 text-slate-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400">
+                                                                            <X className="h-2.5 w-2.5" />
+                                                                        </button>
+                                                                    )}
+                                                                </span>
+                                                            );
+                                                        })}
                                                         {canEdit && (
                                                             <button
                                                                 onClick={() => setAddExpertFor(c)}
-                                                                className="flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-600/10 px-2 py-0.5 text-[10px] text-emerald-400 hover:bg-emerald-600/20"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-dashed border-blue-900/50 px-2 py-0.5 text-[11px] text-slate-500 transition-colors hover:border-blue-500/40 hover:text-blue-300"
+                                                                title="指派专家"
                                                             >
                                                                 <UserCheck className="h-2.5 w-2.5" />指派
                                                             </button>
                                                         )}
                                                     </div>
-                                                    {experts.length === 0 ? (
-                                                        <p className="text-[11px] text-slate-600">暂无专家</p>
-                                                    ) : (
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {experts.map((u) => {
-                                                                const user = pickExpertUser(u);
 
-                                                                return (
-                                                                    <span key={u.id} className="group inline-flex items-center gap-1 rounded-md border border-blue-900/40 bg-blue-600/5 px-2 py-0.5 text-[11px] text-slate-300">
-                                                                        {user?.nickname ?? `专家#${u.expert_user_id}`}
-                                                                        {u.confirm_time
-                                                                            ? <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />
-                                                                            : <Clock className="h-2.5 w-2.5 text-amber-400" />}
-                                                                        {canEdit && (
-                                                                            <button onClick={() => removeExpert(u)} className="ml-0.5 text-slate-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400">
-                                                                                <X className="h-2.5 w-2.5" />
-                                                                            </button>
-                                                                        )}
-                                                                    </span>
-                                                                );
-                                                            })}
+                                                    {/* Dangers */}
+                                                    <div>
+                                                        <div className="mb-1.5 flex items-center justify-between">
+                                                            <span className="text-[11px] text-slate-600">现场隐患 <span className="text-slate-500">({ds.length})</span></span>
+                                                            {canAddDanger && (
+                                                                <button
+                                                                    onClick={() => setAddDangerFor(c)}
+                                                                    className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-600/10 px-2 py-0.5 text-[10px] text-amber-400 transition-colors hover:bg-amber-600/20"
+                                                                >
+                                                                    <AlertTriangle className="h-2.5 w-2.5" />登记隐患
+                                                                </button>
+                                                            )}
                                                         </div>
-                                                    )}
-                                                </div>
+                                                        {ds.length === 0 ? (
+                                                            <p className="rounded border border-dashed border-blue-900/30 py-2 text-center text-[11px] text-slate-700">暂无隐患</p>
+                                                        ) : (
+                                                            <div className="space-y-1.5">
+                                                                {ds.map((d) => {
+                                                                    const status = dangerStatusLabel(d);
+                                                                    const isArchived = d.invest_status === 2;
+                                                                    const isConfirmed = d.correct_status === 3 || Boolean(d.review_time);
+                                                                    const isRectified = d.correct_status === 2;
 
-                                                {/* Hidden dangers */}
-                                                <div className="mt-3 border-t border-blue-900/20 pt-3">
-                                                    <div className="mb-2 flex items-center justify-between">
-                                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">现场隐患 ({ds.length})</p>
-                                                        {canAddDanger && (
-                                                            <button
-                                                                onClick={() => setAddDangerFor(c)}
-                                                                className="flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-600/10 px-2 py-0.5 text-[10px] text-amber-400 hover:bg-amber-600/20"
-                                                            >
-                                                                <AlertTriangle className="h-2.5 w-2.5" />登记隐患
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    {ds.length === 0 ? (
-                                                        <p className="text-[11px] text-slate-600">暂无隐患</p>
-                                                    ) : (
-                                                        <div className="space-y-2">
-                                                            {ds.map((d) => {
-                                                                const status = dangerStatusLabel(d);
-                                                                const isArchived = d.invest_status === 2;
-                                                                const isConfirmed = d.correct_status === 3 || Boolean(d.review_time);
-                                                                const isRectified = d.correct_status === 2;
-
-                                                                return (
-                                                                    <div key={d.id} className="rounded-md border border-blue-900/20 bg-[#0d1530] px-2.5 py-2 text-[11px]">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="rounded border border-blue-900/40 bg-blue-600/8 px-1.5 py-0 text-[10px] text-blue-400">{d.hidden_type}</span>
-                                                                            <span className={cn('rounded border px-1.5 py-0 text-[10px]', d.hidden_level === '重大隐患' ? 'border-red-500/30 bg-red-600/10 text-red-400' : 'border-blue-500/30 bg-blue-600/10 text-blue-400')}>{d.hidden_level}</span>
-                                                                            <span className="text-slate-500">{d.area}</span>
-                                                                            <span className={cn('ml-auto rounded border px-1.5 py-0 text-[10px]', status.cls)}>{status.text}</span>
-                                                                        </div>
-                                                                        <p className="mt-1.5 text-slate-400 line-clamp-2" title={d.description}>{d.description}</p>
-                                                                        {(isRectified || isConfirmed) && d.review_description && (
-                                                                            <p className="mt-1 border-t border-blue-900/20 pt-1.5 text-[10px] text-slate-500">
-                                                                                <span className="text-slate-600">整改：</span>{d.review_description}
-                                                                                {d.correct_date && <span className="ml-1 text-slate-700">· {d.correct_date}</span>}
-                                                                            </p>
-                                                                        )}
-                                                                        {/* Action buttons */}
-                                                                        {!isArchived && (
-                                                                            <div className="mt-2 flex items-center gap-1">
-                                                                                {/* 整改确认 - group/expert when rectified */}
-                                                                                {isRectified && !isConfirmed && (
-                                                                                    <button
-                                                                                        onClick={() => setConfirmFor(d)}
-                                                                                        className="flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-600/10 px-2 py-0.5 text-[10px] text-emerald-400 hover:bg-emerald-600/20"
-                                                                                    >
-                                                                                        <CheckCircle2 className="h-2.5 w-2.5" />整改确认
-                                                                                    </button>
-                                                                                )}
-                                                                                {/* 确认归档 - plan-creator enterprise only */}
-                                                                                {isConfirmed && isPlanOwner && (
-                                                                                    <button
-                                                                                        onClick={() => archiveDanger(d)}
-                                                                                        disabled={archiving === d.id}
-                                                                                        className="flex items-center gap-1 rounded-md border border-violet-500/30 bg-violet-600/10 px-2 py-0.5 text-[10px] text-violet-300 hover:bg-violet-600/20 disabled:opacity-50"
-                                                                                    >
-                                                                                        {archiving === d.id ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Archive className="h-2.5 w-2.5" />}
-                                                                                        确认归档
-                                                                                    </button>
+                                                                    return (
+                                                                        <div
+                                                                            key={d.id}
+                                                                            onClick={() => setViewingDanger(d)}
+                                                                            className="group cursor-pointer rounded-md border border-blue-900/20 bg-[#0d1530] px-2.5 py-2 text-[11px] transition-colors hover:border-blue-500/40 hover:bg-blue-950/40"
+                                                                        >
+                                                                            <div className="flex flex-wrap items-center gap-1.5">
+                                                                                <span className="rounded border border-blue-900/40 bg-blue-600/8 px-1.5 py-0 text-[10px] text-blue-400">{d.hidden_type}</span>
+                                                                                <span className={cn('rounded border px-1.5 py-0 text-[10px]', d.hidden_level === '重大隐患' ? 'border-red-500/30 bg-red-600/10 text-red-400' : 'border-blue-500/30 bg-blue-600/10 text-blue-400')}>{d.hidden_level}</span>
+                                                                                <span className="text-slate-500">{d.area}</span>
+                                                                                <span className={cn('ml-auto rounded border px-1.5 py-0 text-[10px]', status.cls)}>{status.text}</span>
+                                                                                <Eye className="h-3 w-3 text-slate-600 opacity-0 transition-opacity group-hover:opacity-100" />
+                                                                            </div>
+                                                                            <p className="mt-1 text-slate-400 line-clamp-2" title={d.description}>{d.description}</p>
+                                                                            {(isRectified || isConfirmed) && d.review_description && (
+                                                                                <p className="mt-1 text-[10px] text-slate-500">
+                                                                                    <span className="text-slate-600">整改：</span>{d.review_description}
+                                                                                    {d.correct_date && <span className="ml-1 text-slate-700">· {d.correct_date}</span>}
+                                                                                </p>
+                                                                            )}
+                                                                            {!isArchived && (isRectified || (isConfirmed && isPlanOwner)) && (
+                                                                                <div className="mt-1.5 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                                                    {isRectified && !isConfirmed && (
+                                                                                        <button
+                                                                                            onClick={() => setConfirmFor(d)}
+                                                                                            className="flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-600/10 px-2 py-0.5 text-[10px] text-emerald-400 hover:bg-emerald-600/20"
+                                                                                        >
+                                                                                            <CheckCircle2 className="h-2.5 w-2.5" />整改确认
+                                                                                        </button>
+                                                                                    )}
+                                                                                    {isConfirmed && isPlanOwner && (
+                                                                                        <button
+                                                                                            onClick={() => archiveDanger(d)}
+                                                                                            disabled={archiving === d.id}
+                                                                                            className="flex items-center gap-1 rounded-md border border-violet-500/30 bg-violet-600/10 px-2 py-0.5 text-[10px] text-violet-300 hover:bg-violet-600/20 disabled:opacity-50"
+                                                                                        >
+                                                                                            {archiving === d.id ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Archive className="h-2.5 w-2.5" />}
+                                                                                            确认归档
+                                                                                        </button>
                                                                                 )}
                                                                             </div>
                                                                         )}
@@ -986,37 +1079,13 @@ return;
                                                         </div>
                                                     )}
                                                 </div>
+                                                </div>
                                             </div>
                                         );
                                     })}
                                 </div>
                             )}
                         </section>
-                        </>)}
-
-                        {tab === 'inspection-notice' && (
-                            <div className="py-12 text-center">
-                                <FileText className="mx-auto mb-3 h-10 w-10 text-slate-700" />
-                                <p className="text-sm text-slate-400">检查通知单</p>
-                                <p className="mt-1 text-xs text-slate-600">即将支持 · 用于生成并下达专家检查前的通知单</p>
-                            </div>
-                        )}
-
-                        {tab === 'rectification-notice' && (
-                            <div className="py-12 text-center">
-                                <FileCheck className="mx-auto mb-3 h-10 w-10 text-slate-700" />
-                                <p className="text-sm text-slate-400">整改通知单</p>
-                                <p className="mt-1 text-xs text-slate-600">即将支持 · 用于向受检企业下达整改通知单</p>
-                            </div>
-                        )}
-
-                        {tab === 'feedback' && (
-                            <div className="py-12 text-center">
-                                <MessageSquare className="mx-auto mb-3 h-10 w-10 text-slate-700" />
-                                <p className="text-sm text-slate-400">反馈情况</p>
-                                <p className="mt-1 text-xs text-slate-600">即将支持 · 汇总受检企业整改反馈情况</p>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
@@ -1054,19 +1123,176 @@ return;
                 danger={confirmFor}
                 onClose={() => setConfirmFor(null)}
                 onSaved={() => {
- setConfirmFor(null); refresh(); 
+ setConfirmFor(null); refresh();
 }}
             />
+            <DangerDetailsModal danger={viewingDanger} onClose={() => setViewingDanger(null)} />
         </>
+    );
+}
+
+// ── Danger details modal ──────────────────────────────────────────
+
+function pickExamineAnnex(d: HiddenDanger): AnnexItem[] {
+    return d.hidden_examine_annex ?? d.hiddenExamineAnnex ?? [];
+}
+function pickRectifyAnnex(d: HiddenDanger): AnnexItem[] {
+    return d.hidden_rectify_annex ?? d.hiddenRectifyAnnex ?? [];
+}
+function pickReviewAnnex(d: HiddenDanger): AnnexItem[] {
+    return d.hidden_review_annex ?? d.hiddenReviewAnnex ?? [];
+}
+
+function isImageUrl(url: string): boolean {
+    return /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(url);
+}
+
+function AnnexGallery({ items }: { items: AnnexItem[] }) {
+    if (items.length === 0) {
+        return <p className="rounded border border-dashed border-blue-900/30 py-3 text-center text-[11px] text-slate-700">暂无附件</p>;
+    }
+
+    return (
+        <div className="grid grid-cols-4 gap-2">
+            {items.map((a, i) => (
+                <a
+                    key={a.id ?? i}
+                    href={a.annex_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative block overflow-hidden rounded-md border border-blue-900/30 bg-[#070d1f]"
+                    title={a.geolocation ?? undefined}
+                >
+                    {isImageUrl(a.annex_url) ? (
+                        <img src={a.annex_url} alt="" className="h-24 w-full object-cover transition-opacity group-hover:opacity-80" />
+                    ) : (
+                        <div className="flex h-24 w-full flex-col items-center justify-center gap-1 px-2 text-[10px] text-slate-500">
+                            <ImageIcon className="h-5 w-5 text-slate-600" />
+                            <span className="w-full truncate text-center">{a.annex_url.split('/').pop() ?? '附件'}</span>
+                        </div>
+                    )}
+                    {a.geolocation && <span className="absolute bottom-0 left-0 right-0 truncate bg-black/60 px-1 py-0.5 text-[9px] text-slate-300">📍 {a.geolocation}</span>}
+                </a>
+            ))}
+        </div>
+    );
+}
+
+function DangerDetailsModal({ danger, onClose }: { danger: HiddenDanger | null; onClose: () => void }) {
+    if (!danger) {
+return null;
+}
+
+    const status = dangerStatusLabel(danger);
+    const examineAnnex = pickExamineAnnex(danger);
+    const rectifyAnnex = pickRectifyAnnex(danger);
+    const reviewAnnex = pickReviewAnnex(danger);
+
+    return (
+        <Modal open={true} onClose={onClose} size="lg">
+            <ModalHeader title="隐患详情" subtitle={`${danger.hidden_type} · ${danger.area}`} onClose={onClose} />
+            <div className="flex-1 overflow-y-auto p-6">
+                <div className="space-y-5">
+                    {/* Tags */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded border border-blue-900/40 bg-blue-600/10 px-2 py-0.5 text-[11px] text-blue-400">{danger.hidden_type}</span>
+                        <span className={cn('rounded border px-2 py-0.5 text-[11px]', danger.hidden_level === '重大隐患' ? 'border-red-500/30 bg-red-600/10 text-red-400' : 'border-blue-500/30 bg-blue-600/10 text-blue-400')}>{danger.hidden_level}</span>
+                        <span className={cn('rounded border px-2 py-0.5 text-[11px]', status.cls)}>{status.text}</span>
+                        {danger.session && <span className="rounded border border-blue-900/40 bg-[#070d1f] px-2 py-0.5 text-[11px] text-slate-400">第 {danger.session}</span>}
+                    </div>
+
+                    {/* Description */}
+                    <section className="rounded-lg border border-blue-900/30 bg-[#070d1f] px-4 py-3">
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">隐患描述</p>
+                        <p className="whitespace-pre-wrap text-sm text-slate-200">{danger.description}</p>
+                        <p className="mt-2 text-[11px] text-slate-500">场所：{danger.area}</p>
+                    </section>
+
+                    {/* Examination */}
+                    <section>
+                        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600">排查信息</p>
+                        <div className="space-y-3 rounded-lg border border-blue-900/30 bg-[#070d1f] px-4 py-3">
+                            {danger.correct_deadline && (
+                                <div className="text-[11px] text-slate-400">
+                                    <span className="text-slate-600">整改期限：</span>{danger.correct_deadline}
+                                </div>
+                            )}
+                            {danger.legalises && (
+                                <div>
+                                    <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">排查依据</p>
+                                    <p className="whitespace-pre-wrap text-xs text-slate-300">{danger.legalises}</p>
+                                </div>
+                            )}
+                            {danger.proposal && (
+                                <div>
+                                    <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">整改建议</p>
+                                    <p className="whitespace-pre-wrap text-xs text-slate-300">{danger.proposal}</p>
+                                </div>
+                            )}
+                            <div>
+                                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">排查附件</p>
+                                <AnnexGallery items={examineAnnex} />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Rectification */}
+                    {(danger.correct_date || danger.review_description || rectifyAnnex.length > 0) && (
+                        <section>
+                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-400/80">整改情况</p>
+                            <div className="space-y-3 rounded-lg border border-emerald-500/20 bg-emerald-600/5 px-4 py-3">
+                                {danger.correct_date && (
+                                    <div className="text-[11px] text-slate-400">
+                                        <span className="text-slate-600">整改日期：</span>{danger.correct_date}
+                                    </div>
+                                )}
+                                {danger.review_description && (
+                                    <div>
+                                        <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">整改描述</p>
+                                        <p className="whitespace-pre-wrap text-xs text-slate-300">{danger.review_description}</p>
+                                    </div>
+                                )}
+                                <div>
+                                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">整改附件</p>
+                                    <AnnexGallery items={rectifyAnnex} />
+                                </div>
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Confirmation */}
+                    {(danger.review_time || reviewAnnex.length > 0) && (
+                        <section>
+                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-violet-400/80">确认复查</p>
+                            <div className="space-y-3 rounded-lg border border-violet-500/20 bg-violet-600/5 px-4 py-3">
+                                {danger.review_time && (
+                                    <div className="text-[11px] text-slate-400">
+                                        <span className="text-slate-600">确认时间：</span>{danger.review_time}
+                                    </div>
+                                )}
+                                <div>
+                                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600">复查附件</p>
+                                    <AnnexGallery items={reviewAnnex} />
+                                </div>
+                            </div>
+                        </section>
+                    )}
+                </div>
+            </div>
+            <div className="flex items-center justify-end border-t border-blue-900/30 px-6 py-4">
+                <button onClick={onClose} className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">关闭</button>
+            </div>
+        </Modal>
     );
 }
 
 // ── Page ──────────────────────────────────────────────────────────
 
-export default function ExpertInspectionGroupView() {
-    const { rootCompany } = useScope();
+export default function ExpertInspectionGroupView({ mode = 'admin' }: { mode?: 'admin' | 'production' }) {
+    const { rootCompany, activeCompany } = useScope();
     const { user } = useAuth();
-    const companyId = rootCompany?.id;
+    const isProduction = mode === 'production';
+    const companyId = (isProduction ? activeCompany?.id : rootCompany?.id) ?? undefined;
 
     const [rows, setRows] = useState<Inspection[]>([]);
     const [loading, setLoading] = useState(false);
@@ -1081,6 +1307,7 @@ export default function ExpertInspectionGroupView() {
     const [detail, setDetail] = useState<Inspection | null>(null);
     const [deleteItem, setDeleteItem] = useState<Inspection | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [statsModalOpen, setStatsModalOpen] = useState(false);
 
     const fetchRows = useCallback(async (p: number, title: string) => {
         if (!companyId && !user?.id) {
@@ -1151,17 +1378,27 @@ return;
                 <div>
                     <h1 className="text-xl font-bold text-slate-100">专家检查</h1>
                     <p className="mt-0.5 text-xs text-slate-600">
-                        集团端专家现场安全检查任务管理 · 共 <span className="font-medium text-slate-400">{total}</span> 条记录
+                        {isProduction ? '查看本企业相关的专家检查计划' : '集团端专家现场安全检查任务管理'} · 共 <span className="font-medium text-slate-400">{total}</span> 条记录
                     </p>
                 </div>
-                {companyId && (
-                    <button
-                        onClick={openCreate}
-                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"
-                    >
-                        <Plus className="h-4 w-4" />新建检查计划
-                    </button>
-                )}
+                <div className="flex items-center gap-2">
+                    {companyId && !isProduction && (
+                        <button
+                            onClick={() => setStatsModalOpen(true)}
+                            className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-600/15 px-4 py-2 text-sm font-medium text-emerald-300 transition-all hover:border-emerald-400/50 hover:bg-emerald-600/25 active:scale-95"
+                        >
+                            <BarChart3 className="h-4 w-4" />导出隐患分类统计
+                        </button>
+                    )}
+                    {companyId && !isProduction && (
+                        <button
+                            onClick={openCreate}
+                            className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"
+                        >
+                            <Plus className="h-4 w-4" />新建检查计划
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="mb-4 flex items-center gap-2">
@@ -1296,6 +1533,111 @@ setSearch(searchInput.trim());
                     </button>
                 </div>
             </Modal>
+
+            {companyId && (
+                <HazardStatsModal
+                    open={statsModalOpen}
+                    onClose={() => setStatsModalOpen(false)}
+                    companyId={companyId}
+                />
+            )}
         </>
+    );
+}
+
+// ── Hazard statistics export modal ────────────────────────────────
+
+const HAZARD_STATS_TYPES = ['危化品', '电气', '机械', '安全设施', '消防', '职业健康', '其他'];
+
+function HazardStatsModal({
+    open, onClose, companyId,
+}: { open: boolean; onClose: () => void; companyId: number }) {
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
+    const [type, setType] = useState('all');
+    const [exporting, setExporting] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (open) {
+            setStartTime('');
+            setEndTime('');
+            setType('all');
+            setError('');
+        }
+    }, [open]);
+
+    const submit = async () => {
+        setExporting(true);
+        setError('');
+
+        try {
+            const res = await api.get('/hazard-statistics', {
+                params: {
+                    company_id: companyId,
+                    ...(startTime ? { start_time: startTime } : {}),
+                    ...(endTime ? { end_time: endTime } : {}),
+                    ...(type && type !== 'all' ? { type } : {}),
+                },
+                responseType: 'blob',
+            });
+            const blob = new Blob([res.data as BlobPart], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `隐患分类统计-${startTime || '全部'}-${endTime || '至今'}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 0);
+            onClose();
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            setError(e?.response?.data?.message ?? '导出失败');
+        } finally {
+            setExporting(false);
+        }
+    };
+
+    return (
+        <Modal open={open} onClose={onClose}>
+            <ModalHeader title="导出隐患分类统计" subtitle="按时间区间与类别导出本企业隐患排查分类统计表" onClose={onClose} />
+            <div className="flex-1 overflow-y-auto p-6">
+                <div className="space-y-4">
+                    {error && (
+                        <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />{error}
+                        </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="开始日期">
+                            <input type="date" className={cn(inputCls, 'cursor-pointer')} value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                        </Field>
+                        <Field label="结束日期">
+                            <input type="date" className={cn(inputCls, 'cursor-pointer')} value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                        </Field>
+                    </div>
+                    <Field label="隐患类别">
+                        <select className={selectCls} value={type} onChange={(e) => setType(e.target.value)}>
+                            <option value="all" className="bg-[#0d1530]">全部类别</option>
+                            {HAZARD_STATS_TYPES.map((t) => <option key={t} value={t} className="bg-[#0d1530]">{t}</option>)}
+                        </select>
+                    </Field>
+                </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
+                <button onClick={onClose} className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">取消</button>
+                <button
+                    onClick={submit}
+                    disabled={exporting}
+                    className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-600/20 px-4 py-2 text-sm font-medium text-emerald-300 hover:bg-emerald-600/30 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                    {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BarChart3 className="h-3.5 w-3.5" />}
+                    导出
+                </button>
+            </div>
+        </Modal>
     );
 }
