@@ -153,7 +153,6 @@ Route::middleware('permission:bloc-experts.delete')->group(function () {
 
 // ── 集团风险 ─────────────────────────────────────────────────────
 Route::middleware('permission:bloc-risks.list')->group(function () {
-    Route::get('/bloc-risks', [BlocRisksController::class, 'index']);
     Route::get('/bloc-risks-inherent', [BlocRisksController::class, 'getInherentRiskNum']);
     Route::get('/bloc-risks-float', [BlocRisksController::class, 'getFloatRiskNum']);
     Route::get('/bloc-risks-float-statistics', [BlocRisksController::class, 'floatRiskStatistics']);
