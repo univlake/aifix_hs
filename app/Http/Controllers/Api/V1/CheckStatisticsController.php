@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\CorrectionResult;
 use App\Http\Controllers\Api\Controller;
 use App\Models\AccidentCheck;
 use App\Models\AddPoint;
@@ -89,7 +90,7 @@ class CheckStatisticsController extends Controller
      * Return alert counts for a company and all its subordinates:
      * - expired personnel certificates
      * - expired special equipment
-     * - unrevised hazards (MonthlyInvestigation where correct_result != '已整改')
+     * - unrevised hazards (MonthlyInvestigation where correct_result != CorrectionResult::Rectified)
      */
     public function alerts(Request $request): JsonResponse
     {
@@ -114,7 +115,7 @@ class CheckStatisticsController extends Controller
 
         $unrevisedHazards = MonthlyInvestigation::query()
             ->whereIn('company_id', $ids)
-            ->where('correct_result', '!=', '已整改')
+            ->where('correct_result', '!=', CorrectionResult::Rectified->value)
             ->count();
 
         return $this->success([

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\CorrectionResult;
 use App\Http\Controllers\Api\Controller;
 use App\Models\Company;
 use App\Models\MonthlyInvestigation;
@@ -222,9 +223,23 @@ class BlocRisksController extends Controller
         })->first();
         $company_ids = $this->ascTree($companies);
 
-        if (empty($company_ids)) {
-            return $this->success([]);
-        }
+        $data = [];
+        foreach ($company_ids as $k => $items) {
+            $monthly_investigation = MonthlyInvestigation::query()->where('company_id', $items)->count();
+            $monthly_investigation_old = MonthlyInvestigation::query()->where('company_id', $items)->where('updated_at', 'NOT LIKE', date('Y-m-d'))->count();
+            $monthly_investigation_result = MonthlyInvestigation::query()->where('company_id', $items)->where('correct_result', CorrectionResult::Rectified->value)->count();
+            $monthly_investigation_result_old = MonthlyInvestigation::query()->where('company_id', $items)->where('updated_at', 'NOT LIKE', date('Y-m-d'))->where('correct_result', CorrectionResult::Rectified->value)->count();
+            $data[$k]['company_name'] = Company::query()->where('id', $items)->value('title');
+            if ($monthly_investigation && $monthly_investigation_result) {
+                $data[$k]['monthly_investigation_scale'] = round($monthly_investigation_result / $monthly_investigation, 2) * 100;
+            } else {
+                $data[$k]['monthly_investigation_scale'] = 0;
+            }
+            if ($monthly_investigation_old && $monthly_investigation_result_old) {
+                $data[$k]['jqr'] = round($monthly_investigation_result / $monthly_investigation, 2) * 100 - round($monthly_investigation_result_old / $monthly_investigation_old, 2) * 100;
+            } else {
+                $data[$k]['jqr'] = 0;
+            }
 
         $today = date('Y-m-d');
 
