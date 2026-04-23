@@ -63,7 +63,6 @@ return new class extends Migration
         'other_trainings',
         'training_files',
         'training_videos',
-        'training_classes',
         'meetings',
         'internal_meetings',
         'office_notifies',

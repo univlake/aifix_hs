@@ -118,7 +118,7 @@ class BaseDataSeeder extends Seeder
             [
                 'password' => 'admin@admin',
                 'nickname' => '超级管理员',
-                'company_id' => 4,
+                'company_id' => 1,
                 'role_id' => 1,
                 'status' => 1,
                 'created_at' => $now,

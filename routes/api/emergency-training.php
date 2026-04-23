@@ -17,8 +17,6 @@ use App\Http\Controllers\Api\V1\OfficeNotifyController;
 use App\Http\Controllers\Api\V1\OtherTrainingController;
 use App\Http\Controllers\Api\V1\SecurityInvestmentController;
 use App\Http\Controllers\Api\V1\ThreeTogetherController;
-use App\Http\Controllers\Api\V1\TrainingClassController;
-use App\Http\Controllers\Api\V1\TrainingClassInfoController;
 use App\Http\Controllers\Api\V1\TrainingFileController;
 use App\Http\Controllers\Api\V1\TrainingVideoController;
 use Illuminate\Support\Facades\Route;
@@ -215,38 +213,6 @@ Route::middleware('permission:training-videos.update')->group(function () {
 });
 Route::middleware('permission:training-videos.delete')->group(function () {
     Route::delete('/training-videos/{id}', [TrainingVideoController::class, 'destroy']);
-});
-
-// ── 培训课程 ─────────────────────────────────────────────────────
-Route::middleware('permission:training-classes.list')->group(function () {
-    Route::get('/training-classes', [TrainingClassController::class, 'index']);
-    Route::get('/training-classes/{id}', [TrainingClassController::class, 'show']);
-});
-Route::middleware('permission:training-classes.create')->group(function () {
-    Route::post('/training-classes', [TrainingClassController::class, 'store']);
-});
-Route::middleware('permission:training-classes.update')->group(function () {
-    Route::put('/training-classes/{id}', [TrainingClassController::class, 'update']);
-    Route::patch('/training-classes/{id}', [TrainingClassController::class, 'update']);
-});
-Route::middleware('permission:training-classes.delete')->group(function () {
-    Route::delete('/training-classes/{id}', [TrainingClassController::class, 'destroy']);
-});
-
-// ── 培训课程详情 ─────────────────────────────────────────────────────
-Route::middleware('permission:training-class-infos.list')->group(function () {
-    Route::get('/training-class-infos', [TrainingClassInfoController::class, 'index']);
-    Route::get('/training-class-infos/{id}', [TrainingClassInfoController::class, 'show']);
-});
-Route::middleware('permission:training-class-infos.create')->group(function () {
-    Route::post('/training-class-infos', [TrainingClassInfoController::class, 'store']);
-});
-Route::middleware('permission:training-class-infos.update')->group(function () {
-    Route::put('/training-class-infos/{id}', [TrainingClassInfoController::class, 'update']);
-    Route::patch('/training-class-infos/{id}', [TrainingClassInfoController::class, 'update']);
-});
-Route::middleware('permission:training-class-infos.delete')->group(function () {
-    Route::delete('/training-class-infos/{id}', [TrainingClassInfoController::class, 'destroy']);
 });
 
 // ── 会议管理 ─────────────────────────────────────────────────────

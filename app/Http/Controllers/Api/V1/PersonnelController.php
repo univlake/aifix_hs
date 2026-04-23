@@ -74,20 +74,4 @@ class PersonnelController extends Controller
 
         return $this->success(new PersonnelResource($personnel->fresh()));
     }
-
-    /**
-     * 删除人员
-     */
-    public function destroy(int $id): JsonResponse
-    {
-        $personnel = Personnel::find($id);
-
-        if (! $personnel) {
-            return $this->notFound('人员信息不存在');
-        }
-
-        $personnel->delete();
-
-        return $this->message('删除成功');
-    }
 }

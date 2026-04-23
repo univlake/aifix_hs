@@ -111,18 +111,4 @@ describe('Personnel API', function () {
                 ->assertJsonPath('data.total_people', 200);
         });
     });
-
-    describe('Delete', function () {
-        it('soft deletes personnel', function () {
-            [$user] = createAdminWithCompany();
-            $company = Company::factory()->create();
-            $personnel = Personnel::factory()->create(['company_id' => $company->id]);
-
-            $response = $this->actingAs($user, 'api')
-                ->deleteJson("/api/v1/personnels/{$personnel->id}");
-
-            $response->assertOk();
-            $this->assertSoftDeleted('personnels', ['id' => $personnel->id]);
-        });
-    });
 });

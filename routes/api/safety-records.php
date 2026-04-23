@@ -117,9 +117,6 @@ Route::middleware('permission:certificate-statuses.update')->group(function () {
     Route::put('/certificate-statuses/{id}', [CertificateStatusController::class, 'update']);
     Route::patch('/certificate-statuses/{id}', [CertificateStatusController::class, 'update']);
 });
-Route::middleware('permission:certificate-statuses.delete')->group(function () {
-    Route::delete('/certificate-statuses/{id}', [CertificateStatusController::class, 'destroy']);
-});
 
 // ── 消控/淘汰控制人员（统一使用 elimination-control-staff，已合并原 fire-control-room-personnels 路径）────────────
 Route::middleware('permission:elimination-control-staff.list')->group(function () {

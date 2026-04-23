@@ -22,4 +22,7 @@ export default defineConfig({
             formVariants: true,
         }),
     ],
+    ssr: {
+        noExternal: ['jsencrypt'],
+    },
 });

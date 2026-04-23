@@ -78,20 +78,4 @@ class CertificateStatusController extends Controller
 
         return $this->success($record->fresh());
     }
-
-    /**
-     * 删除持证情况
-     */
-    public function destroy(int $id): JsonResponse
-    {
-        $record = CertificateStatus::find($id);
-
-        if (! $record) {
-            return $this->notFound('持证情况不存在');
-        }
-
-        $record->delete();
-
-        return $this->message('删除成功');
-    }
 }

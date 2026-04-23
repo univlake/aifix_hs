@@ -83,7 +83,6 @@ return new class extends Migration
         'other_trainings' => ['company_id', 'user_id', 'last_user_id'],
         'training_files' => ['company_id', 'user_id', 'last_user_id'],
         'training_videos' => ['company_id', 'user_id', 'last_user_id'],
-        'training_classes' => ['company_id', 'user_id', 'last_user_id'],
         'meetings' => ['company_id', 'user_id', 'last_user_id'],
         'internal_meetings' => ['company_id', 'user_id', 'last_user_id'],
         'office_notifies' => ['company_id', 'user_id', 'last_user_id'],

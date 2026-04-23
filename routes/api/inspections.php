@@ -155,11 +155,6 @@ Route::middleware('permission:add-points.delete')->group(function () {
     Route::delete('/add-points/{id}', [AddPointsController::class, 'destroy']);
 });
 
-// ── 检查统计 ─────────────────────────────────────────────────────
-Route::middleware('permission:check-statistics.list')->group(function () {
-    Route::get('/check-statistics', [CheckStatisticsController::class, 'index']);
-});
-
 // ── 考核汇总 ─────────────────────────────────────────────────────
 Route::middleware('permission:daily-checks.list')->group(function () {
     Route::get('/assessment-summary', [AssessmentSummaryController::class, 'summary']);

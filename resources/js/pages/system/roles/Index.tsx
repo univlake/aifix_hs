@@ -16,6 +16,7 @@ import {
 import { useState, useEffect, useMemo } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
 import api from '@/lib/api';
+import { formatAction, formatModule } from '@/lib/permission-labels';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
 
@@ -41,21 +42,6 @@ const SYSTEM_ROLES = ['super-admin', 'admin', 'reviewer', 'user'];
 const NO_EDIT_ROLES = ['super-admin'];
 const LOCKED_NAME_ROLES = ['admin', 'reviewer', 'user'];
 
-const ACTION_LABELS: Record<string, string> = {
-    list: '列表',
-    create: '新增',
-    update: '编辑',
-    delete: '删除',
-    manage: '管理',
-    view: '查看',
-    review: '审核',
-    assign: '分配',
-    tree: '树形',
-    portrait: '画像',
-    file: '文件上传',
-    oss: 'OSS上传',
-};
-
 // ── Role templates ────────────────────────────────────────────────
 // Clickable presets that pre-select a curated bundle of module prefixes.
 // `modules` is matched against the permission's module prefix (the part before
@@ -67,120 +53,135 @@ interface RoleTemplate {
     label: string;
     description: string;
     /** Module prefixes to include. e.g. 'hazards' matches 'hazards.list/create/etc.' */
-    modules: string[];
+    modules?: string[];
+    /** If set, select all known modules except these. Overrides `modules`. */
+    excludeModules?: string[];
     /** If set, only include permissions whose action (suffix) is in this list. */
     actions?: string[];
 }
 
+// 考核模板管理 涵盖 日常 / 事故 / 加分 三类模板
+const ASSESSMENT_TEMPLATE_MODULES = [
+    'daily-check-templates',
+    'accident-check-templates',
+    'add-points-templates',
+];
+
 const ROLE_TEMPLATES: RoleTemplate[] = [
     {
-        key: 'hse-manager',
-        label: 'HSE 经理',
-        description: '风险 / 隐患 / 三同时 / 安全评价 / 应急演练 — 全部 CRUD',
-        modules: [
-            'hazards',
-            'monthly-investigations',
-            'rectification-sheets',
-            'hidden-danger-infos',
-            'three-togethers',
-            'assess-detects',
-            'risk-logs',
-            'inherent-risk-logs',
-            'float-risk-logs',
-            'emergency-drills',
-            'emergency-teams',
-            'emergency-supplies',
-            'expert-inspections',
+        key: 'group-general-manager',
+        label: '集团总经理',
+        description: '除基础数据、考核模板管理、角色管理、权限管理外，拥有全部权限',
+        excludeModules: [
+            'base-data',
+            ...ASSESSMENT_TEMPLATE_MODULES,
+            'roles',
+            'permissions',
         ],
     },
     {
-        key: 'equipment-manager',
-        label: '设备主管',
-        description: '特种设备、危险设备、消防器材/设施 — 全部 CRUD',
+        key: 'production-general-manager',
+        label: '生产总经理',
+        description: '拥有生产视图下全部模块权限',
         modules: [
-            'special-equipment',
-            'special-equipment-staff',
-            'dangerous-equipment',
-            'fire-equipment',
-            'fire-facilities',
-        ],
-    },
-    {
-        key: 'health-officer',
-        label: '职业健康员',
-        description: '健康档案 / 职业危害 / 健康检查 / 职业病报告',
-        modules: [
-            'health-files',
-            'health-checkups',
-            'health-reports',
-            'occupational-hazards',
-            'hygiene-evaluations',
-        ],
-    },
-    {
-        key: 'training-coordinator',
-        label: '培训管理员',
-        description: '内部/外部/其他培训 + 培训资料与视频',
-        modules: [
-            'internal-trainings',
-            'external-trainings',
-            'other-trainings',
-            'training-classes',
-            'training-class-infos',
-            'training-files',
-            'training-videos',
-            'internal-meetings',
-        ],
-    },
-    {
-        key: 'read-only-auditor',
-        label: '只读审计员',
-        description: '全业务模块查阅权限，不可写',
-        modules: [
-            'hazards',
-            'monthly-investigations',
-            'assess-detects',
-            'accident-bulletins',
-            'internal-meetings',
-            'internal-trainings',
+            'homes',
+            'companies',
+            'safety-architectures',
+            'personnels',
+            'filing-permissions',
+            'buildings',
+            'security-investments',
             'special-equipment',
             'dangerous-equipment',
             'hazardous-chemicals',
             'major-hazards',
-            'personnels',
-            'buildings',
-            'companies',
-            'users',
-        ],
-        actions: ['list', 'view'],
-    },
-    {
-        key: 'task-operator',
-        label: '任务执行员',
-        description: '接收并反馈上级下发的会议 / 通知 / 报送',
-        modules: [
+            'major-hazardous-processes',
+            'hazardous-processes',
+            'space-works',
+            'hazards',
+            'monthly-investigations',
+            'job-management',
+            'three-togethers',
+            'assess-detects',
+            'risk-logs',
+            'expert-inspections',
+            'internal-meetings',
+            'internal-trainings',
+            'external-trainings',
+            'other-trainings',
+            'design-units',
+            'evaluation-units',
+            'skill-units',
+            'health-files',
+            'occupational-hazards',
+            'health-checkups',
+            'hygiene-evaluations',
+            'health-reports',
+            'fire-safeties',
+            'fire-equipment',
+            'fire-facilities',
+            'accident-bulletins',
+            'emergency-teams',
+            'emergency-supplies',
+            'emergency-drills',
             'meetings',
-            'meeting-sign-ups',
             'office-notifies',
             'new-notifies',
             'information-drafts',
             'month-statistics',
             'year-statistics',
-            'accident-bulletins',
+            'change-manages',
+            'regulation-libraries',
+            'checklist-libraries',
+            'add-points',
+            'training-files',
+            'training-videos',
+            'users',
         ],
     },
+    {
+        key: 'admin-general-manager',
+        label: '行政总经理',
+        description: '集团视图下全部模块权限（不含基础数据、考核模板、角色、权限）',
+        modules: [
+            'homes',
+            'companies',
+            'risk-distribution-maps',
+            'major-hazards',
+            'online-inspection',
+            'bloc-risks',
+            'special-equipment',
+            'monthly-investigations',
+            'expert-inspections',
+            'internal-meetings',
+            'internal-trainings',
+            'external-trainings',
+            'other-trainings',
+            'regulation-libraries',
+            'checklist-libraries',
+            'meetings',
+            'office-notifies',
+            'new-notifies',
+            'information-drafts',
+            'emergency-teams',
+            'emergency-drills',
+            'accident-bulletins',
+            'bloc-experts',
+            'add-points',
+            'month-statistics',
+            'year-statistics',
+            'training-files',
+            'training-videos',
+            'users',
+        ],
+    },
+    {
+        key: 'external-expert',
+        label: '外部专家',
+        description: '仅拥有专家检查模块与仪表板权限',
+        modules: ['homes', 'expert-inspections'],
+    },
 ];
-
-function formatModule(name: string): string {
-    return name
-        .split('-')
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-}
-
-function formatAction(action: string): string {
-    return ACTION_LABELS[action] ?? action;
-}
 
 // ── Page ──────────────────────────────────────────────────────────
 
@@ -237,8 +238,12 @@ export default function RolesIndex() {
 
     const applyTemplate = (tpl: RoleTemplate) => {
         const all: string[] = [];
+        const exclude = tpl.excludeModules;
+        const targetModules = exclude
+            ? Object.keys(grouped).filter((m) => !exclude.includes(m))
+            : (tpl.modules ?? []);
 
-        for (const module of tpl.modules) {
+        for (const module of targetModules) {
             const modulePerms = grouped[module] ?? [];
 
             for (const p of modulePerms) {

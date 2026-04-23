@@ -20,14 +20,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'companies.create',
             'companies.update',
             'companies.delete',
-            'companies.tree',
             'companies.review',
 
             // 人员管理
             'personnels.list',
             'personnels.create',
             'personnels.update',
-            'personnels.delete',
 
             // 用户管理
             'users.list',
@@ -86,7 +84,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'certificate-statuses.list',
             'certificate-statuses.create',
             'certificate-statuses.update',
-            'certificate-statuses.delete',
 
             // 淘汰控制人员（含原「消防控制室人员」— 已合并路径）
             'elimination-control-staff.list',
@@ -133,12 +130,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'checklist-libraries.create',
             'checklist-libraries.update',
             'checklist-libraries.delete',
-
-            // 报表配置
-            'report-configs.list',
-            'report-configs.create',
-            'report-configs.update',
-            'report-configs.delete',
 
             // ── Phase 4: 安全台账 + 职业健康 ──────────────────────
 
@@ -298,18 +289,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'training-videos.create',
             'training-videos.update',
             'training-videos.delete',
-
-            // 培训课程
-            'training-classes.list',
-            'training-classes.create',
-            'training-classes.update',
-            'training-classes.delete',
-
-            // 培训课程详情
-            'training-class-infos.list',
-            'training-class-infos.create',
-            'training-class-infos.update',
-            'training-class-infos.delete',
 
             // 会议管理
             'meetings.list',

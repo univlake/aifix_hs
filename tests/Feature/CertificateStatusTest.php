@@ -92,26 +92,4 @@ describe('CertificateStatus API', function () {
             $response->assertStatus(403);
         });
     });
-
-    describe('Delete', function () {
-        it('deletes record', function () {
-            [$user, $company] = createAdminWithCompany();
-            $record = CertificateStatus::create(['company_id' => $company->id]);
-
-            $response = $this->actingAs($user, 'api')
-                ->deleteJson("/api/v1/certificate-statuses/{$record->id}");
-
-            $response->assertOk();
-        });
-
-        it('denies delete without permission', function () {
-            [$user, $company] = createUserWithCompany();
-            $record = CertificateStatus::create(['company_id' => $company->id]);
-
-            $response = $this->actingAs($user, 'api')
-                ->deleteJson("/api/v1/certificate-statuses/{$record->id}");
-
-            $response->assertStatus(403);
-        });
-    });
 });
