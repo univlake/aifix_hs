@@ -42,9 +42,6 @@ Route::middleware('permission:personnels.update')->group(function () {
     Route::put('/personnels/{personnel}', [PersonnelController::class, 'update']);
     Route::patch('/personnels/{personnel}', [PersonnelController::class, 'update']);
 });
-Route::middleware('permission:personnels.delete')->group(function () {
-    Route::delete('/personnels/{personnel}', [PersonnelController::class, 'destroy']);
-});
 
 // ── 基础数据 ─────────────────────────────────────────────────────
 Route::middleware('permission:base-data.view')->group(function () {

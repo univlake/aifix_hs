@@ -43,9 +43,7 @@ Route::group([], function () {
     Route::inertia('/system/special-types', 'system/special-types/Index');
     Route::inertia('/system/process-types', 'system/process-types/Index');
     Route::inertia('/system/space-work-types', 'system/space-work-types/Index');
-    Route::inertia('/system/training-class-types', 'system/training-class-types/Index');
     Route::inertia('/system/safety-management-types', 'system/safety-management-types/Index');
-    Route::inertia('/system/report-configs', 'system/report-configs/Index');
     Route::inertia('/system/record-types', 'system/record-types/Index');
     Route::inertia('/system/regulation-library-types', 'system/regulation-library-types/Index');
     Route::inertia('/system/assessment-templates', 'system/assessment-templates/Index');
@@ -84,7 +82,6 @@ Route::group([], function () {
     Route::inertia('/emergency/emergency-teams', 'emergency/emergency-teams/Index');
 
     // ── 培训管理 ──────────────────────────────────────────────
-    Route::inertia('/training/training-classes', 'training/training-classes/Index');
     Route::inertia('/training/training-files', 'training/training-files/Index');
     Route::inertia('/training/training-videos', 'training/training-videos/Index');
     Route::inertia('/training/internal-trainings', 'training/internal-trainings/Index');

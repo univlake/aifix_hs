@@ -7,10 +7,17 @@ import {
     ChevronLeft,
     ChevronRight,
     ExternalLink,
+    Plus,
+    Trash2,
+    X,
+    Loader2,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/types/api-error';
 
 interface Company {
     id: number;
@@ -34,13 +41,72 @@ interface PaginatedResponse {
     per_page: number;
 }
 
+interface TypeOption {
+    id: number;
+    title: string;
+}
+
+const inputCls =
+    'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
+
+function Modal({
+    open,
+    onClose,
+    children,
+}: {
+    open: boolean;
+    onClose: () => void;
+    children: React.ReactNode;
+}) {
+    if (!open) {
+        return null;
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={onClose}
+            />
+            <div className="relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
+                {children}
+            </div>
+        </div>
+    );
+}
+
 export default function Subsidiaries() {
     const { rootCompany, enterCompany } = useScope();
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('companies.create');
+    const canDelete = canWrite('companies.delete');
+
     const [data, setData] = useState<PaginatedResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [error, setError] = useState('');
+
+    const [enterpriseTypes, setEnterpriseTypes] = useState<TypeOption[]>([]);
+    const [operationalTypes, setOperationalTypes] = useState<TypeOption[]>([]);
+
+    const emptyForm = () => ({
+        title: '',
+        credit_code: '',
+        address: '',
+        enterprise_type_id: '',
+        operational_type_id: '',
+    });
+    const [form, setForm] = useState(emptyForm());
+    const set = (k: keyof ReturnType<typeof emptyForm>, v: string) =>
+        setForm((f) => ({ ...f, [k]: v }));
+
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [formLoading, setFormLoading] = useState(false);
+    const [formError, setFormError] = useState('');
+
+    const [deleteItem, setDeleteItem] = useState<Company | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     const handleView = (c: Company) => {
         enterCompany({
@@ -80,10 +146,96 @@ export default function Subsidiaries() {
         fetchData(page, search);
     }, [rootCompany?.id, page]);
 
+    useEffect(() => {
+        if (!canCreate) {
+            return;
+        }
+
+        Promise.all([
+            api.get('/enterprise-types').catch(() => null),
+            api.get('/operational-types').catch(() => null),
+        ]).then(([etRes, otRes]) => {
+            if (etRes) {
+                setEnterpriseTypes(
+                    etRes.data.data?.data ?? etRes.data.data ?? [],
+                );
+            }
+
+            if (otRes) {
+                setOperationalTypes(
+                    otRes.data.data?.data ?? otRes.data.data ?? [],
+                );
+            }
+        });
+    }, [canCreate]);
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         setPage(1);
         fetchData(1, search);
+    };
+
+    const openCreate = () => {
+        setForm(emptyForm());
+        setFormError('');
+        setDialogOpen(true);
+    };
+
+    const handleSubmit = async () => {
+        if (!form.title.trim()) {
+            setFormError('企业名称不能为空');
+
+            return;
+        }
+
+        if (!rootCompany?.id) {
+            setFormError('未定位到当前企业');
+
+            return;
+        }
+
+        setFormLoading(true);
+        setFormError('');
+
+        try {
+            await api.post('/companies', {
+                title: form.title,
+                credit_code: form.credit_code || null,
+                address: form.address || null,
+                enterprise_type_id: form.enterprise_type_id
+                    ? Number(form.enterprise_type_id)
+                    : null,
+                operational_type_id: form.operational_type_id
+                    ? Number(form.operational_type_id)
+                    : null,
+                pid: rootCompany.id,
+            });
+
+            setDialogOpen(false);
+            fetchData(page, search);
+        } catch (err: unknown) {
+            setFormError(getErrorMessage(err, '新增失败，请重试'));
+        } finally {
+            setFormLoading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deleteItem) {
+            return;
+        }
+
+        setDeleteLoading(true);
+
+        try {
+            await api.delete(`/companies/${deleteItem.id}`);
+            setDeleteItem(null);
+            fetchData(page, search);
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, '删除失败，请重试'));
+        } finally {
+            setDeleteLoading(false);
+        }
     };
 
     const statusColors: Record<number, string> = {
@@ -106,11 +258,22 @@ export default function Subsidiaries() {
                         管理当前企业的直属下级企业
                     </p>
                 </div>
-                {data && (
-                    <span className="text-xs text-slate-500">
-                        共 {data.total} 家
-                    </span>
-                )}
+                <div className="flex items-center gap-4">
+                    {data && (
+                        <span className="text-xs text-slate-500">
+                            共 {data.total} 家
+                        </span>
+                    )}
+                    {canCreate && (
+                        <button
+                            onClick={openCreate}
+                            className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"
+                        >
+                            <Plus className="h-4 w-4" />
+                            新增下级企业
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Search */}
@@ -225,13 +388,25 @@ export default function Subsidiaries() {
                                             </span>
                                         </td>
                                         <td className="px-5 py-4 text-right">
-                                            <button
-                                                onClick={() => handleView(c)}
-                                                className="inline-flex items-center gap-1 text-xs text-blue-500 transition-colors hover:text-blue-400"
-                                            >
-                                                查看
-                                                <ExternalLink className="h-3 w-3" />
-                                            </button>
+                                            <div className="flex items-center justify-end gap-3">
+                                                <button
+                                                    onClick={() => handleView(c)}
+                                                    className="inline-flex items-center gap-1 text-xs text-blue-500 transition-colors hover:text-blue-400"
+                                                >
+                                                    查看
+                                                    <ExternalLink className="h-3 w-3" />
+                                                </button>
+                                                {canDelete && (
+                                                    <button
+                                                        onClick={() =>
+                                                            setDeleteItem(c)
+                                                        }
+                                                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-600/10 hover:text-red-400"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -261,6 +436,200 @@ export default function Subsidiaries() {
                     </div>
                 )}
             </div>
+
+            {/* Create dialog */}
+            <Modal open={dialogOpen} onClose={() => setDialogOpen(false)}>
+                <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
+                    <div>
+                        <h2 className="text-base font-semibold text-slate-100">
+                            新增下级企业
+                        </h2>
+                        <p className="mt-0.5 text-xs text-slate-600">
+                            填写基本信息后保存，企业将作为当前企业的直属下级
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setDialogOpen(false)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-white/5 hover:text-slate-300"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6">
+                    <div className="space-y-4">
+                        {formError && (
+                            <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
+                                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                {formError}
+                            </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    企业名称{' '}
+                                    <span className="ml-1 text-blue-500">
+                                        *
+                                    </span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.title}
+                                    onChange={(e) =>
+                                        set('title', e.target.value)
+                                    }
+                                    placeholder="企业全称"
+                                    className={inputCls}
+                                />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    统一社会信用代码
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.credit_code}
+                                    onChange={(e) =>
+                                        set('credit_code', e.target.value)
+                                    }
+                                    placeholder="18位统一社会信用代码"
+                                    className={inputCls}
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    企业类型
+                                </label>
+                                <select
+                                    value={form.enterprise_type_id}
+                                    onChange={(e) =>
+                                        set(
+                                            'enterprise_type_id',
+                                            e.target.value,
+                                        )
+                                    }
+                                    className={cn(
+                                        inputCls,
+                                        'cursor-pointer appearance-none',
+                                    )}
+                                >
+                                    <option value="" className="bg-[#0d1530]">
+                                        请选择
+                                    </option>
+                                    {enterpriseTypes.map((t) => (
+                                        <option
+                                            key={t.id}
+                                            value={t.id}
+                                            className="bg-[#0d1530]"
+                                        >
+                                            {t.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    经营类型
+                                </label>
+                                <select
+                                    value={form.operational_type_id}
+                                    onChange={(e) =>
+                                        set(
+                                            'operational_type_id',
+                                            e.target.value,
+                                        )
+                                    }
+                                    className={cn(
+                                        inputCls,
+                                        'cursor-pointer appearance-none',
+                                    )}
+                                >
+                                    <option value="" className="bg-[#0d1530]">
+                                        请选择
+                                    </option>
+                                    {operationalTypes.map((t) => (
+                                        <option
+                                            key={t.id}
+                                            value={t.id}
+                                            className="bg-[#0d1530]"
+                                        >
+                                            {t.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="col-span-2">
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    地址
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.address}
+                                    onChange={(e) =>
+                                        set('address', e.target.value)
+                                    }
+                                    placeholder="详细地址"
+                                    className={inputCls}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
+                    <button
+                        onClick={() => setDialogOpen(false)}
+                        className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                    >
+                        取消
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={formLoading}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/25 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                        {formLoading && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        )}
+                        {formLoading ? '保存中...' : '保存'}
+                    </button>
+                </div>
+            </Modal>
+
+            {/* Delete confirm */}
+            <Modal open={!!deleteItem} onClose={() => setDeleteItem(null)}>
+                <div className="p-6">
+                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
+                        <Trash2 className="h-5 w-5 text-red-400" />
+                    </div>
+                    <h2 className="mb-1 text-base font-semibold text-slate-100">
+                        删除下级企业
+                    </h2>
+                    <p className="text-sm text-slate-500">
+                        确定要删除 &ldquo;
+                        <span className="font-medium text-slate-300">
+                            {deleteItem?.title}
+                        </span>
+                        &rdquo; 吗？此操作不可撤销。
+                    </p>
+                </div>
+                <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
+                    <button
+                        onClick={() => setDeleteItem(null)}
+                        className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                    >
+                        取消
+                    </button>
+                    <button
+                        onClick={handleDelete}
+                        disabled={deleteLoading}
+                        className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/25 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                        {deleteLoading && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        )}
+                        {deleteLoading ? '删除中...' : '确认删除'}
+                    </button>
+                </div>
+            </Modal>
         </>
     );
 }

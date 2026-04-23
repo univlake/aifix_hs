@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import { Search, Lock } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import api from '@/lib/api';
+import { formatAction, formatModule } from '@/lib/permission-labels';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
 
@@ -13,32 +14,6 @@ interface Permission {
 }
 interface GroupedPermissions {
     [module: string]: Permission[];
-}
-
-const ACTION_LABELS: Record<string, string> = {
-    list: '列表',
-    create: '新增',
-    update: '编辑',
-    delete: '删除',
-    manage: '管理',
-    view: '查看',
-    review: '审核',
-    assign: '分配',
-    tree: '树形',
-    portrait: '画像',
-    file: '文件上传',
-    oss: 'OSS上传',
-};
-
-function formatModule(name: string): string {
-    return name
-        .split('-')
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-}
-
-function formatAction(action: string): string {
-    return ACTION_LABELS[action] ?? action;
 }
 
 // ── Page ──────────────────────────────────────────────────────────
@@ -71,7 +46,10 @@ export default function PermissionsIndex() {
         }
 
         return modules.filter((m) => {
-            if (m.toLowerCase().includes(q)) {
+            if (
+                m.toLowerCase().includes(q) ||
+                formatModule(m).toLowerCase().includes(q)
+            ) {
                 return true;
             }
 
@@ -91,7 +69,8 @@ export default function PermissionsIndex() {
             result[m] = grouped[m].filter(
                 (p) =>
                     p.name.toLowerCase().includes(q) ||
-                    m.toLowerCase().includes(q),
+                    m.toLowerCase().includes(q) ||
+                    formatModule(m).toLowerCase().includes(q),
             );
         });
 

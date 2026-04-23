@@ -7,11 +7,9 @@ use App\Http\Controllers\Api\V1\OperationalTypeController;
 use App\Http\Controllers\Api\V1\ProcessTypeController;
 use App\Http\Controllers\Api\V1\RecordTypeController;
 use App\Http\Controllers\Api\V1\RegulationLibraryTypeController;
-use App\Http\Controllers\Api\V1\ReportConfigController;
 use App\Http\Controllers\Api\V1\SafetyManagementTypeController;
 use App\Http\Controllers\Api\V1\SpaceWorkTypeController;
 use App\Http\Controllers\Api\V1\SpecialTypeController;
-use App\Http\Controllers\Api\V1\TrainingClassTypeController;
 use Illuminate\Support\Facades\Route;
 
 // ── 字典/类型表 (base-data 权限) ──────────────────────────────────
@@ -26,8 +24,6 @@ Route::middleware('permission:base-data.view')->group(function () {
     Route::get('/safety-management-types', [SafetyManagementTypeController::class, 'index']);
     Route::get('/dangerous-craft-types', [DangerousCraftTypeController::class, 'index']);
     Route::get('/regulation-library-types', [RegulationLibraryTypeController::class, 'index']);
-    Route::get('/training-class-types', [TrainingClassTypeController::class, 'index']);
-    Route::get('/report-configs', [ReportConfigController::class, 'index']);
 });
 
 // 检查表库 — 使用独立权限命名（checklist-libraries.*）以与前端 gate 对齐
@@ -90,18 +86,6 @@ Route::middleware('permission:base-data.manage')->group(function () {
     Route::put('/regulation-library-types/{id}', [RegulationLibraryTypeController::class, 'update']);
     Route::patch('/regulation-library-types/{id}', [RegulationLibraryTypeController::class, 'update']);
     Route::delete('/regulation-library-types/{id}', [RegulationLibraryTypeController::class, 'destroy']);
-
-    // 培训课程分类
-    Route::post('/training-class-types', [TrainingClassTypeController::class, 'store']);
-    Route::put('/training-class-types/{id}', [TrainingClassTypeController::class, 'update']);
-    Route::patch('/training-class-types/{id}', [TrainingClassTypeController::class, 'update']);
-    Route::delete('/training-class-types/{id}', [TrainingClassTypeController::class, 'destroy']);
-
-    // 上报配置
-    Route::post('/report-configs', [ReportConfigController::class, 'store']);
-    Route::put('/report-configs/{id}', [ReportConfigController::class, 'update']);
-    Route::patch('/report-configs/{id}', [ReportConfigController::class, 'update']);
-    Route::delete('/report-configs/{id}', [ReportConfigController::class, 'destroy']);
 });
 
 Route::middleware('permission:checklist-libraries.create')->group(function () {
