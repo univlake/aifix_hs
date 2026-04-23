@@ -6,6 +6,7 @@ import {
     Pencil,
     Trash2,
 } from 'lucide-react';
+import { usePermission } from '@/hooks/use-permission';
 import { cn } from '@/lib/utils';
 import { LEVEL_CLS, type Investigation } from './types';
 
@@ -32,6 +33,9 @@ export function InvestigationList({
     onDelete,
     onPage,
 }: InvestigationListProps) {
+    const { canWrite } = usePermission();
+    const canUpdate = canWrite('monthly-investigations.update');
+    const canDelete = canWrite('monthly-investigations.delete');
     return (
         <>
             <div className="overflow-x-auto rounded-xl border border-blue-900/30">
@@ -170,27 +174,27 @@ export function InvestigationList({
                                                     <Eye className="h-3.5 w-3.5" />
                                                     详情
                                                 </button>
-                                                {isMine && (
-                                                    <>
-                                                        <button
-                                                            onClick={() =>
-                                                                onEdit(row)
-                                                            }
-                                                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                                                            title="编辑"
-                                                        >
-                                                            <Pencil className="h-3.5 w-3.5" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() =>
-                                                                onDelete(row)
-                                                            }
-                                                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                                                            title="删除"
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </button>
-                                                    </>
+                                                {isMine && canUpdate && (
+                                                    <button
+                                                        onClick={() =>
+                                                            onEdit(row)
+                                                        }
+                                                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                                                        title="编辑"
+                                                    >
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                                {isMine && canDelete && (
+                                                    <button
+                                                        onClick={() =>
+                                                            onDelete(row)
+                                                        }
+                                                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                                                        title="删除"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
                                                 )}
                                             </div>
                                         </td>

@@ -20,6 +20,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索整改通知单...',
+    permissions: {
+        list: 'rectification-sheets.list',
+        create: 'rectification-sheets.create',
+        update: 'rectification-sheets.update',
+        delete: 'rectification-sheets.delete',
+    },
 };
 
 export default function RectificationSheetsIndex() {

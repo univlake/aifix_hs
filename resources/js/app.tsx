@@ -30,7 +30,13 @@ createInertiaApp({
         return page;
     },
     setup({ el, App, props }) {
+        if (import.meta.env.SSR) {
+            return <App {...props} />;
+        }
+
         createRoot(el).render(<App {...props} />);
+
+        return undefined;
     },
     progress: {
         color: '#4B5563',

@@ -127,6 +127,9 @@ function EmploymentStatsSection({
 }: {
     companyId: number | undefined;
 }) {
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('personnels.create');
+    const canUpdate = canWrite('personnels.update');
     const [stats, setStats] = useState<PersonnelStats>(EMPTY_STATS);
     const [savedStats, setSavedStats] = useState<PersonnelStats>(EMPTY_STATS);
     const [recordId, setRecordId] = useState<number | null>(null);
@@ -138,6 +141,7 @@ function EmploymentStatsSection({
 
     const isNew = !recordId;
     const isEditing = isNew || editMode;
+    const canActOnRecord = isNew ? canCreate : canUpdate;
 
     useEffect(() => {
         if (!companyId) {
@@ -210,24 +214,26 @@ function EmploymentStatsSection({
     );
 
     const actionButtons = isEditing ? (
-        <div className="flex items-center gap-2">
-            {!isNew && (
-                <button
-                    onClick={handleCancel}
-                    disabled={saving}
-                    className="rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200 disabled:pointer-events-none disabled:opacity-50"
-                >
-                    取消
-                </button>
-            )}
-            <SaveButton
-                saving={saving}
-                saved={saved}
-                disabled={loading}
-                onClick={handleSave}
-            />
-        </div>
-    ) : (
+        canActOnRecord ? (
+            <div className="flex items-center gap-2">
+                {!isNew && (
+                    <button
+                        onClick={handleCancel}
+                        disabled={saving}
+                        className="rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                        取消
+                    </button>
+                )}
+                <SaveButton
+                    saving={saving}
+                    saved={saved}
+                    disabled={loading}
+                    onClick={handleSave}
+                />
+            </div>
+        ) : null
+    ) : canUpdate ? (
         <button
             onClick={() => {
                 setEditMode(true);
@@ -238,7 +244,7 @@ function EmploymentStatsSection({
             <Pencil className="h-3 w-3" />
             编辑
         </button>
-    );
+    ) : null;
 
     return (
         <SectionCard

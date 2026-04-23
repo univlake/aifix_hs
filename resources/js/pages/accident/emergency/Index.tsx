@@ -49,6 +49,12 @@ const teamsConfig: CrudPageConfig = {
     ],
     searchField: 'name',
     searchPlaceholder: '搜索队伍名称...',
+    permissions: {
+        list: 'emergency-teams.list',
+        create: 'emergency-teams.create',
+        update: 'emergency-teams.update',
+        delete: 'emergency-teams.delete',
+    },
 };
 
 const suppliesConfig: CrudPageConfig = {

@@ -113,6 +113,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'name',
     searchPlaceholder: '搜索评价名称...',
+    permissions: {
+        list: 'hygiene-evaluations.list',
+        create: 'hygiene-evaluations.create',
+        update: 'hygiene-evaluations.update',
+        delete: 'hygiene-evaluations.delete',
+    },
 };
 
 export default function HygieneEvaluationsIndex() {

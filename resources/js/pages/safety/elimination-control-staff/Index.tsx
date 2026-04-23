@@ -21,6 +21,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'name',
     searchPlaceholder: '搜索姓名...',
+    permissions: {
+        list: 'elimination-control-staff.list',
+        create: 'elimination-control-staff.create',
+        update: 'elimination-control-staff.update',
+        delete: 'elimination-control-staff.delete',
+    },
 };
 
 export default function EliminationControlStaffIndex() {

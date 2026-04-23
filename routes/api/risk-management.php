@@ -22,7 +22,6 @@ Route::middleware('permission:hidden-danger-infos.create')->group(function () {
 });
 Route::middleware('permission:hidden-danger-infos.update')->group(function () {
     Route::put('/hidden-danger-infos/{id}', [HiddenDangerInfoController::class, 'update']);
-    Route::patch('/hidden-danger-infos/{id}', [HiddenDangerInfoController::class, 'update']);
 });
 Route::middleware('permission:hidden-danger-infos.delete')->group(function () {
     Route::delete('/hidden-danger-infos/{id}', [HiddenDangerInfoController::class, 'destroy']);
@@ -42,7 +41,6 @@ Route::middleware('permission:rectification-sheets.create')->group(function () {
 });
 Route::middleware('permission:rectification-sheets.update')->group(function () {
     Route::put('/rectification-sheets/{id}', [RectificationSheetController::class, 'update']);
-    Route::patch('/rectification-sheets/{id}', [RectificationSheetController::class, 'update']);
 });
 Route::middleware('permission:rectification-sheets.delete')->group(function () {
     Route::delete('/rectification-sheets/{id}', [RectificationSheetController::class, 'destroy']);
@@ -58,7 +56,6 @@ Route::middleware('permission:hazards.create')->group(function () {
 });
 Route::middleware('permission:hazards.update')->group(function () {
     Route::put('/hazards/{id}', [HazardController::class, 'update']);
-    Route::patch('/hazards/{id}', [HazardController::class, 'update']);
 });
 Route::middleware('permission:hazards.delete')->group(function () {
     Route::delete('/hazards/{id}', [HazardController::class, 'destroy']);
@@ -74,7 +71,6 @@ Route::middleware('permission:risk-logs.create')->group(function () {
 });
 Route::middleware('permission:risk-logs.update')->group(function () {
     Route::put('/risk-logs/{id}', [RiskLogController::class, 'update']);
-    Route::patch('/risk-logs/{id}', [RiskLogController::class, 'update']);
 });
 Route::middleware('permission:risk-logs.delete')->group(function () {
     Route::delete('/risk-logs/{id}', [RiskLogController::class, 'destroy']);
@@ -90,7 +86,6 @@ Route::middleware('permission:inherent-risk-logs.create')->group(function () {
 });
 Route::middleware('permission:inherent-risk-logs.update')->group(function () {
     Route::put('/inherent-risk-logs/{id}', [InherentRiskLogController::class, 'update']);
-    Route::patch('/inherent-risk-logs/{id}', [InherentRiskLogController::class, 'update']);
 });
 Route::middleware('permission:inherent-risk-logs.delete')->group(function () {
     Route::delete('/inherent-risk-logs/{id}', [InherentRiskLogController::class, 'destroy']);
@@ -106,7 +101,6 @@ Route::middleware('permission:float-risk-logs.create')->group(function () {
 });
 Route::middleware('permission:float-risk-logs.update')->group(function () {
     Route::put('/float-risk-logs/{id}', [FloatRiskLogController::class, 'update']);
-    Route::patch('/float-risk-logs/{id}', [FloatRiskLogController::class, 'update']);
 });
 Route::middleware('permission:float-risk-logs.delete')->group(function () {
     Route::delete('/float-risk-logs/{id}', [FloatRiskLogController::class, 'destroy']);
@@ -121,7 +115,6 @@ Route::middleware('permission:risk-distribution-maps.create')->group(function ()
 });
 Route::middleware('permission:risk-distribution-maps.update')->group(function () {
     Route::put('/risk-distribution-maps/{id}', [RiskDistributionMapController::class, 'update']);
-    Route::patch('/risk-distribution-maps/{id}', [RiskDistributionMapController::class, 'update']);
 });
 
 // ── 月度排查 ─────────────────────────────────────────────────────
@@ -135,7 +128,6 @@ Route::middleware('permission:monthly-investigations.create')->group(function ()
 });
 Route::middleware('permission:monthly-investigations.update')->group(function () {
     Route::put('/monthly-investigations/{id}', [MonthlyInvestigationController::class, 'update']);
-    Route::patch('/monthly-investigations/{id}', [MonthlyInvestigationController::class, 'update']);
 });
 Route::middleware('permission:monthly-investigations.delete')->group(function () {
     Route::delete('/monthly-investigations/{id}', [MonthlyInvestigationController::class, 'destroy']);
@@ -151,7 +143,6 @@ Route::middleware('permission:assess-detects.create')->group(function () {
 });
 Route::middleware('permission:assess-detects.update')->group(function () {
     Route::put('/assess-detects/{id}', [AssessDetectController::class, 'update']);
-    Route::patch('/assess-detects/{id}', [AssessDetectController::class, 'update']);
 });
 Route::middleware('permission:assess-detects.delete')->group(function () {
     Route::delete('/assess-detects/{id}', [AssessDetectController::class, 'destroy']);

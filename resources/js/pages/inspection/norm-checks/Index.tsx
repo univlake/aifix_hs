@@ -20,6 +20,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索规范检查...',
+    permissions: {
+        list: 'norm-checks.list',
+        create: 'norm-checks.create',
+        update: 'norm-checks.update',
+        delete: 'norm-checks.delete',
+    },
 };
 
 export default function NormChecksIndex() {

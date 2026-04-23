@@ -23,6 +23,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索器材名称...',
+    permissions: {
+        list: 'fire-equipment.list',
+        create: 'fire-equipment.create',
+        update: 'fire-equipment.update',
+        delete: 'fire-equipment.delete',
+    },
 };
 
 export default function FireEquipmentIndex() {

@@ -20,6 +20,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索日常检查...',
+    permissions: {
+        list: 'daily-checks.list',
+        create: 'daily-checks.create',
+        update: 'daily-checks.update',
+        delete: 'daily-checks.delete',
+    },
 };
 
 export default function DailyChecksIndex() {

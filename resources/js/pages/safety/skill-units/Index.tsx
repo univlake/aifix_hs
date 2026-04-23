@@ -17,6 +17,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索单位名称...',
+    permissions: {
+        list: 'skill-units.list',
+        create: 'skill-units.create',
+        update: 'skill-units.update',
+        delete: 'skill-units.delete',
+    },
 };
 
 export default function SkillUnitsIndex() {

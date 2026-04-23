@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +46,10 @@ interface CompanyGroup {
 
 export default function EnterpriseGrouping() {
     const { rootCompany } = useScope();
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('company-groups.create');
+    const canUpdate = canWrite('company-groups.update');
+    const canDelete = canWrite('company-groups.delete');
 
     // Tree state
     const [tree, setTree] = useState<TreeNode[]>([]);
@@ -310,13 +315,15 @@ export default function EnterpriseGrouping() {
                                     {groups.length}
                                 </span>
                             </div>
-                            <button
-                                onClick={handleCreateOpen}
-                                className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-3 py-1.5 text-xs font-medium text-blue-300 transition-all hover:bg-blue-600/25"
-                            >
-                                <Plus className="h-3.5 w-3.5" />
-                                新增分组
-                            </button>
+                            {canCreate && (
+                                <button
+                                    onClick={handleCreateOpen}
+                                    className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-3 py-1.5 text-xs font-medium text-blue-300 transition-all hover:bg-blue-600/25"
+                                >
+                                    <Plus className="h-3.5 w-3.5" />
+                                    新增分组
+                                </button>
+                            )}
                         </div>
 
                         {groupsLoading && (
@@ -345,6 +352,8 @@ export default function EnterpriseGrouping() {
                                     <GroupCard
                                         key={g.id}
                                         group={g}
+                                        canUpdate={canUpdate}
+                                        canDelete={canDelete}
                                         onEdit={() => handleEditOpen(g)}
                                         onDelete={() => setDeleteGroup(g)}
                                         onManageMembers={() =>
@@ -649,11 +658,15 @@ function TreeSkeleton() {
 
 function GroupCard({
     group,
+    canUpdate,
+    canDelete,
     onEdit,
     onDelete,
     onManageMembers,
 }: {
     group: CompanyGroup;
+    canUpdate: boolean;
+    canDelete: boolean;
     onEdit: () => void;
     onDelete: () => void;
     onManageMembers: () => void;
@@ -670,27 +683,33 @@ function GroupCard({
                     </span>
                 </div>
                 <div className="flex items-center gap-0.5">
-                    <IconBtn
-                        title="管理成员"
-                        onClick={onManageMembers}
-                        className="text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                    >
-                        <Users className="h-3.5 w-3.5" />
-                    </IconBtn>
-                    <IconBtn
-                        title="编辑名称"
-                        onClick={onEdit}
-                        className="text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                    </IconBtn>
-                    <IconBtn
-                        title="删除分组"
-                        onClick={onDelete}
-                        className="text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </IconBtn>
+                    {canUpdate && (
+                        <IconBtn
+                            title="管理成员"
+                            onClick={onManageMembers}
+                            className="text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                        >
+                            <Users className="h-3.5 w-3.5" />
+                        </IconBtn>
+                    )}
+                    {canUpdate && (
+                        <IconBtn
+                            title="编辑名称"
+                            onClick={onEdit}
+                            className="text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </IconBtn>
+                    )}
+                    {canDelete && (
+                        <IconBtn
+                            title="删除分组"
+                            onClick={onDelete}
+                            className="text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </IconBtn>
+                    )}
                 </div>
             </div>
             {group.kid_companies.length > 0 ? (

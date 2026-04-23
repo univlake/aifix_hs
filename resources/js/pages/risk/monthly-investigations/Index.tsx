@@ -20,6 +20,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索月度排查...',
+    permissions: {
+        list: 'monthly-investigations.list',
+        create: 'monthly-investigations.create',
+        update: 'monthly-investigations.update',
+        delete: 'monthly-investigations.delete',
+    },
 };
 
 export default function MonthlyInvestigationsIndex() {

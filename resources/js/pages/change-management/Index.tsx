@@ -119,6 +119,12 @@ const config: CrudPageConfig = {
             colSpan: 1,
         },
     ],
+    permissions: {
+        list: 'change-manages.list',
+        create: 'change-manages.create',
+        update: 'change-manages.update',
+        delete: 'change-manages.delete',
+    },
 };
 
 export default function ChangeManagementIndex() {

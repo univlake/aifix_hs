@@ -21,6 +21,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索应急队伍...',
+    permissions: {
+        list: 'emergency-teams.list',
+        create: 'emergency-teams.create',
+        update: 'emergency-teams.update',
+        delete: 'emergency-teams.delete',
+    },
 };
 
 export default function EmergencyTeamsIndex() {

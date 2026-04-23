@@ -15,6 +15,7 @@ import {
 import { useState, useEffect, useCallback } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { getErrorMessage } from '@/types/api-error';
 import type { ApiResponse } from '@/types/models';
@@ -47,6 +48,10 @@ export default function ExpertsIndex() {
     const [addOpen, setAddOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<Expert | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('bloc-experts.create');
+    const canDelete = canWrite('bloc-experts.delete');
 
     const crud = useApiCrud('/bloc-experts');
 
@@ -126,14 +131,16 @@ export default function ExpertsIndex() {
                     </button>
                 </form>
 
-                <button
-                    onClick={() => setAddOpen(true)}
-                    disabled={!companyId}
-                    className="flex h-9 items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 text-sm font-medium text-blue-300 transition-colors hover:bg-blue-600/25 disabled:pointer-events-none disabled:opacity-40"
-                >
-                    <Plus className="h-4 w-4" />
-                    添加专家
-                </button>
+                {canCreate && (
+                    <button
+                        onClick={() => setAddOpen(true)}
+                        disabled={!companyId}
+                        className="flex h-9 items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 text-sm font-medium text-blue-300 transition-colors hover:bg-blue-600/25 disabled:pointer-events-none disabled:opacity-40"
+                    >
+                        <Plus className="h-4 w-4" />
+                        添加专家
+                    </button>
+                )}
             </div>
 
             {/* Count */}
@@ -147,7 +154,10 @@ export default function ExpertsIndex() {
             {loading ? (
                 <LoadingState />
             ) : experts.length === 0 ? (
-                <EmptyState onAdd={() => setAddOpen(true)} />
+                <EmptyState
+                    onAdd={() => setAddOpen(true)}
+                    canCreate={canCreate}
+                />
             ) : (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {experts.map((expert) => (
@@ -155,6 +165,7 @@ export default function ExpertsIndex() {
                             key={expert.id}
                             expert={expert}
                             onDelete={() => setDeleteTarget(expert)}
+                            canDelete={canDelete}
                         />
                     ))}
                 </div>
@@ -222,9 +233,11 @@ export default function ExpertsIndex() {
 function ExpertCard({
     expert,
     onDelete,
+    canDelete,
 }: {
     expert: Expert;
     onDelete: () => void;
+    canDelete: boolean;
 }) {
     const user = expert.user;
     const initials = user?.nickname ? user.nickname.slice(-2) : '??';
@@ -232,12 +245,14 @@ function ExpertCard({
     return (
         <div className="group relative rounded-xl border border-blue-900/30 bg-[#0d1530] p-5 transition-colors hover:border-blue-800/50">
             {/* Remove button */}
-            <button
-                onClick={onDelete}
-                className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-md text-slate-700 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-600/10 hover:text-red-400"
-            >
-                <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            {canDelete && (
+                <button
+                    onClick={onDelete}
+                    className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-md text-slate-700 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-600/10 hover:text-red-400"
+                >
+                    <Trash2 className="h-3.5 w-3.5" />
+                </button>
+            )}
 
             {/* Avatar + Name */}
             <div className="mb-4 flex items-center gap-3">
@@ -502,7 +517,13 @@ function LoadingState() {
     );
 }
 
-function EmptyState({ onAdd }: { onAdd: () => void }) {
+function EmptyState({
+    onAdd,
+    canCreate,
+}: {
+    onAdd: () => void;
+    canCreate: boolean;
+}) {
     return (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-blue-900/40 bg-[#0d1530] py-16 text-center">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-500/20 bg-violet-600/10">
@@ -514,13 +535,15 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
             <p className="mb-6 text-sm text-slate-600">
                 点击下方按钮，从系统用户中添加安全专家
             </p>
-            <button
-                onClick={onAdd}
-                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/25"
-            >
-                <Plus className="h-4 w-4" />
-                添加专家
-            </button>
+            {canCreate && (
+                <button
+                    onClick={onAdd}
+                    className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/25"
+                >
+                    <Plus className="h-4 w-4" />
+                    添加专家
+                </button>
+            )}
         </div>
     );
 }

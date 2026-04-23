@@ -41,6 +41,12 @@ const config: CrudPageConfig = {
     importEndpoint: '/health-files-import',
     exportEndpoint: '/health-files-export',
     templateEndpoint: '/health-files-template',
+    permissions: {
+        list: 'health-files.list',
+        create: 'health-files.create',
+        update: 'health-files.update',
+        delete: 'health-files.delete',
+    },
 };
 
 export default function HealthFilesIndex() {

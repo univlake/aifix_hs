@@ -77,7 +77,9 @@ export default function TrainingFilesIndex() {
                     header: '下载次数',
                     width: 90,
                     render: (val) => (
-                        <span className="text-slate-400">{val ?? 0}</span>
+                        <span className="text-slate-400">
+                            {(val as number | null) ?? 0}
+                        </span>
                     ),
                 },
                 {
@@ -89,6 +91,12 @@ export default function TrainingFilesIndex() {
             ],
             searchField: 'title',
             searchPlaceholder: '搜索资料名称...',
+            permissions: {
+                list: 'training-files.list',
+                create: 'training-files.create',
+                update: 'training-files.update',
+                delete: 'training-files.delete',
+            },
         }),
         [parentCompanyId],
     );

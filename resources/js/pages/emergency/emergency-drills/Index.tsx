@@ -21,6 +21,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索应急演练...',
+    permissions: {
+        list: 'emergency-drills.list',
+        create: 'emergency-drills.create',
+        update: 'emergency-drills.update',
+        delete: 'emergency-drills.delete',
+    },
 };
 
 export default function EmergencyDrillsIndex() {

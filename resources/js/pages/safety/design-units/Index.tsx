@@ -17,6 +17,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索单位名称...',
+    permissions: {
+        list: 'design-units.list',
+        create: 'design-units.create',
+        update: 'design-units.update',
+        delete: 'design-units.delete',
+    },
 };
 
 export default function DesignUnitsIndex() {

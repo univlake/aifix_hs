@@ -34,7 +34,6 @@ Route::middleware('permission:accident-bulletins.create')->group(function () {
 });
 Route::middleware('permission:accident-bulletins.update')->group(function () {
     Route::put('/accident-bulletins/{id}', [AccidentBulletinsController::class, 'update']);
-    Route::patch('/accident-bulletins/{id}', [AccidentBulletinsController::class, 'update']);
 });
 Route::middleware('permission:accident-bulletins.delete')->group(function () {
     Route::delete('/accident-bulletins/{id}', [AccidentBulletinsController::class, 'destroy']);
@@ -52,7 +51,6 @@ Route::middleware('permission:information-drafts.create')->group(function () {
 });
 Route::middleware('permission:information-drafts.update')->group(function () {
     Route::put('/information-drafts/{id}', [InformationDraftsController::class, 'update']);
-    Route::patch('/information-drafts/{id}', [InformationDraftsController::class, 'update']);
 });
 Route::middleware('permission:information-drafts.delete')->group(function () {
     Route::delete('/information-drafts/{id}', [InformationDraftsController::class, 'destroy']);
@@ -72,11 +70,8 @@ Route::middleware('permission:expert-inspections.create')->group(function () {
 });
 Route::middleware('permission:expert-inspections.update')->group(function () {
     Route::put('/expert-inspections/{id}', [ExpertInspectionsController::class, 'update']);
-    Route::patch('/expert-inspections/{id}', [ExpertInspectionsController::class, 'update']);
     Route::put('/expert-inspection-companies/{id}', [ExpertInspectionsController::class, 'updateCompany']);
-    Route::patch('/expert-inspection-companies/{id}', [ExpertInspectionsController::class, 'updateCompany']);
     Route::put('/expert-inspection-users/{id}', [ExpertInspectionsController::class, 'updateUser']);
-    Route::patch('/expert-inspection-users/{id}', [ExpertInspectionsController::class, 'updateUser']);
 });
 Route::middleware('permission:expert-inspections.delete')->group(function () {
     Route::delete('/expert-inspections/{id}', [ExpertInspectionsController::class, 'destroy']);
@@ -108,7 +103,6 @@ Route::middleware('permission:month-statistics.create')->group(function () {
 });
 Route::middleware('permission:month-statistics.update')->group(function () {
     Route::put('/month-statistics/{id}', [MonthStatisticsController::class, 'update']);
-    Route::patch('/month-statistics/{id}', [MonthStatisticsController::class, 'update']);
 });
 Route::middleware('permission:month-statistics.delete')->group(function () {
     Route::delete('/month-statistics/{id}', [MonthStatisticsController::class, 'destroy']);
@@ -126,7 +120,6 @@ Route::middleware('permission:year-statistics.create')->group(function () {
 });
 Route::middleware('permission:year-statistics.update')->group(function () {
     Route::put('/year-statistics/{id}', [YearStatisticsController::class, 'update']);
-    Route::patch('/year-statistics/{id}', [YearStatisticsController::class, 'update']);
 });
 Route::middleware('permission:year-statistics.delete')->group(function () {
     Route::delete('/year-statistics/{id}', [YearStatisticsController::class, 'destroy']);
@@ -227,7 +220,6 @@ Route::middleware('permission:regulation-libraries.create')->group(function () {
 });
 Route::middleware('permission:regulation-libraries.update')->group(function () {
     Route::put('/regulation-libraries/{id}', [RegulationLibraryController::class, 'update']);
-    Route::patch('/regulation-libraries/{id}', [RegulationLibraryController::class, 'update']);
 });
 Route::middleware('permission:regulation-libraries.delete')->group(function () {
     Route::delete('/regulation-libraries/{id}', [RegulationLibraryController::class, 'destroy']);

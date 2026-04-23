@@ -20,6 +20,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索体系检查...',
+    permissions: {
+        list: 'system-checks.list',
+        create: 'system-checks.create',
+        update: 'system-checks.update',
+        delete: 'system-checks.delete',
+    },
 };
 
 export default function SystemChecksIndex() {

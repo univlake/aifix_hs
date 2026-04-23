@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\CompanyStatus;
 use App\Enums\UserType;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\LoginRequest;
@@ -43,6 +44,13 @@ class AuthController extends Controller
 
         if ($user->status !== UserType::Enable->value) {
             return $this->failed('该账号已被禁用', 403);
+        }
+
+        if ($user->company_id && ! $user->hasRole('super-admin', 'api')) {
+            $company = $user->company;
+            if ($company && $company->status !== CompanyStatus::Enable->value) {
+                return $this->failed('该企业已被停用，请联系管理员', 403);
+            }
         }
 
         $tokenResult = $user->createToken('admin');

@@ -68,6 +68,12 @@ const config: CrudPageConfig = {
     searchField: 'equipment_name',
     searchPlaceholder: '搜索器材名称...',
     copyEndpoint: '/fire-equipment/copy',
+    permissions: {
+        list: 'fire-equipment.list',
+        create: 'fire-equipment.create',
+        update: 'fire-equipment.update',
+        delete: 'fire-equipment.delete',
+    },
 };
 
 export default function FireEquipmentIndex() {

@@ -23,6 +23,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { getErrorMessage } from '@/types/api-error';
 import type { ApiResponse, Company } from '@/types/models';
@@ -52,6 +53,10 @@ export default function CompaniesIndex() {
         search,
     } = useApiList<Company>({ endpoint: '/companies' });
     const crud = useApiCrud('/companies');
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('companies.create');
+    const canUpdate = canWrite('companies.update');
+    const canDelete = canWrite('companies.delete');
     const [searchTitle, setSearchTitle] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -174,7 +179,7 @@ export default function CompaniesIndex() {
         reload();
     };
 
-    const columns: ColumnDef<Company>[] = [
+    const baseColumns: ColumnDef<Company>[] = [
         { accessorKey: 'id', header: 'ID', size: 60 },
         { accessorKey: 'title', header: '企业名称' },
         {
@@ -196,29 +201,40 @@ export default function CompaniesIndex() {
         },
         { accessorKey: 'supervise_name', header: '安全负责人' },
         { accessorKey: 'supervise_tel', header: '联系电话' },
-        {
-            id: 'actions',
-            header: '操作',
-            cell: ({ row }) => (
-                <div className="flex gap-1">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEdit(row.original)}
-                    >
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteId(row.original.id)}
-                    >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                </div>
-            ),
-        },
     ];
+
+    const columns: ColumnDef<Company>[] =
+        canUpdate || canDelete
+            ? [
+                  ...baseColumns,
+                  {
+                      id: 'actions',
+                      header: '操作',
+                      cell: ({ row }) => (
+                          <div className="flex gap-1">
+                              {canUpdate && (
+                                  <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => openEdit(row.original)}
+                                  >
+                                      <Pencil className="h-4 w-4" />
+                                  </Button>
+                              )}
+                              {canDelete && (
+                                  <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setDeleteId(row.original.id)}
+                                  >
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                              )}
+                          </div>
+                      ),
+                  },
+              ]
+            : baseColumns;
 
     const updateForm = (key: string, value: string | null) =>
         setForm((f) => ({ ...f, [key]: value ?? '' }));
@@ -234,10 +250,12 @@ export default function CompaniesIndex() {
                         共 {total} 家企业
                     </p>
                 </div>
-                <Button onClick={openCreate}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    新增企业
-                </Button>
+                {canCreate && (
+                    <Button onClick={openCreate}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        新增企业
+                    </Button>
+                )}
             </div>
 
             <DataTable

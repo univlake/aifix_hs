@@ -16,6 +16,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索事故通报...',
+    permissions: {
+        list: 'accident-bulletins.list',
+        create: 'accident-bulletins.create',
+        update: 'accident-bulletins.update',
+        delete: 'accident-bulletins.delete',
+    },
 };
 
 export default function AccidentBulletinsIndex() {

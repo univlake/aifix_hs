@@ -21,6 +21,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索应急物资...',
+    permissions: {
+        list: 'emergency-supplies.list',
+        create: 'emergency-supplies.create',
+        update: 'emergency-supplies.update',
+        delete: 'emergency-supplies.delete',
+    },
 };
 
 export default function EmergencySuppliesIndex() {

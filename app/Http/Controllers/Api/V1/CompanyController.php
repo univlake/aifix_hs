@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\CompanyStatus;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\StoreCompanyRequest;
 use App\Http\Requests\Api\V1\UpdateCompanyRequest;
 use App\Models\Company;
+use App\Models\User;
 use App\Traits\ApiTree;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class CompanyController extends Controller
 {
@@ -83,15 +88,41 @@ class CompanyController extends Controller
 
     /**
      * 创建企业
+     *
+     * 同时为新企业自动创建一个 admin 账号，凭据仅在响应中明文返回一次，
+     * 由前端负责提示用户保存。
      */
     public function store(StoreCompanyRequest $request): JsonResponse
     {
         $data = $request->validated();
         $data['user_id'] = auth()->id() ?? 0;
 
-        $company = Company::create($data);
+        $result = DB::transaction(function () use ($data) {
+            $company = Company::create($data);
 
-        return $this->success($company);
+            $username = 'c'.$company->id.'_admin';
+            $plainPassword = Str::password(12, symbols: false);
+
+            $admin = User::create([
+                'username' => $username,
+                'password' => Hash::make($plainPassword),
+                'nickname' => mb_substr($company->title ?: '企业', 0, 20).'管理员',
+                'company_id' => $company->id,
+                'status' => 1,
+            ]);
+            $admin->assignRole('admin');
+
+            return [$company, $username, $plainPassword];
+        });
+
+        [$company, $username, $plainPassword] = $result;
+
+        return $this->success(array_merge($company->toArray(), [
+            'admin_credentials' => [
+                'username' => $username,
+                'password' => $plainPassword,
+            ],
+        ]));
     }
 
     /**
@@ -215,5 +246,41 @@ class CompanyController extends Controller
         ]);
 
         return $this->message('审核成功');
+    }
+
+    /**
+     * 停用/启用企业
+     *
+     * 仅在 Enable(1) / UnEnable(2) 之间切换，待审核(0) 状态不受影响。
+     */
+    public function toggleStatus(int $id): JsonResponse
+    {
+        $company = Company::find($id);
+
+        if (! $company) {
+            return $this->notFound('企业不存在');
+        }
+
+        Gate::authorize('update', $company);
+
+        if ($company->status === CompanyStatus::Pending->value) {
+            return $this->failed('待审核企业不能停用/启用', 422);
+        }
+
+        $newStatus = $company->status === CompanyStatus::Enable->value
+            ? CompanyStatus::UnEnable->value
+            : CompanyStatus::Enable->value;
+
+        $company->update([
+            'status' => $newStatus,
+            'last_user_id' => auth()->id() ?? 0,
+        ]);
+
+        Controller::flushCompanyHierarchyCache($company->id);
+        if ($company->pid) {
+            Controller::flushCompanyHierarchyCache($company->pid);
+        }
+
+        return $this->success($company->fresh());
     }
 }

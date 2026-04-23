@@ -23,6 +23,11 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索证书名称...',
+    permissions: {
+        list: 'certificate-statuses.list',
+        create: 'certificate-statuses.create',
+        update: 'certificate-statuses.update',
+    },
 };
 
 export default function CertificateStatusesIndex() {

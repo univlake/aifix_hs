@@ -73,6 +73,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'name',
     searchPlaceholder: '搜索患者姓名...',
+    permissions: {
+        list: 'health-reports.list',
+        create: 'health-reports.create',
+        update: 'health-reports.update',
+        delete: 'health-reports.delete',
+    },
 };
 
 export default function DiseaseReportIndex() {

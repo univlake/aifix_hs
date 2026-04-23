@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import { Eye, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse, PaginatedData } from '@/types/models';
@@ -57,6 +58,9 @@ export function YearStatisticsPage({ pidMode = false }: PageProps = {}) {
     const { activeCompany, mode } = useScope();
     const companyId = activeCompany?.id;
     const isBloc = !pidMode && mode === 'bloc';
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('year-statistics.create');
+    const canUpdate = canWrite('year-statistics.update');
 
     const [rows, setRows] = useState<YearStatistic[]>([]);
     const [loading, setLoading] = useState(false);
@@ -124,7 +128,7 @@ export function YearStatisticsPage({ pidMode = false }: PageProps = {}) {
                         </h1>
                         <p className="text-sm text-slate-400">{subtitle}</p>
                     </div>
-                    {!pidMode && (
+                    {!pidMode && canCreate && (
                         <button
                             type="button"
                             onClick={() => {
@@ -219,7 +223,7 @@ export function YearStatisticsPage({ pidMode = false }: PageProps = {}) {
                                                 <Eye className="h-3.5 w-3.5" />
                                                 详情
                                             </button>
-                                            {!pidMode && (
+                                            {!pidMode && canUpdate && (
                                                 <button
                                                     type="button"
                                                     onClick={() => {

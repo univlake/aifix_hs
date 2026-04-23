@@ -27,7 +27,6 @@ Route::middleware('permission:special-equipment.create')->group(function () {
 });
 Route::middleware('permission:special-equipment.update')->group(function () {
     Route::put('/special-equipment/{id}', [SpecialEquipmentController::class, 'update']);
-    Route::patch('/special-equipment/{id}', [SpecialEquipmentController::class, 'update']);
 });
 Route::middleware('permission:special-equipment.delete')->group(function () {
     Route::delete('/special-equipment/{id}', [SpecialEquipmentController::class, 'destroy']);
@@ -47,7 +46,6 @@ Route::middleware('permission:special-equipment-staff.create')->group(function (
 });
 Route::middleware('permission:special-equipment-staff.update')->group(function () {
     Route::put('/special-equipment-staff/{id}', [SpecialEquipmentStaffController::class, 'update']);
-    Route::patch('/special-equipment-staff/{id}', [SpecialEquipmentStaffController::class, 'update']);
 });
 Route::middleware('permission:special-equipment-staff.delete')->group(function () {
     Route::delete('/special-equipment-staff/{id}', [SpecialEquipmentStaffController::class, 'destroy']);
@@ -70,7 +68,6 @@ Route::middleware('permission:dangerous-equipment.create')->group(function () {
 });
 Route::middleware('permission:dangerous-equipment.update')->group(function () {
     Route::put('/dangerous-equipment/{id}', [DangerousEquipmentController::class, 'update']);
-    Route::patch('/dangerous-equipment/{id}', [DangerousEquipmentController::class, 'update']);
 });
 Route::middleware('permission:dangerous-equipment.delete')->group(function () {
     Route::delete('/dangerous-equipment/{id}', [DangerousEquipmentController::class, 'destroy']);
@@ -86,7 +83,6 @@ Route::middleware('permission:hazardous-chemicals.create')->group(function () {
 });
 Route::middleware('permission:hazardous-chemicals.update')->group(function () {
     Route::put('/hazardous-chemicals/{id}', [HazardousChemicalController::class, 'update']);
-    Route::patch('/hazardous-chemicals/{id}', [HazardousChemicalController::class, 'update']);
 });
 Route::middleware('permission:hazardous-chemicals.delete')->group(function () {
     Route::delete('/hazardous-chemicals/{id}', [HazardousChemicalController::class, 'destroy']);
@@ -102,7 +98,6 @@ Route::middleware('permission:hazardous-processes.create')->group(function () {
 });
 Route::middleware('permission:hazardous-processes.update')->group(function () {
     Route::put('/hazardous-processes/{id}', [HazardousProcessController::class, 'update']);
-    Route::patch('/hazardous-processes/{id}', [HazardousProcessController::class, 'update']);
 });
 Route::middleware('permission:hazardous-processes.delete')->group(function () {
     Route::delete('/hazardous-processes/{id}', [HazardousProcessController::class, 'destroy']);
@@ -118,7 +113,6 @@ Route::middleware('permission:major-hazards.create')->group(function () {
 });
 Route::middleware('permission:major-hazards.update')->group(function () {
     Route::put('/major-hazards/{id}', [MajorHazardController::class, 'update']);
-    Route::patch('/major-hazards/{id}', [MajorHazardController::class, 'update']);
 });
 Route::middleware('permission:major-hazards.delete')->group(function () {
     Route::delete('/major-hazards/{id}', [MajorHazardController::class, 'destroy']);
@@ -134,7 +128,6 @@ Route::middleware('permission:major-hazardous-processes.create')->group(function
 });
 Route::middleware('permission:major-hazardous-processes.update')->group(function () {
     Route::put('/major-hazardous-processes/{id}', [MajorHazardousProcessController::class, 'update']);
-    Route::patch('/major-hazardous-processes/{id}', [MajorHazardousProcessController::class, 'update']);
 });
 Route::middleware('permission:major-hazardous-processes.delete')->group(function () {
     Route::delete('/major-hazardous-processes/{id}', [MajorHazardousProcessController::class, 'destroy']);
@@ -150,7 +143,6 @@ Route::middleware('permission:space-works.create')->group(function () {
 });
 Route::middleware('permission:space-works.update')->group(function () {
     Route::put('/space-works/{id}', [SpaceWorkController::class, 'update']);
-    Route::patch('/space-works/{id}', [SpaceWorkController::class, 'update']);
 });
 Route::middleware('permission:space-works.delete')->group(function () {
     Route::delete('/space-works/{id}', [SpaceWorkController::class, 'destroy']);

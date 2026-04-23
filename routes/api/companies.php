@@ -20,7 +20,7 @@ Route::middleware('permission:companies.create')->group(function () {
 });
 Route::middleware('permission:companies.update')->group(function () {
     Route::put('/companies/{company}', [CompanyController::class, 'update']);
-    Route::patch('/companies/{company}', [CompanyController::class, 'update']);
+    Route::patch('/companies/{id}/toggle-status', [CompanyController::class, 'toggleStatus']);
 });
 Route::middleware('permission:companies.delete')->group(function () {
     Route::delete('/companies/{company}', [CompanyController::class, 'destroy']);
@@ -40,7 +40,6 @@ Route::middleware('permission:personnels.create')->group(function () {
 });
 Route::middleware('permission:personnels.update')->group(function () {
     Route::put('/personnels/{personnel}', [PersonnelController::class, 'update']);
-    Route::patch('/personnels/{personnel}', [PersonnelController::class, 'update']);
 });
 
 // ── 基础数据 ─────────────────────────────────────────────────────

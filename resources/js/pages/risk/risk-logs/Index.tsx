@@ -20,6 +20,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索风险台账...',
+    permissions: {
+        list: 'risk-logs.list',
+        create: 'risk-logs.create',
+        update: 'risk-logs.update',
+        delete: 'risk-logs.delete',
+    },
 };
 
 export default function RiskLogsIndex() {

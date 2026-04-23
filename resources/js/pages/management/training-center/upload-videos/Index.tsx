@@ -78,6 +78,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索视频名称...',
+    permissions: {
+        list: 'training-videos.list',
+        create: 'training-videos.create',
+        update: 'training-videos.update',
+        delete: 'training-videos.delete',
+    },
 };
 
 export default function UploadVideosIndex() {
