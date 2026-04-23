@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreChangeManageRequest;
+use App\Http\Requests\Api\V1\UpdateChangeManageRequest;
 use App\Models\ChangeManage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreChangeManageRequest;
-use App\Http\Requests\Api\V1\UpdateChangeManageRequest;
 
 class ChangeManageController extends Controller
 {
@@ -35,7 +35,7 @@ class ChangeManageController extends Controller
     {
         $record = ChangeManage::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('变更管理不存在');
         }
 
@@ -63,7 +63,7 @@ class ChangeManageController extends Controller
     {
         $record = ChangeManage::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('变更管理不存在');
         }
         $data = $request->validated();
@@ -80,7 +80,7 @@ class ChangeManageController extends Controller
     {
         $record = ChangeManage::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('变更管理不存在');
         }
 

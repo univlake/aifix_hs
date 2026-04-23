@@ -12,7 +12,12 @@ const config: CrudPageConfig = {
     formFields: [
         { key: 'title', label: '标题', type: 'text', required: true },
         { key: 'location', label: '位置', type: 'text' },
-        { key: 'company_id', label: '所属企业', type: 'select', optionsEndpoint: '/companies' },
+        {
+            key: 'company_id',
+            label: '所属企业',
+            type: 'select',
+            optionsEndpoint: '/companies',
+        },
     ],
     searchField: 'title',
     searchPlaceholder: '搜索消防安全...',

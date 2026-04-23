@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreAddPointsTemplatesRequest;
+use App\Http\Requests\Api\V1\UpdateAddPointsTemplatesRequest;
 use App\Models\AddPointsTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreAddPointsTemplatesRequest;
-use App\Http\Requests\Api\V1\UpdateAddPointsTemplatesRequest;
 
 class AddPointsTemplatesController extends Controller
 {
@@ -35,7 +35,7 @@ class AddPointsTemplatesController extends Controller
     {
         $data = AddPointsTemplate::with(['child'])->find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('加分项模板不存在');
         }
 
@@ -54,7 +54,7 @@ class AddPointsTemplatesController extends Controller
     {
         $record = AddPointsTemplate::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('加分项模板不存在');
         }
         $data = $request->validated();
@@ -67,7 +67,7 @@ class AddPointsTemplatesController extends Controller
     {
         $record = AddPointsTemplate::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('加分项模板不存在');
         }
 

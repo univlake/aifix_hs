@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreHealthSystemRequest;
+use App\Http\Requests\Api\V1\UpdateHealthSystemRequest;
 use App\Models\HealthSystem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreHealthSystemRequest;
-use App\Http\Requests\Api\V1\UpdateHealthSystemRequest;
 
 class HealthSystemController extends Controller
 {
@@ -39,7 +39,7 @@ class HealthSystemController extends Controller
     {
         $healthSystem = HealthSystem::find($id);
 
-        if (!$healthSystem) {
+        if (! $healthSystem) {
             return $this->notFound('职业健康体系不存在');
         }
         $data = $request->validated();

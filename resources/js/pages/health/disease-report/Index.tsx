@@ -2,7 +2,10 @@ import { CrudPage } from '@/components/shared/CrudPage';
 import type { CrudPageConfig } from '@/components/shared/CrudPage';
 
 const DISEASE_TYPES = [
-    { value: '职业性尘肺病及其他呼吸系统疾病', label: '职业性尘肺病及其他呼吸系统疾病' },
+    {
+        value: '职业性尘肺病及其他呼吸系统疾病',
+        label: '职业性尘肺病及其他呼吸系统疾病',
+    },
     { value: '职业性皮肤病', label: '职业性皮肤病' },
     { value: '职业性眼病', label: '职业性眼病' },
     { value: '职业性耳鼻喉口腔疾病', label: '职业性耳鼻喉口腔疾病' },
@@ -25,18 +28,29 @@ const config: CrudPageConfig = {
             key: 'type',
             header: '职业病类型',
             width: 200,
-            render: (value) => value
-                ? <span className="rounded-md border border-violet-900/40 bg-violet-600/8 px-2 py-0.5 text-xs text-violet-400">{value as string}</span>
-                : <span className="text-slate-700">—</span>,
+            render: (value) =>
+                value ? (
+                    <span className="rounded-md border border-violet-900/40 bg-violet-600/8 px-2 py-0.5 text-xs text-violet-400">
+                        {value as string}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         { key: 'find_date', header: '发现日期', width: 110 },
         {
             key: 'is_true',
             header: '是否确诊',
             width: 100,
-            render: (value) => value
-                ? <span className="inline-flex items-center gap-1 rounded-md border border-red-500/20 bg-red-600/8 px-2 py-0.5 text-xs text-red-400"><span className="h-1.5 w-1.5 rounded-full bg-red-400" />已确诊</span>
-                : <span className="text-slate-500 text-xs">待确诊</span>,
+            render: (value) =>
+                value ? (
+                    <span className="inline-flex items-center gap-1 rounded-md border border-red-500/20 bg-red-600/8 px-2 py-0.5 text-xs text-red-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                        已确诊
+                    </span>
+                ) : (
+                    <span className="text-xs text-slate-500">待确诊</span>
+                ),
         },
         { key: 'mechanism', header: '诊断机构', width: 150 },
         { key: 'identify_date', header: '确诊日期', width: 110 },

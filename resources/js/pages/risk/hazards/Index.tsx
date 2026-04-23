@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
-import { useScope } from '@/contexts/ScopeContext';
-import { OssUploadField } from '@/components/shared/OssUploadField';
-import api from '@/lib/api';
-import type { ApiResponse } from '@/types/models';
 import { Loader2, ImageIcon, Save, Pencil, X, Upload } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { OssUploadField } from '@/components/shared/OssUploadField';
+import { useScope } from '@/contexts/ScopeContext';
+import api from '@/lib/api';
+import { getErrorMessage } from '@/types/api-error';
+import type { ApiResponse } from '@/types/models';
 
 interface RiskDistributionMap {
     id: number;
@@ -27,11 +28,17 @@ export default function RiskSourceIndex() {
     const [isEditing, setIsEditing] = useState(false);
 
     const fetchRecord = useCallback(async () => {
-        if (!companyId) return;
+        if (!companyId) {
+            return;
+        }
+
         setLoading(true);
         setError('');
+
         try {
-            const { data: res } = await api.get<ApiResponse<RiskDistributionMap | null>>('/risk-distribution-maps', {
+            const { data: res } = await api.get<
+                ApiResponse<RiskDistributionMap | null>
+            >('/risk-distribution-maps', {
                 params: { company_id: companyId },
             });
             const rec = res.data;
@@ -39,8 +46,8 @@ export default function RiskSourceIndex() {
             setAnnexUrl(rec?.annex_url ?? '');
             setDisplayUrl(rec?.signed_annex_url ?? rec?.annex_url ?? '');
             setIsEditing(false);
-        } catch (err: any) {
-            setError(err.response?.data?.message ?? '加载失败');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, '加载失败'));
         } finally {
             setLoading(false);
         }
@@ -51,22 +58,31 @@ export default function RiskSourceIndex() {
     }, [fetchRecord]);
 
     const handleSave = async () => {
-        if (!companyId) return;
+        if (!companyId) {
+            return;
+        }
+
         setSaving(true);
         setError('');
+
         try {
             const payload = { annex_url: annexUrl, company_id: companyId };
+
             if (record?.id) {
                 await api.put(`/risk-distribution-maps/${record.id}`, payload);
             } else {
-                await api.post<ApiResponse<RiskDistributionMap>>('/risk-distribution-maps', payload);
+                await api.post<ApiResponse<RiskDistributionMap>>(
+                    '/risk-distribution-maps',
+                    payload,
+                );
             }
+
             setSaved(true);
             setIsEditing(false);
             await fetchRecord();
             setTimeout(() => setSaved(false), 2500);
-        } catch (err: any) {
-            setError(err.response?.data?.message ?? '保存失败，请重试');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, '保存失败，请重试'));
         } finally {
             setSaving(false);
         }
@@ -82,7 +98,8 @@ export default function RiskSourceIndex() {
     const isViewMode = hasRecord && !isEditing;
     const isUploadMode = !hasRecord || isEditing;
 
-    const isImage = (url: string) => /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(url);
+    const isImage = (url: string) =>
+        /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(url);
 
     return (
         <>
@@ -90,8 +107,12 @@ export default function RiskSourceIndex() {
 
             <div className="mb-6 flex items-start justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-100">风险源管理</h1>
-                    <p className="mt-0.5 text-xs text-slate-600">上传并管理企业风险分布图</p>
+                    <h1 className="text-xl font-bold text-slate-100">
+                        风险源管理
+                    </h1>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                        上传并管理企业风险分布图
+                    </p>
                 </div>
 
                 {!loading && (
@@ -128,7 +149,13 @@ export default function RiskSourceIndex() {
                                 ) : (
                                     <Upload className="h-4 w-4" />
                                 )}
-                                {saving ? '保存中...' : saved ? '已保存 ✓' : isEditing ? '保存' : '上传并保存'}
+                                {saving
+                                    ? '保存中...'
+                                    : saved
+                                      ? '已保存 ✓'
+                                      : isEditing
+                                        ? '保存'
+                                        : '上传并保存'}
                             </button>
                         )}
                     </div>
@@ -149,12 +176,17 @@ export default function RiskSourceIndex() {
                 <div className="space-y-4">
                     {isUploadMode && (
                         <div className="rounded-xl border border-blue-900/30 bg-[#0d1530] p-4">
-                            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-                                {isEditing ? '替换风险分布图文件' : '风险分布图文件'}
+                            <p className="mb-3 text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                {isEditing
+                                    ? '替换风险分布图文件'
+                                    : '风险分布图文件'}
                             </p>
                             <OssUploadField
                                 value={annexUrl}
-                                onChange={(url) => { setAnnexUrl(url); setDisplayUrl(url); }}
+                                onChange={(url) => {
+                                    setAnnexUrl(url);
+                                    setDisplayUrl(url);
+                                }}
                                 accept="image/*,.pdf"
                                 dir="risk-distribution-maps/"
                                 displayValue={displayUrl}
@@ -166,7 +198,9 @@ export default function RiskSourceIndex() {
                         isImage(displayUrl) ? (
                             <div className="overflow-hidden rounded-xl border border-blue-900/30 bg-[#070d1f]">
                                 <div className="border-b border-blue-900/20 px-4 py-2.5">
-                                    <p className="text-xs text-slate-500">风险分布图预览</p>
+                                    <p className="text-xs text-slate-500">
+                                        风险分布图预览
+                                    </p>
                                 </div>
                                 <div className="p-4">
                                     <img
@@ -186,14 +220,18 @@ export default function RiskSourceIndex() {
                                     className="flex flex-col items-center gap-3 text-blue-400 transition-colors hover:text-blue-300"
                                 >
                                     <ImageIcon className="h-10 w-10 opacity-60" />
-                                    <span className="text-sm">点击查看文件</span>
+                                    <span className="text-sm">
+                                        点击查看文件
+                                    </span>
                                 </a>
                             </div>
                         )
                     ) : (
                         <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-blue-900/40 bg-[#070d1f]">
                             <ImageIcon className="h-10 w-10 text-slate-700" />
-                            <p className="text-sm text-slate-600">暂无风险分布图，请上传图片或 PDF 文件</p>
+                            <p className="text-sm text-slate-600">
+                                暂无风险分布图，请上传图片或 PDF 文件
+                            </p>
                         </div>
                     )}
                 </div>

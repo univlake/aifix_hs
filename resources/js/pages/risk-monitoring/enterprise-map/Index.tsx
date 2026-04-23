@@ -1,16 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
+import L from 'leaflet';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Building2, AlertTriangle, Loader2, RefreshCw, X } from 'lucide-react';
 
 // Fix Leaflet default icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconRetinaUrl:
+        'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
@@ -31,18 +32,40 @@ interface MapCompany {
 type ColorMode = 'status' | 'risk';
 
 const riskGradeColor = (grade?: string): string => {
-    if (!grade) return '#475569';
+    if (!grade) {
+        return '#475569';
+    }
+
     const g = grade.trim();
-    if (g.includes('红') || g === '一级' || g === '1') return '#ef4444';
-    if (g.includes('橙') || g === '二级' || g === '2') return '#f97316';
-    if (g.includes('黄') || g === '三级' || g === '3') return '#eab308';
-    if (g.includes('蓝') || g === '四级' || g === '4') return '#3b82f6';
+
+    if (g.includes('红') || g === '一级' || g === '1') {
+        return '#ef4444';
+    }
+
+    if (g.includes('橙') || g === '二级' || g === '2') {
+        return '#f97316';
+    }
+
+    if (g.includes('黄') || g === '三级' || g === '3') {
+        return '#eab308';
+    }
+
+    if (g.includes('蓝') || g === '四级' || g === '4') {
+        return '#3b82f6';
+    }
+
     return '#475569';
 };
 
 const statusColor = (status: number): string => {
-    if (status === 1) return '#10b981';
-    if (status === 0) return '#f59e0b';
+    if (status === 1) {
+        return '#10b981';
+    }
+
+    if (status === 0) {
+        return '#f59e0b';
+    }
+
     return '#475569';
 };
 
@@ -53,6 +76,7 @@ function createPinIcon(color: string, active = false) {
         <path d="M${size / 2} 0C${size * 0.232} 0 0 ${size * 0.232} 0 ${size / 2}c0 ${size * 0.375} ${size / 2} ${size * 0.786} ${size / 2} ${size * 0.786}S${size} ${size * 0.875} ${size} ${size / 2}C${size} ${size * 0.232} ${size * 0.768} 0 ${size / 2} 0z" fill="${color}" fill-opacity="${active ? 1 : 0.85}"/>
         <circle cx="${size / 2}" cy="${size / 2}" r="${dotR}" fill="white" fill-opacity="0.92"/>
     </svg>`;
+
     return L.divIcon({
         html: svg,
         className: '',
@@ -75,33 +99,47 @@ export default function EnterpriseMap() {
     const [colorMode, setColorMode] = useState<ColorMode>('status');
 
     const fetchCompanies = useCallback(() => {
-        if (!rootCompany?.id) return;
+        if (!rootCompany?.id) {
+            return;
+        }
+
         setLoading(true);
         setError('');
         Promise.all([
             api.get(`/companies/${rootCompany.id}`),
-            api.get('/companies', { params: { pid: rootCompany.id, per_page: 200 } }),
-        ]).then(([rootRes, listRes]) => {
-            const root: MapCompany = rootRes.data.data;
-            const subs: MapCompany[] = listRes.data.data?.data ?? [];
-            setCompanies([root, ...subs]);
-        }).catch(() => setError('加载企业数据失败'))
-          .finally(() => setLoading(false));
+            api.get('/companies', {
+                params: { pid: rootCompany.id, per_page: 200 },
+            }),
+        ])
+            .then(([rootRes, listRes]) => {
+                const root: MapCompany = rootRes.data.data;
+                const subs: MapCompany[] = listRes.data.data?.data ?? [];
+                setCompanies([root, ...subs]);
+            })
+            .catch(() => setError('加载企业数据失败'))
+            .finally(() => setLoading(false));
     }, [rootCompany?.id]);
 
-    useEffect(() => { fetchCompanies(); }, [fetchCompanies]);
+    useEffect(() => {
+        fetchCompanies();
+    }, [fetchCompanies]);
 
     // Init map after data loads
     useEffect(() => {
-        if (loading || !containerRef.current || mapRef.current) return;
+        if (loading || !containerRef.current || mapRef.current) {
+            return;
+        }
 
-        const map = L.map(containerRef.current, { zoomControl: true }).setView([35.86, 104.19], 5);
+        const map = L.map(containerRef.current, { zoomControl: true }).setView(
+            [35.86, 104.19],
+            5,
+        );
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
             maxZoom: 19,
         }).addTo(map);
         mapRef.current = map;
-        // eslint-disable-next-line consistent-return
+
         return () => {
             map.remove();
             mapRef.current = null;
@@ -112,7 +150,10 @@ export default function EnterpriseMap() {
     // Add / update markers
     useEffect(() => {
         const map = mapRef.current;
-        if (!map) return;
+
+        if (!map) {
+            return;
+        }
 
         // Remove old markers
         markersRef.current.forEach((m) => m.remove());
@@ -123,13 +164,21 @@ export default function EnterpriseMap() {
         withCoords.forEach((c) => {
             const lat = Number(c.dimension);
             const lng = Number(c.longitude);
-            if (isNaN(lat) || isNaN(lng)) return;
 
-            const color = colorMode === 'risk'
-                ? riskGradeColor(c.float_risk_grade ?? c.inherent_risk_grade)
-                : statusColor(c.status);
+            if (isNaN(lat) || isNaN(lng)) {
+                return;
+            }
 
-            const marker = L.marker([lat, lng], { icon: createPinIcon(color) }).addTo(map);
+            const color =
+                colorMode === 'risk'
+                    ? riskGradeColor(
+                          c.float_risk_grade ?? c.inherent_risk_grade,
+                      )
+                    : statusColor(c.status);
+
+            const marker = L.marker([lat, lng], {
+                icon: createPinIcon(color),
+            }).addTo(map);
             marker.on('click', () => {
                 setSelected(c);
             });
@@ -137,7 +186,9 @@ export default function EnterpriseMap() {
         });
 
         if (withCoords.length > 0 && markersRef.current.size > 0) {
-            const group = L.featureGroup(Array.from(markersRef.current.values()));
+            const group = L.featureGroup(
+                Array.from(markersRef.current.values()),
+            );
             map.fitBounds(group.getBounds().pad(0.25));
         }
     }, [companies, colorMode, mapRef.current]);
@@ -146,10 +197,17 @@ export default function EnterpriseMap() {
     useEffect(() => {
         markersRef.current.forEach((m, id) => {
             const c = companies.find((x) => x.id === id);
-            if (!c) return;
-            const color = colorMode === 'risk'
-                ? riskGradeColor(c.float_risk_grade ?? c.inherent_risk_grade)
-                : statusColor(c.status);
+
+            if (!c) {
+                return;
+            }
+
+            const color =
+                colorMode === 'risk'
+                    ? riskGradeColor(
+                          c.float_risk_grade ?? c.inherent_risk_grade,
+                      )
+                    : statusColor(c.status);
             m.setIcon(createPinIcon(color, selected?.id === id));
         });
     }, [selected]);
@@ -163,8 +221,12 @@ export default function EnterpriseMap() {
 
             <div className="mb-6 flex items-start justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-100">企业分布图</h1>
-                    <p className="mt-1 text-sm text-slate-500">辖区内企业的地理位置可视化</p>
+                    <h1 className="text-2xl font-bold text-slate-100">
+                        企业分布图
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500">
+                        辖区内企业的地理位置可视化
+                    </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex rounded-lg border border-blue-900/40 bg-[#0a1428] p-1 text-xs">
@@ -174,7 +236,9 @@ export default function EnterpriseMap() {
                                 onClick={() => setColorMode(m)}
                                 className={cn(
                                     'rounded-md px-3 py-1.5 font-medium transition-all',
-                                    colorMode === m ? 'bg-blue-600/30 text-blue-300' : 'text-slate-500 hover:text-slate-300',
+                                    colorMode === m
+                                        ? 'bg-blue-600/30 text-blue-300'
+                                        : 'text-slate-500 hover:text-slate-300',
                                 )}
                             >
                                 {m === 'status' ? '按状态着色' : '按风险着色'}
@@ -184,9 +248,14 @@ export default function EnterpriseMap() {
                     <button
                         onClick={fetchCompanies}
                         disabled={loading}
-                        className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-2 text-xs text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-2 text-xs text-slate-400 transition-colors hover:text-slate-200 disabled:opacity-50"
                     >
-                        <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+                        <RefreshCw
+                            className={cn(
+                                'h-3.5 w-3.5',
+                                loading && 'animate-spin',
+                            )}
+                        />
                         刷新
                     </button>
                 </div>
@@ -194,23 +263,43 @@ export default function EnterpriseMap() {
 
             {/* Stats strip */}
             <div className="mb-4 flex items-center gap-5 text-xs">
-                <span className="text-slate-500">共 <span className="font-semibold text-slate-300">{companies.length}</span> 家企业</span>
-                <span className="text-slate-500">已标注坐标 <span className="font-semibold text-blue-400">{withCoords.length}</span> 家</span>
+                <span className="text-slate-500">
+                    共{' '}
+                    <span className="font-semibold text-slate-300">
+                        {companies.length}
+                    </span>{' '}
+                    家企业
+                </span>
+                <span className="text-slate-500">
+                    已标注坐标{' '}
+                    <span className="font-semibold text-blue-400">
+                        {withCoords.length}
+                    </span>{' '}
+                    家
+                </span>
                 {noCoords.length > 0 && (
-                    <span className="text-slate-600">未设坐标 <span className="font-semibold">{noCoords.length}</span> 家（不显示在地图）</span>
+                    <span className="text-slate-600">
+                        未设坐标{' '}
+                        <span className="font-semibold">{noCoords.length}</span>{' '}
+                        家（不显示在地图）
+                    </span>
                 )}
             </div>
 
             {error && (
                 <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-950/20 p-4 text-sm text-red-400">
-                    <AlertTriangle className="h-4 w-4 shrink-0" />{error}
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    {error}
                 </div>
             )}
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
                 {/* Map panel */}
                 <div className="lg:col-span-3">
-                    <div className="relative overflow-hidden rounded-xl border border-blue-900/40" style={{ height: 560 }}>
+                    <div
+                        className="relative overflow-hidden rounded-xl border border-blue-900/40"
+                        style={{ height: 560 }}
+                    >
                         {loading ? (
                             <div className="flex h-full items-center justify-center bg-[#0d1530]">
                                 <Loader2 className="h-8 w-8 animate-spin text-blue-500/40" />
@@ -225,28 +314,62 @@ export default function EnterpriseMap() {
                 <div className="flex flex-col gap-3">
                     {/* Legend */}
                     <div className="rounded-xl border border-blue-900/40 bg-[#0d1530] p-4">
-                        <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-600">图例</p>
+                        <p className="mb-3 text-[10px] font-semibold tracking-wider text-slate-600 uppercase">
+                            图例
+                        </p>
                         {colorMode === 'status' ? (
                             <div className="space-y-2">
-                                {[{ color: '#10b981', label: '正常运营' }, { color: '#f59e0b', label: '待审核' }, { color: '#475569', label: '已停用' }].map(({ color, label }) => (
-                                    <div key={label} className="flex items-center gap-2.5">
-                                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                                        <span className="text-xs text-slate-400">{label}</span>
+                                {[
+                                    { color: '#10b981', label: '正常运营' },
+                                    { color: '#f59e0b', label: '待审核' },
+                                    { color: '#475569', label: '已停用' },
+                                ].map(({ color, label }) => (
+                                    <div
+                                        key={label}
+                                        className="flex items-center gap-2.5"
+                                    >
+                                        <span
+                                            className="h-3 w-3 shrink-0 rounded-full"
+                                            style={{ backgroundColor: color }}
+                                        />
+                                        <span className="text-xs text-slate-400">
+                                            {label}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             <div className="space-y-2">
                                 {[
-                                    { color: '#ef4444', label: '一级/红色风险' },
-                                    { color: '#f97316', label: '二级/橙色风险' },
-                                    { color: '#eab308', label: '三级/黄色风险' },
-                                    { color: '#3b82f6', label: '四级/蓝色风险' },
+                                    {
+                                        color: '#ef4444',
+                                        label: '一级/红色风险',
+                                    },
+                                    {
+                                        color: '#f97316',
+                                        label: '二级/橙色风险',
+                                    },
+                                    {
+                                        color: '#eab308',
+                                        label: '三级/黄色风险',
+                                    },
+                                    {
+                                        color: '#3b82f6',
+                                        label: '四级/蓝色风险',
+                                    },
                                     { color: '#475569', label: '未评级' },
                                 ].map(({ color, label }) => (
-                                    <div key={label} className="flex items-center gap-2.5">
-                                        <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                                        <span className="text-xs text-slate-400">{label}</span>
+                                    <div
+                                        key={label}
+                                        className="flex items-center gap-2.5"
+                                    >
+                                        <span
+                                            className="h-3 w-3 shrink-0 rounded-full"
+                                            style={{ backgroundColor: color }}
+                                        />
+                                        <span className="text-xs text-slate-400">
+                                            {label}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -261,41 +384,66 @@ export default function EnterpriseMap() {
                                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-blue-600/20 bg-blue-600/15">
                                         <Building2 className="h-3.5 w-3.5 text-blue-400" />
                                     </div>
-                                    <p className="text-sm font-medium text-slate-200 leading-snug">{selected.title}</p>
+                                    <p className="text-sm leading-snug font-medium text-slate-200">
+                                        {selected.title}
+                                    </p>
                                 </div>
-                                <button onClick={() => setSelected(null)} className="shrink-0 text-slate-600 hover:text-slate-400 transition-colors">
+                                <button
+                                    onClick={() => setSelected(null)}
+                                    className="shrink-0 text-slate-600 transition-colors hover:text-slate-400"
+                                >
                                     <X className="h-3.5 w-3.5" />
                                 </button>
                             </div>
                             <dl className="space-y-1.5 text-xs">
                                 {selected.enterprise_type?.title && (
                                     <div className="flex gap-2">
-                                        <dt className="w-16 shrink-0 text-slate-600">类型</dt>
-                                        <dd className="text-slate-400">{selected.enterprise_type.title}</dd>
+                                        <dt className="w-16 shrink-0 text-slate-600">
+                                            类型
+                                        </dt>
+                                        <dd className="text-slate-400">
+                                            {selected.enterprise_type.title}
+                                        </dd>
                                     </div>
                                 )}
                                 {selected.address && (
                                     <div className="flex gap-2">
-                                        <dt className="w-16 shrink-0 text-slate-600">地址</dt>
-                                        <dd className="text-slate-400 leading-relaxed">{selected.address}</dd>
+                                        <dt className="w-16 shrink-0 text-slate-600">
+                                            地址
+                                        </dt>
+                                        <dd className="leading-relaxed text-slate-400">
+                                            {selected.address}
+                                        </dd>
                                     </div>
                                 )}
                                 {selected.inherent_risk_grade && (
                                     <div className="flex gap-2">
-                                        <dt className="w-16 shrink-0 text-slate-600">固有风险</dt>
-                                        <dd className="text-slate-300">{selected.inherent_risk_grade}</dd>
+                                        <dt className="w-16 shrink-0 text-slate-600">
+                                            固有风险
+                                        </dt>
+                                        <dd className="text-slate-300">
+                                            {selected.inherent_risk_grade}
+                                        </dd>
                                     </div>
                                 )}
                                 {selected.float_risk_grade && (
                                     <div className="flex gap-2">
-                                        <dt className="w-16 shrink-0 text-slate-600">浮动风险</dt>
-                                        <dd className="text-slate-300">{selected.float_risk_grade}</dd>
+                                        <dt className="w-16 shrink-0 text-slate-600">
+                                            浮动风险
+                                        </dt>
+                                        <dd className="text-slate-300">
+                                            {selected.float_risk_grade}
+                                        </dd>
                                     </div>
                                 )}
                                 <div className="flex gap-2">
-                                    <dt className="w-16 shrink-0 text-slate-600">坐标</dt>
+                                    <dt className="w-16 shrink-0 text-slate-600">
+                                        坐标
+                                    </dt>
                                     <dd className="font-mono text-slate-500">
-                                        {Number(selected.longitude).toFixed(5)},&nbsp;{Number(selected.dimension).toFixed(5)}
+                                        {Number(selected.longitude).toFixed(5)}
+                                        ,&nbsp;
+                                        {Number(selected.dimension).toFixed(5)}
                                     </dd>
                                 </div>
                             </dl>
@@ -305,10 +453,17 @@ export default function EnterpriseMap() {
                     {/* No-coord list */}
                     {noCoords.length > 0 && (
                         <div className="rounded-xl border border-amber-900/20 bg-[#0d1530] p-4">
-                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-500/60">未设坐标企业</p>
+                            <p className="mb-2 text-[10px] font-semibold tracking-wider text-amber-500/60 uppercase">
+                                未设坐标企业
+                            </p>
                             <div className="max-h-48 space-y-1 overflow-y-auto pr-1">
                                 {noCoords.map((c) => (
-                                    <p key={c.id} className="truncate text-xs text-slate-600">{c.title}</p>
+                                    <p
+                                        key={c.id}
+                                        className="truncate text-xs text-slate-600"
+                                    >
+                                        {c.title}
+                                    </p>
                                 ))}
                             </div>
                         </div>

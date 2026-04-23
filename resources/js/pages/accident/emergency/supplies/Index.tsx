@@ -15,7 +15,14 @@ const config: CrudPageConfig = {
             header: '备注',
             render: (val) => {
                 const s = val ? String(val) : '';
-                return s ? <span title={s}>{s.length > 30 ? s.slice(0, 30) + '…' : s}</span> : <span className="text-slate-700">—</span>;
+
+                return s ? (
+                    <span title={s}>
+                        {s.length > 30 ? s.slice(0, 30) + '…' : s}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                );
             },
         },
     ],

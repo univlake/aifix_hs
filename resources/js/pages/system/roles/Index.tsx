@@ -1,17 +1,39 @@
-import { useState, useEffect, useMemo } from 'react';
 import { Head } from '@inertiajs/react';
-import { type ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
+import {
+    Plus,
+    Pencil,
+    Trash2,
+    X,
+    AlertTriangle,
+    Loader2,
+    ShieldCheck,
+    Check,
+    Minus,
+    Search,
+    Sparkles,
+} from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
-import { cn } from '@/lib/utils';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, ShieldCheck, Check, Minus, Search, Sparkles } from 'lucide-react';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
 
-interface Permission { id: number; name: string }
-interface RoleItem { id: number; name: string; guard_name: string; permissions: Permission[] }
-interface GroupedPermissions { [module: string]: Permission[] }
+interface Permission {
+    id: number;
+    name: string;
+}
+interface RoleItem {
+    id: number;
+    name: string;
+    guard_name: string;
+    permissions: Permission[];
+}
+interface GroupedPermissions {
+    [module: string]: Permission[];
+}
 
 type DialogMode = 'create' | 'edit' | null;
 
@@ -20,9 +42,18 @@ const NO_EDIT_ROLES = ['super-admin'];
 const LOCKED_NAME_ROLES = ['admin', 'reviewer', 'user'];
 
 const ACTION_LABELS: Record<string, string> = {
-    list: '列表', create: '新增', update: '编辑', delete: '删除',
-    manage: '管理', view: '查看', review: '审核', assign: '分配',
-    tree: '树形', portrait: '画像', file: '文件上传', oss: 'OSS上传',
+    list: '列表',
+    create: '新增',
+    update: '编辑',
+    delete: '删除',
+    manage: '管理',
+    view: '查看',
+    review: '审核',
+    assign: '分配',
+    tree: '树形',
+    portrait: '画像',
+    file: '文件上传',
+    oss: 'OSS上传',
 };
 
 // ── Role templates ────────────────────────────────────────────────
@@ -47,9 +78,19 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
         label: 'HSE 经理',
         description: '风险 / 隐患 / 三同时 / 安全评价 / 应急演练 — 全部 CRUD',
         modules: [
-            'hazards', 'monthly-investigations', 'rectification-sheets', 'hidden-danger-infos',
-            'three-togethers', 'assess-detects', 'risk-logs', 'inherent-risk-logs', 'float-risk-logs',
-            'emergency-drills', 'emergency-teams', 'emergency-supplies', 'expert-inspections',
+            'hazards',
+            'monthly-investigations',
+            'rectification-sheets',
+            'hidden-danger-infos',
+            'three-togethers',
+            'assess-detects',
+            'risk-logs',
+            'inherent-risk-logs',
+            'float-risk-logs',
+            'emergency-drills',
+            'emergency-teams',
+            'emergency-supplies',
+            'expert-inspections',
         ],
     },
     {
@@ -57,8 +98,11 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
         label: '设备主管',
         description: '特种设备、危险设备、消防器材/设施 — 全部 CRUD',
         modules: [
-            'special-equipment', 'special-equipment-staff', 'dangerous-equipment',
-            'fire-equipment', 'fire-facilities',
+            'special-equipment',
+            'special-equipment-staff',
+            'dangerous-equipment',
+            'fire-equipment',
+            'fire-facilities',
         ],
     },
     {
@@ -66,8 +110,11 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
         label: '职业健康员',
         description: '健康档案 / 职业危害 / 健康检查 / 职业病报告',
         modules: [
-            'health-files', 'health-checkups', 'health-reports',
-            'occupational-hazards', 'hygiene-evaluations',
+            'health-files',
+            'health-checkups',
+            'health-reports',
+            'occupational-hazards',
+            'hygiene-evaluations',
         ],
     },
     {
@@ -75,8 +122,13 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
         label: '培训管理员',
         description: '内部/外部/其他培训 + 培训资料与视频',
         modules: [
-            'internal-trainings', 'external-trainings', 'other-trainings',
-            'training-classes', 'training-class-infos', 'training-files', 'training-videos',
+            'internal-trainings',
+            'external-trainings',
+            'other-trainings',
+            'training-classes',
+            'training-class-infos',
+            'training-files',
+            'training-videos',
             'internal-meetings',
         ],
     },
@@ -85,11 +137,20 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
         label: '只读审计员',
         description: '全业务模块查阅权限，不可写',
         modules: [
-            'hazards', 'monthly-investigations', 'assess-detects',
-            'accident-bulletins', 'internal-meetings', 'internal-trainings',
-            'special-equipment', 'dangerous-equipment', 'hazardous-chemicals',
-            'major-hazards', 'personnels', 'buildings',
-            'companies', 'users',
+            'hazards',
+            'monthly-investigations',
+            'assess-detects',
+            'accident-bulletins',
+            'internal-meetings',
+            'internal-trainings',
+            'special-equipment',
+            'dangerous-equipment',
+            'hazardous-chemicals',
+            'major-hazards',
+            'personnels',
+            'buildings',
+            'companies',
+            'users',
         ],
         actions: ['list', 'view'],
     },
@@ -98,15 +159,23 @@ const ROLE_TEMPLATES: RoleTemplate[] = [
         label: '任务执行员',
         description: '接收并反馈上级下发的会议 / 通知 / 报送',
         modules: [
-            'meetings', 'meeting-sign-ups', 'office-notifies', 'new-notifies',
-            'information-drafts', 'month-statistics', 'year-statistics',
+            'meetings',
+            'meeting-sign-ups',
+            'office-notifies',
+            'new-notifies',
+            'information-drafts',
+            'month-statistics',
+            'year-statistics',
             'accident-bulletins',
         ],
     },
 ];
 
 function formatModule(name: string): string {
-    return name.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return name
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
 }
 
 function formatAction(action: string): string {
@@ -141,7 +210,9 @@ export default function RolesIndex() {
 
     useEffect(() => {
         loadRoles();
-        api.get<ApiResponse<{ list: Permission[]; grouped: GroupedPermissions }>>('/permissions')
+        api.get<
+            ApiResponse<{ list: Permission[]; grouped: GroupedPermissions }>
+        >('/permissions')
             .then((r) => setGrouped(r.data.data?.grouped ?? {}))
             .catch(() => {});
     }, []);
@@ -166,34 +237,58 @@ export default function RolesIndex() {
 
     const applyTemplate = (tpl: RoleTemplate) => {
         const all: string[] = [];
+
         for (const module of tpl.modules) {
             const modulePerms = grouped[module] ?? [];
+
             for (const p of modulePerms) {
                 const action = p.name.split('.').slice(1).join('.');
+
                 if (!tpl.actions || tpl.actions.includes(action)) {
                     all.push(p.name);
                 }
             }
         }
+
         setSelectedPerms(new Set(all));
     };
 
     const handleSubmit = async () => {
         setFormLoading(true);
         setFormError('');
+
         try {
             const permissions = [...selectedPerms];
+
             if (dialogMode === 'create') {
-                if (!roleName.trim()) { setFormError('请输入角色名称'); setFormLoading(false); return; }
-                await api.post('/roles', { name: roleName.trim(), permissions });
+                if (!roleName.trim()) {
+                    setFormError('请输入角色名称');
+                    setFormLoading(false);
+
+                    return;
+                }
+
+                await api.post('/roles', {
+                    name: roleName.trim(),
+                    permissions,
+                });
             } else if (dialogMode === 'edit' && editingRole) {
                 const payload: Record<string, unknown> = { permissions };
+
                 if (!LOCKED_NAME_ROLES.includes(editingRole.name)) {
-                    if (!roleName.trim()) { setFormError('请输入角色名称'); setFormLoading(false); return; }
+                    if (!roleName.trim()) {
+                        setFormError('请输入角色名称');
+                        setFormLoading(false);
+
+                        return;
+                    }
+
                     payload.name = roleName.trim();
                 }
+
                 await api.put(`/roles/${editingRole.id}`, payload);
             }
+
             setDialogMode(null);
             loadRoles();
         } catch (err: unknown) {
@@ -205,12 +300,16 @@ export default function RolesIndex() {
     };
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!deleteId) {
+            return;
+        }
+
         try {
             await api.delete(`/roles/${deleteId}`);
         } catch {
             // ignore
         }
+
         setDeleteId(null);
         setDeleteLabel('');
         loadRoles();
@@ -219,7 +318,13 @@ export default function RolesIndex() {
     const togglePerm = (name: string) => {
         setSelectedPerms((prev) => {
             const next = new Set(prev);
-            if (next.has(name)) { next.delete(name); } else { next.add(name); }
+
+            if (next.has(name)) {
+                next.delete(name);
+            } else {
+                next.add(name);
+            }
+
             return next;
         });
     };
@@ -228,7 +333,10 @@ export default function RolesIndex() {
         const perms = grouped[module] ?? [];
         setSelectedPerms((prev) => {
             const next = new Set(prev);
-            perms.forEach((p) => (selectAll ? next.add(p.name) : next.delete(p.name)));
+            perms.forEach((p) =>
+                selectAll ? next.add(p.name) : next.delete(p.name),
+            );
+
             return next;
         });
     };
@@ -238,14 +346,19 @@ export default function RolesIndex() {
     const columns: ColumnDef<RoleItem>[] = [
         { accessorKey: 'id', header: 'ID', size: 60 },
         {
-            id: 'name', header: '角色名称', size: 180,
+            id: 'name',
+            header: '角色名称',
+            size: 180,
             cell: ({ row }) => {
                 const isSystem = SYSTEM_ROLES.includes(row.original.name);
+
                 return (
-                    <span className={cn(
-                        'inline-flex items-center gap-1.5 font-medium',
-                        isSystem ? 'text-amber-300' : 'text-slate-200',
-                    )}>
+                    <span
+                        className={cn(
+                            'inline-flex items-center gap-1.5 font-medium',
+                            isSystem ? 'text-amber-300' : 'text-slate-200',
+                        )}
+                    >
                         {isSystem && <ShieldCheck className="h-3.5 w-3.5" />}
                         {row.original.name}
                     </span>
@@ -253,43 +366,67 @@ export default function RolesIndex() {
             },
         },
         {
-            id: 'type', header: '类型', size: 100,
+            id: 'type',
+            header: '类型',
+            size: 100,
             cell: ({ row }) => {
                 const isSystem = SYSTEM_ROLES.includes(row.original.name);
+
                 return (
-                    <span className={cn(
-                        'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
-                        isSystem ? 'bg-amber-600/15 text-amber-400' : 'bg-blue-600/15 text-blue-300',
-                    )}>
+                    <span
+                        className={cn(
+                            'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                            isSystem
+                                ? 'bg-amber-600/15 text-amber-400'
+                                : 'bg-blue-600/15 text-blue-300',
+                        )}
+                    >
                         {isSystem ? '系统角色' : '自定义'}
                     </span>
                 );
             },
         },
         {
-            id: 'perms', header: '权限数量', size: 120,
+            id: 'perms',
+            header: '权限数量',
+            size: 120,
             cell: ({ row }) => (
                 <span className="text-sm text-slate-400">
-                    <span className="font-medium text-slate-200">{row.original.permissions.length}</span>
+                    <span className="font-medium text-slate-200">
+                        {row.original.permissions.length}
+                    </span>
                     <span className="ml-1 text-slate-700">个</span>
                 </span>
             ),
         },
         {
-            id: 'actions', header: '操作', size: 100,
+            id: 'actions',
+            header: '操作',
+            size: 100,
             cell: ({ row }) => {
                 const role = row.original;
+
                 if (NO_EDIT_ROLES.includes(role.name)) {
-                    return <span className="text-xs text-slate-700">不可修改</span>;
+                    return (
+                        <span className="text-xs text-slate-700">不可修改</span>
+                    );
                 }
+
                 return (
                     <div className="flex items-center gap-0.5">
-                        <ActionBtn onClick={() => openEdit(role)} title="编辑权限" variant="edit">
+                        <ActionBtn
+                            onClick={() => openEdit(role)}
+                            title="编辑权限"
+                            variant="edit"
+                        >
                             <Pencil className="h-3.5 w-3.5" />
                         </ActionBtn>
                         {!SYSTEM_ROLES.includes(role.name) && (
                             <ActionBtn
-                                onClick={() => { setDeleteId(role.id); setDeleteLabel(role.name); }}
+                                onClick={() => {
+                                    setDeleteId(role.id);
+                                    setDeleteLabel(role.name);
+                                }}
                                 title="删除"
                                 variant="delete"
                             >
@@ -308,13 +445,20 @@ export default function RolesIndex() {
 
             <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-100">角色管理</h1>
+                    <h1 className="text-xl font-bold text-slate-100">
+                        角色管理
+                    </h1>
                     <p className="mt-0.5 text-xs text-slate-600">
-                        共 <span className="font-medium text-slate-400">{roles.length}</span> 个角色
+                        共{' '}
+                        <span className="font-medium text-slate-400">
+                            {roles.length}
+                        </span>{' '}
+                        个角色
                     </p>
                 </div>
                 <button onClick={openCreate} className={primaryBtn}>
-                    <Plus className="h-4 w-4" />新增角色
+                    <Plus className="h-4 w-4" />
+                    新增角色
                 </button>
             </div>
 
@@ -339,10 +483,12 @@ export default function RolesIndex() {
                     }
                     onClose={() => setDialogMode(null)}
                 />
-                <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                <div className="flex-1 space-y-5 overflow-y-auto p-6">
                     {formError && <ErrorAlert message={formError} />}
 
-                    {(dialogMode === 'create' || (editingRole && !LOCKED_NAME_ROLES.includes(editingRole.name))) && (
+                    {(dialogMode === 'create' ||
+                        (editingRole &&
+                            !LOCKED_NAME_ROLES.includes(editingRole.name))) && (
                         <Field label="角色名称" required>
                             <input
                                 className={inputClass}
@@ -357,9 +503,11 @@ export default function RolesIndex() {
                     <div>
                         <div className="mb-2 flex items-center gap-2">
                             <Sparkles className="h-3.5 w-3.5 text-violet-400" />
-                            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            <label className="text-xs font-medium tracking-wide text-slate-500 uppercase">
                                 快速模板
-                                <span className="ml-2 font-normal text-slate-700">一键预选常用权限组合，应用后可继续微调</span>
+                                <span className="ml-2 font-normal text-slate-700">
+                                    一键预选常用权限组合，应用后可继续微调
+                                </span>
                             </label>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
@@ -379,20 +527,26 @@ export default function RolesIndex() {
 
                     <div>
                         <div className="mb-2 flex items-center justify-between">
-                            <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            <label className="text-xs font-medium tracking-wide text-slate-500 uppercase">
                                 权限分配
                                 <span className="ml-2 font-normal text-slate-700">
-                                    已选 <span className="text-slate-400">{selectedPerms.size}</span> 个
+                                    已选{' '}
+                                    <span className="text-slate-400">
+                                        {selectedPerms.size}
+                                    </span>{' '}
+                                    个
                                 </span>
                             </label>
                             <div className="flex gap-2">
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        const all = Object.values(grouped).flat().map((p) => p.name);
+                                        const all = Object.values(grouped)
+                                            .flat()
+                                            .map((p) => p.name);
                                         setSelectedPerms(new Set(all));
                                     }}
-                                    className="text-[11px] text-blue-500 hover:text-blue-400 transition-colors"
+                                    className="text-[11px] text-blue-500 transition-colors hover:text-blue-400"
                                 >
                                     全选
                                 </button>
@@ -400,20 +554,20 @@ export default function RolesIndex() {
                                 <button
                                     type="button"
                                     onClick={() => setSelectedPerms(new Set())}
-                                    className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors"
+                                    className="text-[11px] text-slate-600 transition-colors hover:text-slate-400"
                                 >
                                     清空
                                 </button>
                             </div>
                         </div>
                         <div className="relative mb-2">
-                            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
+                            <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
                             <input
                                 type="search"
                                 placeholder="搜索模块或权限关键词（如：隐患、training、hazards.list）"
                                 value={permSearch}
                                 onChange={(e) => setPermSearch(e.target.value)}
-                                className="w-full rounded-lg border border-blue-900/40 bg-[#070d1f] py-1.5 pl-8 pr-3 text-xs text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20"
+                                className="w-full rounded-lg border border-blue-900/40 bg-[#070d1f] py-1.5 pr-3 pl-8 text-xs text-slate-200 placeholder-slate-700 transition-colors outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20"
                             />
                         </div>
                         <PermissionMatrix
@@ -425,23 +579,49 @@ export default function RolesIndex() {
                         />
                     </div>
                 </div>
-                <ModalFooter onCancel={() => setDialogMode(null)} onConfirm={handleSubmit} loading={formLoading} />
+                <ModalFooter
+                    onCancel={() => setDialogMode(null)}
+                    onConfirm={handleSubmit}
+                    loading={formLoading}
+                />
             </Modal>
 
             {/* Delete confirm */}
-            <Modal open={!!deleteId} onClose={() => { setDeleteId(null); setDeleteLabel(''); }}>
+            <Modal
+                open={!!deleteId}
+                onClose={() => {
+                    setDeleteId(null);
+                    setDeleteLabel('');
+                }}
+            >
                 <div className="p-6">
                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                         <Trash2 className="h-5 w-5 text-red-400" />
                     </div>
-                    <h2 className="mb-1 text-base font-semibold text-slate-100">删除角色</h2>
+                    <h2 className="mb-1 text-base font-semibold text-slate-100">
+                        删除角色
+                    </h2>
                     <p className="text-sm text-slate-500">
-                        确定要删除角色 &ldquo;<span className="font-medium text-slate-300">{deleteLabel}</span>&rdquo; 吗？此操作不可撤销。
+                        确定要删除角色 &ldquo;
+                        <span className="font-medium text-slate-300">
+                            {deleteLabel}
+                        </span>
+                        &rdquo; 吗？此操作不可撤销。
                     </p>
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                    <button onClick={() => { setDeleteId(null); setDeleteLabel(''); }} className={ghostBtn}>取消</button>
-                    <button onClick={handleDelete} className={dangerBtn}>确认删除</button>
+                    <button
+                        onClick={() => {
+                            setDeleteId(null);
+                            setDeleteLabel('');
+                        }}
+                        className={ghostBtn}
+                    >
+                        取消
+                    </button>
+                    <button onClick={handleDelete} className={dangerBtn}>
+                        确认删除
+                    </button>
                 </div>
             </Modal>
         </>
@@ -469,20 +649,34 @@ function PermissionMatrix({
     // matches OR any of its permissions match (by permission name or action label).
     const filtered = useMemo(() => {
         const allModules = Object.keys(grouped).sort();
-        if (!q) return allModules.map((m) => ({ module: m, perms: grouped[m] }));
+
+        if (!q) {
+            return allModules.map((m) => ({ module: m, perms: grouped[m] }));
+        }
 
         return allModules
             .map((module) => {
-                const moduleMatches = module.toLowerCase().includes(q) || formatModule(module).toLowerCase().includes(q);
+                const moduleMatches =
+                    module.toLowerCase().includes(q) ||
+                    formatModule(module).toLowerCase().includes(q);
                 const perms = grouped[module].filter((p) => {
-                    if (moduleMatches) return true;
+                    if (moduleMatches) {
+                        return true;
+                    }
+
                     const action = p.name.split('.').slice(1).join('.');
-                    return p.name.toLowerCase().includes(q) || formatAction(action).toLowerCase().includes(q);
+
+                    return (
+                        p.name.toLowerCase().includes(q) ||
+                        formatAction(action).toLowerCase().includes(q)
+                    );
                 });
 
                 return { module, perms, moduleMatches };
             })
-            .filter(({ perms, moduleMatches }) => moduleMatches || perms.length > 0)
+            .filter(
+                ({ perms, moduleMatches }) => moduleMatches || perms.length > 0,
+            )
             .map(({ module, perms, moduleMatches }) => ({
                 module,
                 // If module name itself matched, show all perms; otherwise show the filtered subset.
@@ -491,30 +685,45 @@ function PermissionMatrix({
     }, [grouped, q]);
 
     if (Object.keys(grouped).length === 0) {
-        return <div className="py-6 text-center text-xs text-slate-700">加载权限列表中...</div>;
+        return (
+            <div className="py-6 text-center text-xs text-slate-700">
+                加载权限列表中...
+            </div>
+        );
     }
 
     if (filtered.length === 0) {
-        return <div className="py-6 text-center text-xs text-slate-700">未找到匹配的权限</div>;
+        return (
+            <div className="py-6 text-center text-xs text-slate-700">
+                未找到匹配的权限
+            </div>
+        );
     }
 
     return (
-        <div className="max-h-[42vh] overflow-y-auto space-y-1 pr-1">
+        <div className="max-h-[42vh] space-y-1 overflow-y-auto pr-1">
             {filtered.map(({ module, perms: displayPerms }) => {
                 // Module-level toggle operates on ALL perms in the module (not just the
                 // filtered subset), so select-all is unambiguous.
                 const allPerms = grouped[module];
-                const selectedCount = allPerms.filter((p) => selected.has(p.name)).length;
+                const selectedCount = allPerms.filter((p) =>
+                    selected.has(p.name),
+                ).length;
                 const allSelected = selectedCount === allPerms.length;
                 const someSelected = selectedCount > 0 && !allSelected;
                 const perms = displayPerms;
 
                 return (
-                    <div key={module} className="rounded-lg border border-blue-900/25 bg-[#070d1f]/60 px-3 py-2">
-                        <div className="flex items-center gap-2 mb-1.5">
+                    <div
+                        key={module}
+                        className="rounded-lg border border-blue-900/25 bg-[#070d1f]/60 px-3 py-2"
+                    >
+                        <div className="mb-1.5 flex items-center gap-2">
                             <button
                                 type="button"
-                                onClick={() => onToggleModule(module, !allSelected)}
+                                onClick={() =>
+                                    onToggleModule(module, !allSelected)
+                                }
                                 className={cn(
                                     'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
                                     allSelected
@@ -530,25 +739,31 @@ function PermissionMatrix({
                                     <Minus className="h-2.5 w-2.5" />
                                 ) : null}
                             </button>
-                            <span className="text-xs font-medium text-slate-400">{formatModule(module)}</span>
-                            <span className="text-[10px] text-slate-700 ml-auto">
+                            <span className="text-xs font-medium text-slate-400">
+                                {formatModule(module)}
+                            </span>
+                            <span className="ml-auto text-[10px] text-slate-700">
                                 {selectedCount}/{allPerms.length}
                             </span>
                         </div>
                         <div className="flex flex-wrap gap-1 pl-6">
                             {perms.map((p) => {
-                                const action = p.name.split('.').slice(1).join('.');
+                                const action = p.name
+                                    .split('.')
+                                    .slice(1)
+                                    .join('.');
                                 const active = selected.has(p.name);
+
                                 return (
                                     <button
                                         key={p.id}
                                         type="button"
                                         onClick={() => onToggle(p.name)}
                                         className={cn(
-                                            'rounded px-2 py-0.5 text-[11px] border transition-colors',
+                                            'rounded border px-2 py-0.5 text-[11px] transition-colors',
                                             active
-                                                ? 'bg-blue-600/20 text-blue-300 border-blue-500/35 hover:bg-blue-600/30'
-                                                : 'bg-transparent text-slate-600 border-blue-900/30 hover:text-slate-400 hover:border-blue-800/50',
+                                                ? 'border-blue-500/35 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30'
+                                                : 'border-blue-900/30 bg-transparent text-slate-600 hover:border-blue-800/50 hover:text-slate-400',
                                         )}
                                     >
                                         {formatAction(action)}
@@ -565,16 +780,29 @@ function PermissionMatrix({
 
 // ── Shared primitives ─────────────────────────────────────────────
 
-const inputClass = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed';
-const primaryBtn = 'flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95';
-const ghostBtn = 'rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200';
-const dangerBtn = 'flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-600/25 hover:text-red-300 disabled:pointer-events-none disabled:opacity-50';
+const inputClass =
+    'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed';
+const primaryBtn =
+    'flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 hover:text-blue-200 active:scale-95';
+const ghostBtn =
+    'rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200';
+const dangerBtn =
+    'flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-600/25 hover:text-red-300 disabled:pointer-events-none disabled:opacity-50';
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({
+    label,
+    required,
+    children,
+}: {
+    label: string;
+    required?: boolean;
+    children: React.ReactNode;
+}) {
     return (
         <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
-                {label}{required && <span className="ml-1 text-blue-500">*</span>}
+            <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                {label}
+                {required && <span className="ml-1 text-blue-500">*</span>}
             </label>
             {children}
         </div>
@@ -584,7 +812,8 @@ function Field({ label, required, children }: { label: string; required?: boolea
 function ErrorAlert({ message }: { message: string }) {
     return (
         <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
-            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />{message}
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            {message}
         </div>
     );
 }
@@ -600,21 +829,35 @@ function Modal({
     children: React.ReactNode;
     wide?: boolean;
 }) {
-    if (!open) return null;
+    if (!open) {
+        return null;
+    }
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className={cn(
-                'relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60',
-                wide ? 'max-w-2xl' : 'max-w-lg',
-            )}>
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={onClose}
+            />
+            <div
+                className={cn(
+                    'relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60',
+                    wide ? 'max-w-2xl' : 'max-w-lg',
+                )}
+            >
                 {children}
             </div>
         </div>
     );
 }
 
-function ModalHeader({ title, onClose }: { title: string; onClose: () => void }) {
+function ModalHeader({
+    title,
+    onClose,
+}: {
+    title: string;
+    onClose: () => void;
+}) {
     return (
         <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
             <h2 className="text-base font-semibold text-slate-100">{title}</h2>
@@ -641,7 +884,9 @@ function ModalFooter({
 }) {
     return (
         <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-            <button onClick={onCancel} className={ghostBtn}>取消</button>
+            <button onClick={onCancel} className={ghostBtn}>
+                取消
+            </button>
             <button
                 onClick={onConfirm}
                 disabled={loading}

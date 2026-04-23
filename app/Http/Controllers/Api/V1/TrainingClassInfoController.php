@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreTrainingClassInfoRequest;
+use App\Http\Requests\Api\V1\UpdateTrainingClassInfoRequest;
 use App\Models\TrainingClassInfo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreTrainingClassInfoRequest;
-use App\Http\Requests\Api\V1\UpdateTrainingClassInfoRequest;
 
 class TrainingClassInfoController extends Controller
 {
@@ -33,7 +33,7 @@ class TrainingClassInfoController extends Controller
     {
         $data = TrainingClassInfo::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('培训课程详情不存在');
         }
 
@@ -57,7 +57,7 @@ class TrainingClassInfoController extends Controller
     {
         $record = TrainingClassInfo::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('培训课程详情不存在');
         }
         $data = $request->validated();
@@ -71,7 +71,7 @@ class TrainingClassInfoController extends Controller
     {
         $record = TrainingClassInfo::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('培训课程详情不存在');
         }
 

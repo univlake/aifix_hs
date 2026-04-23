@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Api\V1\AccidentBulletinsController;
 use App\Http\Controllers\Api\V1\BlocAccidentBulletinsController;
-use App\Http\Controllers\Api\V1\BlocCommentsController;
 use App\Http\Controllers\Api\V1\BlocExpertsController;
 use App\Http\Controllers\Api\V1\BlocNoticesController;
 use App\Http\Controllers\Api\V1\BlocRisksController;
@@ -154,7 +153,6 @@ Route::middleware('permission:bloc-experts.delete')->group(function () {
 
 // ── 集团风险 ─────────────────────────────────────────────────────
 Route::middleware('permission:bloc-risks.list')->group(function () {
-    Route::get('/bloc-risks', [BlocRisksController::class, 'index']);
     Route::get('/bloc-risks-inherent', [BlocRisksController::class, 'getInherentRiskNum']);
     Route::get('/bloc-risks-float', [BlocRisksController::class, 'getFloatRiskNum']);
     Route::get('/bloc-risks-float-statistics', [BlocRisksController::class, 'floatRiskStatistics']);
@@ -173,11 +171,6 @@ Route::middleware('permission:bloc-notices.list')->group(function () {
 Route::middleware('permission:bloc-accident-bulletins.list')->group(function () {
     Route::get('/bloc-accident-bulletins', [BlocAccidentBulletinsController::class, 'index']);
     Route::get('/bloc-accident-bulletins/annual-stats', [BlocAccidentBulletinsController::class, 'annualStats']);
-});
-
-// ── 集团评论/公告 ─────────────────────────────────────────────────────
-Route::middleware('permission:bloc-comments.list')->group(function () {
-    Route::get('/bloc-comments', [BlocCommentsController::class, 'getInfo']);
 });
 
 // ── 待办事项 ─────────────────────────────────────────────────────

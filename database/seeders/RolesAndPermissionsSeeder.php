@@ -484,9 +484,6 @@ class RolesAndPermissionsSeeder extends Seeder
             // 集团事故快报
             'bloc-accident-bulletins.list',
 
-            // 集团评论
-            'bloc-comments.list',
-
             // 待办事项
             'todos.list',
 

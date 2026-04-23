@@ -24,8 +24,11 @@ export function useDetailDrawer<T = Record<string, unknown>>(
         (r: T) => {
             setRow(r);
             setOpen(true);
+
             if (prefetch && endpoint) {
-                const id = (r as Record<string, unknown>)[idKey] as number | string;
+                const id = (r as Record<string, unknown>)[idKey] as
+                    | number
+                    | string;
                 void fetchItem(id);
             }
         },

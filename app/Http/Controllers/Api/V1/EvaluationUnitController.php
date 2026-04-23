@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreEvaluationUnitRequest;
+use App\Http\Requests\Api\V1\UpdateEvaluationUnitRequest;
 use App\Models\EvaluationUnit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreEvaluationUnitRequest;
-use App\Http\Requests\Api\V1\UpdateEvaluationUnitRequest;
 
 class EvaluationUnitController extends Controller
 {
@@ -23,7 +23,7 @@ class EvaluationUnitController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->orderBy('id', 'desc')
@@ -39,7 +39,7 @@ class EvaluationUnitController extends Controller
     {
         $record = EvaluationUnit::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('评价单位不存在');
         }
 
@@ -67,7 +67,7 @@ class EvaluationUnitController extends Controller
     {
         $record = EvaluationUnit::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('评价单位不存在');
         }
         $data = $request->validated();
@@ -84,7 +84,7 @@ class EvaluationUnitController extends Controller
     {
         $record = EvaluationUnit::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('评价单位不存在');
         }
 

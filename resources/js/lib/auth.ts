@@ -1,6 +1,12 @@
+import type {
+    ApiResponse,
+    LoginResponse,
+    AuthUser,
+    Role,
+    Permission,
+} from '@/types/models';
 import api from './api';
 import { encryptPassword } from './crypto';
-import type { ApiResponse, LoginResponse, AuthUser, Role, Permission } from '@/types/models';
 
 export const authApi = {
     /** 登录 — 密码 RSA 加密后传输，返回 access_token */
@@ -10,6 +16,7 @@ export const authApi = {
             username,
             password: encryptedPassword,
         });
+
         return data.data;
     },
 
@@ -33,6 +40,7 @@ export const authApi = {
             password: encryptedPassword,
             password_confirmation: encryptedConfirmation,
         });
+
         return data.data;
     },
 
@@ -50,11 +58,13 @@ export const authApi = {
         permissions: string[];
     }> {
         const { data } = await api.get<
-            ApiResponse<AuthUser & {
-                company: { id: number; title: string } | null;
-                roles: string[];
-                permissions: string[];
-            }>
+            ApiResponse<
+                AuthUser & {
+                    company: { id: number; title: string } | null;
+                    roles: string[];
+                    permissions: string[];
+                }
+            >
         >('/user-info');
         const { company, roles, permissions, ...user } = data.data;
 
@@ -68,17 +78,24 @@ export const authApi = {
 
     /** 公开企业列表 — 注册时选择所属企业，无需认证 */
     async companiesPublic(): Promise<{ id: number; title: string }[]> {
-        const { data } = await api.get<ApiResponse<{ id: number; title: string }[]>>(
-            '/companies-public',
-        );
+        const { data } =
+            await api.get<ApiResponse<{ id: number; title: string }[]>>(
+                '/companies-public',
+            );
+
         return data.data;
     },
 
     /** 获取所有权限列表（按模块分组） */
     async permissions() {
-        const { data } = await api.get<
-            ApiResponse<{ list: Permission[]; grouped: Record<string, Permission[]> }>
-        >('/permissions');
+        const { data } =
+            await api.get<
+                ApiResponse<{
+                    list: Permission[];
+                    grouped: Record<string, Permission[]>;
+                }>
+            >('/permissions');
+
         return data.data;
     },
 
@@ -89,7 +106,11 @@ export const authApi = {
         new_password: string;
         new_password_confirmation: string;
     }) {
-        const { data } = await api.post<ApiResponse<unknown>>('/reset-password', payload);
+        const { data } = await api.post<ApiResponse<unknown>>(
+            '/reset-password',
+            payload,
+        );
+
         return data.data;
     },
 };

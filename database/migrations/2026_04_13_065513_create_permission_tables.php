@@ -11,8 +11,12 @@ return new class extends Migration
         $tableNames = config('permission.table_names');
         $columnNames = config('permission.column_names');
 
-        if (empty($tableNames)) return;
-        if (Schema::hasTable($tableNames['permissions'])) return;
+        if (empty($tableNames)) {
+            return;
+        }
+        if (Schema::hasTable($tableNames['permissions'])) {
+            return;
+        }
 
         $teams = config('permission.teams');
         $pivotRole = $columnNames['role_pivot_key'] ?? 'role_id';

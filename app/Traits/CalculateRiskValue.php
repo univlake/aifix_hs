@@ -37,36 +37,150 @@ use App\Models\SecurityInvestment;
 use App\Models\SkillUnit;
 use App\Models\SpecialEquipment;
 use App\Models\ThreeTogether;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 trait CalculateRiskValue
 {
+    /**
+     * Industry weight multipliers, keyed by Company.enterprise_type_id (string).
+     * Any unmatched id falls back to 1.0.
+     *
+     * @var array<string, float>
+     */
+    protected array $industryWeights = [
+        '1' => 0.8,
+        '2' => 0.6,
+        '3' => 0.9,
+    ];
+
+    /**
+     * Phase-2 (inherent risk) weight constants, named by metric.
+     * These are the original magic numbers from the legacy implementation —
+     * extracting them here makes the math auditable without changing it.
+     */
+    protected const INHERENT_WEIGHTS = [
+        'safety_architecture_value' => 0.02496,
+        'security_officer_scale' => 0.007345,
+        'already_obtain_people_scale' => 0.007345,
+        'last_year_income_scale' => 0.007345,
+        'funding_execution_scale' => 0.007345,
+        'production_standardization_max' => 0.002665,
+        'health_system_scale' => 0.002665,
+        'assess_detect_scale' => 0.00533,
+        'high_school_diploma_scale' => 0.014235,
+        'acreage_scale' => 0.007865,
+        'staff_scale' => 0.007865,
+        'safety_engineering_major_scale' => 0.035035,
+        'hazardous_processes_scale' => 0.14775,
+        'hazardous_process_scale' => 0.04925,
+        'hazardous_process_more_scale' => 0.14775,
+        'process_is_automatic_scale' => 0.04925,
+        'special_equipment_number_scale' => 0.119,
+        'equipment_more_number_scale' => 0.119,
+        'hazardous_chemical_scale' => 0.158746,
+        'hazardous_chemicals_number_scale' => 0.0594405,
+        'major_hazard_max' => 0.0198135,
+    ];
+
+    /**
+     * Phase-3 (float / dynamic risk) weight constants, named by metric.
+     */
+    protected const FLOAT_WEIGHTS = [
+        'internal_meeting_scale' => 0.031635,
+        'internal_training_scale' => 0.063365,
+        'accident_bulletin_scale' => 0.10075035,
+        'accident_bulletin_severe_max' => 0.058859415,
+        'accident_report_url_scale' => 0.017145235,
+        'emergency_team_scale' => 0.0441225,
+        'emergency_drill_scale' => 0.0441225,
+        'job_management_scale' => 0.228114,
+        'monthly_investigation_scale' => 0.083752,
+        'three_together_over_scale' => 0.048488,
+        'unit_sum_number_scale' => 0.012509904,
+        'evaluation_unit_scale' => 0.00509124,
+        'evaluation_unit_school_scale' => 0.030886856,
+        'health_checkup_people_scale' => 0.009345,
+        'health_checkup_scale' => 0.022962,
+        'health_report_scale' => 0.056693,
+    ];
+
+    /**
+     * Per-company raw "Phase 1" metrics, keyed by company_id.
+     * Populated by computePhase1Metrics(); consumed by phases 2 & 3 via $self lookups.
+     *
+     * @var array<int, array<string, float>>
+     */
+    protected array $riskMaxByCid = [];
+
+    /**
+     * Global per-metric maximum across all produce companies in this run.
+     * Used to normalize per-company metrics into a 0..1 scale.
+     *
+     * @var array<string, float>
+     */
+    protected array $globalMax = [];
+
+    /**
+     * Bulk-loaded data tables, populated by loadBulkMetrics().
+     *
+     * @var array<string, mixed>
+     */
+    protected array $bulk = [];
+
+    /**
+     * Run a complete daily risk calculation pass for every active produce company,
+     * then aggregate bloc averages.
+     */
     public function countRisk(string $content): void
     {
-        // ── Constants ────────────────────────────────────────────────────────
-        $currentYear = (int) date('Y');
-        $today = date('Y-m-d');
-        $tenYearsAgo = date('Y-m-d', strtotime('-10 years'));
-        $startOfYear = $currentYear.'-01-01';
-        $daysThisYear = max(1, (int) floor((time() - strtotime($startOfYear)) / 86400));
-        $now = now()->toDateTimeString();
-
-        // ── Load produce companies ───────────────────────────────────────────
         $companies = Company::where('is_produce', '1')->where('status', 1)->get();
-        $companyIds = $companies->pluck('id')->toArray();
-
-        if (empty($companyIds)) {
+        if ($companies->isEmpty()) {
             return;
         }
 
-        // ── Reset today's logs ───────────────────────────────────────────────
+        $companyIds = $companies->pluck('id')->all();
+        $now = now()->toDateTimeString();
+        $today = date('Y-m-d');
+        $currentYear = (int) date('Y');
+        $tenYearsAgo = date('Y-m-d', strtotime('-10 years'));
+        $startOfYear = $currentYear.'-01-01';
+        $daysThisYear = max(1, (int) floor((time() - strtotime($startOfYear)) / 86400));
+
+        $this->resetTodayLogs($today);
+        $this->loadBulkMetrics($companyIds, $currentYear, $tenYearsAgo);
+
+        $this->computePhase1Metrics($companies, $daysThisYear, $currentYear);
+
+        $inherentRows = $this->computeInherentRisk($companies, $now, $content);
+        $floatRows = $this->computeFloatRisk($companies, $now, $content);
+
+        $this->bulkInsertChunked('inherent_risk_logs', $inherentRows['inherent_log_rows']);
+        $this->bulkInsertChunked('float_risk_logs', $floatRows['float_log_rows']);
+        $this->bulkInsertChunked('risk_logs', array_merge($inherentRows['risk_log_rows'], $floatRows['risk_log_rows']));
+
+        $this->calculateBlocRisk($content, $now);
+    }
+
+    /**
+     * Delete today's pending risk-log rows so a re-run produces a single fresh set.
+     * Failures are logged but not fatal — the run still continues, and the inserts
+     * below would fail loudly if the table was actually unwritable.
+     */
+    protected function resetTodayLogs(string $today): void
+    {
         try {
-            DB::table('risk_max_values')->truncate();
             RiskLog::whereDate('created_at', $today)->delete();
             FloatRiskLog::whereDate('created_at', $today)->delete();
             InherentRiskLog::whereDate('created_at', $today)->delete();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::warning('CalculateRiskValue: reset of today\'s logs failed', [
+                'error' => $e->getMessage(),
+                'date' => $today,
+            ]);
         }
+    }
 
         // ── Bulk load all required data (one query per model) ────────────────
         $personnelByCompany = Personnel::whereIn('company_id', $companyIds)->get()->keyBy('company_id');
@@ -129,159 +243,142 @@ trait CalculateRiskValue
         $riskMaxByCid = [];
 
         foreach ($companies as $company) {
-            $cid = $company->id;
-            $personnel = $personnelByCompany->get($cid);
+            $cid = (int) $company->id;
+            $personnel = $this->bulk['personnel']->get($cid);
             $row = ['company_id' => $cid];
 
-            // 安管员数量比例
             if ($personnel && $personnel->total_people > 0 && $personnel->security_officer > 0) {
                 $row['security_officer_scale'] = $personnel->security_officer / $personnel->total_people;
             }
 
-            // 持证安全管理员比例
-            $cert = $certByCompany->get($cid);
+            $cert = $this->bulk['cert']->get($cid);
             if ($cert && $personnel && $cert->already_obtain_people > 0 && $personnel->security_officer > 0) {
                 $row['already_obtain_people_scale'] = $cert->already_obtain_people / $personnel->security_officer;
             }
 
-            // 年度安全投入占上一年营收比例
-            $secInv = $secInvByCompany->get($cid);
+            $secInv = $this->bulk['sec_inv']->get($cid);
             if ($secInv && $secInv->budget_sum > 0 && $secInv->income_sum > 0) {
                 $row['last_year_income_scale'] = $secInv->budget_sum / $secInv->income_sum * $secInv->cnt;
             }
 
-            // 企业用工总人数/占地面积
             if ($personnel && $company->acreage > 0 && $personnel->total_people > 0) {
                 $row['acreage_scale'] = $personnel->total_people / $company->acreage;
             }
 
-            // （重点监管危险工艺数量+较大危险工艺数量）/企业用工总人数
-            $totalHazProc = (int) $majorHazProcTotal->get($cid, 0) + (int) $hazProcTotal->get($cid, 0);
+            $totalHazProc = (int) $this->bulk['major_haz_proc_total']->get($cid, 0)
+                + (int) $this->bulk['haz_proc_total']->get($cid, 0);
             if ($personnel && $totalHazProc > 0 && $personnel->total_people > 0) {
                 $row['hazardous_processes_scale'] = $totalHazProc / $personnel->total_people;
             }
 
-            // 危险物质数量/企业用工数量
-            $hazChemRow = $hazChemStats->get($cid);
+            $hazChemRow = $this->bulk['haz_chem_stats']->get($cid);
             $hazChemCount = $hazChemRow ? (int) $hazChemRow->total : 0;
             if ($personnel && $hazChemCount > 0 && $personnel->total_people > 0) {
                 $row['hazardous_chemicals_scale'] = $hazChemCount / $personnel->total_people;
             }
 
-            // 平均每月的会议次数
-            $meetingCount = (int) $internalMeetingCounts->get($cid, 0);
+            $meetingCount = (int) $this->bulk['internal_meeting_counts']->get($cid, 0);
             if ($meetingCount > 0) {
                 $row['internal_meeting_scale'] = $meetingCount / $daysThisYear * 30;
             }
 
-            // 平均每月的培训次数
-            $trainingCount = (int) $internalTrainingCounts->get($cid, 0);
+            $trainingCount = (int) $this->bulk['internal_training_counts']->get($cid, 0);
             if ($trainingCount > 0) {
                 $row['internal_training_scale'] = $trainingCount / $daysThisYear * 30;
             }
 
-            // 事故发生频率 次数/年
-            $accRow = $accidentStats->get($cid);
+            $accRow = $this->bulk['accident_stats']->get($cid);
             $accidentCount = $accRow ? (int) $accRow->total : 0;
             if ($accidentCount > 0) {
                 $row['accident_bulletin_scale'] = $accidentCount / $daysThisYear * 365;
             }
 
-            // 应急队伍总人数/企业用工总数
-            $teamSum = (float) $emergencyTeamSums->get($cid, 0);
+            $teamSum = (float) $this->bulk['emergency_team_sums']->get($cid, 0);
             if ($personnel && $teamSum > 0 && $personnel->total_people > 0) {
                 $row['emergency_team_scale'] = $teamSum / $personnel->total_people;
             }
 
-            // 年平均演练次数（建立后满1年起算，避免除以零）
-            $drillCount = (int) $emergencyDrillCounts->get($cid, 0);
+            $drillCount = (int) $this->bulk['emergency_drill_counts']->get($cid, 0);
             $years = max(1, $currentYear - (int) date('Y', strtotime($company->created_at)));
             if ($drillCount > 0) {
                 $row['emergency_drill_scale'] = $drillCount / $years;
             }
 
-            // 平均每月的特殊作业次数
-            $jobCount = (int) $jobManagementCounts->get($cid, 0);
+            $jobCount = (int) $this->bulk['job_management_counts']->get($cid, 0);
             if ($jobCount > 0) {
                 $row['job_management_scale'] = $jobCount / $daysThisYear * 30;
             }
 
-            // 职业病危害数量/企业用工总数
-            $occHazSum = (float) $occupationalHazSums->get($cid, 0);
+            $occHazSum = (float) $this->bulk['occupational_haz_sums']->get($cid, 0);
             if ($personnel && $occHazSum > 0 && $personnel->total_people > 0) {
                 $row['health_checkup_scale'] = $occHazSum / $personnel->total_people;
             }
 
-            $riskMaxRows[] = $row;
-            $riskMaxByCid[$cid] = $row;
+            $rows[] = $row;
+            $byCid[$cid] = $row;
         }
 
-        // Bulk insert risk_max_values
-        $insertRows = array_map(fn ($r) => array_merge($r, ['created_at' => $now, 'updated_at' => $now]), $riskMaxRows);
-        foreach (array_chunk($insertRows, 500) as $chunk) {
-            DB::table('risk_max_values')->insert($chunk);
-        }
-
-        // Compute global MAX values in PHP — no repeated DB queries needed
-        $maxKeys = ['security_officer_scale', 'already_obtain_people_scale', 'last_year_income_scale', 'acreage_scale', 'hazardous_processes_scale', 'hazardous_chemicals_scale', 'internal_meeting_scale', 'internal_training_scale', 'accident_bulletin_scale', 'emergency_team_scale', 'emergency_drill_scale', 'job_management_scale', 'health_checkup_scale'];
-        $globalMax = array_fill_keys($maxKeys, 0.0);
-        foreach ($riskMaxRows as $row) {
+        $maxKeys = [
+            'security_officer_scale', 'already_obtain_people_scale', 'last_year_income_scale',
+            'acreage_scale', 'hazardous_processes_scale', 'hazardous_chemicals_scale',
+            'internal_meeting_scale', 'internal_training_scale', 'accident_bulletin_scale',
+            'emergency_team_scale', 'emergency_drill_scale', 'job_management_scale',
+            'health_checkup_scale',
+        ];
+        $max = array_fill_keys($maxKeys, 0.0);
+        foreach ($rows as $row) {
             foreach ($maxKeys as $key) {
                 $val = (float) ($row[$key] ?? 0);
-                if ($val > $globalMax[$key]) {
-                    $globalMax[$key] = $val;
+                if ($val > $max[$key]) {
+                    $max[$key] = $val;
                 }
             }
         }
 
-        // ── Phase 2: Inherent risk ────────────────────────────────────────────
+        $this->riskMaxByCid = $byCid;
+        $this->globalMax = $max;
+    }
+
+    /**
+     * Compute Phase 2 (inherent / structural) risk for every company. Updates
+     * Company.inherent_risk + grade in batch.
+     *
+     * @param  Collection<int, Company>  $companies
+     * @return array{inherent_log_rows: array<int, array<string, mixed>>, risk_log_rows: array<int, array<string, mixed>>}
+     */
+    protected function computeInherentRisk(Collection $companies, string $now, string $content): array
+    {
         $inherentLogRows = [];
         $riskLogRows = [];
+        $companyUpdates = [];
 
         foreach ($companies as $company) {
-            $cid = $company->id;
-            $personnel = $personnelByCompany->get($cid);
-            $self = $riskMaxByCid[$cid] ?? [];
+            $cid = (int) $company->id;
+            $personnel = $this->bulk['personnel']->get($cid);
+            $self = $this->riskMaxByCid[$cid] ?? [];
             $logs = [];
 
-            // 行业权重
-            $weights = match ((string) $company->enterprise_type_id) {
-                '1' => 0.8,
-                '2' => 0.6,
-                '3' => 0.9,
-                default => 1.0,
-            };
+            $weights = $this->industryWeight((string) $company->enterprise_type_id);
 
-            // 安全管理组织机构
-            if ((int) $safetyArchCounts->get($cid, 0) > 0) {
-                $logs['safety_architecture_value'] = 0.02496;
+            if ((int) $this->bulk['safety_arch_counts']->get($cid, 0) > 0) {
+                $logs['safety_architecture_value'] = self::INHERENT_WEIGHTS['safety_architecture_value'];
             }
 
-            // 安管员数量比例
-            if (! empty($self['security_officer_scale']) && $globalMax['security_officer_scale'] > 0) {
-                $logs['security_officer_scale'] = $self['security_officer_scale'] / $globalMax['security_officer_scale'] * 0.007345;
-            }
+            $logs['security_officer_scale'] = $this->normalized($self, 'security_officer_scale')
+                * self::INHERENT_WEIGHTS['security_officer_scale'];
+            $logs['already_obtain_people_scale'] = $this->normalized($self, 'already_obtain_people_scale')
+                * self::INHERENT_WEIGHTS['already_obtain_people_scale'];
+            $logs['last_year_income_scale'] = $this->normalized($self, 'last_year_income_scale')
+                * self::INHERENT_WEIGHTS['last_year_income_scale'];
 
-            // 持证安全管理人员比例
-            if (! empty($self['already_obtain_people_scale']) && $globalMax['already_obtain_people_scale'] > 0) {
-                $logs['already_obtain_people_scale'] = $self['already_obtain_people_scale'] / $globalMax['already_obtain_people_scale'] * 0.007345;
-            }
-
-            // 年度经费预算比例
-            if (! empty($self['last_year_income_scale']) && $globalMax['last_year_income_scale'] > 0) {
-                $logs['last_year_income_scale'] = $self['last_year_income_scale'] / $globalMax['last_year_income_scale'] * 0.007345;
-            }
-
-            // 执行进度
-            $fundingSum = (float) $fundingExecSums->get($cid, 0);
-            $secInv = $secInvByCompany->get($cid);
+            $fundingSum = (float) $this->bulk['funding_exec_sums']->get($cid, 0);
+            $secInv = $this->bulk['sec_inv']->get($cid);
             $secInvBudget = $secInv ? (float) $secInv->budget_sum : 0.0;
             if ($fundingSum > 0 && $secInvBudget > 0) {
-                $logs['funding_execution_scale'] = $fundingSum / $secInvBudget * 0.007345;
+                $logs['funding_execution_scale'] = $fundingSum / $secInvBudget * self::INHERENT_WEIGHTS['funding_execution_scale'];
             }
 
-            // 安全生产标准化
-            $prodStd = $productionStdByCompany->get($cid);
+            $prodStd = $this->bulk['production_std']->get($cid);
             if ($prodStd) {
                 $logs['production_standardization_scale'] = match ($prodStd->grade) {
                     StandardizationGrade::Level1->value => 0.9 * 0.002665,
@@ -291,96 +388,81 @@ trait CalculateRiskValue
                 };
             }
 
-            // 职业健康管理体系
-            if ($healthSystemByCompany->has($cid)) {
-                $logs['health_system_scale'] = 0.002665;
+            if ($this->bulk['health_system']->has($cid)) {
+                $logs['health_system_scale'] = self::INHERENT_WEIGHTS['health_system_scale'];
             }
 
-            // 安全评价和检测
-            if ((int) $assessDetectCounts->get($cid, 0) > 0) {
-                $logs['assess_detect_scale'] = 0.00533;
+            if ((int) $this->bulk['assess_detect_counts']->get($cid, 0) > 0) {
+                $logs['assess_detect_scale'] = self::INHERENT_WEIGHTS['assess_detect_scale'];
             }
 
-            // 高中以上学历比例
             if ($personnel && $personnel->high_school_diploma > 0 && $personnel->total_people > 0) {
-                $logs['high_school_diploma_scale'] = $personnel->high_school_diploma / $personnel->total_people * 0.014235;
+                $logs['high_school_diploma_scale'] = $personnel->high_school_diploma / $personnel->total_people
+                    * self::INHERENT_WEIGHTS['high_school_diploma_scale'];
             }
 
-            // 单位占地面积用工数量
-            if (! empty($self['acreage_scale']) && $globalMax['acreage_scale'] > 0) {
-                $logs['acreage_scale'] = $self['acreage_scale'] / $globalMax['acreage_scale'] * 0.007865;
-            }
+            $logs['acreage_scale'] = $this->normalized($self, 'acreage_scale')
+                * self::INHERENT_WEIGHTS['acreage_scale'];
 
-            // 合同制员工比例
             if ($personnel && $personnel->staff > 0 && $personnel->total_people > 0) {
-                $logs['staff_scale'] = $personnel->staff / $personnel->total_people * 0.007865;
+                $logs['staff_scale'] = $personnel->staff / $personnel->total_people * self::INHERENT_WEIGHTS['staff_scale'];
             }
 
-            // 安全工程专业人员比例
             if ($personnel && $personnel->safety_engineering_major > 0 && $personnel->security_officer > 0) {
-                $logs['safety_engineering_major_scale'] = $personnel->safety_engineering_major / $personnel->security_officer * 0.035035;
+                $logs['safety_engineering_major_scale'] = $personnel->safety_engineering_major / $personnel->security_officer
+                    * self::INHERENT_WEIGHTS['safety_engineering_major_scale'];
             }
 
-            // 人均危险工艺数量
-            if (! empty($self['hazardous_processes_scale']) && $globalMax['hazardous_processes_scale'] > 0) {
-                $logs['hazardous_processes_scale'] = (1 - $self['hazardous_processes_scale'] / $globalMax['hazardous_processes_scale']) * 0.14775;
+            $logs['hazardous_processes_scale'] = $this->normalizedInverse($self, 'hazardous_processes_scale')
+                * self::INHERENT_WEIGHTS['hazardous_processes_scale'];
+
+            $majHazCount = (int) $this->bulk['major_haz_proc_total']->get($cid, 0);
+            $hazProcCount = (int) $this->bulk['haz_proc_total']->get($cid, 0);
+            $procSum = $majHazCount + $hazProcCount;
+            if ($majHazCount > 0 && $procSum > 0) {
+                $logs['hazardous_process_scale'] = (1 - $majHazCount / $procSum) * self::INHERENT_WEIGHTS['hazardous_process_scale'];
             }
 
-            // 涉及危险化学品的工艺数量比例
-            $majHazCount = (int) $majorHazProcTotal->get($cid, 0);
-            $hazProcCount = (int) $hazProcTotal->get($cid, 0);
-            $snap1 = $majHazCount + $hazProcCount;
-            if ($majHazCount > 0 && $snap1 > 0) {
-                $logs['hazardous_process_scale'] = (1 - $majHazCount / $snap1) * 0.04925;
+            $majHazOver = (int) $this->bulk['major_haz_proc_over']->get($cid, 0);
+            $hazProcOver = (int) $this->bulk['haz_proc_over']->get($cid, 0);
+            $overSum = $majHazOver + $hazProcOver;
+            if ($overSum > 0 && $procSum > 0) {
+                $logs['hazardous_process_more_scale'] = (1 - $overSum / $procSum) * self::INHERENT_WEIGHTS['hazardous_process_more_scale'];
             }
 
-            // 操作人数超过3人以上的危险工艺比例
-            $majHazOverCount = (int) $majorHazProcOver->get($cid, 0);
-            $hazProcOverCount = (int) $hazProcOver->get($cid, 0);
-            $snap = $majHazOverCount + $hazProcOverCount;
-            if ($snap > 0 && $snap1 > 0) {
-                $logs['hazardous_process_more_scale'] = (1 - $snap / $snap1) * 0.14775;
+            $hazProcAuto = (int) $this->bulk['haz_proc_auto']->get($cid, 0);
+            if ($hazProcAuto > 0 && $procSum > 0) {
+                $logs['process_is_automatic_scale'] = $hazProcAuto / $procSum * self::INHERENT_WEIGHTS['process_is_automatic_scale'];
             }
 
-            // 工艺中自动化比例
-            $hazProcAutoCount = (int) $hazProcAuto->get($cid, 0);
-            if ($hazProcAutoCount > 0 && $snap1 > 0) {
-                $logs['process_is_automatic_scale'] = $hazProcAutoCount / $snap1 * 0.04925;
+            $spEqCount = (int) $this->bulk['sp_eq_total']->get($cid, 0);
+            $dangEqCount = (int) $this->bulk['dang_eq_total']->get($cid, 0);
+            $eqSum = $spEqCount + $dangEqCount;
+            if ($spEqCount > 0 && $eqSum > 0) {
+                $logs['special_equipment_number_scale'] = (1 - $spEqCount / $eqSum) * self::INHERENT_WEIGHTS['special_equipment_number_scale'];
             }
 
-            // 特种设备规模
-            $spEqCount = (int) $spEqTotal->get($cid, 0);
-            $dangEqCount = (int) $dangEqTotal->get($cid, 0);
-            $snap2 = $spEqCount + $dangEqCount;
-            if ($spEqCount > 0 && $snap2 > 0) {
-                $logs['special_equipment_number_scale'] = (1 - $spEqCount / $snap2) * 0.119;
+            $spEqOldCount = (int) $this->bulk['sp_eq_old']->get($cid, 0);
+            $dangEqOldCount = (int) $this->bulk['dang_eq_old']->get($cid, 0);
+            $oldSum = $spEqOldCount + $dangEqOldCount;
+            if ($oldSum > 0 && $eqSum > 0) {
+                $logs['equipment_more_number_scale'] = (1 - $oldSum / $eqSum) * self::INHERENT_WEIGHTS['equipment_more_number_scale'];
             }
 
-            // 运行超过10年的危险设备数量比例
-            $spEqOldCount = (int) $spEqOld->get($cid, 0);
-            $dangEqOldCount = (int) $dangEqOld->get($cid, 0);
-            $snap3 = $spEqOldCount + $dangEqOldCount;
-            if ($snap3 > 0 && $snap2 > 0) {
-                $logs['equipment_more_number_scale'] = (1 - $snap3 / $snap2) * 0.119;
-            }
-
-            // 爆炸品/有毒气体/易燃气体物质数量比例
-            $hazChemRow = $hazChemStats->get($cid);
+            $hazChemRow = $this->bulk['haz_chem_stats']->get($cid);
             $hazChemCount = $hazChemRow ? (int) $hazChemRow->total : 0;
-            $hazChemSnapCount = $hazChemRow
-                ? ((int) $hazChemRow->explosion_cnt + (int) $hazChemRow->toxin_gas_cnt + (int) $hazChemRow->fire_a_cnt + (int) $hazChemRow->fire_b_cnt)
+            $hazChemDangerCount = $hazChemRow
+                ? ((int) $hazChemRow->explosion_cnt + (int) $hazChemRow->toxin_gas_cnt
+                    + (int) $hazChemRow->fire_a_cnt + (int) $hazChemRow->fire_b_cnt)
                 : 0;
-            if ($hazChemSnapCount > 0 && $hazChemCount > 0) {
-                $logs['hazardous_chemical_scale'] = (1 - $hazChemSnapCount / $hazChemCount) * 0.158746;
+            if ($hazChemDangerCount > 0 && $hazChemCount > 0) {
+                $logs['hazardous_chemical_scale'] = (1 - $hazChemDangerCount / $hazChemCount) * self::INHERENT_WEIGHTS['hazardous_chemical_scale'];
             }
 
-            // 危险物质数量/人数
-            if (! empty($self['hazardous_chemicals_scale']) && $globalMax['hazardous_chemicals_scale'] > 0) {
-                $logs['hazardous_chemicals_number_scale'] = (1 - $self['hazardous_chemicals_scale'] / $globalMax['hazardous_chemicals_scale']) * 0.0594405;
-            }
+            $logs['hazardous_chemicals_number_scale'] = $this->normalizedInverse($self, 'hazardous_chemicals_scale')
+                * self::INHERENT_WEIGHTS['hazardous_chemicals_number_scale'];
 
-            // 重大危险源
-            $levels = $majorHazardByCompany->get($cid, collect())->pluck('level')->toArray();
+            $levels = $this->bulk['major_hazard']->get($cid, collect())->pluck('level')->toArray();
             $logs['major_hazard_scale'] = match (true) {
                 in_array(MajorHazardLevel::Level1->value, $levels) => 0.6 * 0.0198135,
                 in_array(MajorHazardLevel::Level2->value, $levels) => 0.7 * 0.0198135,
@@ -389,204 +471,163 @@ trait CalculateRiskValue
                 default => 1.0 * 0.0198135,
             };
 
-            // 计算固有风险值
             $inherentRisk = round(array_sum($logs) * $weights * 100, 2);
-            $inherentRiskGrade = $this->riskGrade($inherentRisk);
+            $inherentGrade = $this->riskGrade($inherentRisk);
 
             $inherentLogRows[] = array_merge($logs, ['company_id' => $cid, 'created_at' => $now, 'updated_at' => $now]);
-            $riskLogRows[] = [
-                'company_id' => $cid,
-                'type' => 1,
-                'old_risk_num' => $company->inherent_risk,
-                'risk_num' => $inherentRisk,
-                'date' => date('Ymd'),
-                'content' => $content,
-                'company_name' => $company->title,
-                'old_risk_grade' => $company->inherent_risk_grade,
-                'risk_grade' => $inherentRiskGrade,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
+            $riskLogRows[] = $this->buildRiskLogRow(
+                $company, type: 1, oldRisk: $company->inherent_risk, newRisk: $inherentRisk,
+                oldGrade: $company->inherent_risk_grade, newGrade: $inherentGrade, content: $content, now: $now,
+            );
 
-            Company::where('id', $cid)->update(['inherent_risk' => $inherentRisk, 'inherent_risk_grade' => $inherentRiskGrade]);
+            $companyUpdates[$cid] = ['inherent_risk' => $inherentRisk, 'inherent_risk_grade' => $inherentGrade];
         }
 
-        foreach (array_chunk($inherentLogRows, 500) as $chunk) {
-            DB::table('inherent_risk_logs')->insert($chunk);
-        }
+        $this->batchUpdateCompanies($companyUpdates);
 
-        // ── Phase 3: Float (dynamic) risk ────────────────────────────────────
+        return ['inherent_log_rows' => $inherentLogRows, 'risk_log_rows' => $riskLogRows];
+    }
+
+    /**
+     * Compute Phase 3 (float / dynamic) risk for every company. Updates
+     * Company.float_risk + grade in batch.
+     *
+     * @param  Collection<int, Company>  $companies
+     * @return array{float_log_rows: array<int, array<string, mixed>>, risk_log_rows: array<int, array<string, mixed>>}
+     */
+    protected function computeFloatRisk(Collection $companies, string $now, string $content): array
+    {
         $floatLogRows = [];
+        $riskLogRows = [];
+        $companyUpdates = [];
 
         foreach ($companies as $company) {
-            $cid = $company->id;
-            $personnel = $personnelByCompany->get($cid);
-            $self = $riskMaxByCid[$cid] ?? [];
+            $cid = (int) $company->id;
+            $personnel = $this->bulk['personnel']->get($cid);
+            $self = $this->riskMaxByCid[$cid] ?? [];
             $logs = [];
 
-            // 会议频次
-            if (! empty($self['internal_meeting_scale']) && $globalMax['internal_meeting_scale'] > 0) {
-                $logs['internal_meeting_scale'] = $self['internal_meeting_scale'] / $globalMax['internal_meeting_scale'] * 0.031635;
-            }
+            $logs['internal_meeting_scale'] = $this->normalized($self, 'internal_meeting_scale')
+                * self::FLOAT_WEIGHTS['internal_meeting_scale'];
+            $logs['internal_training_scale'] = $this->normalized($self, 'internal_training_scale')
+                * self::FLOAT_WEIGHTS['internal_training_scale'];
+            $logs['accident_bulletin_scale'] = $this->normalizedInverse($self, 'accident_bulletin_scale')
+                * self::FLOAT_WEIGHTS['accident_bulletin_scale'];
 
-            // 培训频次
-            if (! empty($self['internal_training_scale']) && $globalMax['internal_training_scale'] > 0) {
-                $logs['internal_training_scale'] = $self['internal_training_scale'] / $globalMax['internal_training_scale'] * 0.063365;
-            }
-
-            // 事故发生频率
-            if (! empty($self['accident_bulletin_scale']) && $globalMax['accident_bulletin_scale'] > 0) {
-                $logs['accident_bulletin_scale'] = (1 - $self['accident_bulletin_scale'] / $globalMax['accident_bulletin_scale']) * 0.10075035;
-            }
-
-            // 事故严重程度
-            $accRow = $accidentStats->get($cid);
+            $accRow = $this->bulk['accident_stats']->get($cid);
             $lightCount = $accRow ? (int) $accRow->light_cnt : 0;
             $seriousCount = $accRow ? (int) $accRow->serious_cnt : 0;
             $otherCount = $accRow ? (int) $accRow->other_cnt : 0;
             $logs['accident_bulletin_severe_scale'] = match (true) {
                 $otherCount > 0 => 0,
-                $seriousCount > 0 => 0.3 * 0.058859415,
-                $lightCount > 0 => 0.6 * 0.058859415,
-                default => 1.0 * 0.058859415,
+                $seriousCount > 0 => 0.3 * self::FLOAT_WEIGHTS['accident_bulletin_severe_max'],
+                $lightCount > 0 => 0.6 * self::FLOAT_WEIGHTS['accident_bulletin_severe_max'],
+                default => 1.0 * self::FLOAT_WEIGHTS['accident_bulletin_severe_max'],
             };
 
-            // "四不放过"情况
             $reportedCount = $accRow ? (int) $accRow->reported_cnt : 0;
             if ($reportedCount > 0) {
-                $logs['accident_report_url_scale'] = 0.017145235;
+                $logs['accident_report_url_scale'] = self::FLOAT_WEIGHTS['accident_report_url_scale'];
             }
 
-            // 应急人员比例
-            if (! empty($self['emergency_team_scale']) && $globalMax['emergency_team_scale'] > 0) {
-                $logs['emergency_team_scale'] = $self['emergency_team_scale'] / $globalMax['emergency_team_scale'] * 0.0441225;
-            }
+            $logs['emergency_team_scale'] = $this->normalized($self, 'emergency_team_scale')
+                * self::FLOAT_WEIGHTS['emergency_team_scale'];
+            $logs['emergency_drill_scale'] = $this->normalized($self, 'emergency_drill_scale')
+                * self::FLOAT_WEIGHTS['emergency_drill_scale'];
+            $logs['job_management_scale'] = $this->normalizedInverse($self, 'job_management_scale')
+                * self::FLOAT_WEIGHTS['job_management_scale'];
 
-            // 演练频次
-            if (! empty($self['emergency_drill_scale']) && $globalMax['emergency_drill_scale'] > 0) {
-                $logs['emergency_drill_scale'] = $self['emergency_drill_scale'] / $globalMax['emergency_drill_scale'] * 0.0441225;
-            }
-
-            // 特殊作业频次
-            if (! empty($self['job_management_scale']) && $globalMax['job_management_scale'] > 0) {
-                $logs['job_management_scale'] = (1 - $self['job_management_scale'] / $globalMax['job_management_scale']) * 0.228114;
-            }
-
-            // 风险源管理（待开发）
             $logs['risk_source_scale'] = 0;
 
-            // 隐患整改率
-            $invTotal = (int) $monthlyInvTotal->get($cid, 0);
-            $invDone = (int) $monthlyInvDone->get($cid, 0);
+            $invTotal = (int) $this->bulk['monthly_inv_total']->get($cid, 0);
+            $invDone = (int) $this->bulk['monthly_inv_done']->get($cid, 0);
             if ($invTotal > 0 && $invDone > 0) {
-                $logs['monthly_investigation_scale'] = $invDone / $invTotal * 0.083752;
+                $logs['monthly_investigation_scale'] = $invDone / $invTotal * self::FLOAT_WEIGHTS['monthly_investigation_scale'];
             }
 
-            // 三同时及四新管理未完成比例
-            $threeTotal = (int) $threeTotalCounts->get($cid, 0);
-            $threeOver = (int) $threeOverCounts->get($cid, 0);
+            $threeTotal = (int) $this->bulk['three_total']->get($cid, 0);
+            $threeOver = (int) $this->bulk['three_over']->get($cid, 0);
             if ($threeOver > 0 && $threeTotal > 0) {
-                $logs['three_together_over_scale'] = $threeOver / $threeTotal * 0.048488;
+                $logs['three_together_over_scale'] = $threeOver / $threeTotal * self::FLOAT_WEIGHTS['three_together_over_scale'];
             }
 
-            // 资质情况
-            $skillQual = (int) $skillUnitQualified->get($cid, 0);
-            $skillTotal = (int) $skillUnitTotal->get($cid, 0);
-            $evalQual = (int) $evalUnitQualified->get($cid, 0);
-            $evalTotal = (int) $evalUnitTotal->get($cid, 0);
-            $designQual = (int) $designUnitQualified->get($cid, 0);
-            $designTotal = (int) $designUnitTotal->get($cid, 0);
+            $skillQual = (int) $this->bulk['skill_unit_qualified']->get($cid, 0);
+            $skillTotal = (int) $this->bulk['skill_unit_total']->get($cid, 0);
+            $evalQual = (int) $this->bulk['eval_unit_qualified']->get($cid, 0);
+            $evalTotal = (int) $this->bulk['eval_unit_total']->get($cid, 0);
+            $designQual = (int) $this->bulk['design_unit_qualified']->get($cid, 0);
+            $designTotal = (int) $this->bulk['design_unit_total']->get($cid, 0);
             $unitSumQual = $skillQual + $evalQual + $designQual;
             $unitSumTotal = $skillTotal + $evalTotal + $designTotal;
             if ($unitSumQual > 0 && $unitSumTotal > 0) {
-                $logs['unit_sum_number_scale'] = $unitSumQual / $unitSumTotal * 0.012509904;
+                $logs['unit_sum_number_scale'] = $unitSumQual / $unitSumTotal * self::FLOAT_WEIGHTS['unit_sum_number_scale'];
             }
 
-            // 安全协议
-            $evalAgreement = (int) $evalUnitAgreement->get($cid, 0);
+            $evalAgreement = (int) $this->bulk['eval_unit_agreement']->get($cid, 0);
             if ($evalAgreement > 0 && $evalTotal > 0) {
-                $logs['evaluation_unit_scale'] = $evalAgreement / $evalTotal * 0.00509124;
+                $logs['evaluation_unit_scale'] = $evalAgreement / $evalTotal * self::FLOAT_WEIGHTS['evaluation_unit_scale'];
             }
 
-            // 培训教育
-            $evalTrained = (int) $evalUnitTrained->get($cid, 0);
+            $evalTrained = (int) $this->bulk['eval_unit_trained']->get($cid, 0);
             if ($evalTrained > 0 && $evalTotal > 0) {
-                $logs['evaluation_unit_school_scale'] = $evalTrained / $evalTotal * 0.030886856;
+                $logs['evaluation_unit_school_scale'] = $evalTrained / $evalTotal * self::FLOAT_WEIGHTS['evaluation_unit_school_scale'];
             }
 
-            // 体检覆盖率
-            $healthCheckupPeople = (float) $healthCheckupSums->get($cid, 0);
+            $healthCheckupPeople = (float) $this->bulk['health_checkup_sums']->get($cid, 0);
             if ($healthCheckupPeople > 0 && $personnel && $personnel->total_people > 0) {
-                $logs['health_checkup_people_scale'] = $healthCheckupPeople / $personnel->total_people * 0.009345;
+                $logs['health_checkup_people_scale'] = $healthCheckupPeople / $personnel->total_people
+                    * self::FLOAT_WEIGHTS['health_checkup_people_scale'];
             }
 
-            // 职业病危害接触人数比例
-            if (! empty($self['health_checkup_scale']) && $globalMax['health_checkup_scale'] > 0) {
-                $logs['health_checkup_scale'] = (1 - $self['health_checkup_scale'] / $globalMax['health_checkup_scale']) * 0.022962;
+            $logs['health_checkup_scale'] = $this->normalizedInverse($self, 'health_checkup_scale')
+                * self::FLOAT_WEIGHTS['health_checkup_scale'];
+
+            if ((int) $this->bulk['health_report_counts']->get($cid, 0) > 0) {
+                $logs['health_report_scale'] = self::FLOAT_WEIGHTS['health_report_scale'];
             }
 
-            // 是否有职业病报告（有报告加分）
-            if ((int) $healthReportCounts->get($cid, 0) > 0) {
-                $logs['health_report_scale'] = 0.056693;
-            }
-
-            // 计算浮动风险值
             $floatRisk = round(array_sum($logs) * 100, 2);
-            $floatRiskGrade = $this->riskGrade($floatRisk);
+            $floatGrade = $this->riskGrade($floatRisk);
 
             $floatLogRows[] = array_merge($logs, ['company_id' => $cid, 'created_at' => $now, 'updated_at' => $now]);
-            $riskLogRows[] = [
-                'company_id' => $cid,
-                'type' => 2,
-                'old_risk_num' => $company->float_risk,
-                'risk_num' => $floatRisk,
-                'date' => date('Ymd'),
-                'content' => $content,
-                'company_name' => $company->title,
-                'old_risk_grade' => $company->float_risk_grade,
-                'risk_grade' => $floatRiskGrade,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
+            $riskLogRows[] = $this->buildRiskLogRow(
+                $company, type: 2, oldRisk: $company->float_risk, newRisk: $floatRisk,
+                oldGrade: $company->float_risk_grade, newGrade: $floatGrade, content: $content, now: $now,
+            );
 
-            Company::where('id', $cid)->update(['float_risk' => $floatRisk, 'float_risk_grade' => $floatRiskGrade]);
+            $companyUpdates[$cid] = ['float_risk' => $floatRisk, 'float_risk_grade' => $floatGrade];
         }
 
-        foreach (array_chunk($floatLogRows, 500) as $chunk) {
-            DB::table('float_risk_logs')->insert($chunk);
-        }
+        $this->batchUpdateCompanies($companyUpdates);
 
-        foreach (array_chunk($riskLogRows, 500) as $chunk) {
-            DB::table('risk_logs')->insert($chunk);
-        }
-
-        // ── Phase 4: Bloc company averages ───────────────────────────────────
-        $this->calculateBlocRisk($content);
+        return ['float_log_rows' => $floatLogRows, 'risk_log_rows' => $riskLogRows];
     }
 
     /**
      * For each bloc company, calculate inherent_risk and float_risk
      * as the weighted average of all active descendant produce companies.
      */
-    protected function calculateBlocRisk(string $content): void
+    protected function calculateBlocRisk(string $content, ?string $now = null): void
     {
+        $now ??= now()->toDateTimeString();
         $blocCompanies = Company::where('is_bloc', 1)->where('status', 1)->get();
-        $now = now()->toDateTimeString();
+        if ($blocCompanies->isEmpty()) {
+            return;
+        }
+
+        $companyTree = $this->loadCompanyTree();
+        $blocRiskLogRows = [];
+        $blocCompanyUpdates = [];
 
         foreach ($blocCompanies as $bloc) {
-            $descendantIds = [];
-            $this->collectBlocDescendants($bloc->id, $descendantIds);
-
+            $descendantIds = $this->descendantsOf((int) $bloc->id, $companyTree);
             if (empty($descendantIds)) {
                 continue;
             }
 
             $produces = Company::whereIn('id', $descendantIds)
-                ->where('is_produce', 1)
-                ->where('status', 1)
-                ->whereNotNull('inherent_risk')
-                ->get();
-
+                ->where('is_produce', 1)->where('status', 1)
+                ->whereNotNull('inherent_risk')->get();
             if ($produces->isEmpty()) {
                 continue;
             }
@@ -594,36 +635,189 @@ trait CalculateRiskValue
             $count = $produces->count();
             $inherentAvg = round($produces->sum('inherent_risk') / $count, 2);
             $floatAvg = round($produces->sum('float_risk') / $count, 2);
-
             $inherentGrade = $this->riskGrade($inherentAvg);
             $floatGrade = $this->riskGrade($floatAvg);
 
-            DB::table('risk_logs')->insert([
-                [
-                    'company_id' => $bloc->id, 'type' => 1,
-                    'old_risk_num' => $bloc->inherent_risk, 'risk_num' => $inherentAvg,
-                    'date' => date('Ymd'), 'content' => $content,
-                    'company_name' => $bloc->title,
-                    'old_risk_grade' => $bloc->inherent_risk_grade, 'risk_grade' => $inherentGrade,
-                    'created_at' => $now, 'updated_at' => $now,
-                ],
-                [
-                    'company_id' => $bloc->id, 'type' => 2,
-                    'old_risk_num' => $bloc->float_risk, 'risk_num' => $floatAvg,
-                    'date' => date('Ymd'), 'content' => $content,
-                    'company_name' => $bloc->title,
-                    'old_risk_grade' => $bloc->float_risk_grade, 'risk_grade' => $floatGrade,
-                    'created_at' => $now, 'updated_at' => $now,
-                ],
-            ]);
+            $blocRiskLogRows[] = $this->buildRiskLogRow(
+                $bloc, type: 1, oldRisk: $bloc->inherent_risk, newRisk: $inherentAvg,
+                oldGrade: $bloc->inherent_risk_grade, newGrade: $inherentGrade, content: $content, now: $now,
+            );
+            $blocRiskLogRows[] = $this->buildRiskLogRow(
+                $bloc, type: 2, oldRisk: $bloc->float_risk, newRisk: $floatAvg,
+                oldGrade: $bloc->float_risk_grade, newGrade: $floatGrade, content: $content, now: $now,
+            );
 
-            Company::where('id', $bloc->id)->update([
+            $blocCompanyUpdates[(int) $bloc->id] = [
                 'inherent_risk' => $inherentAvg,
                 'inherent_risk_grade' => $inherentGrade,
                 'float_risk' => $floatAvg,
                 'float_risk_grade' => $floatGrade,
-            ]);
+            ];
         }
+
+        $this->bulkInsertChunked('risk_logs', $blocRiskLogRows);
+        $this->batchUpdateCompanies($blocCompanyUpdates);
+    }
+
+    /**
+     * Map every active company's id → list of direct child ids in a single query.
+     * Replaces the legacy recursive Company::where('pid', ...) which issued
+     * one query per descendant level per bloc.
+     *
+     * @return array<int, array<int>>
+     */
+    protected function loadCompanyTree(): array
+    {
+        $tree = [];
+        Company::where('status', 1)
+            ->select('id', 'pid')
+            ->orderBy('id')
+            ->chunk(1000, function ($companies) use (&$tree) {
+                foreach ($companies as $c) {
+                    $pid = (int) $c->pid;
+                    if ($pid > 0) {
+                        $tree[$pid][] = (int) $c->id;
+                    }
+                }
+            });
+
+        return $tree;
+    }
+
+    /**
+     * Resolve all descendant ids of $companyId from a pre-loaded parent→children map.
+     *
+     * @param  array<int, array<int>>  $tree
+     * @return array<int>
+     */
+    protected function descendantsOf(int $companyId, array $tree): array
+    {
+        $stack = $tree[$companyId] ?? [];
+        $out = [];
+        while (! empty($stack)) {
+            $id = array_pop($stack);
+            $out[] = $id;
+            if (! empty($tree[$id])) {
+                foreach ($tree[$id] as $child) {
+                    $stack[] = $child;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Apply a per-company update map ([id => attrs]) using a single
+     * `CASE WHEN id THEN val END` query per attribute, instead of N round-trips.
+     *
+     * @param  array<int, array<string, mixed>>  $updates
+     */
+    protected function batchUpdateCompanies(array $updates): void
+    {
+        if (empty($updates)) {
+            return;
+        }
+
+        $ids = array_keys($updates);
+        $attrs = array_keys(reset($updates));
+
+        DB::transaction(function () use ($updates, $ids, $attrs) {
+            foreach ($attrs as $attr) {
+                $caseSegments = [];
+                $bindings = [];
+                foreach ($updates as $id => $values) {
+                    $caseSegments[] = 'WHEN ? THEN ?';
+                    $bindings[] = $id;
+                    $bindings[] = $values[$attr];
+                }
+                $idsList = implode(',', array_map('intval', $ids));
+                $sql = "UPDATE companies SET `{$attr}` = CASE id ".implode(' ', $caseSegments)
+                    ." END WHERE id IN ({$idsList})";
+                DB::statement($sql, $bindings);
+            }
+        });
+    }
+
+    /**
+     * Insert rows into a table in chunks of $chunkSize. Skips when empty.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    protected function bulkInsertChunked(string $table, array $rows, int $chunkSize = 500): void
+    {
+        if (empty($rows)) {
+            return;
+        }
+        foreach (array_chunk($rows, $chunkSize) as $chunk) {
+            DB::table($table)->insert($chunk);
+        }
+    }
+
+    /**
+     * Per-company normalized metric: $self[$key] / globalMax[$key], or 0 if either side is 0.
+     *
+     * @param  array<string, float>  $self
+     */
+    protected function normalized(array $self, string $key): float
+    {
+        $val = (float) ($self[$key] ?? 0);
+        $max = $this->globalMax[$key] ?? 0;
+        if ($val <= 0 || $max <= 0) {
+            return 0.0;
+        }
+
+        return $val / $max;
+    }
+
+    /**
+     * Per-company inverted normalized metric: 1 - (val/max), or 0 if either side is 0.
+     * Used for "more is worse" metrics where a higher raw value should *reduce* the contribution.
+     *
+     * @param  array<string, float>  $self
+     */
+    protected function normalizedInverse(array $self, string $key): float
+    {
+        $val = (float) ($self[$key] ?? 0);
+        $max = $this->globalMax[$key] ?? 0;
+        if ($val <= 0 || $max <= 0) {
+            return 0.0;
+        }
+
+        return 1 - ($val / $max);
+    }
+
+    protected function industryWeight(string $enterpriseTypeId): float
+    {
+        return $this->industryWeights[$enterpriseTypeId] ?? 1.0;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function buildRiskLogRow(
+        Company $company,
+        int $type,
+        ?float $oldRisk,
+        float $newRisk,
+        ?string $oldGrade,
+        string $newGrade,
+        string $content,
+        string $now,
+    ): array {
+        return [
+            'company_id' => (int) $company->id,
+            'type' => $type,
+            'old_risk_num' => $oldRisk,
+            'risk_num' => $newRisk,
+            'date' => date('Ymd'),
+            'content' => $content,
+            'company_name' => $company->title,
+            'old_risk_grade' => $oldGrade,
+            'risk_grade' => $newGrade,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ];
     }
 
     protected function riskGrade(float $value): string
@@ -641,15 +835,5 @@ trait CalculateRiskValue
         }
 
         return '蓝';
-    }
-
-    protected function collectBlocDescendants(int $companyId, array &$ids): void
-    {
-        $children = Company::where('pid', $companyId)->where('status', 1)->pluck('id');
-
-        foreach ($children as $childId) {
-            $ids[] = $childId;
-            $this->collectBlocDescendants($childId, $ids);
-        }
     }
 }

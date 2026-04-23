@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreReportConfigRequest;
+use App\Http\Requests\Api\V1\UpdateReportConfigRequest;
 use App\Models\ReportConfig;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreReportConfigRequest;
-use App\Http\Requests\Api\V1\UpdateReportConfigRequest;
 
 class ReportConfigController extends Controller
 {
@@ -47,7 +47,7 @@ class ReportConfigController extends Controller
     {
         $type = ReportConfig::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('报表配置不存在');
         }
         $data = $request->validated();
@@ -64,7 +64,7 @@ class ReportConfigController extends Controller
     {
         $type = ReportConfig::find($id);
 
-        if (!$type) {
+        if (! $type) {
             return $this->notFound('报表配置不存在');
         }
 

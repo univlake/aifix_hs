@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreFloatRiskLogRequest;
+use App\Http\Requests\Api\V1\UpdateFloatRiskLogRequest;
 use App\Models\FloatRiskLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreFloatRiskLogRequest;
-use App\Http\Requests\Api\V1\UpdateFloatRiskLogRequest;
 
 class FloatRiskLogController extends Controller
 {
@@ -29,7 +29,7 @@ class FloatRiskLogController extends Controller
     {
         $data = FloatRiskLog::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('动态风险日志不存在');
         }
 
@@ -51,7 +51,7 @@ class FloatRiskLogController extends Controller
     {
         $floatRiskLog = FloatRiskLog::find($id);
 
-        if (!$floatRiskLog) {
+        if (! $floatRiskLog) {
             return $this->notFound('动态风险日志不存在');
         }
         $data = $request->validated();
@@ -65,7 +65,7 @@ class FloatRiskLogController extends Controller
     {
         $floatRiskLog = FloatRiskLog::find($id);
 
-        if (!$floatRiskLog) {
+        if (! $floatRiskLog) {
             return $this->notFound('动态风险日志不存在');
         }
 

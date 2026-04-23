@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\Api\V1\StoreEmergencySuppliesRequest;
+use App\Http\Requests\Api\V1\UpdateEmergencySuppliesRequest;
 use App\Models\EmergencySupplies;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\Api\V1\StoreEmergencySuppliesRequest;
-use App\Http\Requests\Api\V1\UpdateEmergencySuppliesRequest;
 
 class EmergencySuppliesController extends Controller
 {
@@ -20,7 +20,7 @@ class EmergencySuppliesController extends Controller
         }
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         $list = $query->orderBy('id', 'desc')
@@ -33,7 +33,7 @@ class EmergencySuppliesController extends Controller
     {
         $data = EmergencySupplies::find($id);
 
-        if (!$data) {
+        if (! $data) {
             return $this->notFound('应急物资不存在');
         }
 
@@ -55,7 +55,7 @@ class EmergencySuppliesController extends Controller
     {
         $record = EmergencySupplies::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('应急物资不存在');
         }
         $data = $request->validated();
@@ -69,7 +69,7 @@ class EmergencySuppliesController extends Controller
     {
         $record = EmergencySupplies::find($id);
 
-        if (!$record) {
+        if (! $record) {
             return $this->notFound('应急物资不存在');
         }
 

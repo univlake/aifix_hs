@@ -11,7 +11,12 @@ interface ObjectDetailDrawerProps {
     hiddenKeys?: string[];
 }
 
-const preferredDisplayKeys = ['title', 'name', 'equipment_name', 'qualification_name'];
+const preferredDisplayKeys = [
+    'title',
+    'name',
+    'equipment_name',
+    'qualification_name',
+];
 
 function isUrl(value: string): boolean {
     return /^(https?:\/\/|\/|\.\/|\.\.\/)/.test(value);
@@ -22,7 +27,11 @@ function isAttachmentField(fieldKey?: string): boolean {
         return false;
     }
 
-    return fieldKey.endsWith('_url') || fieldKey.includes('annex') || fieldKey.includes('attachment');
+    return (
+        fieldKey.endsWith('_url') ||
+        fieldKey.includes('annex') ||
+        fieldKey.includes('attachment')
+    );
 }
 
 function renderAttachmentLink(value: string): React.ReactNode {
@@ -57,7 +66,11 @@ function renderValue(
             return renderAttachmentLink(value);
         }
 
-        return <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-300">{value}</p>;
+        return (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap text-slate-300">
+                {value}
+            </p>
+        );
     }
 
     if (typeof value === 'number' || typeof value === 'boolean') {
@@ -72,12 +85,17 @@ function renderValue(
         return (
             <div className="space-y-2">
                 {value.map((item, index) => (
-                    <div key={index} className="rounded-lg border border-blue-900/30 bg-[#0b1226] p-3">
-                        {typeof item === 'object' && item !== null ? (
-                            renderObjectValue(item as Record<string, DetailValue>, labels, hiddenKeys)
-                        ) : (
-                            renderValue(item, labels, hiddenKeys, fieldKey)
-                        )}
+                    <div
+                        key={index}
+                        className="rounded-lg border border-blue-900/30 bg-[#0b1226] p-3"
+                    >
+                        {typeof item === 'object' && item !== null
+                            ? renderObjectValue(
+                                  item as Record<string, DetailValue>,
+                                  labels,
+                                  hiddenKeys,
+                              )
+                            : renderValue(item, labels, hiddenKeys, fieldKey)}
                     </div>
                 ))}
             </div>
@@ -85,7 +103,11 @@ function renderValue(
     }
 
     if (typeof value === 'object') {
-        return renderObjectValue(value as Record<string, DetailValue>, labels, hiddenKeys);
+        return renderObjectValue(
+            value as Record<string, DetailValue>,
+            labels,
+            hiddenKeys,
+        );
     }
 
     return <p className="text-sm text-slate-300">{String(value)}</p>;
@@ -96,15 +118,23 @@ function renderObjectValue(
     labels: Record<string, string>,
     hiddenKeys: Set<string>,
 ): React.ReactNode {
-    const visibleEntries = Object.entries(value).filter(([key, nestedValue]) => {
-        if (hiddenKeys.has(key) || key.endsWith('_id')) {
-            return false;
-        }
+    const visibleEntries = Object.entries(value).filter(
+        ([key, nestedValue]) => {
+            if (hiddenKeys.has(key) || key.endsWith('_id')) {
+                return false;
+            }
 
-        return nestedValue !== null && nestedValue !== undefined && nestedValue !== '';
-    });
+            return (
+                nestedValue !== null &&
+                nestedValue !== undefined &&
+                nestedValue !== ''
+            );
+        },
+    );
 
-    const displayEntry = visibleEntries.find(([key]) => preferredDisplayKeys.includes(key));
+    const displayEntry = visibleEntries.find(([key]) =>
+        preferredDisplayKeys.includes(key),
+    );
 
     if (displayEntry && visibleEntries.length === 1) {
         return renderValue(displayEntry[1], labels, hiddenKeys);
@@ -114,8 +144,12 @@ function renderObjectValue(
         <div className="space-y-2 rounded-lg border border-blue-900/30 bg-[#0b1226] p-3">
             {visibleEntries.map(([key, nestedValue]) => (
                 <div key={key}>
-                    <p className="text-xs text-slate-500">{labels[key] ?? key}</p>
-                    <div className="mt-1">{renderValue(nestedValue, labels, hiddenKeys, key)}</div>
+                    <p className="text-xs text-slate-500">
+                        {labels[key] ?? key}
+                    </p>
+                    <div className="mt-1">
+                        {renderValue(nestedValue, labels, hiddenKeys, key)}
+                    </div>
                 </div>
             ))}
         </div>
@@ -134,7 +168,13 @@ export function ObjectDetailDrawer({
         return null;
     }
 
-    const hiddenKeySet = new Set(['id', 'created_at', 'updated_at', 'deleted_at', ...hiddenKeys]);
+    const hiddenKeySet = new Set([
+        'id',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+        ...hiddenKeys,
+    ]);
 
     return (
         <div className="fixed inset-0 z-50 flex">
@@ -142,8 +182,12 @@ export function ObjectDetailDrawer({
             <div className="flex h-full w-full max-w-xl flex-col overflow-hidden border-l border-blue-900/40 bg-[#070d1f] shadow-2xl">
                 <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
                     <div>
-                        <h2 className="text-base font-semibold text-slate-100">{title}</h2>
-                        <p className="mt-0.5 text-xs text-slate-600">仅展示记录信息</p>
+                        <h2 className="text-base font-semibold text-slate-100">
+                            {title}
+                        </h2>
+                        <p className="mt-0.5 text-xs text-slate-600">
+                            仅展示记录信息
+                        </p>
                     </div>
                     <button
                         onClick={onClose}
@@ -156,13 +200,22 @@ export function ObjectDetailDrawer({
                 <div className="flex-1 overflow-y-auto p-6">
                     <div className="space-y-4">
                         {Object.entries(data)
-                            .filter(([key]) => !hiddenKeySet.has(key) && !key.endsWith('_id'))
+                            .filter(
+                                ([key]) =>
+                                    !hiddenKeySet.has(key) &&
+                                    !key.endsWith('_id'),
+                            )
                             .map(([key, value]) => (
                                 <div key={key}>
-                                    <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    <p className="mb-1.5 text-xs font-medium tracking-wide text-slate-500 uppercase">
                                         {labels[key] ?? key}
                                     </p>
-                                    {renderValue(value, labels, hiddenKeySet, key)}
+                                    {renderValue(
+                                        value,
+                                        labels,
+                                        hiddenKeySet,
+                                        key,
+                                    )}
                                 </div>
                             ))}
                     </div>

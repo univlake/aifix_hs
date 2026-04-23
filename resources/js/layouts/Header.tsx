@@ -1,6 +1,13 @@
-import { Link } from '@inertiajs/react';
-import { useAuth } from '@/hooks/use-auth';
-import { useTheme, type ThemeMode } from '@/contexts/ThemeContext';
+import {
+    Menu,
+    LogOut,
+    User,
+    Key,
+    ChevronDown,
+    Sun,
+    Moon,
+    Monitor,
+} from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,7 +17,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Menu, LogOut, User, Key, ChevronDown, Sun, Moon, Monitor } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
+import type { ThemeMode } from '@/contexts/ThemeContext';
+import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 
 interface HeaderProps {
@@ -40,38 +49,47 @@ export function Header({ onMenuClick }: HeaderProps) {
 
             {/* User menu */}
             <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-sm text-slate-300 transition-all hover:border-blue-700/50 hover:bg-blue-950/50 outline-none cursor-pointer">
+                <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 rounded-lg border border-blue-900/40 bg-[#0a1428] px-3 py-1.5 text-sm text-slate-300 transition-all outline-none hover:border-blue-700/50 hover:bg-blue-950/50">
                     {/* Avatar circle */}
                     <span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-600/25 text-xs font-semibold text-blue-300">
                         {initials}
                     </span>
-                    <span className="hidden sm:block max-w-[120px] truncate">
+                    <span className="hidden max-w-[120px] truncate sm:block">
                         {user?.nickname ?? user?.username}
                     </span>
                     <ChevronDown className="h-3.5 w-3.5 text-slate-600" />
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end" className="w-52 border-blue-900/50 bg-[#0d1530]">
+                <DropdownMenuContent
+                    align="end"
+                    className="w-52 border-blue-900/50 bg-[#0d1530]"
+                >
                     <DropdownMenuGroup>
                         <DropdownMenuLabel className="text-slate-400">
                             <div className="flex flex-col space-y-0.5">
-                                <p className="text-sm font-medium text-slate-200">{user?.nickname}</p>
-                                <p className="text-xs text-slate-600">{user?.username}</p>
+                                <p className="text-sm font-medium text-slate-200">
+                                    {user?.nickname}
+                                </p>
+                                <p className="text-xs text-slate-600">
+                                    {user?.username}
+                                </p>
                             </div>
                         </DropdownMenuLabel>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator className="bg-blue-900/40" />
                     <DropdownMenuGroup>
                         <DropdownMenuItem
-                            className="text-slate-400 hover:text-slate-200 cursor-pointer"
-                            onClick={() => window.location.href = '/profile'}
+                            className="cursor-pointer text-slate-400 hover:text-slate-200"
+                            onClick={() => (window.location.href = '/profile')}
                         >
                             <User className="mr-2 h-4 w-4" />
                             个人资料
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                            className="text-slate-400 hover:text-slate-200 cursor-pointer"
-                            onClick={() => window.location.href = '/change-password'}
+                            className="cursor-pointer text-slate-400 hover:text-slate-200"
+                            onClick={() =>
+                                (window.location.href = '/change-password')
+                            }
                         >
                             <Key className="mr-2 h-4 w-4" />
                             修改密码
@@ -96,10 +114,18 @@ export function Header({ onMenuClick }: HeaderProps) {
 
 // ── Theme toggle ─────────────────────────────────────────────────
 
-const THEME_OPTIONS: { mode: ThemeMode; icon: React.ReactNode; label: string }[] = [
-    { mode: 'light',  icon: <Sun className="h-3.5 w-3.5" />,     label: '白天模式' },
-    { mode: 'auto',   icon: <Monitor className="h-3.5 w-3.5" />, label: '跟随系统' },
-    { mode: 'dark',   icon: <Moon className="h-3.5 w-3.5" />,    label: '暗黑模式' },
+const THEME_OPTIONS: {
+    mode: ThemeMode;
+    icon: React.ReactNode;
+    label: string;
+}[] = [
+    { mode: 'light', icon: <Sun className="h-3.5 w-3.5" />, label: '白天模式' },
+    {
+        mode: 'auto',
+        icon: <Monitor className="h-3.5 w-3.5" />,
+        label: '跟随系统',
+    },
+    { mode: 'dark', icon: <Moon className="h-3.5 w-3.5" />, label: '暗黑模式' },
 ];
 
 function ThemeToggle() {

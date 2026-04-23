@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import type {ColumnDef} from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
@@ -11,6 +11,7 @@ import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/types/api-error';
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -32,7 +33,10 @@ interface JobRow {
     risk_protection: string | null;
 }
 
-interface Option { id: number; label: string; }
+interface Option {
+    id: number;
+    label: string;
+}
 
 // ── Constants ──────────────────────────────────────────────────────
 
@@ -40,18 +44,30 @@ const JOB_TYPES = ['一般作业', '八大特殊作业'] as const;
 
 // ── Shared styles ──────────────────────────────────────────────────
 
-const inputCls = 'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
+const inputCls =
+    'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
 
 // ── Modal ──────────────────────────────────────────────────────────
 
-function Modal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+function Modal({
+    open,
+    onClose,
+    children,
+}: {
+    open: boolean;
+    onClose: () => void;
+    children: React.ReactNode;
+}) {
     if (!open) {
-return null;
-}
+        return null;
+    }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={onClose}
+            />
             <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
                 {children}
             </div>
@@ -70,12 +86,21 @@ export default function SpaceWorksIndex() {
     const canUpdate = canWrite('job-management.update');
     const canDelete = canWrite('job-management.delete');
 
-    const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
-        useApiList<JobRow>({
-            endpoint: '/job-management',
-            defaultParams: companyId ? { company_id: companyId } : {},
-            enabled: !!companyId,
-        });
+    const {
+        data,
+        loading,
+        total,
+        current_page,
+        last_page,
+        per_page,
+        reload,
+        goToPage,
+        search,
+    } = useApiList<JobRow>({
+        endpoint: '/job-management',
+        defaultParams: companyId ? { company_id: companyId } : {},
+        enabled: !!companyId,
+    });
     const crud = useApiCrud('/job-management');
 
     const [searchValue, setSearchValue] = useState('');
@@ -110,9 +135,17 @@ export default function SpaceWorksIndex() {
     const loadOptions = useCallback(async () => {
         try {
             const res = await api.get('/evaluation-units', {
-                params: { per_page: 200, ...(companyId ? { company_id: companyId } : {}) },
+                params: {
+                    per_page: 200,
+                    ...(companyId ? { company_id: companyId } : {}),
+                },
             });
-            setEvaluationUnits((res.data?.data?.data ?? []).map((x: any) => ({ id: x.id, label: x.name })));
+            setEvaluationUnits(
+                (res.data?.data?.data ?? []).map((x: any) => ({
+                    id: x.id,
+                    label: x.name,
+                })),
+            );
         } catch {
             // silently ignore
         }
@@ -138,8 +171,12 @@ export default function SpaceWorksIndex() {
             job_time: row.job_time ? row.job_time.substring(0, 10) : '',
             unit: row.unit ?? '',
             is_outsourcing: String(row.is_outsourcing ?? 0),
-            evaluation_unit_id: row.evaluation_unit_id ? String(row.evaluation_unit_id) : '',
-            job_people_number: row.job_people_number ? String(row.job_people_number) : '',
+            evaluation_unit_id: row.evaluation_unit_id
+                ? String(row.evaluation_unit_id)
+                : '',
+            job_people_number: row.job_people_number
+                ? String(row.job_people_number)
+                : '',
             job_people_name: row.job_people_name ?? '',
             risk_analysis: row.risk_analysis ?? '',
             risk_protection: row.risk_protection ?? '',
@@ -162,18 +199,21 @@ export default function SpaceWorksIndex() {
                 job_time: form.job_time || null,
                 unit: form.unit || null,
                 is_outsourcing: Number(form.is_outsourcing),
-                evaluation_unit_id: form.is_outsourcing === '1' && form.evaluation_unit_id
-                    ? Number(form.evaluation_unit_id)
+                evaluation_unit_id:
+                    form.is_outsourcing === '1' && form.evaluation_unit_id
+                        ? Number(form.evaluation_unit_id)
+                        : null,
+                job_people_number: form.job_people_number
+                    ? Number(form.job_people_number)
                     : null,
-                job_people_number: form.job_people_number ? Number(form.job_people_number) : null,
                 job_people_name: form.job_people_name || null,
                 risk_analysis: form.risk_analysis || null,
                 risk_protection: form.risk_protection || null,
             };
 
             if (!editingId) {
-payload.company_id = companyId;
-}
+                payload.company_id = companyId;
+            }
 
             if (editingId) {
                 await crud.update(editingId, payload);
@@ -183,8 +223,8 @@ payload.company_id = companyId;
 
             setDialogOpen(false);
             reload();
-        } catch (err: any) {
-            setFormError(err.response?.data?.message ?? '操作失败，请重试');
+        } catch (err: unknown) {
+            setFormError(getErrorMessage(err, '操作失败，请重试'));
         } finally {
             setFormLoading(false);
         }
@@ -192,8 +232,8 @@ payload.company_id = companyId;
 
     const handleDelete = async () => {
         if (!deleteItem) {
-return;
-}
+            return;
+        }
 
         await crud.remove(deleteItem.id);
         setDeleteItem(null);
@@ -211,16 +251,18 @@ return;
                 const t = row.original.type;
 
                 if (!t) {
-return <span className="text-slate-700">—</span>;
-}
+                    return <span className="text-slate-700">—</span>;
+                }
 
                 return (
-                    <span className={cn(
-                        'inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium',
-                        t === '八大特殊作业'
-                            ? 'border-amber-500/20 bg-amber-600/8 text-amber-400'
-                            : 'border-blue-500/20 bg-blue-600/8 text-blue-400',
-                    )}>
+                    <span
+                        className={cn(
+                            'inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium',
+                            t === '八大特殊作业'
+                                ? 'border-amber-500/20 bg-amber-600/8 text-amber-400'
+                                : 'border-blue-500/20 bg-blue-600/8 text-blue-400',
+                        )}
+                    >
                         {t}
                     </span>
                 );
@@ -230,46 +272,63 @@ return <span className="text-slate-700">—</span>;
             accessorKey: 'department',
             header: '所属部门',
             size: 120,
-            cell: ({ row }) => row.original.department ?? <span className="text-slate-700">—</span>,
+            cell: ({ row }) =>
+                row.original.department ?? (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             accessorKey: 'content',
             header: '作业内容',
             cell: ({ row }) => (
-                <span className="line-clamp-2 text-xs text-slate-300">{row.original.content ?? '—'}</span>
+                <span className="line-clamp-2 text-xs text-slate-300">
+                    {row.original.content ?? '—'}
+                </span>
             ),
         },
         {
             accessorKey: 'position',
             header: '作业位置',
             size: 120,
-            cell: ({ row }) => row.original.position ?? <span className="text-slate-700">—</span>,
+            cell: ({ row }) =>
+                row.original.position ?? (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             accessorKey: 'job_time',
             header: '作业时间',
             size: 110,
-            cell: ({ row }) => row.original.job_time
-                ? <span className="text-xs text-slate-400">{row.original.job_time.substring(0, 10)}</span>
-                : <span className="text-slate-700">—</span>,
+            cell: ({ row }) =>
+                row.original.job_time ? (
+                    <span className="text-xs text-slate-400">
+                        {row.original.job_time.substring(0, 10)}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             id: 'outsourcing',
             header: '是否外协',
             size: 90,
-            cell: ({ row }) => row.original.is_outsourcing
-                ? (
+            cell: ({ row }) =>
+                row.original.is_outsourcing ? (
                     <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/20 bg-amber-600/8 px-1.5 py-0.5 text-[10px] text-amber-400">
                         <span className="h-1 w-1 rounded-full bg-amber-400" />是
                     </span>
-                )
-                : <span className="text-slate-700">否</span>,
+                ) : (
+                    <span className="text-slate-700">否</span>
+                ),
         },
         {
             accessorKey: 'evaluation_unit',
             header: '外协单位',
             size: 140,
-            cell: ({ row }) => row.original.evaluation_unit?.name ?? <span className="text-slate-700">—</span>,
+            cell: ({ row }) =>
+                row.original.evaluation_unit?.name ?? (
+                    <span className="text-slate-700">—</span>
+                ),
         },
     ];
 
@@ -281,14 +340,18 @@ return <span className="text-slate-700">—</span>;
             <div className="flex items-center gap-0.5">
                 <DetailButton row={row.original} onOpen={detail.openDetail} />
                 {canUpdate && (
-                    <button onClick={() => openEdit(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400">
+                    <button
+                        onClick={() => openEdit(row.original)}
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                    >
                         <Pencil className="h-3.5 w-3.5" />
                     </button>
                 )}
                 {canDelete && (
-                    <button onClick={() => setDeleteItem(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400">
+                    <button
+                        onClick={() => setDeleteItem(row.original)}
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                    >
                         <Trash2 className="h-3.5 w-3.5" />
                     </button>
                 )}
@@ -298,10 +361,10 @@ return <span className="text-slate-700">—</span>;
 
     const detailData = detailItem
         ? {
-            ...detailItem,
-            is_outsourcing: detailItem.is_outsourcing === 1 ? '是' : '否',
-            evaluation_unit: detailItem.evaluation_unit?.name ?? null,
-        }
+              ...detailItem,
+              is_outsourcing: detailItem.is_outsourcing === 1 ? '是' : '否',
+              evaluation_unit: detailItem.evaluation_unit?.name ?? null,
+          }
         : null;
 
     // ── Render ────────────────────────────────────────────────────
@@ -312,15 +375,24 @@ return <span className="text-slate-700">—</span>;
 
             <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-100">作业管理</h1>
+                    <h1 className="text-xl font-bold text-slate-100">
+                        作业管理
+                    </h1>
                     <p className="mt-0.5 text-xs text-slate-600">
-                        共 <span className="font-medium text-slate-400">{total}</span> 条记录
+                        共{' '}
+                        <span className="font-medium text-slate-400">
+                            {total}
+                        </span>{' '}
+                        条记录
                     </p>
                 </div>
                 {canCreate && (
-                    <button onClick={openCreate}
-                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95">
-                        <Plus className="h-4 w-4" />新增作业
+                    <button
+                        onClick={openCreate}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"
+                    >
+                        <Plus className="h-4 w-4" />
+                        新增作业
                     </button>
                 )}
             </div>
@@ -332,8 +404,9 @@ return <span className="text-slate-700">—</span>;
                 searchPlaceholder="搜索部门/作业内容..."
                 searchValue={searchValue}
                 onSearchChange={(v) => {
- setSearchValue(v); search({ department: v || undefined }); 
-}}
+                    setSearchValue(v);
+                    search({ department: v || undefined });
+                }}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
             />
@@ -368,11 +441,15 @@ return <span className="text-slate-700">—</span>;
                             {editingId ? '编辑' : '新增'}作业
                         </h2>
                         <p className="mt-0.5 text-xs text-slate-600">
-                            {editingId ? '修改作业档案信息' : '填写信息后保存新记录'}
+                            {editingId
+                                ? '修改作业档案信息'
+                                : '填写信息后保存新记录'}
                         </p>
                     </div>
-                    <button onClick={() => setDialogOpen(false)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-white/5 hover:text-slate-300">
+                    <button
+                        onClick={() => setDialogOpen(false)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-white/5 hover:text-slate-300"
+                    >
                         <X className="h-4 w-4" />
                     </button>
                 </div>
@@ -389,80 +466,176 @@ return <span className="text-slate-700">—</span>;
                         <div className="grid grid-cols-2 gap-4">
                             {/* 作业类型 */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                                     作业类型
                                 </label>
-                                <select value={form.type} onChange={(e) => set('type', e.target.value)}
-                                    className={cn(inputCls, 'cursor-pointer appearance-none')}>
-                                    <option value="" className="bg-[#0d1530]">请选择</option>
+                                <select
+                                    value={form.type}
+                                    onChange={(e) =>
+                                        set('type', e.target.value)
+                                    }
+                                    className={cn(
+                                        inputCls,
+                                        'cursor-pointer appearance-none',
+                                    )}
+                                >
+                                    <option value="" className="bg-[#0d1530]">
+                                        请选择
+                                    </option>
                                     {JOB_TYPES.map((t) => (
-                                        <option key={t} value={t} className="bg-[#0d1530]">{t}</option>
+                                        <option
+                                            key={t}
+                                            value={t}
+                                            className="bg-[#0d1530]"
+                                        >
+                                            {t}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
                             {/* 特殊作业类型 */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">特殊作业类型</label>
-                                <input type="text" value={form.special_type} onChange={(e) => set('special_type', e.target.value)}
-                                    placeholder="如：动火、高处..." className={inputCls} />
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    特殊作业类型
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.special_type}
+                                    onChange={(e) =>
+                                        set('special_type', e.target.value)
+                                    }
+                                    placeholder="如：动火、高处..."
+                                    className={inputCls}
+                                />
                             </div>
 
                             {/* 所属部门 */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">所属部门</label>
-                                <input type="text" value={form.department} onChange={(e) => set('department', e.target.value)}
-                                    placeholder="部门名称" className={inputCls} />
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    所属部门
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.department}
+                                    onChange={(e) =>
+                                        set('department', e.target.value)
+                                    }
+                                    placeholder="部门名称"
+                                    className={inputCls}
+                                />
                             </div>
 
                             {/* 作业位置 */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">作业位置</label>
-                                <input type="text" value={form.position} onChange={(e) => set('position', e.target.value)}
-                                    placeholder="位置描述" className={inputCls} />
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    作业位置
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.position}
+                                    onChange={(e) =>
+                                        set('position', e.target.value)
+                                    }
+                                    placeholder="位置描述"
+                                    className={inputCls}
+                                />
                             </div>
 
                             {/* 作业时间 */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">作业时间</label>
-                                <input type="date" value={form.job_time} onChange={(e) => set('job_time', e.target.value)}
-                                    className={inputCls} />
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    作业时间
+                                </label>
+                                <input
+                                    type="date"
+                                    value={form.job_time}
+                                    onChange={(e) =>
+                                        set('job_time', e.target.value)
+                                    }
+                                    className={inputCls}
+                                />
                             </div>
 
                             {/* 作业单位 */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">作业单位</label>
-                                <input type="text" value={form.unit} onChange={(e) => set('unit', e.target.value)}
-                                    placeholder="作业单位" className={inputCls} />
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    作业单位
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.unit}
+                                    onChange={(e) =>
+                                        set('unit', e.target.value)
+                                    }
+                                    placeholder="作业单位"
+                                    className={inputCls}
+                                />
                             </div>
 
                             {/* 作业人数 */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">作业人数</label>
-                                <input type="number" min="0" value={form.job_people_number} onChange={(e) => set('job_people_number', e.target.value)}
-                                    placeholder="人数" className={inputCls} />
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    作业人数
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={form.job_people_number}
+                                    onChange={(e) =>
+                                        set('job_people_number', e.target.value)
+                                    }
+                                    placeholder="人数"
+                                    className={inputCls}
+                                />
                             </div>
 
                             {/* 作业人员 */}
                             <div>
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">作业人员</label>
-                                <input type="text" value={form.job_people_name} onChange={(e) => set('job_people_name', e.target.value)}
-                                    placeholder="人员姓名" className={inputCls} />
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    作业人员
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.job_people_name}
+                                    onChange={(e) =>
+                                        set('job_people_name', e.target.value)
+                                    }
+                                    placeholder="人员姓名"
+                                    className={inputCls}
+                                />
                             </div>
 
                             {/* 是否外协 */}
                             <div className="col-span-2">
-                                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">是否外协</label>
+                                <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                    是否外协
+                                </label>
                                 <button
                                     type="button"
-                                    onClick={() => set('is_outsourcing', form.is_outsourcing === '1' ? '0' : '1')}
+                                    onClick={() =>
+                                        set(
+                                            'is_outsourcing',
+                                            form.is_outsourcing === '1'
+                                                ? '0'
+                                                : '1',
+                                        )
+                                    }
                                     className={cn(
                                         'flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-all',
                                         form.is_outsourcing === '1'
                                             ? 'border-emerald-500/25 bg-emerald-600/10 text-emerald-400'
                                             : 'border-blue-900/30 bg-transparent text-slate-600 hover:border-blue-900/50 hover:text-slate-400',
-                                    )}>
-                                    <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', form.is_outsourcing === '1' ? 'bg-emerald-400' : 'bg-slate-700')} />
+                                    )}
+                                >
+                                    <span
+                                        className={cn(
+                                            'h-1.5 w-1.5 shrink-0 rounded-full',
+                                            form.is_outsourcing === '1'
+                                                ? 'bg-emerald-400'
+                                                : 'bg-slate-700',
+                                        )}
+                                    />
                                     {form.is_outsourcing === '1' ? '是' : '否'}
                                 </button>
                             </div>
@@ -470,12 +643,36 @@ return <span className="text-slate-700">—</span>;
                             {/* 外协单位名称 — only when outsourcing */}
                             {form.is_outsourcing === '1' && (
                                 <div className="col-span-2">
-                                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">外协单位名称</label>
-                                    <select value={form.evaluation_unit_id} onChange={(e) => set('evaluation_unit_id', e.target.value)}
-                                        className={cn(inputCls, 'cursor-pointer appearance-none')}>
-                                        <option value="" className="bg-[#0d1530]">请选择</option>
+                                    <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                        外协单位名称
+                                    </label>
+                                    <select
+                                        value={form.evaluation_unit_id}
+                                        onChange={(e) =>
+                                            set(
+                                                'evaluation_unit_id',
+                                                e.target.value,
+                                            )
+                                        }
+                                        className={cn(
+                                            inputCls,
+                                            'cursor-pointer appearance-none',
+                                        )}
+                                    >
+                                        <option
+                                            value=""
+                                            className="bg-[#0d1530]"
+                                        >
+                                            请选择
+                                        </option>
                                         {evaluationUnits.map((o) => (
-                                            <option key={o.id} value={String(o.id)} className="bg-[#0d1530]">{o.label}</option>
+                                            <option
+                                                key={o.id}
+                                                value={String(o.id)}
+                                                className="bg-[#0d1530]"
+                                            >
+                                                {o.label}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
@@ -484,35 +681,67 @@ return <span className="text-slate-700">—</span>;
 
                         {/* 作业内容 */}
                         <div>
-                            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">作业内容</label>
-                            <textarea rows={3} value={form.content} onChange={(e) => set('content', e.target.value)}
-                                placeholder="描述作业内容" className={cn(inputCls, 'resize-none')} />
+                            <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                作业内容
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={form.content}
+                                onChange={(e) => set('content', e.target.value)}
+                                placeholder="描述作业内容"
+                                className={cn(inputCls, 'resize-none')}
+                            />
                         </div>
 
                         {/* 风险分析 */}
                         <div>
-                            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">风险分析</label>
-                            <textarea rows={3} value={form.risk_analysis} onChange={(e) => set('risk_analysis', e.target.value)}
-                                placeholder="风险分析内容" className={cn(inputCls, 'resize-none')} />
+                            <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                风险分析
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={form.risk_analysis}
+                                onChange={(e) =>
+                                    set('risk_analysis', e.target.value)
+                                }
+                                placeholder="风险分析内容"
+                                className={cn(inputCls, 'resize-none')}
+                            />
                         </div>
 
                         {/* 风险防护措施 */}
                         <div>
-                            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">风险防护措施</label>
-                            <textarea rows={3} value={form.risk_protection} onChange={(e) => set('risk_protection', e.target.value)}
-                                placeholder="防护措施内容" className={cn(inputCls, 'resize-none')} />
+                            <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                风险防护措施
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={form.risk_protection}
+                                onChange={(e) =>
+                                    set('risk_protection', e.target.value)
+                                }
+                                placeholder="防护措施内容"
+                                className={cn(inputCls, 'resize-none')}
+                            />
                         </div>
                     </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                    <button onClick={() => setDialogOpen(false)}
-                        className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">
+                    <button
+                        onClick={() => setDialogOpen(false)}
+                        className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                    >
                         取消
                     </button>
-                    <button onClick={handleSubmit} disabled={formLoading}
-                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/30 disabled:opacity-50 disabled:pointer-events-none">
-                        {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={formLoading}
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/30 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                        {formLoading && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        )}
                         {formLoading ? '保存中...' : '保存'}
                     </button>
                 </div>
@@ -524,19 +753,28 @@ return <span className="text-slate-700">—</span>;
                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                         <Trash2 className="h-5 w-5 text-red-400" />
                     </div>
-                    <h2 className="mb-1 text-base font-semibold text-slate-100">删除作业记录</h2>
+                    <h2 className="mb-1 text-base font-semibold text-slate-100">
+                        删除作业记录
+                    </h2>
                     <p className="text-sm text-slate-500">
                         确定要删除此作业记录吗？此操作不可撤销。
                     </p>
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
-                    <button onClick={() => setDeleteItem(null)}
-                        className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200">
+                    <button
+                        onClick={() => setDeleteItem(null)}
+                        className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
+                    >
                         取消
                     </button>
-                    <button onClick={handleDelete} disabled={crud.loading}
-                        className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/25 disabled:opacity-50 disabled:pointer-events-none">
-                        {crud.loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    <button
+                        onClick={handleDelete}
+                        disabled={crud.loading}
+                        className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/25 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                        {crud.loading && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        )}
                         {crud.loading ? '删除中...' : '确认删除'}
                     </button>
                 </div>

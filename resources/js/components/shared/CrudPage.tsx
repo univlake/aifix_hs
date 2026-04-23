@@ -1,6 +1,17 @@
 import { Head } from '@inertiajs/react';
-import type {ColumnDef} from '@tanstack/react-table';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2, Upload, Download, FileDown, Copy } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
+import {
+    Plus,
+    Pencil,
+    Trash2,
+    X,
+    AlertTriangle,
+    Loader2,
+    Upload,
+    Download,
+    FileDown,
+    Copy,
+} from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
 import { DetailButton } from '@/components/shared/DetailButton';
@@ -12,6 +23,7 @@ import { useDetailDrawer } from '@/hooks/use-detail-drawer';
 import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { getApiPayload, getErrorMessage } from '@/types/api-error';
 import type { ApiResponse } from '@/types/models';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -25,7 +37,16 @@ export interface SubField {
 export interface FormField {
     key: string;
     label: string;
-    type: 'text' | 'number' | 'textarea' | 'select' | 'switch' | 'date' | 'file' | 'video' | 'sub-table';
+    type:
+        | 'text'
+        | 'number'
+        | 'textarea'
+        | 'select'
+        | 'switch'
+        | 'date'
+        | 'file'
+        | 'video'
+        | 'sub-table';
     required?: boolean;
     placeholder?: string;
     options?: { value: string; label: string }[];
@@ -147,21 +168,40 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
 
     // Rule 3: hide action buttons the user doesn't have permission for.
     // When `permissions.{action}` is omitted, we fall back to allowed (= existing behaviour).
-    const canCreate = !readOnly && (pagePermissions?.create ? can(pagePermissions.create) : true);
-    const canUpdate = !readOnly && (pagePermissions?.update ? can(pagePermissions.update) : true);
-    const canDelete = !readOnly && (pagePermissions?.delete ? can(pagePermissions.delete) : true);
+    const canCreate =
+        !readOnly &&
+        (pagePermissions?.create ? can(pagePermissions.create) : true);
+    const canUpdate =
+        !readOnly &&
+        (pagePermissions?.update ? can(pagePermissions.update) : true);
+    const canDelete =
+        !readOnly &&
+        (pagePermissions?.delete ? can(pagePermissions.delete) : true);
 
-    const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
-        useApiList<Record<string, unknown>>({
-            endpoint,
-            defaultParams: {
-                ...(companyScoped && companyId ? { company_id: companyId } : {}),
-                ...(extraParams ?? {}),
-            },
-            enabled: companyScoped ? !!companyId : true,
-        });
+    const {
+        data,
+        loading,
+        total,
+        current_page,
+        last_page,
+        per_page,
+        reload,
+        goToPage,
+        search,
+    } = useApiList<Record<string, unknown>>({
+        endpoint,
+        defaultParams: {
+            ...(companyScoped && companyId ? { company_id: companyId } : {}),
+            ...(extraParams ?? {}),
+        },
+        enabled: companyScoped ? !!companyId : true,
+    });
     const crud = useApiCrud(endpoint);
-    const detail = useDetailDrawer<Record<string, unknown>>({ endpoint, idKey, prefetch: true });
+    const detail = useDetailDrawer<Record<string, unknown>>({
+        endpoint,
+        idKey,
+        prefetch: true,
+    });
 
     const [searchValue, setSearchValue] = useState('');
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -171,38 +211,55 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
     const [form, setForm] = useState<Record<string, unknown>>({});
-    const [dynamicOptions, setDynamicOptions] = useState<Record<string, { value: string; label: string }[]>>({});
+    const [dynamicOptions, setDynamicOptions] = useState<
+        Record<string, { value: string; label: string }[]>
+    >({});
     const [importLoading, setImportLoading] = useState(false);
-    const [importError, setImportError] = useState<{ row: number; errors: string[] }[]>([]);
+    const [importError, setImportError] = useState<
+        { row: number; errors: string[] }[]
+    >([]);
     const [exportLoading, setExportLoading] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [copyLoading, setCopyLoading] = useState(false);
     const [copyMsg, setCopyMsg] = useState('');
-    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-    const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
+    const [filterValues, setFilterValues] = useState<Record<string, string>>(
+        {},
+    );
+    const [filterOptions, setFilterOptions] = useState<
+        Record<string, { value: string; label: string }[]>
+    >({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Load dynamic select options (scoped to current company)
     useEffect(() => {
         formFields.forEach((field) => {
-            if (field.type === 'select' && field.optionsEndpoint && !field.options && !field.dependsOnField) {
+            if (
+                field.type === 'select' &&
+                field.optionsEndpoint &&
+                !field.options &&
+                !field.dependsOnField
+            ) {
                 const labelKey = field.optionsLabelKey ?? 'title';
                 const valueKey = field.optionsValueKey ?? 'id';
                 const params: Record<string, unknown> = { per_page: 200 };
 
                 if (companyId) {
-params.company_id = companyId;
-}
+                    params.company_id = companyId;
+                }
 
-                api.get<ApiResponse<PaginatedResponse<Record<string, unknown>>>>(field.optionsEndpoint, { params })
+                api.get<
+                    ApiResponse<PaginatedResponse<Record<string, unknown>>>
+                >(field.optionsEndpoint, { params })
                     .then((res) => {
                         const items = res.data.data?.data ?? [];
                         setDynamicOptions((prev) => ({
                             ...prev,
-                            [field.key]: items.map((item: Record<string, unknown>) => ({
-                                value: String(item[valueKey]),
-                                label: String(item[labelKey]),
-                            })),
+                            [field.key]: items.map(
+                                (item: Record<string, unknown>) => ({
+                                    value: String(item[valueKey]),
+                                    label: String(item[labelKey]),
+                                }),
+                            ),
                         }));
                     })
                     .catch(() => {});
@@ -214,8 +271,8 @@ params.company_id = companyId;
     useEffect(() => {
         formFields.forEach((field) => {
             if (!field.dependsOnField || !field.dependsOnEndpoint) {
-return;
-}
+                return;
+            }
 
             const parentValue = form[field.dependsOnField];
 
@@ -225,7 +282,10 @@ return;
                 return;
             }
 
-            const endpoint = field.dependsOnEndpoint.replace('{value}', String(parentValue));
+            const endpoint = field.dependsOnEndpoint.replace(
+                '{value}',
+                String(parentValue),
+            );
             const labelKey = field.optionsLabelKey ?? 'title';
             const valueKey = field.optionsValueKey ?? 'id';
             const dataKey = field.dependsOnDataKey;
@@ -234,7 +294,9 @@ return;
                     const raw = res.data.data;
                     const items: Record<string, unknown>[] = dataKey
                         ? ((raw?.[dataKey] as Record<string, unknown>[]) ?? [])
-                        : Array.isArray(raw) ? raw : [];
+                        : Array.isArray(raw)
+                          ? raw
+                          : [];
                     setDynamicOptions((prev) => ({
                         ...prev,
                         [field.key]: items.map((item) => ({
@@ -247,16 +309,27 @@ return;
                     setDynamicOptions((prev) => ({ ...prev, [field.key]: [] }));
                 });
         });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formFields, ...formFields.filter((f) => f.dependsOnField).map((f) => form[f.dependsOnField!])]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        formFields,
+        ...formFields
+            .filter((f) => f.dependsOnField)
+            .map((f) => form[f.dependsOnField!]),
+    ]);
 
     // Load options for static filter dropdowns (no dependsOnKey)
     useEffect(() => {
         filterFields.forEach((field) => {
-            if (field.optionsEndpoint && !field.options && !field.dependsOnKey) {
+            if (
+                field.optionsEndpoint &&
+                !field.options &&
+                !field.dependsOnKey
+            ) {
                 const lKey = field.optionsLabelKey ?? 'title';
                 const vKey = field.optionsValueKey ?? 'id';
-                api.get<ApiResponse<PaginatedResponse<Record<string, unknown>>>>(field.optionsEndpoint, {
+                api.get<
+                    ApiResponse<PaginatedResponse<Record<string, unknown>>>
+                >(field.optionsEndpoint, {
                     params: { per_page: 200, ...(field.optionsParams ?? {}) },
                 })
                     .then((res) => {
@@ -272,15 +345,18 @@ return;
                     .catch(() => {});
             }
         });
-     
     }, [filterFields]);
 
     // Load options for cascading filter dropdowns when parent value changes
     useEffect(() => {
         filterFields.forEach((field) => {
-            if (!field.dependsOnKey || !field.optionsEndpoint || field.options) {
-return;
-}
+            if (
+                !field.dependsOnKey ||
+                !field.optionsEndpoint ||
+                field.options
+            ) {
+                return;
+            }
 
             const parentValue = filterValues[field.dependsOnKey];
 
@@ -293,9 +369,12 @@ return;
             const lKey = field.optionsLabelKey ?? 'title';
             const vKey = field.optionsValueKey ?? 'id';
             const paramName = field.dependsOnParam ?? field.dependsOnKey;
-            api.get<ApiResponse<PaginatedResponse<Record<string, unknown>>>>(field.optionsEndpoint, {
-                params: { per_page: 200, [paramName]: parentValue },
-            })
+            api.get<ApiResponse<PaginatedResponse<Record<string, unknown>>>>(
+                field.optionsEndpoint,
+                {
+                    params: { per_page: 200, [paramName]: parentValue },
+                },
+            )
                 .then((res) => {
                     const items = res.data.data?.data ?? [];
                     setFilterOptions((prev) => ({
@@ -310,29 +389,34 @@ return;
                     setFilterOptions((prev) => ({ ...prev, [field.key]: [] }));
                 });
         });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterFields, ...filterFields.filter((f) => f.dependsOnKey).map((f) => filterValues[f.dependsOnKey!])]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        filterFields,
+        ...filterFields
+            .filter((f) => f.dependsOnKey)
+            .map((f) => filterValues[f.dependsOnKey!]),
+    ]);
 
     const handleFilterChange = (key: string, value: string) => {
         const next = { ...filterValues, [key]: value };
         // Clear any child filters that depend on this key
         filterFields.forEach((f) => {
             if (f.dependsOnKey === key) {
-next[f.key] = '';
-}
+                next[f.key] = '';
+            }
         });
         setFilterValues(next);
         const params: Record<string, unknown> = {};
 
         if (searchField && searchValue) {
-params[searchField] = searchValue;
-}
+            params[searchField] = searchValue;
+        }
 
         Object.entries(next).forEach(([k, v]) => {
- if (v) {
-params[k] = v;
-} 
-});
+            if (v) {
+                params[k] = v;
+            }
+        });
         search(params);
     };
 
@@ -340,12 +424,12 @@ params[k] = v;
         const f: Record<string, unknown> = {};
         formFields.forEach((field) => {
             if (field.type === 'sub-table') {
-f[field.key] = [];
-} else if (field.type === 'switch') {
-f[field.key] = 0;
-} else {
-f[field.key] = '';
-}
+                f[field.key] = [];
+            } else if (field.type === 'switch') {
+                f[field.key] = 0;
+            } else {
+                f[field.key] = '';
+            }
         });
 
         return f;
@@ -355,8 +439,8 @@ f[field.key] = '';
         const file = e.target.files?.[0];
 
         if (!file || !importEndpoint || !companyId) {
-return;
-}
+            return;
+        }
 
         e.target.value = '';
         setImportLoading(true);
@@ -370,13 +454,17 @@ return;
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             reload();
-        } catch (err: any) {
-            const rowErrors = err.response?.data?.data?.row_errors;
+        } catch (err: unknown) {
+            const rowErrors = getApiPayload<{
+                row_errors?: Array<{ row: number; errors: string[] }>;
+            }>(err)?.row_errors;
 
             if (rowErrors) {
                 setImportError(rowErrors);
             } else {
-                setImportError([{ row: 0, errors: [err.response?.data?.message ?? '导入失败'] }]);
+                setImportError([
+                    { row: 0, errors: [getErrorMessage(err, '导入失败')] },
+                ]);
             }
         } finally {
             setImportLoading(false);
@@ -385,8 +473,8 @@ return;
 
     const handleExport = async () => {
         if (!exportEndpoint || !companyId) {
-return;
-}
+            return;
+        }
 
         setExportLoading(true);
 
@@ -410,8 +498,8 @@ return;
 
     const handleTemplate = async () => {
         if (!templateEndpoint || !companyId) {
-return;
-}
+            return;
+        }
 
         try {
             const res = await api.get(templateEndpoint, {
@@ -431,8 +519,8 @@ return;
 
     const handleCopy = async () => {
         if (!copyEndpoint || !selectedIds.size) {
-return;
-}
+            return;
+        }
 
         setCopyLoading(true);
 
@@ -442,8 +530,8 @@ return;
             reload();
             setCopyMsg(`已复制 ${selectedIds.size} 条记录`);
             setTimeout(() => setCopyMsg(''), 3000);
-        } catch (err: any) {
-            setCopyMsg(err.response?.data?.message ?? '复制失败');
+        } catch (err: unknown) {
+            setCopyMsg(getErrorMessage(err, '复制失败'));
             setTimeout(() => setCopyMsg(''), 3000);
         } finally {
             setCopyLoading(false);
@@ -455,16 +543,20 @@ return;
             const next = new Set(prev);
 
             if (next.has(id)) {
-next.delete(id);
-} else {
-next.add(id);
-}
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
 
             return next;
         });
 
-    const allPageSelected = data.length > 0 && data.every((r) => selectedIds.has(r[idKey] as number));
-    const somePageSelected = data.some((r) => selectedIds.has(r[idKey] as number));
+    const allPageSelected =
+        data.length > 0 &&
+        data.every((r) => selectedIds.has(r[idKey] as number));
+    const somePageSelected = data.some((r) =>
+        selectedIds.has(r[idKey] as number),
+    );
 
     const toggleAll = () => {
         if (allPageSelected) {
@@ -490,17 +582,17 @@ next.add(id);
             const params: Record<string, unknown> = {};
 
             if (searchField) {
-params[searchField] = val || undefined;
-}
+                params[searchField] = val || undefined;
+            }
 
             Object.entries(filterValues).forEach(([k, v]) => {
- if (v) {
-params[k] = v;
-} 
-});
+                if (v) {
+                    params[k] = v;
+                }
+            });
             search(params);
         },
-         
+
         [search, searchField, filterValues],
     );
 
@@ -517,14 +609,20 @@ params[k] = v;
         const f: Record<string, unknown> = {};
         formFields.forEach((field) => {
             if (field.type === 'sub-table') {
-                f[field.key] = Array.isArray(row[field.key]) ? row[field.key] : [];
+                f[field.key] = Array.isArray(row[field.key])
+                    ? row[field.key]
+                    : [];
 
                 return;
             }
 
             let val = row[field.key] ?? (field.type === 'switch' ? 0 : '');
 
-            if (field.type === 'date' && typeof val === 'string' && val.length > 10) {
+            if (
+                field.type === 'date' &&
+                typeof val === 'string' &&
+                val.length > 10
+            ) {
                 val = val.slice(0, 10);
             }
 
@@ -554,8 +652,8 @@ params[k] = v;
                 }
 
                 if (field.type === 'sub-table') {
-return;
-}
+                    return;
+                }
 
                 if (field.type === 'number' && payload[field.key] !== '') {
                     payload[field.key] = Number(payload[field.key]);
@@ -566,8 +664,8 @@ return;
                 }
 
                 if (payload[field.key] === '') {
-payload[field.key] = null;
-}
+                    payload[field.key] = null;
+                }
             });
 
             if (editingId) {
@@ -578,8 +676,8 @@ payload[field.key] = null;
 
             setDialogOpen(false);
             reload();
-        } catch (err: any) {
-            setFormError(err.response?.data?.message ?? '操作失败，请重试');
+        } catch (err: unknown) {
+            setFormError(getErrorMessage(err, '操作失败，请重试'));
         } finally {
             setFormLoading(false);
         }
@@ -587,8 +685,8 @@ payload[field.key] = null;
 
     const handleDelete = async () => {
         if (!deleteId) {
-return;
-}
+            return;
+        }
 
         await crud.remove(deleteId);
         setDeleteId(null);
@@ -596,17 +694,18 @@ return;
         reload();
     };
 
-    const updateForm = (key: string, value: unknown) => setForm((f) => {
-        const next = { ...f, [key]: value };
-        // Clear any child field that depends on this key
-        formFields.forEach((field) => {
-            if (field.dependsOnField === key) {
-next[field.key] = '';
-}
-        });
+    const updateForm = (key: string, value: unknown) =>
+        setForm((f) => {
+            const next = { ...f, [key]: value };
+            // Clear any child field that depends on this key
+            formFields.forEach((field) => {
+                if (field.dependsOnField === key) {
+                    next[field.key] = '';
+                }
+            });
 
-        return next;
-    });
+            return next;
+        });
 
     // Build table columns
     const checkboxColumn: ColumnDef<Record<string, unknown>> = {
@@ -617,10 +716,10 @@ next[field.key] = '';
                 type="checkbox"
                 checked={allPageSelected}
                 ref={(el) => {
- if (el) {
-el.indeterminate = somePageSelected && !allPageSelected;
-} 
-}}
+                    if (el) {
+                        el.indeterminate = somePageSelected && !allPageSelected;
+                    }
+                }}
                 onChange={toggleAll}
                 className="h-3.5 w-3.5 rounded border-blue-900/60 bg-[#070d1f] accent-blue-500"
             />
@@ -643,14 +742,14 @@ el.indeterminate = somePageSelected && !allPageSelected;
             size: col.width,
             cell: ({ row }: { row: { original: Record<string, unknown> } }) => {
                 if (col.render) {
-return col.render(row.original[col.key], row.original);
-}
+                    return col.render(row.original[col.key], row.original);
+                }
 
                 const val = row.original[col.key];
 
                 if (val === null || val === undefined) {
-return <span className="text-slate-700">—</span>;
-}
+                    return <span className="text-slate-700">—</span>;
+                }
 
                 return String(val);
             },
@@ -658,23 +757,32 @@ return <span className="text-slate-700">—</span>;
     ];
 
     const showActionsColumn = enableDetail || canUpdate || canDelete;
+
     if (showActionsColumn) {
-        const actionCount = (enableDetail ? 1 : 0) + (canUpdate ? 1 : 0) + (canDelete ? 1 : 0);
+        const actionCount =
+            (enableDetail ? 1 : 0) + (canUpdate ? 1 : 0) + (canDelete ? 1 : 0);
         tableColumns.push({
             id: 'actions',
             header: '操作',
             size: actionCount >= 3 ? 156 : actionCount === 2 ? 112 : 68,
             cell: ({ row }) => {
-                const rowCompanyId = row.original.company_id as number | undefined;
+                const rowCompanyId = row.original.company_id as
+                    | number
+                    | undefined;
                 // Row may still be locked even if the page is editable — when the row belongs
                 // to a different company (only possible in bloc drill-downs; isSubordinate is
                 // already folded into globalReadOnly above).
-                const rowBelongsToUs = rowCompanyId === undefined || rowCompanyId === rootCompany?.id;
+                const rowBelongsToUs =
+                    rowCompanyId === undefined ||
+                    rowCompanyId === rootCompany?.id;
 
                 return (
                     <div className="flex items-center gap-0.5">
                         {enableDetail && (
-                            <DetailButton row={row.original} onOpen={detail.openDetail} />
+                            <DetailButton
+                                row={row.original}
+                                onOpen={detail.openDetail}
+                            />
                         )}
                         {canUpdate && rowBelongsToUs && (
                             <ActionButton
@@ -689,7 +797,13 @@ return <span className="text-slate-700">—</span>;
                             <ActionButton
                                 onClick={() => {
                                     setDeleteId(row.original[idKey] as number);
-                                    setDeleteLabel(String(row.original[labelKey] ?? row.original[idKey] ?? ''));
+                                    setDeleteLabel(
+                                        String(
+                                            row.original[labelKey] ??
+                                                row.original[idKey] ??
+                                                '',
+                                        ),
+                                    );
                                 }}
                                 variant="delete"
                                 title="删除"
@@ -710,10 +824,14 @@ return <span className="text-slate-700">—</span>;
             {/* Page header */}
             <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-100">{title}</h1>
+                    <h1 className="text-xl font-bold text-slate-100">
+                        {title}
+                    </h1>
                     <p className="mt-0.5 text-xs text-slate-600">
                         共{' '}
-                        <span className="font-medium text-slate-400">{total}</span>{' '}
+                        <span className="font-medium text-slate-400">
+                            {total}
+                        </span>{' '}
                         条记录
                     </p>
                 </div>
@@ -732,15 +850,21 @@ return <span className="text-slate-700">—</span>;
             {importError.length > 0 && (
                 <div className="mb-4 rounded-lg border border-red-500/20 bg-red-600/8 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-medium text-red-400">导入失败，请修正以下行后重新导入：</p>
-                        <button onClick={() => setImportError([])} className="text-red-600 hover:text-red-400">
+                        <p className="text-xs font-medium text-red-400">
+                            导入失败，请修正以下行后重新导入：
+                        </p>
+                        <button
+                            onClick={() => setImportError([])}
+                            className="text-red-600 hover:text-red-400"
+                        >
                             <X className="h-3.5 w-3.5" />
                         </button>
                     </div>
                     <ul className="space-y-0.5 text-xs text-red-400/80">
                         {importError.map((e, i) => (
                             <li key={i}>
-                                {e.row > 0 ? `第 ${e.row} 行：` : ''}{e.errors.join('；')}
+                                {e.row > 0 ? `第 ${e.row} 行：` : ''}
+                                {e.errors.join('；')}
                             </li>
                         ))}
                     </ul>
@@ -756,74 +880,126 @@ return <span className="text-slate-700">—</span>;
                 onSearchChange={searchField ? handleSearch : undefined}
                 pagination={{ current_page, last_page, per_page, total }}
                 onPageChange={goToPage}
-                toolbar={(filterFields.length > 0 || copyEndpoint || templateEndpoint || importEndpoint || exportEndpoint) ? (
-                    <div className="flex items-center gap-2">
-                        {filterFields.map((ff) => {
-                            if (ff.dependsOnKey && !filterValues[ff.dependsOnKey]) {
-return null;
-}
+                toolbar={
+                    filterFields.length > 0 ||
+                    copyEndpoint ||
+                    templateEndpoint ||
+                    importEndpoint ||
+                    exportEndpoint ? (
+                        <div className="flex items-center gap-2">
+                            {filterFields.map((ff) => {
+                                if (
+                                    ff.dependsOnKey &&
+                                    !filterValues[ff.dependsOnKey]
+                                ) {
+                                    return null;
+                                }
 
-                            const opts = ff.options ?? filterOptions[ff.key] ?? [];
+                                const opts =
+                                    ff.options ?? filterOptions[ff.key] ?? [];
 
-                            return (
-                                <select
-                                    key={ff.key}
-                                    value={filterValues[ff.key] ?? ''}
-                                    onChange={(e) => handleFilterChange(ff.key, e.target.value)}
-                                    className="h-9 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 text-sm text-slate-300 outline-none transition-colors focus:border-blue-500/60 appearance-none cursor-pointer"
-                                >
-                                    <option value="" className="bg-[#0d1530]">{ff.placeholder}</option>
-                                    {opts.map((o) => (
-                                        <option key={o.value} value={o.value} className="bg-[#0d1530]">{o.label}</option>
-                                    ))}
-                                </select>
-                            );
-                        })}
-                        {copyMsg && <span className="text-xs text-blue-400">{copyMsg}</span>}
-                        {copyEndpoint && canCreate && selectedIds.size > 0 && (
-                            <button
-                                onClick={handleCopy}
-                                disabled={copyLoading}
-                                className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-600/10 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-600/20 disabled:opacity-50 disabled:pointer-events-none"
-                            >
-                                {copyLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
-                                复制已选 ({selectedIds.size})
-                            </button>
-                        )}
-                        {templateEndpoint && (
-                            <button
-                                onClick={handleTemplate}
-                                className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
-                            >
-                                <FileDown className="h-3.5 w-3.5" />
-                                下载模板
-                            </button>
-                        )}
-                        {importEndpoint && canCreate && (
-                            <>
-                                <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportFile} />
+                                return (
+                                    <select
+                                        key={ff.key}
+                                        value={filterValues[ff.key] ?? ''}
+                                        onChange={(e) =>
+                                            handleFilterChange(
+                                                ff.key,
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="h-9 cursor-pointer appearance-none rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 text-sm text-slate-300 transition-colors outline-none focus:border-blue-500/60"
+                                    >
+                                        <option
+                                            value=""
+                                            className="bg-[#0d1530]"
+                                        >
+                                            {ff.placeholder}
+                                        </option>
+                                        {opts.map((o) => (
+                                            <option
+                                                key={o.value}
+                                                value={o.value}
+                                                className="bg-[#0d1530]"
+                                            >
+                                                {o.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                );
+                            })}
+                            {copyMsg && (
+                                <span className="text-xs text-blue-400">
+                                    {copyMsg}
+                                </span>
+                            )}
+                            {copyEndpoint &&
+                                canCreate &&
+                                selectedIds.size > 0 && (
+                                    <button
+                                        onClick={handleCopy}
+                                        disabled={copyLoading}
+                                        className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-600/10 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-600/20 disabled:pointer-events-none disabled:opacity-50"
+                                    >
+                                        {copyLoading ? (
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                            <Copy className="h-3.5 w-3.5" />
+                                        )}
+                                        复制已选 ({selectedIds.size})
+                                    </button>
+                                )}
+                            {templateEndpoint && (
                                 <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={importLoading}
-                                    className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:opacity-50 disabled:pointer-events-none"
+                                    onClick={handleTemplate}
+                                    className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 hover:border-blue-500/40 hover:text-slate-200"
                                 >
-                                    {importLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                                    导入
+                                    <FileDown className="h-3.5 w-3.5" />
+                                    下载模板
                                 </button>
-                            </>
-                        )}
-                        {exportEndpoint && (
-                            <button
-                                onClick={handleExport}
-                                disabled={exportLoading}
-                                className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:opacity-50 disabled:pointer-events-none"
-                            >
-                                {exportLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                                导出
-                            </button>
-                        )}
-                    </div>
-                ) : undefined}
+                            )}
+                            {importEndpoint && canCreate && (
+                                <>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".xlsx,.xls"
+                                        className="hidden"
+                                        onChange={handleImportFile}
+                                    />
+                                    <button
+                                        onClick={() =>
+                                            fileInputRef.current?.click()
+                                        }
+                                        disabled={importLoading}
+                                        className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:pointer-events-none disabled:opacity-50"
+                                    >
+                                        {importLoading ? (
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                            <Upload className="h-3.5 w-3.5" />
+                                        )}
+                                        导入
+                                    </button>
+                                </>
+                            )}
+                            {exportEndpoint && (
+                                <button
+                                    onClick={handleExport}
+                                    disabled={exportLoading}
+                                    className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 hover:border-blue-500/40 hover:text-slate-200 disabled:pointer-events-none disabled:opacity-50"
+                                >
+                                    {exportLoading ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <Download className="h-3.5 w-3.5" />
+                                    )}
+                                    导出
+                                </button>
+                            )}
+                        </div>
+                    ) : undefined
+                }
             />
 
             {/* Create / Edit modal */}
@@ -831,10 +1007,13 @@ return null;
                 <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
                     <div>
                         <h2 className="text-base font-semibold text-slate-100">
-                            {editingId ? '编辑' : '新增'}{title}
+                            {editingId ? '编辑' : '新增'}
+                            {title}
                         </h2>
                         <p className="mt-0.5 text-xs text-slate-600">
-                            {editingId ? '修改现有记录信息' : '填写信息后保存新记录'}
+                            {editingId
+                                ? '修改现有记录信息'
+                                : '填写信息后保存新记录'}
                         </p>
                     </div>
                     <button
@@ -853,27 +1032,45 @@ return null;
                                 {formError}
                             </div>
                         )}
-                        <div className={cn(
-                            'grid gap-4',
-                            formFields.some((f) => f.colSpan === 2) ? 'md:grid-cols-2' : 'grid-cols-1',
-                        )}>
+                        <div
+                            className={cn(
+                                'grid gap-4',
+                                formFields.some((f) => f.colSpan === 2)
+                                    ? 'md:grid-cols-2'
+                                    : 'grid-cols-1',
+                            )}
+                        >
                             {formFields.map((field) => {
-                                if (field.visibleWhen && !field.visibleWhen(form)) {
-return null;
-}
+                                if (
+                                    field.visibleWhen &&
+                                    !field.visibleWhen(form)
+                                ) {
+                                    return null;
+                                }
 
                                 return (
                                     <div
                                         key={field.key}
-                                        className={field.colSpan === 2 ? 'md:col-span-2' : ''}
+                                        className={
+                                            field.colSpan === 2
+                                                ? 'md:col-span-2'
+                                                : ''
+                                        }
                                     >
-                                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
+                                        <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                                             {field.label}
                                             {field.required && (
-                                                <span className="ml-1 text-blue-500">*</span>
+                                                <span className="ml-1 text-blue-500">
+                                                    *
+                                                </span>
                                             )}
                                         </label>
-                                        {renderFormField(field, form, updateForm, dynamicOptions)}
+                                        {renderFormField(
+                                            field,
+                                            form,
+                                            updateForm,
+                                            dynamicOptions,
+                                        )}
                                     </div>
                                 );
                             })}
@@ -891,9 +1088,11 @@ return null;
                     <button
                         onClick={handleSubmit}
                         disabled={formLoading}
-                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:bg-blue-600/30 hover:text-blue-200 disabled:opacity-50 disabled:pointer-events-none"
+                        className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:bg-blue-600/30 hover:text-blue-200 disabled:pointer-events-none disabled:opacity-50"
                     >
-                        {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        {formLoading && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        )}
                         {formLoading ? '保存中...' : '保存'}
                     </button>
                 </div>
@@ -901,7 +1100,10 @@ return null;
 
             {detail.open && (
                 <div className="fixed inset-0 z-50 flex">
-                    <div className="flex-1 bg-black/50" onClick={detail.close} />
+                    <div
+                        className="flex-1 bg-black/50"
+                        onClick={detail.close}
+                    />
                     <div className="flex h-full w-full max-w-xl flex-col overflow-hidden border-l border-blue-900/40 bg-[#070d1f] shadow-2xl">
                         <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
                             <div>
@@ -934,53 +1136,87 @@ return null;
                                 </div>
                             )}
 
-                            {!detail.loading && !detail.error && detail.data && (() => {
-                                const detailData = detail.data;
+                            {!detail.loading &&
+                                !detail.error &&
+                                detail.data &&
+                                (() => {
+                                    const detailData = detail.data;
 
-                                return (
-                                    <div className={cn(
-                                        'grid gap-4',
-                                        formFields.some((f) => f.colSpan === 2) ? 'md:grid-cols-2' : 'grid-cols-1',
-                                    )}>
-                                        {formFields.map((field) => (
-                                            <div
-                                                key={field.key}
-                                                className={field.colSpan === 2 ? 'md:col-span-2' : ''}
-                                            >
-                                                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
-                                                    {field.label}
-                                                </p>
-                                                {renderDetailField(field, detailData)}
-                                            </div>
-                                        ))}
-                                    </div>
-                                );
-                            })()}
+                                    return (
+                                        <div
+                                            className={cn(
+                                                'grid gap-4',
+                                                formFields.some(
+                                                    (f) => f.colSpan === 2,
+                                                )
+                                                    ? 'md:grid-cols-2'
+                                                    : 'grid-cols-1',
+                                            )}
+                                        >
+                                            {formFields.map((field) => (
+                                                <div
+                                                    key={field.key}
+                                                    className={
+                                                        field.colSpan === 2
+                                                            ? 'md:col-span-2'
+                                                            : ''
+                                                    }
+                                                >
+                                                    <p className="mb-1.5 text-xs font-medium tracking-wide text-slate-500 uppercase">
+                                                        {field.label}
+                                                    </p>
+                                                    {renderDetailField(
+                                                        field,
+                                                        detailData,
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
                         </div>
                     </div>
                 </div>
             )}
 
             {/* Delete confirm modal */}
-            <Modal open={!!deleteId} onClose={() => {
- setDeleteId(null); setDeleteLabel(''); 
-}}>
+            <Modal
+                open={!!deleteId}
+                onClose={() => {
+                    setDeleteId(null);
+                    setDeleteLabel('');
+                }}
+            >
                 <div className="p-6">
                     <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                         <Trash2 className="h-5 w-5 text-red-400" />
                     </div>
-                    <h2 className="mb-1 text-base font-semibold text-slate-100">删除{title}</h2>
+                    <h2 className="mb-1 text-base font-semibold text-slate-100">
+                        删除{title}
+                    </h2>
                     <p className="text-sm text-slate-500">
-                        确定要删除{deleteLabel ? (
-                            <> &ldquo;<span className="font-medium text-slate-300">{deleteLabel}</span>&rdquo;</>
-                        ) : '这条记录'}吗？此操作不可撤销。
+                        确定要删除
+                        {deleteLabel ? (
+                            <>
+                                {' '}
+                                &ldquo;
+                                <span className="font-medium text-slate-300">
+                                    {deleteLabel}
+                                </span>
+                                &rdquo;
+                            </>
+                        ) : (
+                            '这条记录'
+                        )}
+                        吗？此操作不可撤销。
                     </p>
                 </div>
                 <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
                     <button
                         onClick={() => {
- setDeleteId(null); setDeleteLabel(''); 
-}}
+                            setDeleteId(null);
+                            setDeleteLabel('');
+                        }}
                         className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200"
                     >
                         取消
@@ -988,9 +1224,11 @@ return null;
                     <button
                         onClick={handleDelete}
                         disabled={crud.loading}
-                        className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-600/25 hover:text-red-300 disabled:opacity-50 disabled:pointer-events-none"
+                        className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-600/25 hover:text-red-300 disabled:pointer-events-none disabled:opacity-50"
                     >
-                        {crud.loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        {crud.loading && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        )}
                         {crud.loading ? '删除中...' : '确认删除'}
                     </button>
                 </div>
@@ -1064,7 +1302,11 @@ function renderFormField(
                         {field.placeholder ?? '请选择'}
                     </option>
                     {opts.map((opt) => (
-                        <option key={opt.value} value={opt.value} className="bg-[#0d1530]">
+                        <option
+                            key={opt.value}
+                            value={opt.value}
+                            className="bg-[#0d1530]"
+                        >
                             {opt.label}
                         </option>
                     ))}
@@ -1111,36 +1353,63 @@ function renderFormField(
             const addRow = () => {
                 const empty: Record<string, unknown> = {};
                 cols.forEach((c) => {
- empty[c.key] = ''; 
-});
+                    empty[c.key] = '';
+                });
                 updateForm(field.key, [...rows, empty]);
             };
             const removeRow = (idx: number) =>
-                updateForm(field.key, rows.filter((_, i) => i !== idx));
+                updateForm(
+                    field.key,
+                    rows.filter((_, i) => i !== idx),
+                );
             const updateCell = (idx: number, colKey: string, val: string) =>
-                updateForm(field.key, rows.map((r, i) => i === idx ? { ...r, [colKey]: val } : r));
+                updateForm(
+                    field.key,
+                    rows.map((r, i) =>
+                        i === idx ? { ...r, [colKey]: val } : r,
+                    ),
+                );
 
             return (
-                <div className="rounded-lg border border-blue-900/30 overflow-x-auto">
+                <div className="overflow-x-auto rounded-lg border border-blue-900/30">
                     {rows.length > 0 && (
                         <table className="w-full min-w-max text-xs">
                             <thead>
                                 <tr className="border-b border-blue-900/30 bg-[#070d1f]">
                                     {cols.map((c) => (
-                                        <th key={c.key} className="px-3 py-2 text-left font-medium uppercase tracking-wide text-slate-500">{c.label}</th>
+                                        <th
+                                            key={c.key}
+                                            className="px-3 py-2 text-left font-medium tracking-wide text-slate-500 uppercase"
+                                        >
+                                            {c.label}
+                                        </th>
                                     ))}
                                     <th className="w-8 px-2 py-2" />
                                 </tr>
                             </thead>
                             <tbody>
                                 {rows.map((row, idx) => (
-                                    <tr key={idx} className="border-b border-blue-900/20 last:border-0">
+                                    <tr
+                                        key={idx}
+                                        className="border-b border-blue-900/20 last:border-0"
+                                    >
                                         {cols.map((c) => (
-                                            <td key={c.key} className="px-2 py-1.5">
+                                            <td
+                                                key={c.key}
+                                                className="px-2 py-1.5"
+                                            >
                                                 <input
                                                     type="text"
-                                                    value={String(row[c.key] ?? '')}
-                                                    onChange={(e) => updateCell(idx, c.key, e.target.value)}
+                                                    value={String(
+                                                        row[c.key] ?? '',
+                                                    )}
+                                                    onChange={(e) =>
+                                                        updateCell(
+                                                            idx,
+                                                            c.key,
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     placeholder={c.placeholder}
                                                     className="w-full rounded border border-blue-900/30 bg-transparent px-2 py-1 text-slate-200 placeholder-slate-700 outline-none focus:border-blue-500/60"
                                                 />
@@ -1163,7 +1432,7 @@ function renderFormField(
                     <button
                         type="button"
                         onClick={addRow}
-                        className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-xs text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
+                        className="flex w-full items-center justify-center gap-1.5 px-3 py-2 text-xs text-slate-500 transition-colors hover:bg-white/5 hover:text-slate-300"
                     >
                         <Plus className="h-3 w-3" />
                         添加成员
@@ -1184,11 +1453,19 @@ function renderDetailField(field: FormField, row: Record<string, unknown>) {
     }
 
     if (field.type === 'textarea') {
-        return <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-300">{String(value)}</p>;
+        return (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap text-slate-300">
+                {String(value)}
+            </p>
+        );
     }
 
     if (field.type === 'switch') {
-        return <p className="text-sm text-slate-300">{Number(value) === 1 ? '是' : '否'}</p>;
+        return (
+            <p className="text-sm text-slate-300">
+                {Number(value) === 1 ? '是' : '否'}
+            </p>
+        );
     }
 
     if (field.type === 'file' || field.type === 'video') {
@@ -1205,13 +1482,23 @@ function renderDetailField(field: FormField, row: Record<string, unknown>) {
     }
 
     if (field.type === 'date') {
-        return <p className="text-sm text-slate-300">{String(value).slice(0, 10)}</p>;
+        return (
+            <p className="text-sm text-slate-300">
+                {String(value).slice(0, 10)}
+            </p>
+        );
     }
 
     if (field.type === 'select' && field.options) {
-        const selectedOption = field.options.find((option) => option.value === String(value));
+        const selectedOption = field.options.find(
+            (option) => option.value === String(value),
+        );
 
-        return <p className="text-sm text-slate-300">{selectedOption?.label ?? String(value)}</p>;
+        return (
+            <p className="text-sm text-slate-300">
+                {selectedOption?.label ?? String(value)}
+            </p>
+        );
     }
 
     if (field.type === 'sub-table' && Array.isArray(value)) {
@@ -1222,12 +1509,22 @@ function renderDetailField(field: FormField, row: Record<string, unknown>) {
         return (
             <div className="space-y-2">
                 {value.map((item, index) => (
-                    <div key={index} className="rounded-lg border border-blue-900/30 bg-[#070d1f] p-3">
+                    <div
+                        key={index}
+                        className="rounded-lg border border-blue-900/30 bg-[#070d1f] p-3"
+                    >
                         {field.subFields?.map((subField) => (
-                            <div key={subField.key} className="flex gap-2 text-sm">
-                                <span className="text-slate-500">{subField.label}:</span>
+                            <div
+                                key={subField.key}
+                                className="flex gap-2 text-sm"
+                            >
+                                <span className="text-slate-500">
+                                    {subField.label}:
+                                </span>
                                 <span className="text-slate-300">
-                                    {item?.[subField.key] ? String(item[subField.key]) : '—'}
+                                    {item?.[subField.key]
+                                        ? String(item[subField.key])
+                                        : '—'}
                                 </span>
                             </div>
                         ))}
@@ -1252,8 +1549,8 @@ function Modal({
     children: React.ReactNode;
 }) {
     if (!open) {
-return null;
-}
+        return null;
+    }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -6,7 +7,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 
 interface ConfirmDialogProps {
     open: boolean;
@@ -40,10 +40,18 @@ export function ConfirmDialog({
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+                    <Button
+                        variant="outline"
+                        onClick={() => onOpenChange(false)}
+                        disabled={loading}
+                    >
                         取消
                     </Button>
-                    <Button variant={variant} onClick={handleConfirm} disabled={loading}>
+                    <Button
+                        variant={variant}
+                        onClick={handleConfirm}
+                        disabled={loading}
+                    >
                         {loading ? '处理中...' : '确认'}
                     </Button>
                 </DialogFooter>

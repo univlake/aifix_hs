@@ -10,7 +10,7 @@ class PermissionMiddleware
 {
     public function handle(Request $request, Closure $next, string ...$permissions): Response
     {
-        if (!$request->user()) {
+        if (! $request->user()) {
             return response()->json([
                 'status' => 'error',
                 'code' => 401,
@@ -18,7 +18,7 @@ class PermissionMiddleware
             ], 401);
         }
 
-        if (!$request->user()->hasAnyPermission(...$permissions)) {
+        if (! $request->user()->hasAnyPermission(...$permissions)) {
             return response()->json([
                 'status' => 'error',
                 'code' => 403,

@@ -19,9 +19,14 @@ const config: CrudPageConfig = {
             width: 380,
             render: (val) => {
                 const s = val ? String(val) : '';
-                return s
-                    ? <span title={s}>{s.length > 40 ? s.slice(0, 40) + '…' : s}</span>
-                    : <span className="text-slate-700">—</span>;
+
+                return s ? (
+                    <span title={s}>
+                        {s.length > 40 ? s.slice(0, 40) + '…' : s}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                );
             },
         },
         {
@@ -30,9 +35,14 @@ const config: CrudPageConfig = {
             width: 150,
             render: (_, row) => {
                 const t = row.regulation_type as { title?: string } | null;
-                return t?.title
-                    ? <span className="rounded-md border border-blue-900/40 bg-blue-600/8 px-2 py-0.5 text-xs text-blue-400">{t.title}</span>
-                    : <span className="text-slate-700">—</span>;
+
+                return t?.title ? (
+                    <span className="rounded-md border border-blue-900/40 bg-blue-600/8 px-2 py-0.5 text-xs text-blue-400">
+                        {t.title}
+                    </span>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                );
             },
         },
         { key: 'promulgating_department', header: '颁布部门', width: 140 },
@@ -40,28 +50,44 @@ const config: CrudPageConfig = {
             key: 'established_date',
             header: '制订日期',
             width: 110,
-            render: (val) => val ? String(val).slice(0, 10) : <span className="text-slate-700">—</span>,
+            render: (val) =>
+                val ? (
+                    String(val).slice(0, 10)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             key: 'effective_date',
             header: '生效日期',
             width: 110,
-            render: (val) => val ? String(val).slice(0, 10) : <span className="text-slate-700">—</span>,
+            render: (val) =>
+                val ? (
+                    String(val).slice(0, 10)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             key: 'status',
             header: '状态',
             width: 90,
             render: (val) => {
-                if (!val) return <span className="text-slate-700">—</span>;
+                if (!val) {
+                    return <span className="text-slate-700">—</span>;
+                }
+
                 const s = String(val);
                 const isValid = s === '有效';
+
                 return (
-                    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs ${
-                        isValid
-                            ? 'border-emerald-500/20 bg-emerald-600/8 text-emerald-400'
-                            : 'border-slate-700/50 bg-slate-700/20 text-slate-500'
-                    }`}>
+                    <span
+                        className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs ${
+                            isValid
+                                ? 'border-emerald-500/20 bg-emerald-600/8 text-emerald-400'
+                                : 'border-slate-700/50 bg-slate-700/20 text-slate-500'
+                        }`}
+                    >
                         {s}
                     </span>
                 );
@@ -71,13 +97,29 @@ const config: CrudPageConfig = {
             key: 'annex_url',
             header: '附件',
             width: 70,
-            render: (val) => val
-                ? <a href={String(val)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center rounded-md border border-blue-500/20 bg-blue-600/10 px-1.5 py-0.5 text-xs font-medium text-blue-400 hover:text-blue-300">查看</a>
-                : <span className="text-slate-700">—</span>,
+            render: (val) =>
+                val ? (
+                    <a
+                        href={String(val)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded-md border border-blue-500/20 bg-blue-600/10 px-1.5 py-0.5 text-xs font-medium text-blue-400 hover:text-blue-300"
+                    >
+                        查看
+                    </a>
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
     ],
     formFields: [
-        { key: 'title', label: '法规标题', type: 'text', required: true, colSpan: 2 },
+        {
+            key: 'title',
+            label: '法规标题',
+            type: 'text',
+            required: true,
+            colSpan: 2,
+        },
         {
             key: 'regulation_library_type_id',
             label: '法规类型',

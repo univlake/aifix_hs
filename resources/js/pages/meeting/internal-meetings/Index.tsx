@@ -20,7 +20,12 @@ const config: CrudPageConfig = {
             key: 'meeting_date',
             header: '会议日期',
             width: 110,
-            render: (val) => (val ? String(val).slice(0, 10) : <span className="text-slate-700">—</span>),
+            render: (val) =>
+                val ? (
+                    String(val).slice(0, 10)
+                ) : (
+                    <span className="text-slate-700">—</span>
+                ),
         },
         {
             key: 'annex_url',
@@ -42,7 +47,13 @@ const config: CrudPageConfig = {
         },
     ],
     formFields: [
-        { key: 'name', label: '会议名称', type: 'text', required: true, colSpan: 1 },
+        {
+            key: 'name',
+            label: '会议名称',
+            type: 'text',
+            required: true,
+            colSpan: 1,
+        },
         { key: 'theme', label: '会议主题', type: 'text', colSpan: 1 },
         {
             key: 'type',
@@ -53,11 +64,26 @@ const config: CrudPageConfig = {
         },
         { key: 'meeting_date', label: '会议日期', type: 'date', colSpan: 1 },
         { key: 'summary', label: '会议纪要', type: 'textarea', colSpan: 2 },
-        { key: 'notice_annex_url', label: '会议通知', type: 'file', colSpan: 1 },
+        {
+            key: 'notice_annex_url',
+            label: '会议通知',
+            type: 'file',
+            colSpan: 1,
+        },
         { key: 'annex_url', label: '会议附件', type: 'file', colSpan: 1 },
-        { key: 'summary_annex_url', label: '纪要附件', type: 'file', colSpan: 1 },
+        {
+            key: 'summary_annex_url',
+            label: '纪要附件',
+            type: 'file',
+            colSpan: 1,
+        },
         { key: 'sign_annex_url', label: '签到表', type: 'file', colSpan: 1 },
-        { key: 'material_annex_url', label: '会议材料', type: 'file', colSpan: 1 },
+        {
+            key: 'material_annex_url',
+            label: '会议材料',
+            type: 'file',
+            colSpan: 1,
+        },
         { key: 'photo_annex_url', label: '会议照片', type: 'file', colSpan: 1 },
     ],
     searchField: 'name',

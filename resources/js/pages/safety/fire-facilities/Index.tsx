@@ -12,7 +12,12 @@ const config: CrudPageConfig = {
     formFields: [
         { key: 'title', label: '名称', type: 'text', required: true },
         { key: 'location', label: '位置', type: 'text' },
-        { key: 'company_id', label: '所属单位', type: 'select', optionsEndpoint: '/companies' },
+        {
+            key: 'company_id',
+            label: '所属单位',
+            type: 'select',
+            optionsEndpoint: '/companies',
+        },
     ],
     searchField: 'title',
     searchPlaceholder: '搜索设施名称...',

@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
 import { Loader2, Upload, FileText, ExternalLink, X } from 'lucide-react';
+import { useState, useRef } from 'react';
 import api from '@/lib/api';
+import { getErrorMessage } from '@/types/api-error';
 import type { ApiResponse } from '@/types/models';
 
 interface OssSignature {
@@ -13,9 +14,16 @@ interface OssSignature {
 }
 
 async function uploadToOss(file: File, dir?: string): Promise<string> {
-    const { data: res } = await api.get<ApiResponse<OssSignature>>('/upload/oss-signature', {
-        params: { dir: dir ?? `uploads/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}/` },
-    });
+    const { data: res } = await api.get<ApiResponse<OssSignature>>(
+        '/upload/oss-signature',
+        {
+            params: {
+                dir:
+                    dir ??
+                    `uploads/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}/`,
+            },
+        },
+    );
     const sig = res.data;
 
     const ext = file.name.split('.').pop() ?? 'bin';
@@ -32,12 +40,16 @@ async function uploadToOss(file: File, dir?: string): Promise<string> {
     const url = `${sig.host}/${key}`;
 
     try {
-        const response = await fetch(sig.host, { method: 'POST', body: formData });
+        const response = await fetch(sig.host, {
+            method: 'POST',
+            body: formData,
+        });
+
         // OSS returns 200 (success_action_status=200) or 204
         if (response.status !== 0 && !response.ok && response.status !== 204) {
             throw new Error(`OSS上传失败: ${response.status}`);
         }
-    } catch (err: any) {
+    } catch (err: unknown) {
         // OSS may not include CORS headers in its response for local dev origins,
         // causing fetch() to throw TypeError even though the upload succeeded.
         // Verify by probing the URL with no-cors (opaque response, won't throw on CORS).
@@ -65,18 +77,31 @@ interface OssUploadFieldProps {
     displayValue?: string;
 }
 
-export function OssUploadField({ value, onChange, dir, accept, displayValue }: OssUploadFieldProps) {
+export function OssUploadField({
+    value,
+    onChange,
+    dir,
+    accept,
+    displayValue,
+}: OssUploadFieldProps) {
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
 
     const previewUrl = displayValue || value;
-    const isImage = previewUrl ? /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(previewUrl) : false;
-    const filename = value ? decodeURIComponent(value.split('/').pop()?.split('?')[0] ?? '') : '';
+    const isImage = previewUrl
+        ? /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(previewUrl)
+        : false;
+    const filename = value
+        ? decodeURIComponent(value.split('/').pop()?.split('?')[0] ?? '')
+        : '';
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+
+        if (!file) {
+            return;
+        }
 
         setUploading(true);
         setUploadError('');
@@ -84,11 +109,14 @@ export function OssUploadField({ value, onChange, dir, accept, displayValue }: O
         try {
             const url = await uploadToOss(file, dir);
             onChange(url);
-        } catch (err: any) {
-            setUploadError(err.message ?? '上传失败，请重试');
+        } catch (err: unknown) {
+            setUploadError(getErrorMessage(err, '上传失败，请重试'));
         } finally {
             setUploading(false);
-            if (inputRef.current) inputRef.current.value = '';
+
+            if (inputRef.current) {
+                inputRef.current.value = '';
+            }
         }
     };
 
@@ -101,7 +129,11 @@ export function OssUploadField({ value, onChange, dir, accept, displayValue }: O
                     disabled={uploading}
                     className="flex items-center gap-1.5 rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                    {uploading ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                        <Upload className="h-3 w-3" />
+                    )}
                     {uploading ? '上传中...' : value ? '重新上传' : '选择文件'}
                 </button>
                 {value && (
@@ -116,12 +148,25 @@ export function OssUploadField({ value, onChange, dir, accept, displayValue }: O
                 )}
             </div>
 
-            <input ref={inputRef} type="file" accept={accept} onChange={handleFileChange} className="hidden" />
+            <input
+                ref={inputRef}
+                type="file"
+                accept={accept}
+                onChange={handleFileChange}
+                className="hidden"
+            />
 
-            {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
+            {uploadError && (
+                <p className="text-xs text-red-400">{uploadError}</p>
+            )}
 
             {previewUrl && isImage && (
-                <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="block">
+                <a
+                    href={previewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                >
                     <img
                         src={previewUrl}
                         alt="预览"
@@ -138,7 +183,9 @@ export function OssUploadField({ value, onChange, dir, accept, displayValue }: O
                     className="flex items-center gap-1.5 text-xs text-blue-400 transition-colors hover:text-blue-300"
                 >
                     <FileText className="h-3.5 w-3.5 shrink-0" />
-                    <span className="max-w-xs truncate">{filename || '查看文件'}</span>
+                    <span className="max-w-xs truncate">
+                        {filename || '查看文件'}
+                    </span>
                     <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
             )}

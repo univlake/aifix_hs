@@ -1,13 +1,23 @@
-import { useState, useEffect, useCallback } from 'react';
 import { Head } from '@inertiajs/react';
+import {
+    Loader2,
+    Plus,
+    Trash2,
+    X,
+    AlertTriangle,
+    Users,
+    Search,
+    Mail,
+    Phone,
+    Building2,
+    UserCheck,
+} from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import api from '@/lib/api';
+import { getErrorMessage } from '@/types/api-error';
 import type { ApiResponse } from '@/types/models';
-import {
-    Loader2, Plus, Trash2, X, AlertTriangle,
-    Users, Search, Mail, Phone, Building2, UserCheck,
-} from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -54,14 +64,19 @@ export default function ExpertsIndex() {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (companyId) {
             doSearch({ company_id: companyId, nickname: search || undefined });
         }
     };
 
     const handleDelete = async () => {
-        if (!deleteTarget) return;
+        if (!deleteTarget) {
+            return;
+        }
+
         setDeleteLoading(true);
+
         try {
             await crud.remove(deleteTarget.id);
             setDeleteTarget(null);
@@ -82,20 +97,25 @@ export default function ExpertsIndex() {
 
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-100">专家库</h1>
-                <p className="mt-1 text-sm text-slate-500">管理企业安全生产专家信息，记录专家资质及领域专长</p>
+                <p className="mt-1 text-sm text-slate-500">
+                    管理企业安全生产专家信息，记录专家资质及领域专长
+                </p>
             </div>
 
             {/* Toolbar */}
             <div className="mb-4 flex items-center justify-between gap-3">
-                <form onSubmit={handleSearch} className="flex items-center gap-2">
+                <form
+                    onSubmit={handleSearch}
+                    className="flex items-center gap-2"
+                >
                     <div className="relative">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
+                        <Search className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="搜索专家姓名..."
-                            className="h-9 w-56 rounded-lg border border-blue-900/40 bg-[#0a1428] pl-9 pr-3 text-sm text-slate-300 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20"
+                            className="h-9 w-56 rounded-lg border border-blue-900/40 bg-[#0a1428] pr-3 pl-9 text-sm text-slate-300 placeholder-slate-700 transition-colors outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20"
                         />
                     </div>
                     <button
@@ -152,13 +172,18 @@ export default function ExpertsIndex() {
             {/* Delete confirm */}
             {deleteTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDeleteTarget(null)} />
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setDeleteTarget(null)}
+                    />
                     <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl">
                         <div className="p-6">
                             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                                 <Trash2 className="h-5 w-5 text-red-400" />
                             </div>
-                            <h2 className="mb-1 text-base font-semibold text-slate-100">确认移除</h2>
+                            <h2 className="mb-1 text-base font-semibold text-slate-100">
+                                确认移除
+                            </h2>
                             <p className="text-sm text-slate-500">
                                 确定要将{' '}
                                 <span className="font-medium text-slate-300">
@@ -179,7 +204,9 @@ export default function ExpertsIndex() {
                                 disabled={deleteLoading}
                                 className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-600/25 disabled:pointer-events-none disabled:opacity-50"
                             >
-                                {deleteLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                {deleteLoading && (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                )}
                                 确认移除
                             </button>
                         </div>
@@ -192,7 +219,13 @@ export default function ExpertsIndex() {
 
 // ── Expert Card ───────────────────────────────────────────────────
 
-function ExpertCard({ expert, onDelete }: { expert: Expert; onDelete: () => void }) {
+function ExpertCard({
+    expert,
+    onDelete,
+}: {
+    expert: Expert;
+    onDelete: () => void;
+}) {
     const user = expert.user;
     const initials = user?.nickname ? user.nickname.slice(-2) : '??';
 
@@ -201,7 +234,7 @@ function ExpertCard({ expert, onDelete }: { expert: Expert; onDelete: () => void
             {/* Remove button */}
             <button
                 onClick={onDelete}
-                className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md text-slate-700 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-600/10 hover:text-red-400"
+                className="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-md text-slate-700 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-600/10 hover:text-red-400"
             >
                 <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -215,9 +248,11 @@ function ExpertCard({ expert, onDelete }: { expert: Expert; onDelete: () => void
                     <div className="truncate font-semibold text-slate-100">
                         {user?.nickname ?? '—'}
                     </div>
-                    <div className="flex items-center gap-1 mt-0.5">
+                    <div className="mt-0.5 flex items-center gap-1">
                         <UserCheck className="h-3 w-3 text-violet-400" />
-                        <span className="text-xs text-violet-400">安全专家</span>
+                        <span className="text-xs text-violet-400">
+                            安全专家
+                        </span>
                     </div>
                 </div>
             </div>
@@ -274,22 +309,34 @@ function AddExpertModal({
     const [adding, setAdding] = useState<number | null>(null);
     const [error, setError] = useState('');
 
-    const fetchUsers = useCallback(async (nickname?: string) => {
-        setLoadingUsers(true);
-        setError('');
-        try {
-            const { data: res } = await api.get<ApiResponse<ExpertUser[]>>('/bloc-experts-list', {
-                params: { company_id: companyId, nickname: nickname || undefined },
-            });
-            setUsers(Array.isArray(res.data) ? res.data : []);
-        } catch {
-            setError('加载用户列表失败');
-        } finally {
-            setLoadingUsers(false);
-        }
-    }, [companyId]);
+    const fetchUsers = useCallback(
+        async (nickname?: string) => {
+            setLoadingUsers(true);
+            setError('');
 
-    useEffect(() => { fetchUsers(); }, [fetchUsers]);
+            try {
+                const { data: res } = await api.get<ApiResponse<ExpertUser[]>>(
+                    '/bloc-experts-list',
+                    {
+                        params: {
+                            company_id: companyId,
+                            nickname: nickname || undefined,
+                        },
+                    },
+                );
+                setUsers(Array.isArray(res.data) ? res.data : []);
+            } catch {
+                setError('加载用户列表失败');
+            } finally {
+                setLoadingUsers(false);
+            }
+        },
+        [companyId],
+    );
+
+    useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -299,26 +346,43 @@ function AddExpertModal({
     const handleAdd = async (user: ExpertUser) => {
         setAdding(user.id);
         setError('');
+
         try {
-            await api.post('/bloc-experts', { company_id: companyId, expert_user_id: user.id });
+            await api.post('/bloc-experts', {
+                company_id: companyId,
+                expert_user_id: user.id,
+            });
             onAdded();
-        } catch (err: any) {
-            setError(err.response?.data?.message ?? '添加失败，请重试');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, '添加失败，请重试'));
             setAdding(null);
         }
     };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl" style={{ maxHeight: '80vh' }}>
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={onClose}
+            />
+            <div
+                className="relative flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl"
+                style={{ maxHeight: '80vh' }}
+            >
                 {/* Header */}
                 <div className="flex shrink-0 items-center justify-between border-b border-blue-900/30 px-5 py-4">
                     <div>
-                        <h2 className="text-sm font-semibold text-slate-100">添加专家</h2>
-                        <p className="mt-0.5 text-xs text-slate-600">从系统用户中选择并添加为专家</p>
+                        <h2 className="text-sm font-semibold text-slate-100">
+                            添加专家
+                        </h2>
+                        <p className="mt-0.5 text-xs text-slate-600">
+                            从系统用户中选择并添加为专家
+                        </p>
                     </div>
-                    <button onClick={onClose} className="text-slate-600 transition-colors hover:text-slate-300">
+                    <button
+                        onClick={onClose}
+                        className="text-slate-600 transition-colors hover:text-slate-300"
+                    >
                         <X className="h-4 w-4" />
                     </button>
                 </div>
@@ -327,13 +391,13 @@ function AddExpertModal({
                 <div className="shrink-0 border-b border-blue-900/20 px-5 py-3">
                     <form onSubmit={handleSearch} className="flex gap-2">
                         <div className="relative flex-1">
-                            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
+                            <Search className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-slate-600" />
                             <input
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="搜索用户姓名..."
-                                className="h-9 w-full rounded-lg border border-blue-900/40 bg-[#0a1428] pl-9 pr-3 text-sm text-slate-300 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60"
+                                className="h-9 w-full rounded-lg border border-blue-900/40 bg-[#0a1428] pr-3 pl-9 text-sm text-slate-300 placeholder-slate-700 transition-colors outline-none focus:border-blue-500/60"
                             />
                         </div>
                         <button
@@ -347,7 +411,7 @@ function AddExpertModal({
 
                 {/* Error */}
                 {error && (
-                    <div className="shrink-0 mx-5 mt-3 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
+                    <div className="mx-5 mt-3 flex shrink-0 items-center gap-2 rounded-lg border border-red-500/20 bg-red-600/8 px-3 py-2.5 text-xs text-red-400">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                         {error}
                     </div>
@@ -367,15 +431,25 @@ function AddExpertModal({
                     ) : (
                         <ul className="divide-y divide-blue-900/20">
                             {users.map((user) => (
-                                <li key={user.id} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-blue-900/10">
+                                <li
+                                    key={user.id}
+                                    className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-blue-900/10"
+                                >
                                     <div className="flex min-w-0 items-center gap-3">
                                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-semibold text-violet-300">
                                             {user.nickname.slice(-2)}
                                         </div>
                                         <div className="min-w-0">
-                                            <div className="truncate text-sm font-medium text-slate-200">{user.nickname}</div>
+                                            <div className="truncate text-sm font-medium text-slate-200">
+                                                {user.nickname}
+                                            </div>
                                             <div className="truncate text-xs text-slate-600">
-                                                {[user.department_name, user.phone].filter(Boolean).join(' · ') || '暂无信息'}
+                                                {[
+                                                    user.department_name,
+                                                    user.phone,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' · ') || '暂无信息'}
                                             </div>
                                         </div>
                                     </div>
@@ -384,9 +458,11 @@ function AddExpertModal({
                                         disabled={adding === user.id}
                                         className="flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-3 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-600/25 disabled:pointer-events-none disabled:opacity-50"
                                     >
-                                        {adding === user.id
-                                            ? <Loader2 className="h-3 w-3 animate-spin" />
-                                            : <Plus className="h-3 w-3" />}
+                                        {adding === user.id ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                            <Plus className="h-3 w-3" />
+                                        )}
                                         添加
                                     </button>
                                 </li>
@@ -405,7 +481,10 @@ function LoadingState() {
     return (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="rounded-xl border border-blue-900/30 bg-[#0d1530] p-5">
+                <div
+                    key={i}
+                    className="rounded-xl border border-blue-900/30 bg-[#0d1530] p-5"
+                >
                     <div className="mb-4 flex items-center gap-3">
                         <div className="h-11 w-11 animate-pulse rounded-xl bg-blue-900/30" />
                         <div className="space-y-2">
@@ -429,8 +508,12 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-500/20 bg-violet-600/10">
                 <Users className="h-7 w-7 text-violet-400" />
             </div>
-            <h3 className="mb-1 text-base font-semibold text-slate-300">暂无专家</h3>
-            <p className="mb-6 text-sm text-slate-600">点击下方按钮，从系统用户中添加安全专家</p>
+            <h3 className="mb-1 text-base font-semibold text-slate-300">
+                暂无专家
+            </h3>
+            <p className="mb-6 text-sm text-slate-600">
+                点击下方按钮，从系统用户中添加安全专家
+            </p>
             <button
                 onClick={onAdd}
                 className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-600/25"

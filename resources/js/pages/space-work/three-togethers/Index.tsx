@@ -1,6 +1,14 @@
 import { Head } from '@inertiajs/react';
-import type {ColumnDef} from '@tanstack/react-table';
-import { Check, Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
+import {
+    Check,
+    Plus,
+    Pencil,
+    Trash2,
+    X,
+    AlertTriangle,
+    Loader2,
+} from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
 import { DetailButton } from '@/components/shared/DetailButton';
@@ -18,20 +26,20 @@ import type { ApiResponse } from '@/types/models';
 
 function deriveStatus(row: ThreeTogether): StatusValue | '' {
     if (row.complete_comment || row.acceptance) {
-return '完成验收/评价';
-}
+        return '完成验收/评价';
+    }
 
     if (row.construction_comment || row.safety_requirements) {
-return '施工中';
-}
+        return '施工中';
+    }
 
     if (row.evaluation_unit_id || row.write_time) {
-return '完成预评价/设计专篇';
-}
+        return '完成预评价/设计专篇';
+    }
 
     if (row.design_unit_id || row.design_annex_url) {
-return '设计中';
-}
+        return '设计中';
+    }
 
     return '';
 }
@@ -40,7 +48,10 @@ const PROJECT_TYPES = [
     { value: '新建项目', label: '新建项目' },
     { value: '改建项目', label: '改建项目' },
     { value: '扩建项目', label: '扩建项目' },
-    { value: '四新产品/新技术/新设备/新材料', label: '四新产品/新技术/新设备/新材料' },
+    {
+        value: '四新产品/新技术/新设备/新材料',
+        label: '四新产品/新技术/新设备/新材料',
+    },
 ];
 
 const STATUSES = [
@@ -89,12 +100,21 @@ export default function ThreeTogethersIndex() {
     const canUpdate = canWrite('three-togethers.update');
     const canDelete = canWrite('three-togethers.delete');
 
-    const { data, loading, total, current_page, last_page, per_page, reload, goToPage, search } =
-        useApiList<ThreeTogether>({
-            endpoint: '/three-togethers',
-            defaultParams: companyId ? { company_id: companyId } : {},
-            enabled: !!companyId,
-        });
+    const {
+        data,
+        loading,
+        total,
+        current_page,
+        last_page,
+        per_page,
+        reload,
+        goToPage,
+        search,
+    } = useApiList<ThreeTogether>({
+        endpoint: '/three-togethers',
+        defaultParams: companyId ? { company_id: companyId } : {},
+        enabled: !!companyId,
+    });
     const crud = useApiCrud('/three-togethers');
 
     const [searchValue, setSearchValue] = useState('');
@@ -112,36 +132,58 @@ export default function ThreeTogethersIndex() {
     const [evaluationUnits, setEvaluationUnits] = useState<SelectOption[]>([]);
 
     useEffect(() => {
-        const params = { per_page: 200, ...(companyId ? { company_id: companyId } : {}) };
+        const params = {
+            per_page: 200,
+            ...(companyId ? { company_id: companyId } : {}),
+        };
 
-        api.get<ApiResponse<{ data: { id: number; name: string }[] }>>('/design-units', { params })
+        api.get<ApiResponse<{ data: { id: number; name: string }[] }>>(
+            '/design-units',
+            { params },
+        )
             .then((res) => {
-                setDesignUnits((res.data.data?.data ?? []).map((u) => ({ value: String(u.id), label: u.name })));
+                setDesignUnits(
+                    (res.data.data?.data ?? []).map((u) => ({
+                        value: String(u.id),
+                        label: u.name,
+                    })),
+                );
             })
             .catch(() => {});
 
-        api.get<ApiResponse<{ data: { id: number; name: string }[] }>>('/evaluation-units', { params })
+        api.get<ApiResponse<{ data: { id: number; name: string }[] }>>(
+            '/evaluation-units',
+            { params },
+        )
             .then((res) => {
-                setEvaluationUnits((res.data.data?.data ?? []).map((u) => ({ value: String(u.id), label: u.name })));
+                setEvaluationUnits(
+                    (res.data.data?.data ?? []).map((u) => ({
+                        value: String(u.id),
+                        label: u.name,
+                    })),
+                );
             })
             .catch(() => {});
     }, [companyId]);
 
-    const initForm = useCallback((): FormData => ({
-        name: '',
-        three_together_type: '',
-        establish_time: '',
-        establish_section: '',
-        status: '',
-        design_unit_id: null,
-        design_annex_url: '',
-        evaluation_unit_id: null,
-        write_time: '',
-        construction_comment: '',
-        safety_requirements: '',
-        complete_comment: '',
-        acceptance: '',
-    }), []);
+    const initForm = useCallback(
+        (): FormData => ({
+            name: '',
+            three_together_type: '',
+            establish_time: '',
+            establish_section: '',
+            status: '',
+            design_unit_id: null,
+            design_annex_url: '',
+            evaluation_unit_id: null,
+            write_time: '',
+            construction_comment: '',
+            safety_requirements: '',
+            complete_comment: '',
+            acceptance: '',
+        }),
+        [],
+    );
 
     const openCreate = () => {
         setEditingId(null);
@@ -184,8 +226,8 @@ export default function ThreeTogethersIndex() {
 
             Object.keys(payload).forEach((k) => {
                 if (payload[k] === '') {
-payload[k] = null;
-}
+                    payload[k] = null;
+                }
             });
 
             if (editingId) {
@@ -206,8 +248,8 @@ payload[k] = null;
 
     const handleDelete = async () => {
         if (!deleteId) {
-return;
-}
+            return;
+        }
 
         await crud.remove(deleteId);
         setDeleteId(null);
@@ -285,13 +327,13 @@ return;
 
     const detailData = detailItem
         ? {
-            ...detailItem,
-            designUnit: detailItem.designUnit?.name ?? null,
-            evaluationUnit: detailItem.evaluationUnit?.name ?? null,
-            design_unit: detailItem.designUnit?.name ?? null,
-            evaluation_unit: detailItem.evaluationUnit?.name ?? null,
-            status: deriveStatus(detailItem) || detailItem.status || null,
-        }
+              ...detailItem,
+              designUnit: detailItem.designUnit?.name ?? null,
+              evaluationUnit: detailItem.evaluationUnit?.name ?? null,
+              design_unit: detailItem.designUnit?.name ?? null,
+              evaluation_unit: detailItem.evaluationUnit?.name ?? null,
+              status: deriveStatus(detailItem) || detailItem.status || null,
+          }
         : null;
 
     return (
@@ -300,9 +342,15 @@ return;
 
             <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-100">三同时管理</h1>
+                    <h1 className="text-xl font-bold text-slate-100">
+                        三同时管理
+                    </h1>
                     <p className="mt-0.5 text-xs text-slate-600">
-                        共 <span className="font-medium text-slate-400">{total}</span> 条记录
+                        共{' '}
+                        <span className="font-medium text-slate-400">
+                            {total}
+                        </span>{' '}
+                        条记录
                     </p>
                 </div>
                 {canCreate && (
@@ -357,7 +405,10 @@ return;
             {/* Create / Edit modal */}
             {dialogOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDialogOpen(false)} />
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setDialogOpen(false)}
+                    />
                     <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
                         {/* Header */}
                         <div className="flex items-center justify-between border-b border-blue-900/30 px-6 py-4">
@@ -366,7 +417,9 @@ return;
                                     {editingId ? '编辑' : '新增'}三同时管理
                                 </h2>
                                 <p className="mt-0.5 text-xs text-slate-600">
-                                    {editingId ? '修改现有记录信息' : '填写信息后保存新记录'}
+                                    {editingId
+                                        ? '修改现有记录信息'
+                                        : '填写信息后保存新记录'}
                                 </p>
                             </div>
                             <button
@@ -393,28 +446,41 @@ return;
                                         <Field label="项目名称" required>
                                             <Input
                                                 value={form.name ?? ''}
-                                                onChange={(v) => update('name', v)}
+                                                onChange={(v) =>
+                                                    update('name', v)
+                                                }
                                                 placeholder="请输入项目名称"
                                             />
                                         </Field>
                                     </div>
                                     <Field label="项目类型">
                                         <Select
-                                            value={form.three_together_type ?? ''}
-                                            onChange={(v) => update('three_together_type', v)}
+                                            value={
+                                                form.three_together_type ?? ''
+                                            }
+                                            onChange={(v) =>
+                                                update('three_together_type', v)
+                                            }
                                             options={PROJECT_TYPES}
                                         />
                                     </Field>
                                     <Field label="立项时间">
                                         <DateInput
                                             value={form.establish_time ?? ''}
-                                            onChange={(v) => update('establish_time', v)}
+                                            onChange={(v) =>
+                                                update('establish_time', v)
+                                            }
                                         />
                                     </Field>
-                                    <Field label="立项部门" className="col-span-2">
+                                    <Field
+                                        label="立项部门"
+                                        className="col-span-2"
+                                    >
                                         <Input
                                             value={form.establish_section ?? ''}
-                                            onChange={(v) => update('establish_section', v)}
+                                            onChange={(v) =>
+                                                update('establish_section', v)
+                                            }
                                             placeholder="请输入立项部门"
                                         />
                                     </Field>
@@ -422,11 +488,13 @@ return;
 
                                 {/* Timeline status selector */}
                                 <div>
-                                    <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+                                    <p className="mb-3 text-xs font-medium tracking-wide text-slate-500 uppercase">
                                         当前状态
                                     </p>
                                     <StatusTimeline
-                                        value={(form.status as StatusValue) ?? ''}
+                                        value={
+                                            (form.status as StatusValue) ?? ''
+                                        }
                                         onChange={(v) => update('status', v)}
                                     />
                                 </div>
@@ -455,7 +523,9 @@ return;
                                 disabled={formLoading}
                                 className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:bg-blue-600/30 hover:text-blue-200 disabled:pointer-events-none disabled:opacity-50"
                             >
-                                {formLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                {formLoading && (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                )}
                                 {formLoading ? '保存中...' : '保存'}
                             </button>
                         </div>
@@ -466,26 +536,44 @@ return;
             {/* Delete confirm */}
             {!!deleteId && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => {
- setDeleteId(null); setDeleteLabel(''); 
-}} />
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => {
+                            setDeleteId(null);
+                            setDeleteLabel('');
+                        }}
+                    />
                     <div className="relative w-full max-w-sm rounded-2xl border border-blue-900/50 bg-[#0d1530] shadow-2xl shadow-black/60">
                         <div className="p-6">
                             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-600/10">
                                 <Trash2 className="h-5 w-5 text-red-400" />
                             </div>
-                            <h2 className="mb-1 text-base font-semibold text-slate-100">删除三同时管理</h2>
+                            <h2 className="mb-1 text-base font-semibold text-slate-100">
+                                删除三同时管理
+                            </h2>
                             <p className="text-sm text-slate-500">
-                                确定要删除{deleteLabel ? (
-                                    <> &ldquo;<span className="font-medium text-slate-300">{deleteLabel}</span>&rdquo;</>
-                                ) : '这条记录'}吗？此操作不可撤销。
+                                确定要删除
+                                {deleteLabel ? (
+                                    <>
+                                        {' '}
+                                        &ldquo;
+                                        <span className="font-medium text-slate-300">
+                                            {deleteLabel}
+                                        </span>
+                                        &rdquo;
+                                    </>
+                                ) : (
+                                    '这条记录'
+                                )}
+                                吗？此操作不可撤销。
                             </p>
                         </div>
                         <div className="flex items-center justify-end gap-2 border-t border-blue-900/30 px-6 py-4">
                             <button
                                 onClick={() => {
- setDeleteId(null); setDeleteLabel(''); 
-}}
+                                    setDeleteId(null);
+                                    setDeleteLabel('');
+                                }}
                                 className="rounded-lg border border-blue-900/40 px-4 py-2 text-sm text-slate-400 transition-colors hover:border-blue-500/40 hover:text-slate-200"
                             >
                                 取消
@@ -495,7 +583,9 @@ return;
                                 disabled={crud.loading}
                                 className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-600/25 hover:text-red-300 disabled:pointer-events-none disabled:opacity-50"
                             >
-                                {crud.loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                {crud.loading && (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                )}
                                 {crud.loading ? '删除中...' : '确认删除'}
                             </button>
                         </div>
@@ -508,13 +598,19 @@ return;
 
 // ── Timeline status selector ──────────────────────────────────────
 
-function StatusTimeline({ value, onChange }: { value: string; onChange: (v: StatusValue) => void }) {
+function StatusTimeline({
+    value,
+    onChange,
+}: {
+    value: string;
+    onChange: (v: StatusValue) => void;
+}) {
     const currentIdx = STATUSES.findIndex((s) => s.value === value);
 
     return (
         <div className="relative flex items-start">
             {/* Connector line */}
-            <div className="absolute top-4 left-4 right-4 h-px bg-blue-900/40" />
+            <div className="absolute top-4 right-4 left-4 h-px bg-blue-900/40" />
 
             {STATUSES.map((status, idx) => {
                 const isDone = currentIdx > idx;
@@ -531,15 +627,21 @@ function StatusTimeline({ value, onChange }: { value: string; onChange: (v: Stat
                         <div
                             className={cn(
                                 'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all',
-                                isDone && 'border-blue-500 bg-blue-500 text-white',
-                                isActive && 'border-blue-400 bg-blue-600/30 text-blue-300 ring-2 ring-blue-500/30',
-                                !isDone && !isActive && 'border-blue-900/60 bg-[#0d1530] text-slate-600',
+                                isDone &&
+                                    'border-blue-500 bg-blue-500 text-white',
+                                isActive &&
+                                    'border-blue-400 bg-blue-600/30 text-blue-300 ring-2 ring-blue-500/30',
+                                !isDone &&
+                                    !isActive &&
+                                    'border-blue-900/60 bg-[#0d1530] text-slate-600',
                             )}
                         >
                             {isDone ? (
                                 <Check className="h-3.5 w-3.5" />
                             ) : (
-                                <span className="text-xs font-semibold">{idx + 1}</span>
+                                <span className="text-xs font-semibold">
+                                    {idx + 1}
+                                </span>
                             )}
                         </div>
                         {/* Label */}
@@ -576,8 +678,8 @@ function ConditionalFields({
     evaluationUnits: SelectOption[];
 }) {
     if (!status) {
-return null;
-}
+        return null;
+    }
 
     switch (status) {
         case '设计中':
@@ -586,7 +688,9 @@ return null;
                     <Field label="设计单位">
                         <Select
                             value={String(form.design_unit_id ?? '')}
-                            onChange={(v) => update('design_unit_id', v ? Number(v) : null)}
+                            onChange={(v) =>
+                                update('design_unit_id', v ? Number(v) : null)
+                            }
                             options={designUnits}
                         />
                     </Field>
@@ -605,7 +709,12 @@ return null;
                     <Field label="评价机构">
                         <Select
                             value={String(form.evaluation_unit_id ?? '')}
-                            onChange={(v) => update('evaluation_unit_id', v ? Number(v) : null)}
+                            onChange={(v) =>
+                                update(
+                                    'evaluation_unit_id',
+                                    v ? Number(v) : null,
+                                )
+                            }
                             options={evaluationUnits}
                         />
                     </Field>
@@ -664,7 +773,12 @@ return null;
 const inputClass =
     'w-full rounded-lg border border-blue-900/40 bg-[#070d1f] px-3 py-2 text-sm text-slate-200 placeholder-slate-700 outline-none transition-colors focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20';
 
-function Field({ label, required, className, children }: {
+function Field({
+    label,
+    required,
+    className,
+    children,
+}: {
     label: string;
     required?: boolean;
     className?: string;
@@ -672,7 +786,7 @@ function Field({ label, required, className, children }: {
 }) {
     return (
         <div className={className}>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500">
+            <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                 {label}
                 {required && <span className="ml-1 text-blue-500">*</span>}
             </label>
@@ -681,7 +795,15 @@ function Field({ label, required, className, children }: {
     );
 }
 
-function Input({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+function Input({
+    value,
+    onChange,
+    placeholder,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+}) {
     return (
         <input
             type="text"
@@ -693,7 +815,13 @@ function Input({ value, onChange, placeholder }: { value: string; onChange: (v: 
     );
 }
 
-function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function DateInput({
+    value,
+    onChange,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+}) {
     return (
         <input
             type="date"
@@ -704,7 +832,15 @@ function DateInput({ value, onChange }: { value: string; onChange: (v: string) =
     );
 }
 
-function Textarea({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+function Textarea({
+    value,
+    onChange,
+    placeholder,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+}) {
     return (
         <textarea
             value={value}
@@ -716,16 +852,30 @@ function Textarea({ value, onChange, placeholder }: { value: string; onChange: (
     );
 }
 
-function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: SelectOption[] }) {
+function Select({
+    value,
+    onChange,
+    options,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    options: SelectOption[];
+}) {
     return (
         <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
             className={cn(inputClass, 'cursor-pointer appearance-none')}
         >
-            <option value="" disabled className="bg-[#0d1530]">请选择</option>
+            <option value="" disabled className="bg-[#0d1530]">
+                请选择
+            </option>
             {options.map((opt) => (
-                <option key={opt.value} value={opt.value} className="bg-[#0d1530]">
+                <option
+                    key={opt.value}
+                    value={opt.value}
+                    className="bg-[#0d1530]"
+                >
                     {opt.label}
                 </option>
             ))}
