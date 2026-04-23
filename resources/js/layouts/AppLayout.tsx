@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ScopeProvider, useScope } from '@/contexts/ScopeContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/use-auth';
@@ -75,6 +76,7 @@ function AppLayoutInner({ children }: AppLayoutProps) {
             <AuthenticatedShell
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
+                resetKey={url}
             >
                 {children}
             </AuthenticatedShell>
@@ -88,10 +90,12 @@ function AuthenticatedShell({
     children,
     sidebarOpen,
     setSidebarOpen,
+    resetKey,
 }: {
     children: React.ReactNode;
     sidebarOpen: boolean;
     setSidebarOpen: (v: boolean) => void;
+    resetKey: string;
 }) {
     const { isSubordinate, activeCompany, rootCompany, exitToRoot } =
         useScope();
@@ -128,7 +132,9 @@ function AuthenticatedShell({
                     </div>
                 )}
 
-                <main className="flex-1 overflow-y-auto p-6">{children}</main>
+                <main className="flex-1 overflow-y-auto p-6">
+                    <ErrorBoundary resetKey={resetKey}>{children}</ErrorBoundary>
+                </main>
             </div>
         </div>
     );
