@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\CorrectionResult;
+use App\Enums\HiddenDangerLevel;
+use App\Enums\MeetingType;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\StoreMonthStatisticsRequest;
 use App\Http\Requests\Api\V1\UpdateMonthStatisticsRequest;
@@ -287,7 +290,7 @@ class MonthStatisticsController extends Controller
             ->whereIn('company_id', $detailIds)
             ->whereYear('inv_time', $year)
             ->whereMonth('inv_time', $month)
-            ->where('level', '重大隐患')
+            ->where('level', HiddenDangerLevel::Major->value)
             ->where('is_govern', 1)
             ->get();
 
@@ -326,11 +329,11 @@ class MonthStatisticsController extends Controller
         $safetyMeeting = InternalMeeting::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('created_at', $year)->whereMonth('created_at', $month)
-            ->where('type', '安全例会')->count();
+            ->where('type', MeetingType::Safety->value)->count();
         $fireMeeting = InternalMeeting::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('created_at', $year)->whereMonth('created_at', $month)
-            ->where('type', '消防例会')->count();
+            ->where('type', MeetingType::Fire->value)->count();
 
         $safetyCheck = MonthlyInvestigation::query()
             ->whereIn('company_id', $companyIds)
@@ -395,23 +398,23 @@ class MonthStatisticsController extends Controller
         $someHidden = MonthlyInvestigation::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('level', '一般隐患')->count();
+            ->where('level', HiddenDangerLevel::General->value)->count();
         $someRectify = MonthlyInvestigation::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('level', '一般隐患')->where('correct_result', '!=', '未整改')->count();
+            ->where('level', HiddenDangerLevel::General->value)->where('correct_result', '!=', CorrectionResult::Unrectified->value)->count();
         $bigHidden = MonthlyInvestigation::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('level', '重大隐患')->count();
+            ->where('level', HiddenDangerLevel::Major->value)->count();
         $bigRectify = MonthlyInvestigation::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('level', '重大隐患')->where('correct_result', '!=', '未整改')->count();
+            ->where('level', HiddenDangerLevel::Major->value)->where('correct_result', '!=', CorrectionResult::Unrectified->value)->count();
         $governCount = MonthlyInvestigation::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('level', '重大隐患')->where('is_govern', 1)->count();
+            ->where('level', HiddenDangerLevel::Major->value)->where('is_govern', 1)->count();
 
         $fireDanger = MonthlyInvestigation::query()
             ->whereIn('company_id', $companyIds)
@@ -424,7 +427,7 @@ class MonthStatisticsController extends Controller
         $fireLawRectify = MonthlyInvestigation::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('inv_time', $year)->whereMonth('inv_time', $month)
-            ->where('is_fire_fighting', 1)->where('correct_result', '!=', '未整改')->count();
+            ->where('is_fire_fighting', 1)->where('correct_result', '!=', CorrectionResult::Unrectified->value)->count();
 
         $accidentCount = AccidentBulletin::query()
             ->whereIn('company_id', $companyIds)

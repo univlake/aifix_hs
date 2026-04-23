@@ -2,6 +2,9 @@
 
 namespace App\Traits;
 
+use App\Enums\CorrectionResult;
+use App\Enums\MajorHazardLevel;
+use App\Enums\StandardizationGrade;
 use App\Models\AccidentBulletin;
 use App\Models\AssessDetect;
 use App\Models\CertificateStatus;
@@ -107,7 +110,7 @@ trait CalculateRiskValue
         $dangEqOld = DangerousEquipment::whereIn('company_id', $companyIds)->where('use_time', '<', $tenYearsAgo)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
         $majorHazardByCompany = MajorHazard::whereIn('company_id', $companyIds)->get()->groupBy('company_id');
         $monthlyInvTotal = MonthlyInvestigation::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $monthlyInvDone = MonthlyInvestigation::whereIn('company_id', $companyIds)->where('correct_result', '已整改')->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
+        $monthlyInvDone = MonthlyInvestigation::whereIn('company_id', $companyIds)->where('correct_result', CorrectionResult::Rectified->value)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
         $threeTotalCounts = ThreeTogether::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
         $threeOverCounts = ThreeTogether::whereIn('company_id', $companyIds)->where('status', 4)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
         $skillUnitTotal = SkillUnit::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id');
@@ -281,9 +284,9 @@ trait CalculateRiskValue
             $prodStd = $productionStdByCompany->get($cid);
             if ($prodStd) {
                 $logs['production_standardization_scale'] = match ($prodStd->grade) {
-                    '一级' => 0.9 * 0.002665,
-                    '二级' => 0.75 * 0.002665,
-                    '三级' => 0.6 * 0.002665,
+                    StandardizationGrade::Level1->value => 0.9 * 0.002665,
+                    StandardizationGrade::Level2->value => 0.75 * 0.002665,
+                    StandardizationGrade::Level3->value => 0.6 * 0.002665,
                     default => 0,
                 };
             }
@@ -379,10 +382,10 @@ trait CalculateRiskValue
             // 重大危险源
             $levels = $majorHazardByCompany->get($cid, collect())->pluck('level')->toArray();
             $logs['major_hazard_scale'] = match (true) {
-                in_array('一级', $levels) => 0.6 * 0.0198135,
-                in_array('二级', $levels) => 0.7 * 0.0198135,
-                in_array('三级', $levels) => 0.8 * 0.0198135,
-                in_array('四级', $levels) => 0.9 * 0.0198135,
+                in_array(MajorHazardLevel::Level1->value, $levels) => 0.6 * 0.0198135,
+                in_array(MajorHazardLevel::Level2->value, $levels) => 0.7 * 0.0198135,
+                in_array(MajorHazardLevel::Level3->value, $levels) => 0.8 * 0.0198135,
+                in_array(MajorHazardLevel::Level4->value, $levels) => 0.9 * 0.0198135,
                 default => 1.0 * 0.0198135,
             };
 

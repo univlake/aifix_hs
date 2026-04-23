@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\CorrectionResult;
 use App\Http\Controllers\Api\Controller;
 use App\Models\Company;
 use App\Models\MonthlyInvestigation;
@@ -260,8 +261,8 @@ class BlocRisksController extends Controller
         foreach ($company_ids as $k => $items) {
             $monthly_investigation = MonthlyInvestigation::query()->where('company_id', $items)->count();
             $monthly_investigation_old = MonthlyInvestigation::query()->where('company_id', $items)->where('updated_at', 'NOT LIKE', date('Y-m-d'))->count();
-            $monthly_investigation_result = MonthlyInvestigation::query()->where('company_id', $items)->where('correct_result', '已整改')->count();
-            $monthly_investigation_result_old = MonthlyInvestigation::query()->where('company_id', $items)->where('updated_at', 'NOT LIKE', date('Y-m-d'))->where('correct_result', '已整改')->count();
+            $monthly_investigation_result = MonthlyInvestigation::query()->where('company_id', $items)->where('correct_result', CorrectionResult::Rectified->value)->count();
+            $monthly_investigation_result_old = MonthlyInvestigation::query()->where('company_id', $items)->where('updated_at', 'NOT LIKE', date('Y-m-d'))->where('correct_result', CorrectionResult::Rectified->value)->count();
             $data[$k]['company_name'] = Company::query()->where('id', $items)->value('title');
             if ($monthly_investigation && $monthly_investigation_result) {
                 $data[$k]['monthly_investigation_scale'] = round($monthly_investigation_result / $monthly_investigation, 2) * 100;
