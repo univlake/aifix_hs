@@ -182,65 +182,134 @@ trait CalculateRiskValue
         }
     }
 
-        // ── Bulk load all required data (one query per model) ────────────────
-        $personnelByCompany = Personnel::whereIn('company_id', $companyIds)->get()->keyBy('company_id');
-        $certByCompany = CertificateStatus::whereIn('company_id', $companyIds)->where('type', 1)->where('name', '安全管理员')->get()->keyBy('company_id');
-        $secInvByCompany = SecurityInvestment::whereIn('company_id', $companyIds)->where('year', $currentYear)->selectRaw('company_id, SUM(budget) AS budget_sum, SUM(last_year_income) AS income_sum, COUNT(*) AS cnt')->groupBy('company_id')->get()->keyBy('company_id');
-        $fundingExecSums = FundingExecution::whereIn('company_id', $companyIds)->where('year', $currentYear)->selectRaw('company_id, SUM(budget) AS budget_sum')->groupBy('company_id')->pluck('budget_sum', 'company_id');
-        $majorHazProcTotal = MajorHazardousProcess::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id');
-        $majorHazProcOver = MajorHazardousProcess::whereIn('company_id', $companyIds)->where('operating_people_num', '>', 3)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $hazProcTotal = HazardousProcess::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id');
-        $hazProcOver = HazardousProcess::whereIn('company_id', $companyIds)->where('operating_people_num', '>', 3)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $hazProcAuto = HazardousProcess::whereIn('company_id', $companyIds)->where('is_automatic', 1)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $hazChemStats = HazardousChemical::whereIn('company_id', $companyIds)->selectRaw(
-            "company_id,
-             COUNT(*) AS total,
-             SUM(CASE WHEN is_explosion = 1 THEN 1 ELSE 0 END) AS explosion_cnt,
-             SUM(CASE WHEN is_toxin = 1 AND matter_state = '气态' THEN 1 ELSE 0 END) AS toxin_gas_cnt,
-             SUM(CASE WHEN fire_class = '甲类' AND matter_state = '气态' THEN 1 ELSE 0 END) AS fire_a_cnt,
-             SUM(CASE WHEN fire_class = '乙类' AND matter_state = '气态' THEN 1 ELSE 0 END) AS fire_b_cnt"
-        )->groupBy('company_id')->get()->keyBy('company_id');
-        $internalMeetingCounts = InternalMeeting::whereIn('company_id', $companyIds)->whereYear('created_at', $currentYear)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $internalTrainingCounts = InternalTraining::whereIn('company_id', $companyIds)->whereYear('created_at', $currentYear)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $accidentStats = AccidentBulletin::whereIn('company_id', $companyIds)->whereYear('created_at', $currentYear)->selectRaw(
-            "company_id,
-             COUNT(*) AS total,
-             SUM(CASE WHEN accident_level = '轻伤事故' THEN 1 ELSE 0 END) AS light_cnt,
-             SUM(CASE WHEN accident_level = '重伤事故' THEN 1 ELSE 0 END) AS serious_cnt,
-             SUM(CASE WHEN accident_level NOT IN ('轻伤事故','重伤事故') THEN 1 ELSE 0 END) AS other_cnt,
-             SUM(CASE WHEN accident_report_url IS NOT NULL THEN 1 ELSE 0 END) AS reported_cnt"
-        )->groupBy('company_id')->get()->keyBy('company_id');
-        $emergencyTeamSums = EmergencyTeam::whereIn('company_id', $companyIds)->selectRaw('company_id, SUM(team_number) AS team_sum')->groupBy('company_id')->pluck('team_sum', 'company_id');
-        $emergencyDrillCounts = EmergencyDrill::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $jobManagementCounts = JobManagement::whereIn('company_id', $companyIds)->whereYear('created_at', $currentYear)->where('type', '八大特殊作业')->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $occupationalHazSums = OccupationalHazard::whereIn('company_id', $companyIds)->selectRaw('company_id, SUM(number) AS num_sum')->groupBy('company_id')->pluck('num_sum', 'company_id');
-        $safetyArchCounts = SafetyArchitecture::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $productionStdByCompany = ProductionStandardization::whereIn('company_id', $companyIds)->get()->keyBy('company_id');
-        $healthSystemByCompany = HealthSystem::whereIn('company_id', $companyIds)->get()->keyBy('company_id');
-        $assessDetectCounts = AssessDetect::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $spEqTotal = SpecialEquipment::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id');
-        $spEqOld = SpecialEquipment::whereIn('company_id', $companyIds)->where('use_time', '<', $tenYearsAgo)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $dangEqTotal = DangerousEquipment::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id');
-        $dangEqOld = DangerousEquipment::whereIn('company_id', $companyIds)->where('use_time', '<', $tenYearsAgo)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $majorHazardByCompany = MajorHazard::whereIn('company_id', $companyIds)->get()->groupBy('company_id');
-        $monthlyInvTotal = MonthlyInvestigation::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $monthlyInvDone = MonthlyInvestigation::whereIn('company_id', $companyIds)->where('correct_result', CorrectionResult::Rectified->value)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $threeTotalCounts = ThreeTogether::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $threeOverCounts = ThreeTogether::whereIn('company_id', $companyIds)->where('status', 4)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $skillUnitTotal = SkillUnit::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id');
-        $skillUnitQualified = SkillUnit::whereIn('company_id', $companyIds)->has('skillUnitKids')->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $evalUnitTotal = EvaluationUnit::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id');
-        $evalUnitQualified = EvaluationUnit::whereIn('company_id', $companyIds)->where('is_qualification', 1)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $evalUnitAgreement = EvaluationUnit::whereIn('company_id', $companyIds)->whereNotNull('agreement_annex_url')->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $evalUnitTrained = EvaluationUnit::whereIn('company_id', $companyIds)->where('is_agreement', 1)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $designUnitTotal = DesignUnit::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id');
-        $designUnitQualified = DesignUnit::whereIn('company_id', $companyIds)->whereNotNull('qualification_name')->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
-        $healthCheckupSums = HealthCheckup::whereIn('company_id', $companyIds)->selectRaw('company_id, SUM(number) AS num_sum')->groupBy('company_id')->pluck('num_sum', 'company_id');
-        $healthReportCounts = HealthReport::whereIn('company_id', $companyIds)->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id');
+    /**
+     * Bulk-load every model needed downstream into the $this->bulk cache.
+     * One query per source table, keyed/grouped by company_id for O(1) lookups.
+     *
+     * @param  array<int>  $companyIds
+     */
+    protected function loadBulkMetrics(array $companyIds, int $currentYear, string $tenYearsAgo): void
+    {
+        $this->bulk = [
+            'personnel' => Personnel::whereIn('company_id', $companyIds)->get()->keyBy('company_id'),
+            'cert' => CertificateStatus::whereIn('company_id', $companyIds)
+                ->where('type', 1)->where('name', '安全管理员')
+                ->get()->keyBy('company_id'),
+            'sec_inv' => SecurityInvestment::whereIn('company_id', $companyIds)
+                ->where('year', $currentYear)
+                ->selectRaw('company_id, SUM(budget) AS budget_sum, SUM(last_year_income) AS income_sum, COUNT(*) AS cnt')
+                ->groupBy('company_id')->get()->keyBy('company_id'),
+            'funding_exec_sums' => FundingExecution::whereIn('company_id', $companyIds)
+                ->where('year', $currentYear)
+                ->selectRaw('company_id, SUM(budget) AS budget_sum')
+                ->groupBy('company_id')->pluck('budget_sum', 'company_id'),
+            'major_haz_proc_total' => MajorHazardousProcess::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id'),
+            'major_haz_proc_over' => MajorHazardousProcess::whereIn('company_id', $companyIds)
+                ->where('operating_people_num', '>', 3)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'haz_proc_total' => HazardousProcess::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id'),
+            'haz_proc_over' => HazardousProcess::whereIn('company_id', $companyIds)
+                ->where('operating_people_num', '>', 3)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'haz_proc_auto' => HazardousProcess::whereIn('company_id', $companyIds)
+                ->where('is_automatic', 1)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'haz_chem_stats' => HazardousChemical::whereIn('company_id', $companyIds)->selectRaw(
+                "company_id,
+                 COUNT(*) AS total,
+                 SUM(CASE WHEN is_explosion = 1 THEN 1 ELSE 0 END) AS explosion_cnt,
+                 SUM(CASE WHEN is_toxin = 1 AND matter_state = '气态' THEN 1 ELSE 0 END) AS toxin_gas_cnt,
+                 SUM(CASE WHEN fire_class = '甲类' AND matter_state = '气态' THEN 1 ELSE 0 END) AS fire_a_cnt,
+                 SUM(CASE WHEN fire_class = '乙类' AND matter_state = '气态' THEN 1 ELSE 0 END) AS fire_b_cnt"
+            )->groupBy('company_id')->get()->keyBy('company_id'),
+            'internal_meeting_counts' => InternalMeeting::whereIn('company_id', $companyIds)
+                ->whereYear('created_at', $currentYear)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'internal_training_counts' => InternalTraining::whereIn('company_id', $companyIds)
+                ->whereYear('created_at', $currentYear)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'accident_stats' => AccidentBulletin::whereIn('company_id', $companyIds)
+                ->whereYear('created_at', $currentYear)->selectRaw(
+                    "company_id,
+                     COUNT(*) AS total,
+                     SUM(CASE WHEN accident_level = '轻伤事故' THEN 1 ELSE 0 END) AS light_cnt,
+                     SUM(CASE WHEN accident_level = '重伤事故' THEN 1 ELSE 0 END) AS serious_cnt,
+                     SUM(CASE WHEN accident_level NOT IN ('轻伤事故','重伤事故') THEN 1 ELSE 0 END) AS other_cnt,
+                     SUM(CASE WHEN accident_report_url IS NOT NULL THEN 1 ELSE 0 END) AS reported_cnt"
+                )->groupBy('company_id')->get()->keyBy('company_id'),
+            'emergency_team_sums' => EmergencyTeam::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, SUM(team_number) AS team_sum')
+                ->groupBy('company_id')->pluck('team_sum', 'company_id'),
+            'emergency_drill_counts' => EmergencyDrill::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'job_management_counts' => JobManagement::whereIn('company_id', $companyIds)
+                ->whereYear('created_at', $currentYear)->where('type', '八大特殊作业')
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'occupational_haz_sums' => OccupationalHazard::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, SUM(number) AS num_sum')
+                ->groupBy('company_id')->pluck('num_sum', 'company_id'),
+            'safety_arch_counts' => SafetyArchitecture::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'production_std' => ProductionStandardization::whereIn('company_id', $companyIds)->get()->keyBy('company_id'),
+            'health_system' => HealthSystem::whereIn('company_id', $companyIds)->get()->keyBy('company_id'),
+            'assess_detect_counts' => AssessDetect::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'sp_eq_total' => SpecialEquipment::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id'),
+            'sp_eq_old' => SpecialEquipment::whereIn('company_id', $companyIds)
+                ->where('use_time', '<', $tenYearsAgo)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'dang_eq_total' => DangerousEquipment::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id'),
+            'dang_eq_old' => DangerousEquipment::whereIn('company_id', $companyIds)
+                ->where('use_time', '<', $tenYearsAgo)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'major_hazard' => MajorHazard::whereIn('company_id', $companyIds)->get()->groupBy('company_id'),
+            'monthly_inv_total' => MonthlyInvestigation::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'monthly_inv_done' => MonthlyInvestigation::whereIn('company_id', $companyIds)
+                ->where('correct_result', CorrectionResult::Rectified->value)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'three_total' => ThreeTogether::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'three_over' => ThreeTogether::whereIn('company_id', $companyIds)->where('status', 4)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'skill_unit_total' => SkillUnit::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id'),
+            'skill_unit_qualified' => SkillUnit::whereIn('company_id', $companyIds)->has('kids')
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'eval_unit_total' => EvaluationUnit::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id'),
+            'eval_unit_qualified' => EvaluationUnit::whereIn('company_id', $companyIds)->where('is_qualification', 1)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'eval_unit_agreement' => EvaluationUnit::whereIn('company_id', $companyIds)->whereNotNull('agreement_annex_url')
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'eval_unit_trained' => EvaluationUnit::whereIn('company_id', $companyIds)->where('is_agreement', 1)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'design_unit_total' => DesignUnit::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS total')->groupBy('company_id')->pluck('total', 'company_id'),
+            'design_unit_qualified' => DesignUnit::whereIn('company_id', $companyIds)->whereNotNull('qualification_name')
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+            'health_checkup_sums' => HealthCheckup::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, SUM(number) AS num_sum')
+                ->groupBy('company_id')->pluck('num_sum', 'company_id'),
+            'health_report_counts' => HealthReport::whereIn('company_id', $companyIds)
+                ->selectRaw('company_id, COUNT(*) AS cnt')->groupBy('company_id')->pluck('cnt', 'company_id'),
+        ];
+    }
 
-        // ── Phase 1: Raw metrics (risk_max_values) ───────────────────────────
-        $riskMaxRows = [];
-        $riskMaxByCid = [];
+    /**
+     * Compute per-company raw metrics + global maxes used to normalize them.
+     * Populates $this->riskMaxByCid and $this->globalMax in place.
+     *
+     * @param  Collection<int, Company>  $companies
+     */
+    protected function computePhase1Metrics(Collection $companies, int $daysThisYear, int $currentYear): void
+    {
+        $rows = [];
+        $byCid = [];
 
         foreach ($companies as $company) {
             $cid = (int) $company->id;
@@ -381,9 +450,9 @@ trait CalculateRiskValue
             $prodStd = $this->bulk['production_std']->get($cid);
             if ($prodStd) {
                 $logs['production_standardization_scale'] = match ($prodStd->grade) {
-                    StandardizationGrade::Level1->value => 0.9 * 0.002665,
-                    StandardizationGrade::Level2->value => 0.75 * 0.002665,
-                    StandardizationGrade::Level3->value => 0.6 * 0.002665,
+                    StandardizationGrade::Level1->value => 0.9 * self::INHERENT_WEIGHTS['production_standardization_max'],
+                    StandardizationGrade::Level2->value => 0.75 * self::INHERENT_WEIGHTS['production_standardization_max'],
+                    StandardizationGrade::Level3->value => 0.6 * self::INHERENT_WEIGHTS['production_standardization_max'],
                     default => 0,
                 };
             }
@@ -464,11 +533,11 @@ trait CalculateRiskValue
 
             $levels = $this->bulk['major_hazard']->get($cid, collect())->pluck('level')->toArray();
             $logs['major_hazard_scale'] = match (true) {
-                in_array(MajorHazardLevel::Level1->value, $levels) => 0.6 * 0.0198135,
-                in_array(MajorHazardLevel::Level2->value, $levels) => 0.7 * 0.0198135,
-                in_array(MajorHazardLevel::Level3->value, $levels) => 0.8 * 0.0198135,
-                in_array(MajorHazardLevel::Level4->value, $levels) => 0.9 * 0.0198135,
-                default => 1.0 * 0.0198135,
+                in_array(MajorHazardLevel::Level1->value, $levels) => 0.6 * self::INHERENT_WEIGHTS['major_hazard_max'],
+                in_array(MajorHazardLevel::Level2->value, $levels) => 0.7 * self::INHERENT_WEIGHTS['major_hazard_max'],
+                in_array(MajorHazardLevel::Level3->value, $levels) => 0.8 * self::INHERENT_WEIGHTS['major_hazard_max'],
+                in_array(MajorHazardLevel::Level4->value, $levels) => 0.9 * self::INHERENT_WEIGHTS['major_hazard_max'],
+                default => 1.0 * self::INHERENT_WEIGHTS['major_hazard_max'],
             };
 
             $inherentRisk = round(array_sum($logs) * $weights * 100, 2);

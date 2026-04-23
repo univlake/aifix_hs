@@ -223,25 +223,12 @@ class BlocRisksController extends Controller
         })->first();
         $company_ids = $this->ascTree($companies);
 
-        $data = [];
-        foreach ($company_ids as $k => $items) {
-            $monthly_investigation = MonthlyInvestigation::query()->where('company_id', $items)->count();
-            $monthly_investigation_old = MonthlyInvestigation::query()->where('company_id', $items)->where('updated_at', 'NOT LIKE', date('Y-m-d'))->count();
-            $monthly_investigation_result = MonthlyInvestigation::query()->where('company_id', $items)->where('correct_result', CorrectionResult::Rectified->value)->count();
-            $monthly_investigation_result_old = MonthlyInvestigation::query()->where('company_id', $items)->where('updated_at', 'NOT LIKE', date('Y-m-d'))->where('correct_result', CorrectionResult::Rectified->value)->count();
-            $data[$k]['company_name'] = Company::query()->where('id', $items)->value('title');
-            if ($monthly_investigation && $monthly_investigation_result) {
-                $data[$k]['monthly_investigation_scale'] = round($monthly_investigation_result / $monthly_investigation, 2) * 100;
-            } else {
-                $data[$k]['monthly_investigation_scale'] = 0;
-            }
-            if ($monthly_investigation_old && $monthly_investigation_result_old) {
-                $data[$k]['jqr'] = round($monthly_investigation_result / $monthly_investigation, 2) * 100 - round($monthly_investigation_result_old / $monthly_investigation_old, 2) * 100;
-            } else {
-                $data[$k]['jqr'] = 0;
-            }
+        if (empty($company_ids)) {
+            return $this->success([]);
+        }
 
         $today = date('Y-m-d');
+        $rectified = CorrectionResult::Rectified->value;
 
         // Single conditional-aggregate query covering all 4 stats per company.
         // Replaces 4N queries (4 per company in the legacy loop).
@@ -251,8 +238,8 @@ class BlocRisksController extends Controller
                 'company_id',
                 DB::raw('COUNT(*) as total'),
                 DB::raw("SUM(CASE WHEN updated_at NOT LIKE '{$today}%' THEN 1 ELSE 0 END) as total_old"),
-                DB::raw("SUM(CASE WHEN correct_result = '已整改' THEN 1 ELSE 0 END) as resolved"),
-                DB::raw("SUM(CASE WHEN correct_result = '已整改' AND updated_at NOT LIKE '{$today}%' THEN 1 ELSE 0 END) as resolved_old"),
+                DB::raw("SUM(CASE WHEN correct_result = '{$rectified}' THEN 1 ELSE 0 END) as resolved"),
+                DB::raw("SUM(CASE WHEN correct_result = '{$rectified}' AND updated_at NOT LIKE '{$today}%' THEN 1 ELSE 0 END) as resolved_old"),
             )
             ->groupBy('company_id')
             ->get()
