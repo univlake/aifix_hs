@@ -1242,10 +1242,10 @@ function ModeButton({
         <button
             onClick={onClick}
             className={cn(
-                'flex-1 rounded-md border py-1.5 text-[10px] font-medium transition-all',
+                'flex-1 rounded-md border py-2 text-xs font-medium transition-all',
                 active
                     ? 'border-blue-500/40 bg-blue-600/20 text-blue-300'
-                    : 'border-blue-900/30 bg-transparent text-slate-600 hover:border-blue-500/30 hover:text-slate-400',
+                    : 'border-blue-900/30 bg-transparent text-slate-400 hover:border-blue-500/30 hover:text-slate-200',
             )}
         >
             {label}

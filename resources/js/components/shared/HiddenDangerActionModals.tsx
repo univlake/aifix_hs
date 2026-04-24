@@ -7,6 +7,7 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -279,12 +280,7 @@ export function RectifyModal({
                         </div>
                     )}
                     <Field label="整改日期">
-                        <input
-                            type="date"
-                            className={cn(inputCls, 'cursor-pointer')}
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                        />
+                        <DatePicker value={date} onChange={setDate} />
                     </Field>
                     <Field label="整改描述" required>
                         <textarea

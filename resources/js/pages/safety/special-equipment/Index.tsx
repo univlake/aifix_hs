@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
@@ -1006,26 +1007,18 @@ export default function SpecialEquipmentIndex() {
                                 <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                                     投用时间
                                 </label>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={form.use_time}
-                                    onChange={(e) =>
-                                        set('use_time', e.target.value)
-                                    }
-                                    className={cn(inputCls, 'cursor-pointer')}
+                                    onChange={(v) => set('use_time', v)}
                                 />
                             </div>
                             <div>
                                 <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                                     检验有效期
                                 </label>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={form.valid_period}
-                                    onChange={(e) =>
-                                        set('valid_period', e.target.value)
-                                    }
-                                    className={cn(inputCls, 'cursor-pointer')}
+                                    onChange={(v) => set('valid_period', v)}
                                 />
                             </div>
 

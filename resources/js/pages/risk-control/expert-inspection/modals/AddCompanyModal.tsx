@@ -1,11 +1,10 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { DateTimePicker } from '@/components/shared/DateTimePicker';
 import api from '@/lib/api';
-import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/types/api-error';
 import type { ApiResponse, PaginatedData } from '@/types/models';
 import { Field, Modal, ModalHeader, selectCls } from '../components';
-import { inputCls } from '../types';
 import type { CompanyOption, Inspection } from '../types';
 
 export function AddCompanyModal({
@@ -113,19 +112,15 @@ export function AddCompanyModal({
                     </Field>
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="通知企业时间">
-                            <input
-                                type="datetime-local"
-                                className={cn(inputCls, 'cursor-pointer')}
+                            <DateTimePicker
                                 value={notifyTime}
-                                onChange={(e) => setNotifyTime(e.target.value)}
+                                onChange={setNotifyTime}
                             />
                         </Field>
                         <Field label="计划检查时间">
-                            <input
-                                type="datetime-local"
-                                className={cn(inputCls, 'cursor-pointer')}
+                            <DateTimePicker
                                 value={checkTime}
-                                onChange={(e) => setCheckTime(e.target.value)}
+                                onChange={setCheckTime}
                             />
                         </Field>
                     </div>

@@ -1,10 +1,10 @@
 import { AlertTriangle, BarChart3, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { DatePicker } from '@/components/shared/DatePicker';
 import api from '@/lib/api';
-import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/types/api-error';
 import { Field, Modal, ModalHeader, selectCls } from '../components';
-import { HAZARD_STATS_TYPES, inputCls } from '../types';
+import { HAZARD_STATS_TYPES } from '../types';
 
 export function HazardStatsModal({
     open,
@@ -80,19 +80,15 @@ export function HazardStatsModal({
                     )}
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="开始日期">
-                            <input
-                                type="date"
-                                className={cn(inputCls, 'cursor-pointer')}
+                            <DatePicker
                                 value={startTime}
-                                onChange={(e) => setStartTime(e.target.value)}
+                                onChange={setStartTime}
                             />
                         </Field>
                         <Field label="结束日期">
-                            <input
-                                type="date"
-                                className={cn(inputCls, 'cursor-pointer')}
+                            <DatePicker
                                 value={endTime}
-                                onChange={(e) => setEndTime(e.target.value)}
+                                onChange={setEndTime}
                             />
                         </Field>
                     </div>

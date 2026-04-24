@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { Eye, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { useScope } from '@/contexts/ScopeContext';
 import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
@@ -925,16 +926,10 @@ function AccidentSection({
                             </button>
                         </div>
                         <div className="grid gap-2 sm:grid-cols-3">
-                            <input
-                                type="date"
-                                className={inputCls}
+                            <DatePicker
                                 value={row.happen_time ?? ''}
-                                onChange={(e) =>
-                                    updateField(
-                                        i,
-                                        'happen_time',
-                                        e.target.value,
-                                    )
+                                onChange={(v) =>
+                                    updateField(i, 'happen_time', v)
                                 }
                             />
                             <input

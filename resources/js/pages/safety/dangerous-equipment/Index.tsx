@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useState, useCallback, useRef } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
 import { usePermission } from '@/hooks/use-permission';
@@ -726,13 +727,9 @@ export default function DangerousEquipmentIndex() {
                                 <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                                     投用时间
                                 </label>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={form.use_time}
-                                    onChange={(e) =>
-                                        set('use_time', e.target.value)
-                                    }
-                                    className={cn(inputCls, 'cursor-pointer')}
+                                    onChange={(v) => set('use_time', v)}
                                 />
                             </div>
 

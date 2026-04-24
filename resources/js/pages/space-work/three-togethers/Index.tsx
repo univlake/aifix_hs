@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
@@ -818,14 +819,7 @@ function DateInput({
     value: string;
     onChange: (v: string) => void;
 }) {
-    return (
-        <input
-            type="date"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className={cn(inputClass, 'cursor-pointer')}
-        />
-    );
+    return <DatePicker value={value} onChange={onChange} />;
 }
 
 function Textarea({

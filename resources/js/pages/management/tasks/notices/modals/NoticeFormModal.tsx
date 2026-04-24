@@ -6,6 +6,7 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -239,12 +240,10 @@ export function NoticeFormModal({
                         </Field>
                         {config.hasFeedback && (
                             <Field label="反馈截止日期">
-                                <input
-                                    type="date"
-                                    className={inputCls}
+                                <DatePicker
                                     value={form.feedback_time}
-                                    onChange={(e) =>
-                                        update('feedback_time', e.target.value)
+                                    onChange={(v) =>
+                                        update('feedback_time', v)
                                     }
                                 />
                             </Field>

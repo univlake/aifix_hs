@@ -83,7 +83,7 @@ export function AnnualChart({
                                 y1={y}
                                 x2={PAD.left + PLOT_W}
                                 y2={y}
-                                stroke="#1e3a5f"
+                                style={{ stroke: 'var(--border-subtle)' }}
                                 strokeWidth="1"
                                 strokeDasharray={
                                     i === gridLines ? 'none' : '4 3'
@@ -93,7 +93,7 @@ export function AnnualChart({
                                 x={PAD.left - 6}
                                 y={y + 4}
                                 textAnchor="end"
-                                fill="#475569"
+                                style={{ fill: 'var(--text-muted)' }}
                                 fontSize="11"
                             >
                                 {val}
@@ -113,7 +113,8 @@ export function AnnualChart({
                             y={PAD.top + PLOT_H - h}
                             width={barW}
                             height={Math.max(h, 0)}
-                            fill="#3b82f680"
+                            fill="#3b82f6"
+                            fillOpacity="0.7"
                             rx="3"
                         />
                     );
@@ -142,7 +143,7 @@ export function AnnualChart({
                                     cy={toY(d[key])}
                                     r="4"
                                     fill={color}
-                                    stroke="#0d1530"
+                                    style={{ stroke: 'var(--surface-card)' }}
                                     strokeWidth="1.5"
                                 />
                             ))}
@@ -156,7 +157,7 @@ export function AnnualChart({
                         x={toX(i)}
                         y={PAD.top + PLOT_H + 16}
                         textAnchor="middle"
-                        fill="#64748b"
+                        style={{ fill: 'var(--text-muted)' }}
                         fontSize="12"
                     >
                         {y}
@@ -168,7 +169,7 @@ export function AnnualChart({
                     y1={PAD.top + PLOT_H}
                     x2={PAD.left + PLOT_W}
                     y2={PAD.top + PLOT_H}
-                    stroke="#1e3a5f"
+                    style={{ stroke: 'var(--text-muted)' }}
                     strokeWidth="1"
                 />
             </svg>

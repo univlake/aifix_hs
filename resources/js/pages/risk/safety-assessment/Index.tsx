@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
@@ -441,13 +442,9 @@ export default function SafetyAssessmentIndex() {
                     </Field>
 
                     <Field label="报告有效期">
-                        <input
-                            type="date"
-                            className={inputClass}
+                        <DatePicker
                             value={form.valid_period}
-                            onChange={(e) =>
-                                update('valid_period', e.target.value)
-                            }
+                            onChange={(v) => update('valid_period', v)}
                         />
                     </Field>
 

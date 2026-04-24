@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
@@ -814,16 +815,9 @@ export default function MonthlyInvestigationIndex() {
                                     <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                                         排查时间
                                     </label>
-                                    <input
-                                        type="date"
+                                    <DatePicker
                                         value={form.inv_time}
-                                        onChange={(e) =>
-                                            set('inv_time', e.target.value)
-                                        }
-                                        className={cn(
-                                            inputCls,
-                                            'cursor-pointer',
-                                        )}
+                                        onChange={(v) => set('inv_time', v)}
                                     />
                                 </div>
                                 <div>
@@ -935,16 +929,9 @@ export default function MonthlyInvestigationIndex() {
                                     <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                                         整改日期
                                     </label>
-                                    <input
-                                        type="date"
+                                    <DatePicker
                                         value={form.correct_date}
-                                        onChange={(e) =>
-                                            set('correct_date', e.target.value)
-                                        }
-                                        className={cn(
-                                            inputCls,
-                                            'cursor-pointer',
-                                        )}
+                                        onChange={(v) => set('correct_date', v)}
                                     />
                                 </div>
                                 <div>
@@ -1131,16 +1118,9 @@ export default function MonthlyInvestigationIndex() {
                                     <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                                         复查日期
                                     </label>
-                                    <input
-                                        type="date"
+                                    <DatePicker
                                         value={form.review_date}
-                                        onChange={(e) =>
-                                            set('review_date', e.target.value)
-                                        }
-                                        className={cn(
-                                            inputCls,
-                                            'cursor-pointer',
-                                        )}
+                                        onChange={(v) => set('review_date', v)}
                                     />
                                 </div>
                                 <div className="col-span-2">

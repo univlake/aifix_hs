@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { Eye, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { useScope } from '@/contexts/ScopeContext';
 import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
@@ -496,28 +497,18 @@ function YearFormModal({
                                 />
                             </Field>
                             <Field label="标准化达标时间">
-                                <input
-                                    type="date"
-                                    className={inputCls}
+                                <DatePicker
                                     value={form.compliance_time}
-                                    onChange={(e) =>
-                                        update(
-                                            'compliance_time',
-                                            e.target.value,
-                                        )
+                                    onChange={(v) =>
+                                        update('compliance_time', v)
                                     }
                                 />
                             </Field>
                             <Field label="标准化复评时间">
-                                <input
-                                    type="date"
-                                    className={inputCls}
+                                <DatePicker
                                     value={form.revaluation_time}
-                                    onChange={(e) =>
-                                        update(
-                                            'revaluation_time',
-                                            e.target.value,
-                                        )
+                                    onChange={(v) =>
+                                        update('revaluation_time', v)
                                     }
                                 />
                             </Field>
