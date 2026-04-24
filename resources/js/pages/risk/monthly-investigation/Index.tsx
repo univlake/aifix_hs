@@ -620,6 +620,9 @@ export default function MonthlyInvestigationIndex() {
     const detailData = detailItem
         ? {
               ...detailItem,
+              is_fire_fighting: detailItem.is_fire_fighting ? '是' : '否',
+              is_emergency: detailItem.is_emergency ? '是' : '否',
+              is_govern: detailItem.is_govern ? '是' : '否',
               monthly_investigation_reviews:
                   detailItem.monthlyInvestigationReviews ??
                   detailItem.monthly_investigation_reviews ??

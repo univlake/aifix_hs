@@ -80,9 +80,22 @@ function deriveFilename(url: string): string {
     }
 }
 
-async function fetchSignedUrl(rawUrl: string): Promise<string> {
+async function fetchSignedUrl(
+    rawUrl: string,
+    opts: { download?: boolean; filename?: string } = {},
+): Promise<string> {
+    const params: Record<string, string> = { url: rawUrl };
+
+    if (opts.download) {
+        params.download = '1';
+
+        if (opts.filename) {
+            params.filename = opts.filename;
+        }
+    }
+
     const res = await api.get<ApiResponse<string>>('/upload/oss-sign', {
-        params: { url: rawUrl },
+        params,
     });
 
     return res.data.data || rawUrl;
@@ -199,22 +212,16 @@ export function AttachmentViewer({
         setDownloading(true);
 
         try {
-            const signed = signedUrl || (await fetchSignedUrl(url));
-            const response = await fetch(signed);
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            const blob = await response.blob();
-            const objectUrl = window.URL.createObjectURL(blob);
+            const signed = await fetchSignedUrl(url, {
+                download: true,
+                filename: displayName,
+            });
             const a = document.createElement('a');
-            a.href = objectUrl;
-            a.download = displayName;
+            a.href = signed;
+            a.rel = 'noopener noreferrer';
             document.body.appendChild(a);
             a.click();
             a.remove();
-            window.URL.revokeObjectURL(objectUrl);
         } catch {
             setError('下载失败，请重试');
         } finally {

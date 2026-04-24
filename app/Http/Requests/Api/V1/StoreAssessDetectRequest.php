@@ -15,8 +15,12 @@ class StoreAssessDetectRequest extends FormRequest
     {
         return [
             'company_id' => 'required|integer',
-            'name' => 'required|string',
-            'assess_detect_type' => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'assess_detect_type' => 'nullable|string|max:64',
+            'skill_unit_id' => 'nullable|integer',
+            'skill_unit_kid_id' => 'nullable|integer',
+            'valid_period' => 'nullable|string|max:64',
+            'annex_url' => 'nullable|string',
         ];
     }
 

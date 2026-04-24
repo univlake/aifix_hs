@@ -1,4 +1,3 @@
-import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import { CrudPage } from '@/components/shared/CrudPage';
 import type { CrudPageConfig } from '@/components/shared/CrudPage';
 
@@ -6,6 +5,10 @@ const MEETING_TYPES = [
     { value: 'fire', label: '消防会议' },
     { value: 'safety', label: '安全会议' },
 ];
+
+const MEETING_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+    MEETING_TYPES.map((t) => [t.value, t.label]),
+);
 
 const config: CrudPageConfig = {
     title: '内部会议',
@@ -16,7 +19,18 @@ const config: CrudPageConfig = {
         { key: 'id', header: 'ID', width: 60 },
         { key: 'name', header: '会议名称' },
         { key: 'theme', header: '会议主题' },
-        { key: 'type', header: '会议类型', width: 110 },
+        {
+            key: 'type',
+            header: '会议类型',
+            width: 110,
+            render: (val) => {
+                const v = val == null ? '' : String(val);
+
+                return MEETING_TYPE_LABELS[v] ?? (
+                    <span className="text-slate-700">—</span>
+                );
+            },
+        },
         {
             key: 'meeting_date',
             header: '会议日期',
@@ -24,17 +38,6 @@ const config: CrudPageConfig = {
             render: (val) =>
                 val ? (
                     String(val).slice(0, 10)
-                ) : (
-                    <span className="text-slate-700">—</span>
-                ),
-        },
-        {
-            key: 'annex_url',
-            header: '附件',
-            width: 70,
-            render: (val) =>
-                val ? (
-                    <AttachmentViewer url={String(val)} />
                 ) : (
                     <span className="text-slate-700">—</span>
                 ),

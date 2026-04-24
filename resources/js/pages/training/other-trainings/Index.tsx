@@ -55,7 +55,7 @@ const config: CrudPageConfig = {
         },
         {
             key: 'task_content',
-            label: '培训任务内容',
+            label: '作业内容',
             type: 'textarea',
             colSpan: 2,
         },

@@ -47,7 +47,6 @@ const config: CrudPageConfig = {
         { key: 'organization_department', label: '组织部门', type: 'text' },
         { key: 'join_department', label: '参与部门', type: 'text' },
         { key: 'drill_number', label: '参演人数', type: 'text' },
-        { key: 'drill_plan', label: '预案名称', type: 'text' },
         {
             key: 'drill_type',
             label: '演练类型',

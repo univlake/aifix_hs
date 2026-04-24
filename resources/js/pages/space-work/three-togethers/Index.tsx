@@ -78,8 +78,8 @@ interface ThreeTogether {
     safety_requirements: string;
     complete_comment: string;
     acceptance: string;
-    designUnit?: { id: number; name: string };
-    evaluationUnit?: { id: number; name: string };
+    design_unit?: { id: number; name: string } | null;
+    evaluation_unit?: { id: number; name: string } | null;
 }
 
 type FormData = Partial<ThreeTogether>;
@@ -328,10 +328,8 @@ export default function ThreeTogethersIndex() {
     const detailData = detailItem
         ? {
               ...detailItem,
-              designUnit: detailItem.designUnit?.name ?? null,
-              evaluationUnit: detailItem.evaluationUnit?.name ?? null,
-              design_unit: detailItem.designUnit?.name ?? null,
-              evaluation_unit: detailItem.evaluationUnit?.name ?? null,
+              design_unit: detailItem.design_unit?.name ?? null,
+              evaluation_unit: detailItem.evaluation_unit?.name ?? null,
               status: deriveStatus(detailItem) || detailItem.status || null,
           }
         : null;
@@ -389,9 +387,7 @@ export default function ThreeTogethersIndex() {
                     establish_time: '立项时间',
                     establish_section: '立项部门',
                     status: '当前状态',
-                    designUnit: '设计单位',
                     design_unit: '设计单位',
-                    evaluationUnit: '评价机构',
                     evaluation_unit: '评价机构',
                     design_annex_url: '设计文件附件',
                     write_time: '设计专篇编制日期',
