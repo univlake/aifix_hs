@@ -134,6 +134,21 @@ describe('Company API', function () {
             expect($admin->hasRole('admin'))->toBeTrue();
             expect(Hash::check($password, $admin->password))->toBeTrue();
         });
+
+        it('flags auto-provisioned admin for first-login change', function () {
+            [$user] = createAdminWithCompany();
+
+            $response = $this->actingAs($user, 'api')
+                ->postJson('/api/v1/companies', [
+                    'title' => '子公司乙',
+                ]);
+
+            $response->assertOk();
+
+            $companyId = $response->json('data.id');
+            $admin = User::where('company_id', $companyId)->first();
+            expect((bool) $admin->must_change_credentials)->toBeTrue();
+        });
     });
 
     describe('Update', function () {

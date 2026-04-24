@@ -19,7 +19,12 @@ createInertiaApp({
         const page: any = await loader();
 
         // 自动包裹 Layout：auth 页面不包裹，其他页面包裹 AppLayout
-        const authPages = ['welcome', 'auth/Login', 'auth/Register'];
+        const authPages = [
+            'welcome',
+            'auth/Login',
+            'auth/Register',
+            'first-login-setup/Index',
+        ];
 
         if (!authPages.includes(name) && page.default.layout === undefined) {
             page.default.layout = (children: React.ReactNode) => (

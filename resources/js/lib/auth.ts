@@ -113,4 +113,49 @@ export const authApi = {
 
         return data.data;
     },
+
+    /** 更新当前用户的个人资料（可选同时修改用户名） */
+    async updateUserInfo(payload: {
+        nickname: string;
+        username?: string;
+        phone?: string | null;
+        email?: string | null;
+        header_img?: string | null;
+    }) {
+        const { data } = await api.put<ApiResponse<unknown>>(
+            '/user-info',
+            payload,
+        );
+
+        return data.data;
+    },
+
+    /** 实时检查用户名是否可用 — 排除当前用户自己 */
+    async checkUsernameAvailability(
+        username: string,
+        signal?: AbortSignal,
+    ): Promise<{ available: boolean; reason: string | null }> {
+        const { data } = await api.get<
+            ApiResponse<{ available: boolean; reason: string | null }>
+        >('/username-availability', {
+            params: { username },
+            signal,
+        });
+
+        return data.data;
+    },
+
+    /** 首次登录必改 — 同时修改用户名和密码，成功后清除 must_change_credentials */
+    async firstLoginSetup(payload: {
+        new_username: string;
+        new_password: string;
+        new_password_confirmation: string;
+    }) {
+        const { data } = await api.post<ApiResponse<unknown>>(
+            '/first-login-setup',
+            payload,
+        );
+
+        return data.data;
+    },
 };
