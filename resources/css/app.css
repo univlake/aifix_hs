@@ -55,11 +55,14 @@
  *      the surface got lighter; net result = higher perceived contrast,
  *      lower eye fatigue (WCAG contrast stays ≥ 7:1 for body text)
  *
- *  LIGHT
- *    · neutral-warm surfaces (slate-50 → white) instead of cold cyan
- *    · distinct button intent colors (primary-blue / success-emerald /
- *      warning-amber / danger-rose) for clear affordance on white bg
- *    · text hierarchy tightened: body is slate-900, muted slate-500
+ *  LIGHT (re-tuned 2026-04-24 — "neutral body + solid intents")
+ *    · body/borders/tables de-tinted to neutral gray (was blue-tinted)
+ *      so UI doesn't feel "hazy blue" everywhere
+ *    · cards/sidebar stay white with subtle shadow for elevation
+ *    · text hierarchy kept: body slate-900, muted slate-500
+ *    · primary intent buttons use SOLID fill + white text (not 20%
+ *      transparent tints) so contrast is ≥ 7:1 and affordance clear
+ *    · badges/pills (/5-/15 alphas) stay as soft tints for hierarchy
  * ═════════════════════════════════════════════════════════════════
  */
 
@@ -122,9 +125,9 @@
     color-scheme: dark;
 }
 
-/* LIGHT — warm neutrals + strong button intents */
+/* LIGHT — neutral body + solid intent buttons */
 html.light {
-    --background: 210 40% 98%;
+    --background: 220 9% 95%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -132,31 +135,31 @@ html.light {
     --popover-foreground: 222 47% 11%;
     --primary: 217 91% 48%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 32% 91%;
+    --secondary: 220 13% 91%;
     --secondary-foreground: 215 25% 27%;
-    --muted: 210 40% 94%;
-    --muted-foreground: 215 16% 40%;
-    --accent: 214 32% 91%;
+    --muted: 220 13% 91%;
+    --muted-foreground: 220 9% 45%;
+    --accent: 220 13% 91%;
     --accent-foreground: 215 25% 27%;
     --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 86%;
-    --input: 210 40% 94%;
+    --border: 220 13% 86%;
+    --input: 220 13% 91%;
     --ring: 217 91% 48%;
 
-    /* Surface tokens — light */
-    --surface-base: #f8fafc; /* slate-50 (was cool cyan #eef3f8) */
-    --surface-sidebar: #ffffff; /* pure white for max separation from content */
+    /* Surface tokens — neutral gray body, white cards float */
+    --surface-base: #f1f3f5; /* neutral gray-100 (de-tinted) */
+    --surface-sidebar: #ffffff;
     --surface-card: #ffffff;
-    --surface-input: #f1f5f9; /* slate-100 */
-    --surface-input-2: #e2e8f0; /* slate-200 */
-    --surface-muted: #e2e8f0;
+    --surface-input: #f8fafc; /* brighter than body */
+    --surface-input-2: #e5e7eb; /* gray-200 */
+    --surface-muted: #e5e7eb;
     --text-base: #0f172a; /* slate-900 */
-    --text-secondary: #334155; /* slate-700 — stronger than before */
+    --text-secondary: #334155; /* slate-700 */
     --text-muted: #64748b; /* slate-500 */
-    --border-subtle: rgba(148, 163, 184, 0.35);
+    --border-subtle: rgba(156, 163, 175, 0.32); /* gray-400 */
 
-    /* Intent tokens — solid saturated colors for clear affordance on white */
+    /* Intent tokens — solid saturated colors for clear affordance */
     --intent-primary: #2563eb; /* blue-600 */
     --intent-primary-soft: rgba(37, 99, 235, 0.1);
     --intent-primary-border: rgba(37, 99, 235, 0.25);
@@ -198,7 +201,7 @@ input[type='datetime-local'] {
     opacity: 1;
 }
 html.light ::placeholder {
-    color: #7f92a8;
+    color: #9ca3af;
     opacity: 1;
 }
 
@@ -220,6 +223,12 @@ html.light ::placeholder {
 .bg-\[\#0d1530\] {
     background-color: var(--surface-card) !important;
 }
+.bg-\[\#0d1530\]\/60 {
+    background-color: color-mix(in srgb, var(--surface-card) 60%, transparent) !important;
+}
+.bg-\[\#0d1530\]\/80 {
+    background-color: color-mix(in srgb, var(--surface-card) 80%, transparent) !important;
+}
 .bg-\[\#0a1428\] {
     background-color: var(--surface-input-2) !important;
 }
@@ -227,7 +236,17 @@ html.light ::placeholder {
     background-color: var(--surface-muted) !important;
 }
 
-/* ── Light mode: text — remap light-on-dark Tailwind classes ───── */
+/* ── Light mode: surface elevation — subtle shadows ───────────── */
+html.light .bg-\[\#0d1530\] {
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.05),
+        0 1px 3px rgba(15, 23, 42, 0.07);
+}
+html.light .bg-\[\#060c1a\] {
+    box-shadow: 1px 0 5px rgba(15, 23, 42, 0.06);
+}
+
+/* ── Light mode: text — cool slate hierarchy ──────────────────── */
 html.light .text-slate-100 {
     color: #0f172a !important;
 }
@@ -278,71 +297,109 @@ html.light .text-orange-400 {
     color: #c2410c !important;
 }
 
-/* ── Light mode: button / badge surfaces — more saturation ─────── */
+/* ── Light mode: badges/pills (low alpha → soft tints) ─────────── */
 html.light .bg-blue-600\/5 {
-    background-color: rgba(37, 99, 235, 0.05) !important;
+    background-color: rgba(37, 99, 235, 0.06) !important;
 }
 html.light .bg-blue-600\/8 {
-    background-color: rgba(37, 99, 235, 0.07) !important;
-}
-html.light .bg-blue-600\/10 {
     background-color: rgba(37, 99, 235, 0.08) !important;
 }
-html.light .bg-blue-600\/15 {
+html.light .bg-blue-600\/10 {
     background-color: rgba(37, 99, 235, 0.1) !important;
 }
-html.light .bg-blue-600\/20 {
-    background-color: rgba(37, 99, 235, 0.14) !important;
-}
-html.light .bg-blue-600\/25 {
-    background-color: rgba(37, 99, 235, 0.18) !important;
-}
-html.light .bg-blue-600\/30 {
-    background-color: rgba(37, 99, 235, 0.22) !important;
+html.light .bg-blue-600\/15 {
+    background-color: rgba(37, 99, 235, 0.12) !important;
 }
 
 html.light .bg-emerald-600\/8,
 html.light .bg-emerald-600\/10 {
-    background-color: rgba(5, 150, 105, 0.08) !important;
+    background-color: rgba(5, 150, 105, 0.1) !important;
 }
 html.light .bg-emerald-600\/15 {
-    background-color: rgba(5, 150, 105, 0.12) !important;
-}
-html.light .bg-emerald-600\/20 {
-    background-color: rgba(5, 150, 105, 0.16) !important;
-}
-html.light .bg-emerald-600\/25 {
-    background-color: rgba(5, 150, 105, 0.2) !important;
+    background-color: rgba(5, 150, 105, 0.13) !important;
 }
 
 html.light .bg-amber-600\/10 {
-    background-color: rgba(217, 119, 6, 0.08) !important;
+    background-color: rgba(217, 119, 6, 0.1) !important;
 }
 html.light .bg-amber-600\/15 {
-    background-color: rgba(217, 119, 6, 0.12) !important;
-}
-html.light .bg-amber-600\/20 {
-    background-color: rgba(217, 119, 6, 0.18) !important;
+    background-color: rgba(217, 119, 6, 0.14) !important;
 }
 
 html.light .bg-red-600\/8,
 html.light .bg-red-600\/10 {
-    background-color: rgba(220, 38, 38, 0.07) !important;
+    background-color: rgba(220, 38, 38, 0.09) !important;
 }
 html.light .bg-red-600\/15 {
-    background-color: rgba(220, 38, 38, 0.11) !important;
-}
-html.light .bg-red-600\/25 {
-    background-color: rgba(220, 38, 38, 0.16) !important;
+    background-color: rgba(220, 38, 38, 0.13) !important;
 }
 
 html.light .bg-violet-600\/10,
 html.light .bg-violet-600\/15 {
-    background-color: rgba(109, 40, 217, 0.1) !important;
+    background-color: rgba(109, 40, 217, 0.12) !important;
 }
 
 html.light .bg-orange-600\/10 {
-    background-color: rgba(194, 65, 12, 0.08) !important;
+    background-color: rgba(194, 65, 12, 0.1) !important;
+}
+
+/* ── Light mode: primary buttons (/20+ → solid fill + white text) ─ */
+html.light .bg-blue-600\/20 {
+    background-color: #2563eb !important; /* blue-600 solid */
+    color: #ffffff !important;
+}
+html.light .bg-blue-600\/25,
+html.light .bg-blue-600\/30 {
+    background-color: #1d4ed8 !important; /* blue-700 (stronger) */
+    color: #ffffff !important;
+}
+html.light .hover\:bg-blue-600\/25:hover,
+html.light .hover\:bg-blue-600\/30:hover {
+    background-color: #1e40af !important; /* blue-800 on hover */
+    color: #ffffff !important;
+}
+
+html.light .bg-emerald-600\/20 {
+    background-color: #059669 !important; /* emerald-600 */
+    color: #ffffff !important;
+}
+html.light .bg-emerald-600\/25,
+html.light .bg-emerald-600\/30 {
+    background-color: #047857 !important; /* emerald-700 */
+    color: #ffffff !important;
+}
+html.light .hover\:bg-emerald-600\/25:hover,
+html.light .hover\:bg-emerald-600\/30:hover {
+    background-color: #065f46 !important;
+    color: #ffffff !important;
+}
+
+html.light .bg-amber-600\/20,
+html.light .bg-amber-600\/25 {
+    background-color: #d97706 !important; /* amber-600 */
+    color: #ffffff !important;
+}
+html.light .bg-amber-600\/30 {
+    background-color: #b45309 !important; /* amber-700 */
+    color: #ffffff !important;
+}
+html.light .hover\:bg-amber-600\/30:hover {
+    background-color: #92400e !important;
+    color: #ffffff !important;
+}
+
+html.light .bg-red-600\/20,
+html.light .bg-red-600\/25 {
+    background-color: #dc2626 !important; /* red-600 */
+    color: #ffffff !important;
+}
+html.light .bg-red-600\/30 {
+    background-color: #b91c1c !important; /* red-700 */
+    color: #ffffff !important;
+}
+html.light .hover\:bg-red-600\/30:hover {
+    background-color: #991b1b !important;
+    color: #ffffff !important;
 }
 
 /* ── Light mode: colored button borders — tight, saturated ─────── */
@@ -364,56 +421,56 @@ html.light .border-red-500\/40 {
     border-color: var(--intent-danger-border) !important;
 }
 
-/* ── Light mode: borders → restrained steel-blue palette ───────── */
+/* ── Light mode: borders → neutral gray palette ──────────────── */
 html.light .border-blue-900\/10 {
-    border-color: rgba(148, 169, 190, 0.22) !important;
+    border-color: rgba(156, 163, 175, 0.22) !important;
 }
 html.light .border-blue-900\/15 {
-    border-color: rgba(133, 156, 181, 0.26) !important;
+    border-color: rgba(148, 156, 168, 0.26) !important;
 }
 html.light .border-blue-900\/20 {
-    border-color: rgba(118, 145, 172, 0.3) !important;
+    border-color: rgba(140, 148, 160, 0.3) !important;
 }
 html.light .border-blue-900\/30 {
-    border-color: rgba(99, 131, 164, 0.38) !important;
+    border-color: rgba(120, 128, 140, 0.38) !important;
 }
 html.light .border-blue-900\/40 {
-    border-color: rgba(70, 104, 140, 0.32) !important;
+    border-color: rgba(90, 98, 110, 0.32) !important;
 }
 html.light .border-blue-900\/50 {
-    border-color: rgba(54, 87, 121, 0.38) !important;
+    border-color: rgba(70, 78, 90, 0.38) !important;
 }
 
-/* ── Light mode: table ──────────────────────────────────────────── */
+/* ── Light mode: table — neutral gray with clear zebra ─────────── */
 html.light thead tr {
-    background-color: #e3ebf3 !important;
-    border-bottom-color: #cfdbe7 !important;
+    background-color: #e5e7eb !important;
+    border-bottom-color: #d1d5db !important;
 }
 html.light thead th {
-    color: #2a5a7d !important;
+    color: #374151 !important; /* gray-700 */
 }
 html.light tbody tr {
-    border-bottom-color: rgba(159, 177, 196, 0.34) !important;
+    border-bottom-color: rgba(156, 163, 175, 0.32) !important;
 }
 html.light tbody tr:nth-child(even) {
-    background-color: rgba(224, 232, 241, 0.52);
+    background-color: rgba(229, 231, 235, 0.5);
 }
 html.light tbody tr:hover {
-    background-color: rgba(84, 126, 169, 0.08) !important;
+    background-color: rgba(107, 114, 128, 0.08) !important;
 }
 html.light tbody td {
-    color: #1e293b;
+    color: #1f2937; /* gray-800 */
 }
 
-/* ── Light mode: scrollbar ─────────────────────────────────────── */
+/* ── Light mode: scrollbar — neutral gray ──────────────────────── */
 html.light ::-webkit-scrollbar-track {
-    background: #dde6ef;
+    background: #e5e7eb;
 }
 html.light ::-webkit-scrollbar-thumb {
-    background: #95a9bf;
+    background: #9ca3af;
 }
 html.light ::-webkit-scrollbar-thumb:hover {
-    background: #6b89a7;
+    background: #6b7280;
 }
 
 /* Scrollbar — theme-aware via CSS tokens */
@@ -431,9 +488,9 @@ html.light ::-webkit-scrollbar-thumb:hover {
     background: var(--intent-primary);
 }
 
-/* Modal overlay — lighter in light mode for less jarring darkening */
+/* Modal overlay — neutral gray in light mode */
 html.light .bg-black\/60 {
-    background-color: rgba(30, 41, 59, 0.4) !important; /* slate-800 @ 40% */
+    background-color: rgba(31, 41, 55, 0.4) !important; /* gray-800 @ 40% */
 }
 
 /* Focus ring — theme-aware */

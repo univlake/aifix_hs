@@ -15,6 +15,7 @@ import {
 import { useState, useEffect } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
 import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
@@ -437,30 +438,16 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <FieldLabel>取得时间</FieldLabel>
-                                    <input
-                                        type="date"
+                                    <DatePicker
                                         value={form.get_time}
-                                        onChange={(e) =>
-                                            set('get_time', e.target.value)
-                                        }
-                                        className={cn(
-                                            inputCls,
-                                            'cursor-pointer',
-                                        )}
+                                        onChange={(v) => set('get_time', v)}
                                     />
                                 </div>
                                 <div>
                                     <FieldLabel>有效期</FieldLabel>
-                                    <input
-                                        type="date"
+                                    <DatePicker
                                         value={form.valid_period}
-                                        onChange={(e) =>
-                                            set('valid_period', e.target.value)
-                                        }
-                                        className={cn(
-                                            inputCls,
-                                            'cursor-pointer',
-                                        )}
+                                        onChange={(v) => set('valid_period', v)}
                                     />
                                 </div>
                             </div>
@@ -666,30 +653,16 @@ function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <FieldLabel>取得时间</FieldLabel>
-                                    <input
-                                        type="date"
+                                    <DatePicker
                                         value={form.get_time}
-                                        onChange={(e) =>
-                                            set('get_time', e.target.value)
-                                        }
-                                        className={cn(
-                                            inputCls,
-                                            'cursor-pointer',
-                                        )}
+                                        onChange={(v) => set('get_time', v)}
                                     />
                                 </div>
                                 <div>
                                     <FieldLabel>有效期</FieldLabel>
-                                    <input
-                                        type="date"
+                                    <DatePicker
                                         value={form.valid_period}
-                                        onChange={(e) =>
-                                            set('valid_period', e.target.value)
-                                        }
-                                        className={cn(
-                                            inputCls,
-                                            'cursor-pointer',
-                                        )}
+                                        onChange={(v) => set('valid_period', v)}
                                     />
                                 </div>
                             </div>
@@ -1068,24 +1041,16 @@ function FilingPermissionsSection({ companyId }: { companyId: number }) {
                             </div>
                             <div>
                                 <FieldLabel>备案/许可时间</FieldLabel>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={form.filing_time}
-                                    onChange={(e) =>
-                                        set('filing_time', e.target.value)
-                                    }
-                                    className={cn(inputCls, 'cursor-pointer')}
+                                    onChange={(v) => set('filing_time', v)}
                                 />
                             </div>
                             <div>
                                 <FieldLabel>有效期</FieldLabel>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={form.valid_period}
-                                    onChange={(e) =>
-                                        set('valid_period', e.target.value)
-                                    }
-                                    className={cn(inputCls, 'cursor-pointer')}
+                                    onChange={(v) => set('valid_period', v)}
                                 />
                             </div>
                             <div className="md:col-span-2">

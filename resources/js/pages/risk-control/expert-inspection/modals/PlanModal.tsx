@@ -1,5 +1,6 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { useApiCrud } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/types/api-error';
@@ -97,23 +98,15 @@ export function PlanModal({
                     </Field>
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="开始日期">
-                            <input
-                                type="date"
-                                className={cn(inputCls, 'cursor-pointer')}
+                            <DatePicker
                                 value={form.start_date}
-                                onChange={(e) =>
-                                    set('start_date', e.target.value)
-                                }
+                                onChange={(v) => set('start_date', v)}
                             />
                         </Field>
                         <Field label="结束日期">
-                            <input
-                                type="date"
-                                className={cn(inputCls, 'cursor-pointer')}
+                            <DatePicker
                                 value={form.end_date}
-                                onChange={(e) =>
-                                    set('end_date', e.target.value)
-                                }
+                                onChange={(v) => set('end_date', v)}
                             />
                         </Field>
                     </div>

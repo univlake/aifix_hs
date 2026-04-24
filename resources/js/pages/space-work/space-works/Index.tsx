@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { useScope } from '@/contexts/ScopeContext';
@@ -547,13 +548,9 @@ export default function SpaceWorksIndex() {
                                 <label className="mb-1.5 block text-xs font-medium tracking-wide text-slate-500 uppercase">
                                     作业时间
                                 </label>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={form.job_time}
-                                    onChange={(e) =>
-                                        set('job_time', e.target.value)
-                                    }
-                                    className={inputCls}
+                                    onChange={(v) => set('job_time', v)}
                                 />
                             </div>
 

@@ -1,5 +1,6 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { AnnexUploadEditor } from '@/components/shared/HiddenDangerActionModals';
 import type { DangerAnnexItem } from '@/components/shared/HiddenDangerActionModals';
 import api from '@/lib/api';
@@ -163,13 +164,9 @@ export function DangerModal({
                             </select>
                         </Field>
                         <Field label="整改截止期限">
-                            <input
-                                type="date"
-                                className={cn(inputCls, 'cursor-pointer')}
+                            <DatePicker
                                 value={form.correct_deadline}
-                                onChange={(e) =>
-                                    set('correct_deadline', e.target.value)
-                                }
+                                onChange={(v) => set('correct_deadline', v)}
                             />
                         </Field>
                     </div>

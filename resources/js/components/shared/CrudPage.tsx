@@ -15,6 +15,7 @@ import {
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
 import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { OssVideoUploadField } from '@/components/shared/OssVideoUploadField';
@@ -1280,11 +1281,10 @@ function renderFormField(
             );
         case 'date':
             return (
-                <input
-                    type="date"
+                <DatePicker
                     value={(value as string) ?? ''}
-                    onChange={(e) => updateForm(field.key, e.target.value)}
-                    className={cn(inputClass, 'cursor-pointer')}
+                    onChange={(v) => updateForm(field.key, v)}
+                    placeholder={field.placeholder}
                 />
             );
         case 'textarea':

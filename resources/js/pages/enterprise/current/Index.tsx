@@ -13,6 +13,7 @@ import {
     Check,
 } from 'lucide-react';
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { DatePicker } from '@/components/shared/DatePicker';
 import { useScope } from '@/contexts/ScopeContext';
 
 // Map modals are lazy-loaded — they pull in Leaflet (~148 KB) which is
@@ -841,6 +842,8 @@ function EditableField({
                         className={`${inputCls} resize-none leading-relaxed`}
                         placeholder={`请输入${label}`}
                     />
+                ) : type === 'date' ? (
+                    <DatePicker value={value} onChange={onChange} />
                 ) : (
                     <input
                         type={type}

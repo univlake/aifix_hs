@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight, Loader2, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { DateTimePicker } from '@/components/shared/DateTimePicker';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -234,33 +235,21 @@ export function CreateMeetingModal({
                             />
                         </Field>
                         <Field label="会议时间">
-                            <input
-                                type="datetime-local"
-                                className={inputCls}
+                            <DateTimePicker
                                 value={form.meeting_date}
-                                onChange={(e) =>
-                                    update('meeting_date', e.target.value)
-                                }
+                                onChange={(v) => update('meeting_date', v)}
                             />
                         </Field>
                         <Field label="报名开始">
-                            <input
-                                type="datetime-local"
-                                className={inputCls}
+                            <DateTimePicker
                                 value={form.sign_up_date}
-                                onChange={(e) =>
-                                    update('sign_up_date', e.target.value)
-                                }
+                                onChange={(v) => update('sign_up_date', v)}
                             />
                         </Field>
                         <Field label="报名截止">
-                            <input
-                                type="datetime-local"
-                                className={inputCls}
+                            <DateTimePicker
                                 value={form.sign_end_date}
-                                onChange={(e) =>
-                                    update('sign_end_date', e.target.value)
-                                }
+                                onChange={(v) => update('sign_end_date', v)}
                             />
                         </Field>
                     </div>
