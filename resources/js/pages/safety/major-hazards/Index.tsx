@@ -309,7 +309,7 @@ export default function MajorHazardsIndex() {
         {
             id: 'actions',
             header: '操作',
-            size: 144,
+            size: 160,
             cell: ({ row }: any) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton

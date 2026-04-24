@@ -295,37 +295,32 @@ export default function TechnicalServicesIndex() {
         },
     ];
 
-    if (canUpdate || canDelete) {
-        columns.push({
-            id: 'actions',
-            header: '操作',
-            size: 144,
-            cell: ({ row }) => (
-                <div className="flex items-center gap-0.5">
-                    <DetailButton
-                        row={row.original}
-                        onOpen={detail.openDetail}
-                    />
-                    {canUpdate && (
-                        <button
-                            onClick={() => openEdit(row.original)}
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                        >
-                            <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                    )}
-                    {canDelete && (
-                        <button
-                            onClick={() => setDeleteItem(row.original)}
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                    )}
-                </div>
-            ),
-        });
-    }
+    columns.push({
+        id: 'actions',
+        header: '操作',
+        size: 160,
+        cell: ({ row }) => (
+            <div className="flex items-center gap-0.5">
+                <DetailButton row={row.original} onOpen={detail.openDetail} />
+                {canUpdate && (
+                    <button
+                        onClick={() => openEdit(row.original)}
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                    >
+                        <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                )}
+                {canDelete && (
+                    <button
+                        onClick={() => setDeleteItem(row.original)}
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                )}
+            </div>
+        ),
+    });
 
     const detailData = detailItem
         ? {

@@ -227,12 +227,14 @@ class YearStatisticsController extends Controller
         $data['safety_funding'] = $ownSafety + $subSafety;
         $data['fire_fighting'] = $ownFire + $subFire;
 
-        // Three-types-of-personnel certificates (type=1 三类人员 / type=2 消防)
+        // Three-types-of-personnel (type=1/2/3 in certificate_statuses) and fire personnel
+        // (type=4/5/6) each carry three rows. Year-report kids use type=1 for 三类人员 group
+        // and type=2 for 消防 group; the per-role name comes from certificate_statuses.name.
         $kids = [];
         if ($company->is_produce) {
             $slStatuses = CertificateStatus::query()
                 ->where('company_id', $company->id)
-                ->where('type', 1)->get();
+                ->whereIn('type', [1, 2, 3])->get();
             foreach ($slStatuses as $s) {
                 $kids[] = [
                     'name' => $s->name,
@@ -245,7 +247,7 @@ class YearStatisticsController extends Controller
             }
             $xfStatuses = CertificateStatus::query()
                 ->where('company_id', $company->id)
-                ->where('type', 2)->get();
+                ->whereIn('type', [4, 5, 6])->get();
             foreach ($xfStatuses as $s) {
                 $kids[] = [
                     'name' => $s->name,

@@ -47,9 +47,9 @@ interface CompanyGroup {
 export default function EnterpriseGrouping() {
     const { rootCompany } = useScope();
     const { canWrite } = usePermission();
-    const canCreate = canWrite('company-groups.create');
-    const canUpdate = canWrite('company-groups.update');
-    const canDelete = canWrite('company-groups.delete');
+    const canCreate = canWrite('companies.create');
+    const canUpdate = canWrite('companies.update');
+    const canDelete = canWrite('companies.delete');
 
     // Tree state
     const [tree, setTree] = useState<TreeNode[]>([]);
@@ -208,9 +208,10 @@ export default function EnterpriseGrouping() {
     // ── Available companies for member modal ─────────────────────
     // Flatten the full hierarchy tree (already fetched for the left panel) so
     // all levels are available, not just direct children from scope subordinates.
+    // 自定义分组的成员只从下属企业中选择，不包含集团本身。
     const availableCompanies: GroupCompany[] = rootCompany
         ? (() => {
-              const seen = new Set<number>();
+              const seen = new Set<number>([rootCompany.id]);
               const result: GroupCompany[] = [];
               const visit = (nodes: TreeNode[]) => {
                   for (const n of nodes) {
@@ -228,13 +229,6 @@ export default function EnterpriseGrouping() {
                       }
                   }
               };
-              // Root company first
-              seen.add(rootCompany.id);
-              result.push({
-                  id: rootCompany.id,
-                  title: rootCompany.title,
-                  status: rootCompany.status,
-              });
               visit(tree);
 
               return result;

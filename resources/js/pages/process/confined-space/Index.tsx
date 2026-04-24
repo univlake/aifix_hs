@@ -324,7 +324,7 @@ export default function ConfinedSpaceIndex() {
         {
             id: 'actions',
             header: '操作',
-            size: readOnly ? 76 : 144,
+            size: readOnly ? 96 : 160,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton

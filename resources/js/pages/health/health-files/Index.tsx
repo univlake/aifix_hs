@@ -34,7 +34,7 @@ const config: CrudPageConfig = {
             colSpan: 2,
         },
         { key: 'process_result', label: '处理结果', type: 'text', colSpan: 2 },
-        { key: 'annex_url', label: '附件链接', type: 'text', colSpan: 2 },
+        { key: 'annex_url', label: '附件', type: 'file', colSpan: 2 },
     ],
     searchField: 'name',
     searchPlaceholder: '搜索员工姓名...',

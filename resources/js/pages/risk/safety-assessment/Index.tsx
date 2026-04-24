@@ -268,7 +268,7 @@ export default function SafetyAssessmentIndex() {
         {
             id: 'actions',
             header: '操作',
-            size: 146,
+            size: 160,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
                     <DetailButton

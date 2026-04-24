@@ -21,29 +21,27 @@ class InformationDraftsController extends Controller
             $scope = $request->input('scope');
 
             if ($scope === 'published') {
-                // Drafts I published myself (authored by me and owned by me — not reported out).
-                $query->where('company_id', $companyId)
-                    ->where('next_reviewer', $companyId);
+                // Everything I authored — includes drafts I still own and drafts I've reported up.
+                // Reported drafts remain visible here read-only (frontend hides edit/delete).
+                $query->where('company_id', $companyId);
             } elseif ($scope === 'received') {
                 // Everything visible to me that I did not author myself:
                 //   - Reports from subordinates (next_reviewer = me, company_id != me)
-                //   - Published drafts from any ancestor (status = 1)
+                //   - Published drafts from any ancestor (status = 1, company_id != me)
                 $ancestors = $this->ancestorChain($companyId);
                 $upstream = array_values(array_filter($ancestors, fn ($id) => $id !== $companyId));
 
-                $query->where(function ($q) use ($companyId, $upstream) {
-                    $q->where(function ($inner) use ($companyId) {
-                        $inner->where('next_reviewer', $companyId)
-                            ->where('company_id', '!=', $companyId);
-                    });
+                $query->where('company_id', '!=', $companyId)
+                    ->where(function ($q) use ($companyId, $upstream) {
+                        $q->where('next_reviewer', $companyId);
 
-                    if (! empty($upstream)) {
-                        $q->orWhere(function ($inner) use ($upstream) {
-                            $inner->whereIn('next_reviewer', $upstream)
-                                ->where('status', 1);
-                        });
-                    }
-                });
+                        if (! empty($upstream)) {
+                            $q->orWhere(function ($inner) use ($upstream) {
+                                $inner->whereIn('next_reviewer', $upstream)
+                                    ->where('status', 1);
+                            });
+                        }
+                    });
             } else {
                 // General visibility: owned by viewer (any status) OR published upstream (status=1).
                 $ancestors = $this->ancestorChain($companyId);

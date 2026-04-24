@@ -565,7 +565,7 @@ export default function MonthlyInvestigationIndex() {
     columns.push({
         id: 'actions',
         header: '操作',
-        size: 144,
+        size: 160,
         cell: ({ row }) => {
             return (
                 <div className="flex items-center gap-0.5">

@@ -767,7 +767,7 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
         tableColumns.push({
             id: 'actions',
             header: '操作',
-            size: actionCount >= 3 ? 156 : actionCount === 2 ? 112 : 68,
+            size: actionCount >= 3 ? 160 : actionCount === 2 ? 120 : 96,
             cell: ({ row }) => {
                 const rowCompanyId = row.original.company_id as
                     | number
@@ -1498,6 +1498,23 @@ function renderDetailField(field: FormField, row: Record<string, unknown>) {
                 {selectedOption?.label ?? String(value)}
             </p>
         );
+    }
+
+    // 异步 select（optionsEndpoint / dependsOnField）— 后端预加载关联关系时，
+    // 对 `foo_id` 字段读取 `row.foo[optionsLabelKey]` 展示可读名称，避免显示裸 ID。
+    if (
+        field.type === 'select' &&
+        (field.optionsEndpoint || field.dependsOnField) &&
+        field.key.endsWith('_id')
+    ) {
+        const relationKey = field.key.slice(0, -3);
+        const relation = row[relationKey] as Record<string, unknown> | null;
+        const labelKey = field.optionsLabelKey ?? 'name';
+        const label = relation?.[labelKey];
+
+        if (label !== undefined && label !== null && label !== '') {
+            return <p className="text-sm text-slate-300">{String(label)}</p>;
+        }
     }
 
     if (field.type === 'sub-table' && Array.isArray(value)) {
