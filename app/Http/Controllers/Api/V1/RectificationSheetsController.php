@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\ExpertCompany;
 use App\Models\ExpertInspection;
 use App\Models\HiddenDangerInfo;
+use App\Services\OssService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -369,7 +370,9 @@ class RectificationSheetsController extends Controller
         }
 
         try {
-            $bytes = @file_get_contents($url);
+            // Bucket is private; raw URL returns 403 for server-side fetch.
+            $signed = OssService::signUrl($url, 600);
+            $bytes = @file_get_contents($signed);
 
             if ($bytes === false) {
                 return;
