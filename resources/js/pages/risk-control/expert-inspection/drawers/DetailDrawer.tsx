@@ -13,10 +13,14 @@ import {
     Trash2,
     UserCheck,
     Users,
+    Wrench,
     X,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { ConfirmRectificationModal } from '@/components/shared/HiddenDangerActionModals';
+import {
+    ConfirmRectificationModal,
+    RectifyModal,
+} from '@/components/shared/HiddenDangerActionModals';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/types/api-error';
@@ -65,6 +69,7 @@ export function DetailDrawer({
         null,
     );
     const [confirmFor, setConfirmFor] = useState<HiddenDanger | null>(null);
+    const [rectifyFor, setRectifyFor] = useState<HiddenDanger | null>(null);
     const [archiving, setArchiving] = useState<number | null>(null);
     const [generatingNotice, setGeneratingNotice] = useState<number | null>(
         null,
@@ -567,6 +572,15 @@ export function DetailDrawer({
                                                                     const isRectified =
                                                                         d.correct_status ===
                                                                         2;
+                                                                    const isPending =
+                                                                        d.correct_status ===
+                                                                        1;
+                                                                    // 受检企业本人或指派专家均可提交整改。
+                                                                    const canRectify =
+                                                                        isPending &&
+                                                                        (d.check_company_id ===
+                                                                            rootCompanyId ||
+                                                                            isExpertOnRow);
 
                                                                     return (
                                                                         <div
@@ -647,7 +661,8 @@ export function DetailDrawer({
                                                                                     </p>
                                                                                 )}
                                                                             {!isArchived &&
-                                                                                (isRectified ||
+                                                                                (canRectify ||
+                                                                                    isRectified ||
                                                                                     (isConfirmed &&
                                                                                         isPlanOwner)) && (
                                                                                     <div
@@ -658,6 +673,19 @@ export function DetailDrawer({
                                                                                             e.stopPropagation()
                                                                                         }
                                                                                     >
+                                                                                        {canRectify && (
+                                                                                            <button
+                                                                                                onClick={() =>
+                                                                                                    setRectifyFor(
+                                                                                                        d,
+                                                                                                    )
+                                                                                                }
+                                                                                                className="flex items-center gap-1 rounded-md border border-blue-500/30 bg-blue-600/10 px-2 py-0.5 text-[10px] text-blue-300 hover:bg-blue-600/20"
+                                                                                            >
+                                                                                                <Wrench className="h-2.5 w-2.5" />
+                                                                                                提交整改
+                                                                                            </button>
+                                                                                        )}
                                                                                         {isRectified &&
                                                                                             !isConfirmed && (
                                                                                                 <button
@@ -743,6 +771,15 @@ export function DetailDrawer({
                 rootCompanyId={rootCompanyId}
                 onSaved={() => {
                     setAddDangerFor(null);
+                    refresh();
+                }}
+            />
+            <RectifyModal
+                open={rectifyFor !== null}
+                danger={rectifyFor}
+                onClose={() => setRectifyFor(null)}
+                onSaved={() => {
+                    setRectifyFor(null);
                     refresh();
                 }}
             />

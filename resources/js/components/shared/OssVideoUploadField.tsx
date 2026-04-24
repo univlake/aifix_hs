@@ -71,17 +71,42 @@ function putPart(
                     xhr.getResponseHeader('Etag');
 
                 if (!etag) {
-                    reject(new Error('分片响应缺少 ETag'));
+                    // OSS returned 2xx but ETag is unreadable — almost always
+                    // missing `ETag` in the bucket's CORS ExposeHeader config.
+                    console.error(
+                        'OSS part upload succeeded but ETag header is not exposed.',
+                        'Configure the bucket CORS rule to expose `ETag`.',
+                        xhr.getAllResponseHeaders(),
+                    );
+                    reject(
+                        new Error(
+                            '分片响应缺少 ETag（请在 OSS Bucket CORS 中将 ETag 加入暴露 Header）',
+                        ),
+                    );
 
                     return;
                 }
 
                 resolve(etag);
             } else {
-                reject(new Error(`分片上传失败 (HTTP ${xhr.status})`));
+                const snippet = (xhr.responseText || '').slice(0, 200);
+                console.error(
+                    `OSS part upload failed (HTTP ${xhr.status}):`,
+                    xhr.responseText,
+                );
+                reject(
+                    new Error(
+                        `分片上传失败 (HTTP ${xhr.status})${snippet ? `: ${snippet}` : ''}`,
+                    ),
+                );
             }
         };
-        xhr.onerror = () => reject(new Error('网络错误，分片上传失败'));
+        xhr.onerror = () =>
+            reject(
+                new Error(
+                    '网络错误，分片上传失败（可能是 OSS Bucket CORS 未放通当前域名）',
+                ),
+            );
         xhr.onabort = () => reject(new Error('aborted'));
         run.xhr = xhr;
         xhr.send(blob);
