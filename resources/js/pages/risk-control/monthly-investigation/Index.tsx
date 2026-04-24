@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiCrud } from '@/hooks/use-api';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import type { ApiResponse, PaginatedData } from '@/types/models';
 import { FilterSelect } from './components';
@@ -23,6 +24,8 @@ export default function BlocMonthlyInvestigationIndex() {
     const { activeCompany, rootCompany } = useScope();
     const companyId = activeCompany?.id;
     const myCompanyId = rootCompany?.id;
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('monthly-investigations.create');
 
     const [rows, setRows] = useState<Investigation[]>([]);
     const [loading, setLoading] = useState(false);
@@ -190,7 +193,7 @@ export default function BlocMonthlyInvestigationIndex() {
                         条记录
                     </p>
                 </div>
-                {myCompanyId && (
+                {myCompanyId && canCreate && (
                     <button
                         onClick={openCreate}
                         className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"

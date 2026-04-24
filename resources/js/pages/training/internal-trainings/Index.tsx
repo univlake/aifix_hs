@@ -91,6 +91,12 @@ const config: CrudPageConfig = {
         { key: 'material_annex_url', label: '材料附件', type: 'file' },
         { key: 'photo_annex_url', label: '照片附件', type: 'file' },
     ],
+    permissions: {
+        list: 'internal-trainings.list',
+        create: 'internal-trainings.create',
+        update: 'internal-trainings.update',
+        delete: 'internal-trainings.delete',
+    },
 };
 
 export default function InternalTrainingsIndex() {

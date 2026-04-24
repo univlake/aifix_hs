@@ -25,6 +25,7 @@ const GeoRangeDrawerModal = lazy(() =>
     import('@/components/map/GeoRangeDrawerModal').then((m) => ({ default: m.GeoRangeDrawerModal })),
 );
 import api from '@/lib/api';
+import { usePermission } from '@/hooks/use-permission';
 import { getErrorMessage } from '@/types/api-error';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -72,6 +73,9 @@ type EditForm = Omit<
 
 export default function CurrentEnterprise() {
     const { activeCompany } = useScope();
+    const { canWrite } = usePermission();
+    const canUpdate = canWrite('companies.update');
+
     const [company, setCompany] = useState<Company | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -208,7 +212,7 @@ export default function CurrentEnterprise() {
                             label={company.status_str}
                         />
                     )}
-                    {!loading && company && !editMode && (
+                    {!loading && company && !editMode && canUpdate && (
                         <button
                             onClick={() => setEditMode(true)}
                             className="flex items-center gap-1.5 rounded-lg border border-blue-600/40 bg-blue-600/15 px-3.5 py-2 text-xs font-medium text-blue-400 transition-all hover:bg-blue-600/25"

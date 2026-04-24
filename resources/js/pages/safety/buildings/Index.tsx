@@ -34,6 +34,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索建筑名称...',
+    permissions: {
+        list: 'buildings.list',
+        create: 'buildings.create',
+        update: 'buildings.update',
+        delete: 'buildings.delete',
+    },
 };
 
 export default function BuildingsIndex() {

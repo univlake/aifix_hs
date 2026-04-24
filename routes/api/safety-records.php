@@ -27,7 +27,6 @@ Route::middleware('permission:buildings.create')->group(function () {
 });
 Route::middleware('permission:buildings.update')->group(function () {
     Route::put('/buildings/{id}', [BuildingController::class, 'update']);
-    Route::patch('/buildings/{id}', [BuildingController::class, 'update']);
 });
 Route::middleware('permission:buildings.delete')->group(function () {
     Route::delete('/buildings/{id}', [BuildingController::class, 'destroy']);
@@ -43,7 +42,6 @@ Route::middleware('permission:job-management.create')->group(function () {
 });
 Route::middleware('permission:job-management.update')->group(function () {
     Route::put('/job-management/{id}', [JobManagementController::class, 'update']);
-    Route::patch('/job-management/{id}', [JobManagementController::class, 'update']);
 });
 Route::middleware('permission:job-management.delete')->group(function () {
     Route::delete('/job-management/{id}', [JobManagementController::class, 'destroy']);
@@ -58,7 +56,6 @@ Route::middleware('permission:safety-architectures.create')->group(function () {
 });
 Route::middleware('permission:safety-architectures.update')->group(function () {
     Route::put('/safety-architectures/{id}', [SafetyArchitectureController::class, 'update']);
-    Route::patch('/safety-architectures/{id}', [SafetyArchitectureController::class, 'update']);
 });
 
 // ── 安全生产标准化 ─────────────────────────────────────────────────────
@@ -70,7 +67,6 @@ Route::middleware('permission:production-standardizations.create')->group(functi
 });
 Route::middleware('permission:production-standardizations.update')->group(function () {
     Route::put('/production-standardizations/{id}', [ProductionStandardizationController::class, 'update']);
-    Route::patch('/production-standardizations/{id}', [ProductionStandardizationController::class, 'update']);
 });
 
 // ── 职业健康安全管理体系 ──────────────────────────────────────────────────
@@ -82,7 +78,6 @@ Route::middleware('permission:occupational-health-safeties.create')->group(funct
 });
 Route::middleware('permission:occupational-health-safeties.update')->group(function () {
     Route::put('/occupational-health-safeties/{id}', [OccupationalHealthSafetyController::class, 'update']);
-    Route::patch('/occupational-health-safeties/{id}', [OccupationalHealthSafetyController::class, 'update']);
 });
 
 // ── 安全管理人员 ─────────────────────────────────────────────────────
@@ -99,7 +94,6 @@ Route::middleware('permission:safety-management.create')->group(function () {
 });
 Route::middleware('permission:safety-management.update')->group(function () {
     Route::put('/safety-management/{id}', [SafetyManagementController::class, 'update']);
-    Route::patch('/safety-management/{id}', [SafetyManagementController::class, 'update']);
 });
 Route::middleware('permission:safety-management.delete')->group(function () {
     Route::delete('/safety-management/{id}', [SafetyManagementController::class, 'destroy']);
@@ -115,7 +109,6 @@ Route::middleware('permission:certificate-statuses.create')->group(function () {
 });
 Route::middleware('permission:certificate-statuses.update')->group(function () {
     Route::put('/certificate-statuses/{id}', [CertificateStatusController::class, 'update']);
-    Route::patch('/certificate-statuses/{id}', [CertificateStatusController::class, 'update']);
 });
 
 // ── 消控/淘汰控制人员（统一使用 elimination-control-staff，已合并原 fire-control-room-personnels 路径）────────────
@@ -130,7 +123,6 @@ Route::middleware('permission:elimination-control-staff.create')->group(function
 });
 Route::middleware('permission:elimination-control-staff.update')->group(function () {
     Route::put('/elimination-control-staff/{id}', [EliminationControlStaffController::class, 'update']);
-    Route::patch('/elimination-control-staff/{id}', [EliminationControlStaffController::class, 'update']);
 });
 Route::middleware('permission:elimination-control-staff.delete')->group(function () {
     Route::delete('/elimination-control-staff/{id}', [EliminationControlStaffController::class, 'destroy']);
@@ -146,7 +138,6 @@ Route::middleware('permission:skill-units.create')->group(function () {
 });
 Route::middleware('permission:skill-units.update')->group(function () {
     Route::put('/skill-units/{id}', [SkillUnitController::class, 'update']);
-    Route::patch('/skill-units/{id}', [SkillUnitController::class, 'update']);
 });
 Route::middleware('permission:skill-units.delete')->group(function () {
     Route::delete('/skill-units/{id}', [SkillUnitController::class, 'destroy']);
@@ -162,7 +153,6 @@ Route::middleware('permission:design-units.create')->group(function () {
 });
 Route::middleware('permission:design-units.update')->group(function () {
     Route::put('/design-units/{id}', [DesignUnitController::class, 'update']);
-    Route::patch('/design-units/{id}', [DesignUnitController::class, 'update']);
 });
 Route::middleware('permission:design-units.delete')->group(function () {
     Route::delete('/design-units/{id}', [DesignUnitController::class, 'destroy']);
@@ -178,7 +168,6 @@ Route::middleware('permission:evaluation-units.create')->group(function () {
 });
 Route::middleware('permission:evaluation-units.update')->group(function () {
     Route::put('/evaluation-units/{id}', [EvaluationUnitController::class, 'update']);
-    Route::patch('/evaluation-units/{id}', [EvaluationUnitController::class, 'update']);
 });
 Route::middleware('permission:evaluation-units.delete')->group(function () {
     Route::delete('/evaluation-units/{id}', [EvaluationUnitController::class, 'destroy']);
@@ -194,7 +183,6 @@ Route::middleware('permission:change-manages.create')->group(function () {
 });
 Route::middleware('permission:change-manages.update')->group(function () {
     Route::put('/change-manages/{id}', [ChangeManageController::class, 'update']);
-    Route::patch('/change-manages/{id}', [ChangeManageController::class, 'update']);
 });
 Route::middleware('permission:change-manages.delete')->group(function () {
     Route::delete('/change-manages/{id}', [ChangeManageController::class, 'destroy']);
@@ -227,7 +215,6 @@ Route::middleware('permission:filing-permissions.create')->group(function () {
 });
 Route::middleware('permission:filing-permissions.update')->group(function () {
     Route::put('/filing-permissions/{id}', [FilingPermissionsController::class, 'update']);
-    Route::patch('/filing-permissions/{id}', [FilingPermissionsController::class, 'update']);
 });
 Route::middleware('permission:filing-permissions.delete')->group(function () {
     Route::delete('/filing-permissions/{id}', [FilingPermissionsController::class, 'destroy']);

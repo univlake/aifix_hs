@@ -20,6 +20,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索事故检查...',
+    permissions: {
+        list: 'accident-checks.list',
+        create: 'accident-checks.create',
+        update: 'accident-checks.update',
+        delete: 'accident-checks.delete',
+    },
 };
 
 export default function AccidentChecksIndex() {

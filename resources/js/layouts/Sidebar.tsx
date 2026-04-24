@@ -910,8 +910,34 @@ function collectPermissions(
     }
 }
 
+// Routes that exist in web.php but aren't surfaced in the visible sidebar
+// (legacy URLs, tab sub-pages, cross-linked deep pages). Kept here so direct-URL
+// access is still guarded by AppLayout.
+const extraRoutePermissions: Record<string, string | string[]> = {
+    '/accident/emergency/teams': 'emergency-teams.list',
+    '/accident/emergency/drill': 'emergency-drills.list',
+    '/accident/emergency/supplies': 'emergency-supplies.list',
+    '/emergency/emergency-teams': 'emergency-teams.list',
+    '/emergency/emergency-drills': 'emergency-drills.list',
+    '/emergency/emergency-supplies': 'emergency-supplies.list',
+    '/emergency/fire-safety': 'fire-safeties.list',
+    '/inspection/accident-checks': 'accident-checks.list',
+    '/inspection/daily-checks': 'daily-checks.list',
+    '/inspection/norm-checks': 'norm-checks.list',
+    '/inspection/system-checks': 'system-checks.list',
+    '/meeting/meeting-sign-ups': 'meeting-sign-ups.list',
+    '/risk/rectification-sheets': 'rectification-sheets.list',
+    '/risk/risk-logs': 'risk-logs.list',
+    '/statistics/accident-bulletins': 'accident-bulletins.list',
+    '/statistics/expert-inspections': 'expert-inspections.list',
+    '/system/companies': 'companies.list',
+    '/system/dangerous-craft-types': 'dangerous-craft-types.list',
+    '/system/regulation-library-types': 'regulation-library-types.list',
+    '/training/other-trainings': 'other-trainings.list',
+};
+
 const routePermissionMap: Record<string, string | string[]> = (() => {
-    const map: Record<string, string | string[]> = {};
+    const map: Record<string, string | string[]> = { ...extraRoutePermissions };
 
     for (const section of navSections) {
         collectPermissions(section.items, map);
@@ -977,10 +1003,9 @@ function NavLink({ item, depth = 0 }: { item: NavItem; depth?: number }) {
             )}
             <span className="flex-1 truncate">{item.title}</span>
             {item.upstream && (
-                <ArrowUpRight
-                    className="h-2.5 w-2.5 shrink-0 text-blue-600"
-                    title="与上级企业交互"
-                />
+                <span title="与上级企业交互" className="inline-flex">
+                    <ArrowUpRight className="h-2.5 w-2.5 shrink-0 text-blue-600" />
+                </span>
             )}
         </Link>
     );

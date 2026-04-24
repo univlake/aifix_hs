@@ -69,6 +69,12 @@ const config: CrudPageConfig = {
     searchField: 'equipment_name',
     searchPlaceholder: '搜索设施名称...',
     copyEndpoint: '/fire-facilities/copy',
+    permissions: {
+        list: 'fire-facilities.list',
+        create: 'fire-facilities.create',
+        update: 'fire-facilities.update',
+        delete: 'fire-facilities.delete',
+    },
 };
 
 export default function FireFacilitiesIndex() {

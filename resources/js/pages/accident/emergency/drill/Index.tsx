@@ -68,6 +68,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'name',
     searchPlaceholder: '搜索演练名称...',
+    permissions: {
+        list: 'emergency-drills.list',
+        create: 'emergency-drills.create',
+        update: 'emergency-drills.update',
+        delete: 'emergency-drills.delete',
+    },
 };
 
 export default function EmergencyDrillIndex() {

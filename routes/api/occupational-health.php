@@ -21,7 +21,6 @@ Route::middleware('permission:occupational-hazards.create')->group(function () {
 });
 Route::middleware('permission:occupational-hazards.update')->group(function () {
     Route::put('/occupational-hazards/{id}', [OccupationalHazardController::class, 'update']);
-    Route::patch('/occupational-hazards/{id}', [OccupationalHazardController::class, 'update']);
 });
 Route::middleware('permission:occupational-hazards.delete')->group(function () {
     Route::delete('/occupational-hazards/{id}', [OccupationalHazardController::class, 'destroy']);
@@ -36,7 +35,6 @@ Route::middleware('permission:health-systems.create')->group(function () {
 });
 Route::middleware('permission:health-systems.update')->group(function () {
     Route::put('/health-systems/{id}', [HealthSystemController::class, 'update']);
-    Route::patch('/health-systems/{id}', [HealthSystemController::class, 'update']);
 });
 
 // ── 健康档案 ─────────────────────────────────────────────────────
@@ -52,7 +50,6 @@ Route::middleware('permission:health-files.create')->group(function () {
 });
 Route::middleware('permission:health-files.update')->group(function () {
     Route::put('/health-files/{id}', [HealthFileController::class, 'update']);
-    Route::patch('/health-files/{id}', [HealthFileController::class, 'update']);
 });
 Route::middleware('permission:health-files.delete')->group(function () {
     Route::delete('/health-files/{id}', [HealthFileController::class, 'destroy']);
@@ -68,7 +65,6 @@ Route::middleware('permission:health-reports.create')->group(function () {
 });
 Route::middleware('permission:health-reports.update')->group(function () {
     Route::put('/health-reports/{id}', [HealthReportController::class, 'update']);
-    Route::patch('/health-reports/{id}', [HealthReportController::class, 'update']);
 });
 Route::middleware('permission:health-reports.delete')->group(function () {
     Route::delete('/health-reports/{id}', [HealthReportController::class, 'destroy']);
@@ -84,7 +80,6 @@ Route::middleware('permission:health-checkups.create')->group(function () {
 });
 Route::middleware('permission:health-checkups.update')->group(function () {
     Route::put('/health-checkups/{id}', [HealthCheckupController::class, 'update']);
-    Route::patch('/health-checkups/{id}', [HealthCheckupController::class, 'update']);
 });
 Route::middleware('permission:health-checkups.delete')->group(function () {
     Route::delete('/health-checkups/{id}', [HealthCheckupController::class, 'destroy']);
@@ -100,7 +95,6 @@ Route::middleware('permission:hygiene-evaluations.create')->group(function () {
 });
 Route::middleware('permission:hygiene-evaluations.update')->group(function () {
     Route::put('/hygiene-evaluations/{id}', [HygieneEvaluationController::class, 'update']);
-    Route::patch('/hygiene-evaluations/{id}', [HygieneEvaluationController::class, 'update']);
 });
 Route::middleware('permission:hygiene-evaluations.delete')->group(function () {
     Route::delete('/hygiene-evaluations/{id}', [HygieneEvaluationController::class, 'destroy']);

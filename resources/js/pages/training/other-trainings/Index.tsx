@@ -89,6 +89,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'name',
     searchPlaceholder: '搜索第三方培训...',
+    permissions: {
+        list: 'other-trainings.list',
+        create: 'other-trainings.create',
+        update: 'other-trainings.update',
+        delete: 'other-trainings.delete',
+    },
 };
 
 export default function OtherTrainingsIndex() {

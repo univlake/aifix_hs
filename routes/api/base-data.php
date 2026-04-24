@@ -36,55 +36,46 @@ Route::middleware('permission:base-data.manage')->group(function () {
     // 企业类型
     Route::post('/enterprise-types', [EnterpriseTypeController::class, 'store']);
     Route::put('/enterprise-types/{id}', [EnterpriseTypeController::class, 'update']);
-    Route::patch('/enterprise-types/{id}', [EnterpriseTypeController::class, 'update']);
     Route::delete('/enterprise-types/{id}', [EnterpriseTypeController::class, 'destroy']);
 
     // 经营类型
     Route::post('/operational-types', [OperationalTypeController::class, 'store']);
     Route::put('/operational-types/{id}', [OperationalTypeController::class, 'update']);
-    Route::patch('/operational-types/{id}', [OperationalTypeController::class, 'update']);
     Route::delete('/operational-types/{id}', [OperationalTypeController::class, 'destroy']);
 
     // 备案/许可类型
     Route::post('/record-types', [RecordTypeController::class, 'store']);
     Route::put('/record-types/{id}', [RecordTypeController::class, 'update']);
-    Route::patch('/record-types/{id}', [RecordTypeController::class, 'update']);
     Route::delete('/record-types/{id}', [RecordTypeController::class, 'destroy']);
 
     // 工艺类型
     Route::post('/process-types', [ProcessTypeController::class, 'store']);
     Route::put('/process-types/{id}', [ProcessTypeController::class, 'update']);
-    Route::patch('/process-types/{id}', [ProcessTypeController::class, 'update']);
     Route::delete('/process-types/{id}', [ProcessTypeController::class, 'destroy']);
 
     // 特种设备类型
     Route::post('/special-types', [SpecialTypeController::class, 'store']);
     Route::put('/special-types/{id}', [SpecialTypeController::class, 'update']);
-    Route::patch('/special-types/{id}', [SpecialTypeController::class, 'update']);
     Route::delete('/special-types/{id}', [SpecialTypeController::class, 'destroy']);
 
     // 作业类型
     Route::post('/space-work-types', [SpaceWorkTypeController::class, 'store']);
     Route::put('/space-work-types/{id}', [SpaceWorkTypeController::class, 'update']);
-    Route::patch('/space-work-types/{id}', [SpaceWorkTypeController::class, 'update']);
     Route::delete('/space-work-types/{id}', [SpaceWorkTypeController::class, 'destroy']);
 
     // 安全管理人员类型
     Route::post('/safety-management-types', [SafetyManagementTypeController::class, 'store']);
     Route::put('/safety-management-types/{id}', [SafetyManagementTypeController::class, 'update']);
-    Route::patch('/safety-management-types/{id}', [SafetyManagementTypeController::class, 'update']);
     Route::delete('/safety-management-types/{id}', [SafetyManagementTypeController::class, 'destroy']);
 
     // 危险工艺类型
     Route::post('/dangerous-craft-types', [DangerousCraftTypeController::class, 'store']);
     Route::put('/dangerous-craft-types/{id}', [DangerousCraftTypeController::class, 'update']);
-    Route::patch('/dangerous-craft-types/{id}', [DangerousCraftTypeController::class, 'update']);
     Route::delete('/dangerous-craft-types/{id}', [DangerousCraftTypeController::class, 'destroy']);
 
     // 法规库分类
     Route::post('/regulation-library-types', [RegulationLibraryTypeController::class, 'store']);
     Route::put('/regulation-library-types/{id}', [RegulationLibraryTypeController::class, 'update']);
-    Route::patch('/regulation-library-types/{id}', [RegulationLibraryTypeController::class, 'update']);
     Route::delete('/regulation-library-types/{id}', [RegulationLibraryTypeController::class, 'destroy']);
 });
 
@@ -93,7 +84,6 @@ Route::middleware('permission:checklist-libraries.create')->group(function () {
 });
 Route::middleware('permission:checklist-libraries.update')->group(function () {
     Route::put('/checklist-libraries/{id}', [ChecklistLibraryController::class, 'update']);
-    Route::patch('/checklist-libraries/{id}', [ChecklistLibraryController::class, 'update']);
 });
 Route::middleware('permission:checklist-libraries.delete')->group(function () {
     Route::delete('/checklist-libraries/{id}', [ChecklistLibraryController::class, 'destroy']);

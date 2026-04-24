@@ -16,6 +16,7 @@ import { useState, useCallback, useRef } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
 import { useScope } from '@/contexts/ScopeContext';
 import { useApiList, useApiCrud } from '@/hooks/use-api';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/types/api-error';
@@ -82,6 +83,10 @@ export default function DangerousEquipmentIndex() {
     const { activeCompany, isSubordinate } = useScope();
     const companyId = activeCompany?.id;
     const readOnly = isSubordinate;
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('dangerous-equipment.create');
+    const canUpdate = canWrite('dangerous-equipment.update');
+    const canDelete = canWrite('dangerous-equipment.delete');
 
     const {
         data,
@@ -450,28 +455,32 @@ export default function DangerousEquipmentIndex() {
         },
     ];
 
-    if (!readOnly) {
+    if (!readOnly && (canUpdate || canDelete)) {
         columns.push({
             id: 'actions',
             header: '操作',
             size: 88,
             cell: ({ row }) => (
                 <div className="flex items-center gap-0.5">
-                    <button
-                        onClick={() => openEdit(row.original)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        onClick={() => {
-                            setDeleteId(row.original.id);
-                            setDeleteLabel(row.original.equipment_name ?? '');
-                        }}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {canUpdate && (
+                        <button
+                            onClick={() => openEdit(row.original)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {canDelete && (
+                        <button
+                            onClick={() => {
+                                setDeleteId(row.original.id);
+                                setDeleteLabel(row.original.equipment_name ?? '');
+                            }}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    )}
                 </div>
             ),
         });
@@ -484,7 +493,7 @@ export default function DangerousEquipmentIndex() {
             {actionMsg && (
                 <span className="text-xs text-blue-400">{actionMsg}</span>
             )}
-            {selectedIds.size > 0 && !readOnly && (
+            {selectedIds.size > 0 && !readOnly && canCreate && (
                 <button
                     onClick={handleCopy}
                     disabled={copying}
@@ -505,7 +514,7 @@ export default function DangerousEquipmentIndex() {
                 <Download className="h-3.5 w-3.5" />
                 下载模板
             </button>
-            {!readOnly && (
+            {!readOnly && canCreate && (
                 <>
                     <button
                         onClick={() => importRef.current?.click()}
@@ -562,7 +571,7 @@ export default function DangerousEquipmentIndex() {
                         条记录
                     </p>
                 </div>
-                {!readOnly && (
+                {!readOnly && canCreate && (
                     <button
                         onClick={openCreate}
                         className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"

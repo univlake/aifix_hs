@@ -23,7 +23,6 @@ Route::middleware('permission:daily-check-templates.create')->group(function () 
 });
 Route::middleware('permission:daily-check-templates.update')->group(function () {
     Route::put('/daily-check-templates/{id}', [DailyCheckTemplatesController::class, 'update']);
-    Route::patch('/daily-check-templates/{id}', [DailyCheckTemplatesController::class, 'update']);
 });
 Route::middleware('permission:daily-check-templates.delete')->group(function () {
     Route::delete('/daily-check-templates/{id}', [DailyCheckTemplatesController::class, 'destroy']);
@@ -60,7 +59,6 @@ Route::middleware('permission:system-checks.create')->group(function () {
 });
 Route::middleware('permission:system-checks.update')->group(function () {
     Route::put('/system-checks/{id}', [SystemChecksController::class, 'update']);
-    Route::patch('/system-checks/{id}', [SystemChecksController::class, 'update']);
 });
 Route::middleware('permission:system-checks.delete')->group(function () {
     Route::delete('/system-checks/{id}', [SystemChecksController::class, 'destroy']);
@@ -79,7 +77,6 @@ Route::middleware('permission:norm-checks.create')->group(function () {
 });
 Route::middleware('permission:norm-checks.update')->group(function () {
     Route::put('/norm-checks/{id}', [NormChecksController::class, 'update']);
-    Route::patch('/norm-checks/{id}', [NormChecksController::class, 'update']);
 });
 Route::middleware('permission:norm-checks.delete')->group(function () {
     Route::delete('/norm-checks/{id}', [NormChecksController::class, 'destroy']);
@@ -95,7 +92,6 @@ Route::middleware('permission:accident-check-templates.create')->group(function 
 });
 Route::middleware('permission:accident-check-templates.update')->group(function () {
     Route::put('/accident-check-templates/{id}', [AccidentCheckTemplatesController::class, 'update']);
-    Route::patch('/accident-check-templates/{id}', [AccidentCheckTemplatesController::class, 'update']);
 });
 Route::middleware('permission:accident-check-templates.delete')->group(function () {
     Route::delete('/accident-check-templates/{id}', [AccidentCheckTemplatesController::class, 'destroy']);
@@ -114,7 +110,6 @@ Route::middleware('permission:accident-checks.create')->group(function () {
 });
 Route::middleware('permission:accident-checks.update')->group(function () {
     Route::put('/accident-checks/{id}', [AccidentChecksController::class, 'update']);
-    Route::patch('/accident-checks/{id}', [AccidentChecksController::class, 'update']);
 });
 Route::middleware('permission:accident-checks.delete')->group(function () {
     Route::delete('/accident-checks/{id}', [AccidentChecksController::class, 'destroy']);
@@ -130,7 +125,6 @@ Route::middleware('permission:add-points-templates.create')->group(function () {
 });
 Route::middleware('permission:add-points-templates.update')->group(function () {
     Route::put('/add-points-templates/{id}', [AddPointsTemplatesController::class, 'update']);
-    Route::patch('/add-points-templates/{id}', [AddPointsTemplatesController::class, 'update']);
 });
 Route::middleware('permission:add-points-templates.delete')->group(function () {
     Route::delete('/add-points-templates/{id}', [AddPointsTemplatesController::class, 'destroy']);
@@ -149,7 +143,6 @@ Route::middleware('permission:add-points.create')->group(function () {
 });
 Route::middleware('permission:add-points.update')->group(function () {
     Route::put('/add-points/{id}', [AddPointsController::class, 'update']);
-    Route::patch('/add-points/{id}', [AddPointsController::class, 'update']);
 });
 Route::middleware('permission:add-points.delete')->group(function () {
     Route::delete('/add-points/{id}', [AddPointsController::class, 'destroy']);

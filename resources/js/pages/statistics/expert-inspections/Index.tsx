@@ -21,6 +21,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索专家检查...',
+    permissions: {
+        list: 'expert-inspections.list',
+        create: 'expert-inspections.create',
+        update: 'expert-inspections.update',
+        delete: 'expert-inspections.delete',
+    },
 };
 
 export default function ExpertInspectionsIndex() {

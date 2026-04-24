@@ -11,6 +11,7 @@ import {
     Clock,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 
 interface Company {
@@ -31,6 +32,9 @@ interface PaginatedResponse {
 }
 
 export default function EnterpriseApproval() {
+    const { canWrite } = usePermission();
+    const canUpdate = canWrite('companies.update');
+
     const [data, setData] = useState<PaginatedResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -213,30 +217,42 @@ export default function EnterpriseApproval() {
                                         </td>
                                         <td className="px-5 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    disabled={
-                                                        reviewing === c.id
-                                                    }
-                                                    onClick={() =>
-                                                        handleReview(c.id, 1)
-                                                    }
-                                                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-600/10 px-2.5 py-1.5 text-xs font-medium text-emerald-400 transition-all hover:bg-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50"
-                                                >
-                                                    <CheckCircle className="h-3 w-3" />
-                                                    通过
-                                                </button>
-                                                <button
-                                                    disabled={
-                                                        reviewing === c.id
-                                                    }
-                                                    onClick={() =>
-                                                        handleReview(c.id, 2)
-                                                    }
-                                                    className="inline-flex items-center gap-1 rounded-lg border border-red-500/30 bg-red-600/10 px-2.5 py-1.5 text-xs font-medium text-red-400 transition-all hover:bg-red-600/20 disabled:cursor-not-allowed disabled:opacity-50"
-                                                >
-                                                    <XCircle className="h-3 w-3" />
-                                                    拒绝
-                                                </button>
+                                                {canUpdate && (
+                                                    <>
+                                                        <button
+                                                            disabled={
+                                                                reviewing ===
+                                                                c.id
+                                                            }
+                                                            onClick={() =>
+                                                                handleReview(
+                                                                    c.id,
+                                                                    1,
+                                                                )
+                                                            }
+                                                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-600/10 px-2.5 py-1.5 text-xs font-medium text-emerald-400 transition-all hover:bg-emerald-600/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        >
+                                                            <CheckCircle className="h-3 w-3" />
+                                                            通过
+                                                        </button>
+                                                        <button
+                                                            disabled={
+                                                                reviewing ===
+                                                                c.id
+                                                            }
+                                                            onClick={() =>
+                                                                handleReview(
+                                                                    c.id,
+                                                                    2,
+                                                                )
+                                                            }
+                                                            className="inline-flex items-center gap-1 rounded-lg border border-red-500/30 bg-red-600/10 px-2.5 py-1.5 text-xs font-medium text-red-400 transition-all hover:bg-red-600/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        >
+                                                            <XCircle className="h-3 w-3" />
+                                                            拒绝
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

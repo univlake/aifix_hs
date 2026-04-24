@@ -3,6 +3,7 @@ import { Loader2, ImageIcon, Save, Pencil, X, Upload } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { getErrorMessage } from '@/types/api-error';
 import type { ApiResponse } from '@/types/models';
@@ -16,7 +17,10 @@ interface RiskDistributionMap {
 
 export default function RiskSourceIndex() {
     const { activeCompany } = useScope();
+    const { canWrite } = usePermission();
     const companyId = activeCompany?.id;
+    const canCreate = canWrite('risk-distribution-maps.create');
+    const canUpdate = canWrite('risk-distribution-maps.update');
 
     const [record, setRecord] = useState<RiskDistributionMap | null>(null);
     const [annexUrl, setAnnexUrl] = useState('');
@@ -97,6 +101,7 @@ export default function RiskSourceIndex() {
     const hasRecord = record !== null && !!record.annex_url;
     const isViewMode = hasRecord && !isEditing;
     const isUploadMode = !hasRecord || isEditing;
+    const canEdit = hasRecord ? canUpdate : canCreate;
 
     const isImage = (url: string) =>
         /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(url);
@@ -115,7 +120,7 @@ export default function RiskSourceIndex() {
                     </p>
                 </div>
 
-                {!loading && (
+                {!loading && canEdit && (
                     <div className="flex items-center gap-2">
                         {isEditing && (
                             <button
@@ -174,7 +179,7 @@ export default function RiskSourceIndex() {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {isUploadMode && (
+                    {isUploadMode && canEdit && (
                         <div className="rounded-xl border border-blue-900/30 bg-[#0d1530] p-4">
                             <p className="mb-3 text-xs font-medium tracking-wide text-slate-500 uppercase">
                                 {isEditing
@@ -230,7 +235,9 @@ export default function RiskSourceIndex() {
                         <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-blue-900/40 bg-[#070d1f]">
                             <ImageIcon className="h-10 w-10 text-slate-700" />
                             <p className="text-sm text-slate-600">
-                                暂无风险分布图，请上传图片或 PDF 文件
+                                {canEdit
+                                    ? '暂无风险分布图，请上传图片或 PDF 文件'
+                                    : '暂无风险分布图'}
                             </p>
                         </div>
                     )}

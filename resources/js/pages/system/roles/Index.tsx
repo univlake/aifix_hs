@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { formatAction, formatModule } from '@/lib/permission-labels';
 import { cn } from '@/lib/utils';
@@ -200,6 +201,11 @@ export default function RolesIndex() {
     const [roleName, setRoleName] = useState('');
     const [selectedPerms, setSelectedPerms] = useState<Set<string>>(new Set());
     const [permSearch, setPermSearch] = useState('');
+
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('roles.create');
+    const canUpdate = canWrite('roles.update');
+    const canDelete = canWrite('roles.delete');
 
     const loadRoles = () => {
         setLoadingRoles(true);
@@ -404,7 +410,10 @@ export default function RolesIndex() {
                 </span>
             ),
         },
-        {
+    ];
+
+    if (canUpdate || canDelete) {
+        columns.push({
             id: 'actions',
             header: '操作',
             size: 100,
@@ -419,14 +428,16 @@ export default function RolesIndex() {
 
                 return (
                     <div className="flex items-center gap-0.5">
-                        <ActionBtn
-                            onClick={() => openEdit(role)}
-                            title="编辑权限"
-                            variant="edit"
-                        >
-                            <Pencil className="h-3.5 w-3.5" />
-                        </ActionBtn>
-                        {!SYSTEM_ROLES.includes(role.name) && (
+                        {canUpdate && (
+                            <ActionBtn
+                                onClick={() => openEdit(role)}
+                                title="编辑权限"
+                                variant="edit"
+                            >
+                                <Pencil className="h-3.5 w-3.5" />
+                            </ActionBtn>
+                        )}
+                        {canDelete && !SYSTEM_ROLES.includes(role.name) && (
                             <ActionBtn
                                 onClick={() => {
                                     setDeleteId(role.id);
@@ -441,8 +452,8 @@ export default function RolesIndex() {
                     </div>
                 );
             },
-        },
-    ];
+        });
+    }
 
     return (
         <>
@@ -461,10 +472,12 @@ export default function RolesIndex() {
                         个角色
                     </p>
                 </div>
-                <button onClick={openCreate} className={primaryBtn}>
-                    <Plus className="h-4 w-4" />
-                    新增角色
-                </button>
+                {canCreate && (
+                    <button onClick={openCreate} className={primaryBtn}>
+                        <Plus className="h-4 w-4" />
+                        新增角色
+                    </button>
+                )}
             </div>
 
             <DataTable

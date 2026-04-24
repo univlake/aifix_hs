@@ -2,6 +2,7 @@
 
 use App\Models\Company;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 describe('Company API', function () {
     describe('Index (List)', function () {
@@ -109,6 +110,29 @@ describe('Company API', function () {
                 ->postJson('/api/v1/companies', []);
 
             $response->assertStatus(422);
+        });
+
+        it('provisions an admin user and returns one-time credentials', function () {
+            [$user] = createAdminWithCompany();
+
+            $response = $this->actingAs($user, 'api')
+                ->postJson('/api/v1/companies', [
+                    'title' => '子公司甲',
+                ]);
+
+            $response->assertOk();
+
+            $companyId = $response->json('data.id');
+            $username = $response->json('data.admin_credentials.username');
+            $password = $response->json('data.admin_credentials.password');
+
+            expect($username)->toBe("c{$companyId}_admin");
+            expect($password)->toBeString()->not->toBeEmpty();
+
+            $admin = User::where('company_id', $companyId)->first();
+            expect($admin)->not->toBeNull();
+            expect($admin->hasRole('admin'))->toBeTrue();
+            expect(Hash::check($password, $admin->password))->toBeTrue();
         });
     });
 

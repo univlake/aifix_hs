@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -728,6 +729,9 @@ function FocusList({
     rootCompanyId: number;
     onChange: () => void | Promise<void>;
 }) {
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('focus-companies.create');
+    const canDelete = canWrite('focus-companies.delete');
     const [showPicker, setShowPicker] = useState(false);
     const [query, setQuery] = useState('');
     const [addingId, setAddingId] = useState<number | null>(null);
@@ -772,66 +776,68 @@ function FocusList({
 
     return (
         <>
-            <div className="border-b border-blue-900/20 p-2">
-                {!showPicker ? (
-                    <button
-                        onClick={() => setShowPicker(true)}
-                        className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-[11px] text-slate-400 hover:border-blue-500/40 hover:text-blue-300"
-                    >
-                        <Plus className="h-3 w-3" />
-                        添加关注企业
-                    </button>
-                ) : (
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="search"
-                                placeholder="搜索企业..."
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                autoFocus
-                                className="flex-1 rounded-md border border-blue-900/40 bg-[#070d1f] px-2 py-1 text-xs text-slate-200 placeholder:text-slate-600 focus:border-blue-500/40 focus:outline-none"
-                            />
-                            <button
-                                onClick={() => {
-                                    setShowPicker(false);
-                                    setQuery('');
-                                }}
-                                className="text-[11px] text-slate-500 hover:text-slate-300"
-                            >
-                                收起
-                            </button>
+            {canCreate && (
+                <div className="border-b border-blue-900/20 p-2">
+                    {!showPicker ? (
+                        <button
+                            onClick={() => setShowPicker(true)}
+                            className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-blue-900/40 bg-[#070d1f] px-3 py-1.5 text-[11px] text-slate-400 hover:border-blue-500/40 hover:text-blue-300"
+                        >
+                            <Plus className="h-3 w-3" />
+                            添加关注企业
+                        </button>
+                    ) : (
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="search"
+                                    placeholder="搜索企业..."
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    autoFocus
+                                    className="flex-1 rounded-md border border-blue-900/40 bg-[#070d1f] px-2 py-1 text-xs text-slate-200 placeholder:text-slate-600 focus:border-blue-500/40 focus:outline-none"
+                                />
+                                <button
+                                    onClick={() => {
+                                        setShowPicker(false);
+                                        setQuery('');
+                                    }}
+                                    className="text-[11px] text-slate-500 hover:text-slate-300"
+                                >
+                                    收起
+                                </button>
+                            </div>
+                            <div className="max-h-44 space-y-1 overflow-y-auto">
+                                {candidates.length === 0 ? (
+                                    <p className="py-2 text-center text-[11px] text-slate-600">
+                                        {q
+                                            ? '未找到匹配企业'
+                                            : '所有下级企业已关注'}
+                                    </p>
+                                ) : (
+                                    candidates.slice(0, 50).map((c) => (
+                                        <button
+                                            key={c.id}
+                                            onClick={() => add(c.id)}
+                                            disabled={addingId != null}
+                                            className="flex w-full items-center justify-between gap-2 rounded-md border border-blue-900/30 bg-[#070d1f] px-2.5 py-1.5 text-left text-xs text-slate-300 hover:border-blue-500/40 hover:bg-[#0a1329] disabled:opacity-50"
+                                        >
+                                            <span className="truncate">
+                                                {c.title}
+                                            </span>
+                                            <span className="shrink-0 text-blue-400">
+                                                {addingId === c.id
+                                                    ? '添加中…'
+                                                    : '+ 关注'}
+                                            </span>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
                         </div>
-                        <div className="max-h-44 space-y-1 overflow-y-auto">
-                            {candidates.length === 0 ? (
-                                <p className="py-2 text-center text-[11px] text-slate-600">
-                                    {q
-                                        ? '未找到匹配企业'
-                                        : '所有下级企业已关注'}
-                                </p>
-                            ) : (
-                                candidates.slice(0, 50).map((c) => (
-                                    <button
-                                        key={c.id}
-                                        onClick={() => add(c.id)}
-                                        disabled={addingId != null}
-                                        className="flex w-full items-center justify-between gap-2 rounded-md border border-blue-900/30 bg-[#070d1f] px-2.5 py-1.5 text-left text-xs text-slate-300 hover:border-blue-500/40 hover:bg-[#0a1329] disabled:opacity-50"
-                                    >
-                                        <span className="truncate">
-                                            {c.title}
-                                        </span>
-                                        <span className="shrink-0 text-blue-400">
-                                            {addingId === c.id
-                                                ? '添加中…'
-                                                : '+ 关注'}
-                                        </span>
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
 
             {items.length === 0 ? (
                 <div className="px-5 py-10 text-center">
@@ -853,42 +859,45 @@ function FocusList({
                                     <p className="flex-1 truncate text-xs text-slate-300">
                                         {c?.title ?? `企业#${item.focus_id}`}
                                     </p>
-                                    {confirmId === item.id ? (
-                                        <div className="flex shrink-0 items-center gap-1 text-[10px]">
-                                            <button
-                                                onClick={() => remove(item.id)}
-                                                disabled={
-                                                    removingId === item.id
-                                                }
-                                                className="rounded border border-red-500/30 bg-red-600/15 px-1.5 py-0.5 text-red-300 hover:bg-red-600/25 disabled:opacity-50"
-                                            >
-                                                {removingId === item.id
-                                                    ? '取消中…'
-                                                    : '确认取消'}
-                                            </button>
+                                    {canDelete &&
+                                        (confirmId === item.id ? (
+                                            <div className="flex shrink-0 items-center gap-1 text-[10px]">
+                                                <button
+                                                    onClick={() =>
+                                                        remove(item.id)
+                                                    }
+                                                    disabled={
+                                                        removingId === item.id
+                                                    }
+                                                    className="rounded border border-red-500/30 bg-red-600/15 px-1.5 py-0.5 text-red-300 hover:bg-red-600/25 disabled:opacity-50"
+                                                >
+                                                    {removingId === item.id
+                                                        ? '取消中…'
+                                                        : '确认取消'}
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        setConfirmId(null)
+                                                    }
+                                                    disabled={
+                                                        removingId === item.id
+                                                    }
+                                                    className="rounded px-1.5 py-0.5 text-slate-500 hover:text-slate-300 disabled:opacity-50"
+                                                >
+                                                    返回
+                                                </button>
+                                            </div>
+                                        ) : (
                                             <button
                                                 onClick={() =>
-                                                    setConfirmId(null)
+                                                    setConfirmId(item.id)
                                                 }
-                                                disabled={
-                                                    removingId === item.id
-                                                }
-                                                className="rounded px-1.5 py-0.5 text-slate-500 hover:text-slate-300 disabled:opacity-50"
+                                                className="shrink-0 rounded text-slate-600 hover:text-red-400"
+                                                title="取消关注"
                                             >
-                                                返回
+                                                <X className="h-3.5 w-3.5" />
                                             </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={() =>
-                                                setConfirmId(item.id)
-                                            }
-                                            className="shrink-0 rounded text-slate-600 hover:text-red-400"
-                                            title="取消关注"
-                                        >
-                                            <X className="h-3.5 w-3.5" />
-                                        </button>
-                                    )}
+                                        ))}
                                 </div>
                                 <div className="ml-5 grid grid-cols-2 gap-2 text-[10px]">
                                     <div>

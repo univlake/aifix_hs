@@ -94,6 +94,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索检查表名称...',
+    permissions: {
+        list: 'checklist-libraries.list',
+        create: 'checklist-libraries.create',
+        update: 'checklist-libraries.update',
+        delete: 'checklist-libraries.delete',
+    },
 };
 
 export default function ChecklistsIndex() {

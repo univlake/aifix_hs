@@ -17,6 +17,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索单位名称...',
+    permissions: {
+        list: 'evaluation-units.list',
+        create: 'evaluation-units.create',
+        update: 'evaluation-units.update',
+        delete: 'evaluation-units.delete',
+    },
 };
 
 export default function EvaluationUnitsIndex() {

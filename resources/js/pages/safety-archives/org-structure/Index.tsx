@@ -3,6 +3,7 @@ import { Loader2, ImageIcon, Save, Pencil, X, Upload } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { getErrorMessage } from '@/types/api-error';
 import type { ApiResponse } from '@/types/models';
@@ -18,6 +19,9 @@ interface SafetyArchitecture {
 export default function OrgStructureIndex() {
     const { activeCompany } = useScope();
     const companyId = activeCompany?.id;
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('safety-architectures.create');
+    const canUpdate = canWrite('safety-architectures.update');
 
     const [record, setRecord] = useState<SafetyArchitecture | null>(null);
     const [annexUrl, setAnnexUrl] = useState('');
@@ -98,6 +102,7 @@ export default function OrgStructureIndex() {
     const hasRecord = record !== null && !!record.annex_url;
     const isViewMode = hasRecord && !isEditing;
     const isUploadMode = !hasRecord || isEditing;
+    const canEdit = hasRecord ? canUpdate : canCreate;
 
     const isImage = (url: string) =>
         /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(url);
@@ -129,38 +134,40 @@ export default function OrgStructureIndex() {
                             </button>
                         )}
 
-                        {isViewMode ? (
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25"
-                            >
-                                <Pencil className="h-4 w-4" />
-                                编辑
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 disabled:pointer-events-none disabled:opacity-50"
-                            >
-                                {saving ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : saved ? (
-                                    <Save className="h-4 w-4" />
-                                ) : isEditing ? (
-                                    <Save className="h-4 w-4" />
-                                ) : (
-                                    <Upload className="h-4 w-4" />
-                                )}
-                                {saving
-                                    ? '保存中...'
-                                    : saved
-                                      ? '已保存 ✓'
-                                      : isEditing
-                                        ? '保存'
-                                        : '上传并保存'}
-                            </button>
-                        )}
+                        {isViewMode
+                            ? canUpdate && (
+                                  <button
+                                      onClick={() => setIsEditing(true)}
+                                      className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25"
+                                  >
+                                      <Pencil className="h-4 w-4" />
+                                      编辑
+                                  </button>
+                              )
+                            : canEdit && (
+                                  <button
+                                      onClick={handleSave}
+                                      disabled={saving}
+                                      className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 disabled:pointer-events-none disabled:opacity-50"
+                                  >
+                                      {saving ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : saved ? (
+                                          <Save className="h-4 w-4" />
+                                      ) : isEditing ? (
+                                          <Save className="h-4 w-4" />
+                                      ) : (
+                                          <Upload className="h-4 w-4" />
+                                      )}
+                                      {saving
+                                          ? '保存中...'
+                                          : saved
+                                            ? '已保存 ✓'
+                                            : isEditing
+                                              ? '保存'
+                                              : '上传并保存'}
+                                  </button>
+                              )}
                     </div>
                 )}
             </div>

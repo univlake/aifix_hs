@@ -14,6 +14,11 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索标题...',
+    permissions: {
+        list: 'health-systems.list',
+        create: 'health-systems.create',
+        update: 'health-systems.update',
+    },
 };
 
 export default function HealthSystemsIndex() {

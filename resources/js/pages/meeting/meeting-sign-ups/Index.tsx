@@ -21,6 +21,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'meeting_id',
     searchPlaceholder: '搜索会议签到...',
+    permissions: {
+        list: 'meeting-sign-ups.list',
+        create: 'meeting-sign-ups.create',
+        update: 'meeting-sign-ups.update',
+        delete: 'meeting-sign-ups.delete',
+    },
 };
 
 export default function MeetingSignUpsIndex() {

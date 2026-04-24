@@ -16,6 +16,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { uploadToOss } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -119,6 +120,10 @@ export default function AssessmentFilingIndex() {
     const { activeCompany } = useScope();
     const companyId = activeCompany?.id;
     const isTopLevel = !activeCompany || activeCompany.pid === 0;
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('daily-checks.create');
+    const canUpdate = canWrite('daily-checks.update');
+    const canDelete = canWrite('daily-checks.delete');
 
     const [rows, setRows] = useState<SubmissionRow[]>([]);
     const [loading, setLoading] = useState(false);
@@ -198,7 +203,7 @@ export default function AssessmentFilingIndex() {
                             按年度填报日常目标管理工作考核材料，提交后由上级企业评分。
                         </p>
                     </div>
-                    {!isTopLevel && (
+                    {!isTopLevel && canCreate && (
                         <button
                             type="button"
                             onClick={() => setYearPickerOpen(true)}
@@ -292,33 +297,37 @@ export default function AssessmentFilingIndex() {
                                                     {r.status ===
                                                     STATUS_DRAFT ? (
                                                         <>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    setFormState(
-                                                                        {
-                                                                            year: r.year,
-                                                                            isNew: false,
-                                                                        },
-                                                                    )
-                                                                }
-                                                                className="inline-flex items-center gap-1 rounded-lg border border-blue-500/30 bg-blue-600/10 px-3 py-1 text-xs text-blue-300 transition-colors hover:bg-blue-600/20"
-                                                            >
-                                                                <Pencil className="h-3.5 w-3.5" />
-                                                                继续填报
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    setDeleting(
-                                                                        r,
-                                                                    )
-                                                                }
-                                                                title="删除"
-                                                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-600/10 hover:text-red-400"
-                                                            >
-                                                                <Trash2 className="h-3.5 w-3.5" />
-                                                            </button>
+                                                            {canUpdate && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        setFormState(
+                                                                            {
+                                                                                year: r.year,
+                                                                                isNew: false,
+                                                                            },
+                                                                        )
+                                                                    }
+                                                                    className="inline-flex items-center gap-1 rounded-lg border border-blue-500/30 bg-blue-600/10 px-3 py-1 text-xs text-blue-300 transition-colors hover:bg-blue-600/20"
+                                                                >
+                                                                    <Pencil className="h-3.5 w-3.5" />
+                                                                    继续填报
+                                                                </button>
+                                                            )}
+                                                            {canDelete && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        setDeleting(
+                                                                            r,
+                                                                        )
+                                                                    }
+                                                                    title="删除"
+                                                                    className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-600/10 hover:text-red-400"
+                                                                >
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </button>
+                                                            )}
                                                         </>
                                                     ) : (
                                                         <button

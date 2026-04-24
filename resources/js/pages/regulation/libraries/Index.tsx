@@ -164,6 +164,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索法律法规标题...',
+    permissions: {
+        list: 'regulation-libraries.list',
+        create: 'regulation-libraries.create',
+        update: 'regulation-libraries.update',
+        delete: 'regulation-libraries.delete',
+    },
 };
 
 export default function LibrariesIndex() {

@@ -21,6 +21,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索设施名称...',
+    permissions: {
+        list: 'fire-facilities.list',
+        create: 'fire-facilities.create',
+        update: 'fire-facilities.update',
+        delete: 'fire-facilities.delete',
+    },
 };
 
 export default function FireFacilitiesIndex() {

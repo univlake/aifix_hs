@@ -88,6 +88,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'name',
     searchPlaceholder: '搜索内部会议...',
+    permissions: {
+        list: 'internal-meetings.list',
+        create: 'internal-meetings.create',
+        update: 'internal-meetings.update',
+        delete: 'internal-meetings.delete',
+    },
 };
 
 export default function InternalMeetingsIndex() {

@@ -114,6 +114,12 @@ const internalConfig: CrudPageConfig = {
         { key: 'material_annex_url', label: '培训教材', type: 'file' },
         { key: 'photo_annex_url', label: '培训照片', type: 'file' },
     ],
+    permissions: {
+        list: 'internal-trainings.list',
+        create: 'internal-trainings.create',
+        update: 'internal-trainings.update',
+        delete: 'internal-trainings.delete',
+    },
 };
 
 const externalConfig: CrudPageConfig = {

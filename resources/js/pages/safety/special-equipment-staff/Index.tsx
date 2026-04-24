@@ -21,6 +21,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'name',
     searchPlaceholder: '搜索姓名...',
+    permissions: {
+        list: 'special-equipment-staff.list',
+        create: 'special-equipment-staff.create',
+        update: 'special-equipment-staff.update',
+        delete: 'special-equipment-staff.delete',
+    },
 };
 
 export default function SpecialEquipmentStaffIndex() {

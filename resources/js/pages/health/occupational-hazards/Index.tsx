@@ -88,6 +88,12 @@ const config: CrudPageConfig = {
     importEndpoint: '/occupational-hazards-import',
     exportEndpoint: '/occupational-hazards-export',
     templateEndpoint: '/occupational-hazards-template',
+    permissions: {
+        list: 'occupational-hazards.list',
+        create: 'occupational-hazards.create',
+        update: 'occupational-hazards.update',
+        delete: 'occupational-hazards.delete',
+    },
 };
 
 export default function OccupationalHazardsIndex() {

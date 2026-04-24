@@ -21,6 +21,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索消防安全...',
+    permissions: {
+        list: 'fire-safeties.list',
+        create: 'fire-safeties.create',
+        update: 'fire-safeties.update',
+        delete: 'fire-safeties.delete',
+    },
 };
 
 export default function FireSafetyIndex() {

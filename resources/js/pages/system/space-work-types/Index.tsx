@@ -15,6 +15,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'title',
     searchPlaceholder: '搜索有限空间类型...',
+    permissions: {
+        list: 'base-data.view',
+        create: 'base-data.manage',
+        update: 'base-data.manage',
+        delete: 'base-data.manage',
+    },
 };
 
 export default function SpaceWorkTypesIndex() {

@@ -31,7 +31,6 @@ Route::middleware('permission:fire-safeties.create')->group(function () {
 });
 Route::middleware('permission:fire-safeties.update')->group(function () {
     Route::put('/fire-safeties/{id}', [FireSafetyController::class, 'update']);
-    Route::patch('/fire-safeties/{id}', [FireSafetyController::class, 'update']);
 });
 Route::middleware('permission:fire-safeties.delete')->group(function () {
     Route::delete('/fire-safeties/{id}', [FireSafetyController::class, 'destroy']);
@@ -48,7 +47,6 @@ Route::middleware('permission:fire-equipment.create')->group(function () {
 });
 Route::middleware('permission:fire-equipment.update')->group(function () {
     Route::put('/fire-equipment/{id}', [FireEquipmentController::class, 'update']);
-    Route::patch('/fire-equipment/{id}', [FireEquipmentController::class, 'update']);
 });
 Route::middleware('permission:fire-equipment.delete')->group(function () {
     Route::delete('/fire-equipment/{id}', [FireEquipmentController::class, 'destroy']);
@@ -65,7 +63,6 @@ Route::middleware('permission:fire-facilities.create')->group(function () {
 });
 Route::middleware('permission:fire-facilities.update')->group(function () {
     Route::put('/fire-facilities/{id}', [FireFacilityController::class, 'update']);
-    Route::patch('/fire-facilities/{id}', [FireFacilityController::class, 'update']);
 });
 Route::middleware('permission:fire-facilities.delete')->group(function () {
     Route::delete('/fire-facilities/{id}', [FireFacilityController::class, 'destroy']);
@@ -81,7 +78,6 @@ Route::middleware('permission:emergency-drills.create')->group(function () {
 });
 Route::middleware('permission:emergency-drills.update')->group(function () {
     Route::put('/emergency-drills/{id}', [EmergencyDrillController::class, 'update']);
-    Route::patch('/emergency-drills/{id}', [EmergencyDrillController::class, 'update']);
 });
 Route::middleware('permission:emergency-drills.delete')->group(function () {
     Route::delete('/emergency-drills/{id}', [EmergencyDrillController::class, 'destroy']);
@@ -97,7 +93,6 @@ Route::middleware('permission:emergency-supplies.create')->group(function () {
 });
 Route::middleware('permission:emergency-supplies.update')->group(function () {
     Route::put('/emergency-supplies/{id}', [EmergencySuppliesController::class, 'update']);
-    Route::patch('/emergency-supplies/{id}', [EmergencySuppliesController::class, 'update']);
 });
 Route::middleware('permission:emergency-supplies.delete')->group(function () {
     Route::delete('/emergency-supplies/{id}', [EmergencySuppliesController::class, 'destroy']);
@@ -113,7 +108,6 @@ Route::middleware('permission:emergency-teams.create')->group(function () {
 });
 Route::middleware('permission:emergency-teams.update')->group(function () {
     Route::put('/emergency-teams/{id}', [EmergencyTeamController::class, 'update']);
-    Route::patch('/emergency-teams/{id}', [EmergencyTeamController::class, 'update']);
 });
 Route::middleware('permission:emergency-teams.delete')->group(function () {
     Route::delete('/emergency-teams/{id}', [EmergencyTeamController::class, 'destroy']);
@@ -129,7 +123,6 @@ Route::middleware('permission:three-togethers.create')->group(function () {
 });
 Route::middleware('permission:three-togethers.update')->group(function () {
     Route::put('/three-togethers/{id}', [ThreeTogetherController::class, 'update']);
-    Route::patch('/three-togethers/{id}', [ThreeTogetherController::class, 'update']);
 });
 Route::middleware('permission:three-togethers.delete')->group(function () {
     Route::delete('/three-togethers/{id}', [ThreeTogetherController::class, 'destroy']);
@@ -145,7 +138,6 @@ Route::middleware('permission:internal-trainings.create')->group(function () {
 });
 Route::middleware('permission:internal-trainings.update')->group(function () {
     Route::put('/internal-trainings/{id}', [InternalTrainingController::class, 'update']);
-    Route::patch('/internal-trainings/{id}', [InternalTrainingController::class, 'update']);
 });
 Route::middleware('permission:internal-trainings.delete')->group(function () {
     Route::delete('/internal-trainings/{id}', [InternalTrainingController::class, 'destroy']);
@@ -161,7 +153,6 @@ Route::middleware('permission:external-trainings.create')->group(function () {
 });
 Route::middleware('permission:external-trainings.update')->group(function () {
     Route::put('/external-trainings/{id}', [ExternalTrainingController::class, 'update']);
-    Route::patch('/external-trainings/{id}', [ExternalTrainingController::class, 'update']);
 });
 Route::middleware('permission:external-trainings.delete')->group(function () {
     Route::delete('/external-trainings/{id}', [ExternalTrainingController::class, 'destroy']);
@@ -177,7 +168,6 @@ Route::middleware('permission:other-trainings.create')->group(function () {
 });
 Route::middleware('permission:other-trainings.update')->group(function () {
     Route::put('/other-trainings/{id}', [OtherTrainingController::class, 'update']);
-    Route::patch('/other-trainings/{id}', [OtherTrainingController::class, 'update']);
 });
 Route::middleware('permission:other-trainings.delete')->group(function () {
     Route::delete('/other-trainings/{id}', [OtherTrainingController::class, 'destroy']);
@@ -193,7 +183,6 @@ Route::middleware('permission:training-files.create')->group(function () {
 });
 Route::middleware('permission:training-files.update')->group(function () {
     Route::put('/training-files/{id}', [TrainingFileController::class, 'update']);
-    Route::patch('/training-files/{id}', [TrainingFileController::class, 'update']);
 });
 Route::middleware('permission:training-files.delete')->group(function () {
     Route::delete('/training-files/{id}', [TrainingFileController::class, 'destroy']);
@@ -209,7 +198,6 @@ Route::middleware('permission:training-videos.create')->group(function () {
 });
 Route::middleware('permission:training-videos.update')->group(function () {
     Route::put('/training-videos/{id}', [TrainingVideoController::class, 'update']);
-    Route::patch('/training-videos/{id}', [TrainingVideoController::class, 'update']);
 });
 Route::middleware('permission:training-videos.delete')->group(function () {
     Route::delete('/training-videos/{id}', [TrainingVideoController::class, 'destroy']);
@@ -225,7 +213,6 @@ Route::middleware('permission:meetings.create')->group(function () {
 });
 Route::middleware('permission:meetings.update')->group(function () {
     Route::put('/meetings/{id}', [MeetingController::class, 'update']);
-    Route::patch('/meetings/{id}', [MeetingController::class, 'update']);
 });
 Route::middleware('permission:meetings.delete')->group(function () {
     Route::delete('/meetings/{id}', [MeetingController::class, 'destroy']);
@@ -246,7 +233,6 @@ Route::middleware('permission:meeting-sign-ups.create')->group(function () {
 });
 Route::middleware('permission:meeting-sign-ups.update')->group(function () {
     Route::put('/meeting-sign-ups/{id}', [MeetingSignUpController::class, 'update']);
-    Route::patch('/meeting-sign-ups/{id}', [MeetingSignUpController::class, 'update']);
 });
 Route::middleware('permission:meeting-sign-ups.delete')->group(function () {
     Route::delete('/meeting-sign-ups/{id}', [MeetingSignUpController::class, 'destroy']);
@@ -262,7 +248,6 @@ Route::middleware('permission:internal-meetings.create')->group(function () {
 });
 Route::middleware('permission:internal-meetings.update')->group(function () {
     Route::put('/internal-meetings/{id}', [InternalMeetingController::class, 'update']);
-    Route::patch('/internal-meetings/{id}', [InternalMeetingController::class, 'update']);
 });
 Route::middleware('permission:internal-meetings.delete')->group(function () {
     Route::delete('/internal-meetings/{id}', [InternalMeetingController::class, 'destroy']);
@@ -278,7 +263,6 @@ Route::middleware('permission:office-notifies.create')->group(function () {
 });
 Route::middleware('permission:office-notifies.update')->group(function () {
     Route::put('/office-notifies/{id}', [OfficeNotifyController::class, 'update']);
-    Route::patch('/office-notifies/{id}', [OfficeNotifyController::class, 'update']);
 });
 Route::middleware('permission:office-notifies.delete')->group(function () {
     Route::delete('/office-notifies/{id}', [OfficeNotifyController::class, 'destroy']);
@@ -294,7 +278,6 @@ Route::middleware('permission:new-notifies.create')->group(function () {
 });
 Route::middleware('permission:new-notifies.update')->group(function () {
     Route::put('/new-notifies/{id}', [NewNotifyController::class, 'update']);
-    Route::patch('/new-notifies/{id}', [NewNotifyController::class, 'update']);
 });
 Route::middleware('permission:new-notifies.delete')->group(function () {
     Route::delete('/new-notifies/{id}', [NewNotifyController::class, 'destroy']);
@@ -316,7 +299,6 @@ Route::middleware('permission:security-investments.create')->group(function () {
 });
 Route::middleware('permission:security-investments.update')->group(function () {
     Route::put('/security-investments/{id}', [SecurityInvestmentController::class, 'update']);
-    Route::patch('/security-investments/{id}', [SecurityInvestmentController::class, 'update']);
 });
 Route::middleware('permission:security-investments.delete')->group(function () {
     Route::delete('/security-investments/{id}', [SecurityInvestmentController::class, 'destroy']);
@@ -332,7 +314,6 @@ Route::middleware('permission:funding-executions.create')->group(function () {
 });
 Route::middleware('permission:funding-executions.update')->group(function () {
     Route::put('/funding-executions/{id}', [FundingExecutionController::class, 'update']);
-    Route::patch('/funding-executions/{id}', [FundingExecutionController::class, 'update']);
 });
 Route::middleware('permission:funding-executions.delete')->group(function () {
     Route::delete('/funding-executions/{id}', [FundingExecutionController::class, 'destroy']);

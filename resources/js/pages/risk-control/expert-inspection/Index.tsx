@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { useScope } from '@/contexts/ScopeContext';
 import { useAuth } from '@/hooks/use-auth';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse, PaginatedData } from '@/types/models';
@@ -29,6 +30,10 @@ export default function ExpertInspectionGroupView({
 }) {
     const { rootCompany, activeCompany } = useScope();
     const { user } = useAuth();
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('expert-inspections.create');
+    const canUpdate = canWrite('expert-inspections.update');
+    const canDelete = canWrite('expert-inspections.delete');
     const isProduction = mode === 'production';
     const companyId =
         (isProduction ? activeCompany?.id : rootCompany?.id) ?? undefined;
@@ -144,7 +149,7 @@ export default function ExpertInspectionGroupView({
                             导出隐患分类统计
                         </button>
                     )}
-                    {companyId && !isProduction && (
+                    {companyId && !isProduction && canCreate && (
                         <button
                             onClick={openCreate}
                             className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-600/25 active:scale-95"
@@ -284,28 +289,32 @@ export default function ExpertInspectionGroupView({
                                                     row.company_id ===
                                                         companyId && (
                                                         <>
-                                                            <button
-                                                                onClick={() =>
-                                                                    openEdit(
-                                                                        row,
-                                                                    )
-                                                                }
-                                                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
-                                                                title="编辑"
-                                                            >
-                                                                <Pencil className="h-3.5 w-3.5" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() =>
-                                                                    setDeleteItem(
-                                                                        row,
-                                                                    )
-                                                                }
-                                                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
-                                                                title="删除"
-                                                            >
-                                                                <Trash2 className="h-3.5 w-3.5" />
-                                                            </button>
+                                                            {canUpdate && (
+                                                                <button
+                                                                    onClick={() =>
+                                                                        openEdit(
+                                                                            row,
+                                                                        )
+                                                                    }
+                                                                    className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-blue-600/10 hover:text-blue-400"
+                                                                    title="编辑"
+                                                                >
+                                                                    <Pencil className="h-3.5 w-3.5" />
+                                                                </button>
+                                                            )}
+                                                            {canDelete && (
+                                                                <button
+                                                                    onClick={() =>
+                                                                        setDeleteItem(
+                                                                            row,
+                                                                        )
+                                                                    }
+                                                                    className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 hover:bg-red-600/10 hover:text-red-400"
+                                                                    title="删除"
+                                                                >
+                                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                                </button>
+                                                            )}
                                                         </>
                                                     )}
                                             </div>

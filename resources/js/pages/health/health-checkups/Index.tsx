@@ -53,6 +53,12 @@ const config: CrudPageConfig = {
     ],
     searchField: 'type',
     searchPlaceholder: '搜索检查类型...',
+    permissions: {
+        list: 'health-checkups.list',
+        create: 'health-checkups.create',
+        update: 'health-checkups.update',
+        delete: 'health-checkups.delete',
+    },
 };
 
 export default function HealthCheckupsIndex() {

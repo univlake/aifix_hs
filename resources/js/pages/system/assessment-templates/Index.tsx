@@ -12,6 +12,7 @@ import {
     X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types/models';
@@ -37,10 +38,25 @@ interface CopySummary {
     summary: Record<TemplateKind, { copied: number }>;
 }
 
-const KIND_META: Record<TemplateKind, { label: string; endpoint: string }> = {
-    daily: { label: '日常考核模板', endpoint: '/daily-check-templates' },
-    accident: { label: '事故考核模板', endpoint: '/accident-check-templates' },
-    add_points: { label: '加分项模板', endpoint: '/add-points-templates' },
+const KIND_META: Record<
+    TemplateKind,
+    { label: string; endpoint: string; permBase: string }
+> = {
+    daily: {
+        label: '日常考核模板',
+        endpoint: '/daily-check-templates',
+        permBase: 'daily-check-templates',
+    },
+    accident: {
+        label: '事故考核模板',
+        endpoint: '/accident-check-templates',
+        permBase: 'accident-check-templates',
+    },
+    add_points: {
+        label: '加分项模板',
+        endpoint: '/add-points-templates',
+        permBase: 'add-points-templates',
+    },
 };
 
 const KIND_ORDER: TemplateKind[] = ['daily', 'accident', 'add_points'];
@@ -74,6 +90,16 @@ export default function AssessmentTemplatesIndex() {
         parent: TemplateNode | null;
     } | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<TemplateNode | null>(null);
+
+    const { canWrite } = usePermission();
+    const permBase = KIND_META[kind].permBase;
+    const canCreate = canWrite(`${permBase}.create`);
+    const canUpdate = canWrite(`${permBase}.update`);
+    const canDelete = canWrite(`${permBase}.delete`);
+    const canCopyAny =
+        canWrite('daily-check-templates.create') ||
+        canWrite('accident-check-templates.create') ||
+        canWrite('add-points-templates.create');
 
     const loadYears = useCallback(async () => {
         try {
@@ -202,24 +228,28 @@ export default function AssessmentTemplatesIndex() {
                                 </option>
                             ))}
                         </select>
-                        <button
-                            type="button"
-                            onClick={() => setCopyOpen(true)}
-                            className="flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-600/15 px-4 py-2 text-sm font-medium text-violet-300 transition-colors hover:bg-violet-600/25"
-                        >
-                            <Copy className="h-4 w-4" />
-                            从上一年度复制
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setEditTarget({ node: null, parent: null })
-                            }
-                            className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-colors hover:bg-blue-600/25"
-                        >
-                            <Plus className="h-4 w-4" />
-                            新增条目
-                        </button>
+                        {canCopyAny && (
+                            <button
+                                type="button"
+                                onClick={() => setCopyOpen(true)}
+                                className="flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-600/15 px-4 py-2 text-sm font-medium text-violet-300 transition-colors hover:bg-violet-600/25"
+                            >
+                                <Copy className="h-4 w-4" />
+                                从上一年度复制
+                            </button>
+                        )}
+                        {canCreate && (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setEditTarget({ node: null, parent: null })
+                                }
+                                className="flex items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-600/15 px-4 py-2 text-sm font-medium text-blue-300 transition-colors hover:bg-blue-600/25"
+                            >
+                                <Plus className="h-4 w-4" />
+                                新增条目
+                            </button>
+                        )}
                     </div>
                 </header>
 
@@ -287,6 +317,9 @@ export default function AssessmentTemplatesIndex() {
                                     onAddChild={(parent) =>
                                         setEditTarget({ node: null, parent })
                                     }
+                                    canCreate={canCreate}
+                                    canUpdate={canUpdate}
+                                    canDelete={canDelete}
                                 />
                             ))}
                         </div>
@@ -333,6 +366,9 @@ function TreeRow({
     onEdit,
     onDelete,
     onAddChild,
+    canCreate,
+    canUpdate,
+    canDelete,
 }: {
     node: TemplateNode;
     parent?: TemplateNode | null;
@@ -340,6 +376,9 @@ function TreeRow({
     onEdit: (n: TemplateNode, parent: TemplateNode | null) => void;
     onDelete: (n: TemplateNode) => void;
     onAddChild: (parent: TemplateNode) => void;
+    canCreate: boolean;
+    canUpdate: boolean;
+    canDelete: boolean;
 }) {
     const children = nodeChildren(node);
     const hasChildren = children.length > 0;
@@ -389,30 +428,36 @@ function TreeRow({
                 </div>
 
                 <div className="flex items-center gap-0.5">
-                    <button
-                        type="button"
-                        onClick={() => onAddChild(node)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
-                        title="新增子项"
-                    >
-                        <Plus className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onEdit(node, parent)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
-                        title="编辑"
-                    >
-                        <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onDelete(node)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-red-600/10 hover:text-red-400"
-                        title="删除"
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {canCreate && (
+                        <button
+                            type="button"
+                            onClick={() => onAddChild(node)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
+                            title="新增子项"
+                        >
+                            <Plus className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {canUpdate && (
+                        <button
+                            type="button"
+                            onClick={() => onEdit(node, parent)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
+                            title="编辑"
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                    )}
+                    {canDelete && (
+                        <button
+                            type="button"
+                            onClick={() => onDelete(node)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-red-600/10 hover:text-red-400"
+                            title="删除"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -427,6 +472,9 @@ function TreeRow({
                             onEdit={onEdit}
                             onDelete={onDelete}
                             onAddChild={onAddChild}
+                            canCreate={canCreate}
+                            canUpdate={canUpdate}
+                            canDelete={canDelete}
                         />
                     ))}
                 </div>

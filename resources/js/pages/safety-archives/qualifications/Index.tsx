@@ -272,6 +272,9 @@ function InfoCard({
 // ── Production Standardization card ──────────────────────────────
 
 function ProductionStandardizationCard({ companyId }: { companyId: number }) {
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('production-standardizations.create');
+    const canUpdate = canWrite('production-standardizations.update');
     const [record, setRecord] = useState<ProductionStandardization | null>(
         null,
     );
@@ -286,6 +289,7 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
     const [saving, setSaving] = useState(false);
     const [savedMsg, setSavedMsg] = useState('');
     const [error, setError] = useState('');
+    const canEdit = record ? canUpdate : canCreate;
 
     useEffect(() => {
         setLoading(true);
@@ -313,7 +317,7 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
     }, [companyId]);
 
     const isNew = !record;
-    const isEditing = isNew || editMode;
+    const isEditing = canEdit && (isNew || editMode);
 
     const handleEdit = () => {
         setEditMode(true);
@@ -372,15 +376,17 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
             icon={ShieldCheck}
             accent="blue"
             action={
-                <EditButtons
-                    isNew={isNew}
-                    editMode={editMode}
-                    saving={saving}
-                    loading={loading}
-                    onEdit={handleEdit}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                />
+                canEdit ? (
+                    <EditButtons
+                        isNew={isNew}
+                        editMode={editMode}
+                        saving={saving}
+                        loading={loading}
+                        onEdit={handleEdit}
+                        onSave={handleSave}
+                        onCancel={handleCancel}
+                    />
+                ) : null
             }
         >
             {loading ? (
@@ -501,6 +507,9 @@ function ProductionStandardizationCard({ companyId }: { companyId: number }) {
 // ── Occupational Health Safety card ──────────────────────────────
 
 function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('occupational-health-safeties.create');
+    const canUpdate = canWrite('occupational-health-safeties.update');
     const [record, setRecord] = useState<OccupationalHealthSafety | null>(null);
     const [form, setForm] = useState({
         certification_body: '',
@@ -514,6 +523,7 @@ function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
     const [saving, setSaving] = useState(false);
     const [savedMsg, setSavedMsg] = useState('');
     const [error, setError] = useState('');
+    const canEdit = record ? canUpdate : canCreate;
 
     useEffect(() => {
         setLoading(true);
@@ -542,7 +552,7 @@ function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
     }, [companyId]);
 
     const isNew = !record;
-    const isEditing = isNew || editMode;
+    const isEditing = canEdit && (isNew || editMode);
 
     const handleEdit = () => {
         setEditMode(true);
@@ -602,15 +612,17 @@ function OccupationalHealthSafetyCard({ companyId }: { companyId: number }) {
             icon={Stethoscope}
             accent="teal"
             action={
-                <EditButtons
-                    isNew={isNew}
-                    editMode={editMode}
-                    saving={saving}
-                    loading={loading}
-                    onEdit={handleEdit}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                />
+                canEdit ? (
+                    <EditButtons
+                        isNew={isNew}
+                        editMode={editMode}
+                        saving={saving}
+                        loading={loading}
+                        onEdit={handleEdit}
+                        onSave={handleSave}
+                        onCancel={handleCancel}
+                    />
+                ) : null
             }
         >
             {loading ? (

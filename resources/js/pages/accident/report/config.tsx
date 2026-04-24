@@ -259,4 +259,10 @@ export const accidentReportConfig: CrudPageConfig = {
     ],
     searchField: 'type',
     searchPlaceholder: '按事故类型搜索...',
+    permissions: {
+        list: 'accident-bulletins.list',
+        create: 'accident-bulletins.create',
+        update: 'accident-bulletins.update',
+        delete: 'accident-bulletins.delete',
+    },
 };

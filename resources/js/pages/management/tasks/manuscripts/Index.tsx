@@ -5,6 +5,7 @@ import { OssDownloadLink } from '@/components/shared/OssDownloadLink';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { useAuth } from '@/hooks/use-auth';
+import { usePermission } from '@/hooks/use-permission';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { ApiResponse, PaginatedData } from '@/types/models';
@@ -109,7 +110,12 @@ export function ManuscriptsPage() {
         }
     }, [deleting, fetchRows, page, search, scope]);
 
-    const canCreate = scope === 'published';
+    const { canWrite } = usePermission();
+    const canCreate = canWrite('information-drafts.create');
+    const canUpdate = canWrite('information-drafts.update');
+    const canDelete = canWrite('information-drafts.delete');
+
+    const isPublishedScope = scope === 'published';
 
     return (
         <>
@@ -132,7 +138,7 @@ export function ManuscriptsPage() {
                             onChange={(e) => setSearch(e.target.value)}
                             className={cn(inputCls, 'max-w-xs')}
                         />
-                        {canCreate && (
+                        {isPublishedScope && canCreate && (
                             <button
                                 type="button"
                                 onClick={() => setCreateOpen(true)}
@@ -279,26 +285,34 @@ export function ManuscriptsPage() {
                                                 </button>
                                                 {canManage && (
                                                     <>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setEditing(d)
-                                                            }
-                                                            title="编辑"
-                                                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
-                                                        >
-                                                            <Pencil className="h-3.5 w-3.5" />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setDeleting(d)
-                                                            }
-                                                            title="删除"
-                                                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-600/10 hover:text-red-400"
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </button>
+                                                        {canUpdate && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setEditing(
+                                                                        d,
+                                                                    )
+                                                                }
+                                                                title="编辑"
+                                                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-blue-600/10 hover:text-blue-400"
+                                                            >
+                                                                <Pencil className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        )}
+                                                        {canDelete && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    setDeleting(
+                                                                        d,
+                                                                    )
+                                                                }
+                                                                title="删除"
+                                                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-600/10 hover:text-red-400"
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        )}
                                                     </>
                                                 )}
                                             </div>
