@@ -221,7 +221,11 @@ class BlocRisksController extends Controller
         $companies = Company::query()->where('id', $request->company_id)->with('companies', function ($query) {
             $query->where('status', 1);
         })->first();
-        $company_ids = $this->ascTree($companies);
+        // 排名只对比下属企业，集团本身不参与。
+        $company_ids = array_values(array_filter(
+            $this->ascTree($companies),
+            fn ($id) => $id !== (int) $request->company_id,
+        ));
 
         if (empty($company_ids)) {
             return $this->success([]);

@@ -243,11 +243,13 @@ export default function RiskMonitor() {
     }, [rootCompany?.id]);
 
     // Build sorted rankings from live company data (always current, not today-only like RiskLog)
-    const inherentSort = [...subCompanies]
-        .filter((c) => c.inherent_risk != null)
+    // 集团本身不参与下属企业排名对比。
+    const rootId = rootCompany?.id;
+    const inherentSort = subCompanies
+        .filter((c) => c.id !== rootId && c.inherent_risk != null)
         .sort((a, b) => Number(b.inherent_risk) - Number(a.inherent_risk));
-    const floatSort = [...subCompanies]
-        .filter((c) => c.float_risk != null)
+    const floatSort = subCompanies
+        .filter((c) => c.id !== rootId && c.float_risk != null)
         .sort((a, b) => Number(b.float_risk) - Number(a.float_risk));
 
     const activeSort =

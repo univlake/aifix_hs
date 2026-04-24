@@ -143,7 +143,7 @@ export function ManuscriptsPage() {
                                 type="button"
                                 onClick={() => setCreateOpen(true)}
                                 disabled={!companyId}
-                                className="inline-flex min-w-[140px] items-center justify-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-6 py-2.5 text-sm font-medium text-blue-200 transition-colors hover:bg-blue-600/30 disabled:opacity-40"
+                                className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-lg border border-blue-500/30 bg-blue-600/20 px-8 py-2.5 text-sm font-medium text-blue-200 transition-colors hover:bg-blue-600/30 disabled:opacity-40"
                             >
                                 <Plus className="h-4 w-4" />
                                 新建信息稿
@@ -225,11 +225,16 @@ export function ManuscriptsPage() {
                                                 <span className="font-medium">
                                                     {d.name}
                                                 </span>
-                                                {!canManage && (
-                                                    <span className="rounded bg-blue-900/40 px-1.5 py-0.5 text-[10px] text-blue-300">
-                                                        上级发布
-                                                    </span>
-                                                )}
+                                                {!canManage &&
+                                                    (scope === 'published' ? (
+                                                        <span className="rounded bg-amber-900/40 px-1.5 py-0.5 text-[10px] text-amber-300">
+                                                            已上报
+                                                        </span>
+                                                    ) : (
+                                                        <span className="rounded bg-blue-900/40 px-1.5 py-0.5 text-[10px] text-blue-300">
+                                                            上级发布
+                                                        </span>
+                                                    ))}
                                             </div>
                                             {d.comment && (
                                                 <div

@@ -317,11 +317,35 @@ class MonthStatisticsController extends Controller
             ->where('is_govern', 1)
             ->get();
 
+        // Kid rows carry person-level fields; the parent AccidentBulletin carries
+        // incident-level fields (happen_time, type, direct_cause, content, direct_loss_property).
+        // Merge both so the form can pre-fill every column.
         $accidentDetails = AccidentBulletinKid::query()
+            ->with('accidentBulletin')
             ->whereIn('company_id', $detailIds)
             ->whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
-            ->get();
+            ->get()
+            ->map(function (AccidentBulletinKid $kid) {
+                $bulletin = $kid->accidentBulletin;
+
+                return [
+                    'name' => $kid->name,
+                    'department' => $kid->department ?? $bulletin?->department,
+                    'sex' => $kid->sex,
+                    'age' => $kid->age,
+                    'work_type' => $kid->work_type,
+                    'work_age' => $kid->work_age,
+                    'education_level' => $kid->education_level,
+                    'degree_injury' => $kid->degree_injury ?? $bulletin?->degree_injury,
+                    'days_off' => $kid->days_off,
+                    'happen_time' => $bulletin?->happen_time,
+                    'type' => $bulletin?->type,
+                    'direct_cause' => $bulletin?->direct_cause,
+                    'content' => $bulletin?->content,
+                    'direct_loss_property' => $bulletin?->direct_loss_property,
+                ];
+            });
 
         $counts['no_rectify_info'] = null;
         $counts['govern_hidden_danger'] = $governDetails;
