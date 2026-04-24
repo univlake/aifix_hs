@@ -32,6 +32,7 @@ class User extends Authenticatable
         'user_id',
         'last_user_id',
         'login_times',
+        'must_change_credentials',
     ];
 
     protected $hidden = [
@@ -48,6 +49,7 @@ class User extends Authenticatable
             'role_id' => 'integer',
             'user_id' => 'integer',
             'last_user_id' => 'integer',
+            'must_change_credentials' => 'boolean',
         ];
     }
 

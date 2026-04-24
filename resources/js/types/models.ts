@@ -61,6 +61,7 @@ export interface AuthUser {
     company_id: number;
     is_expert: number;
     status: number;
+    must_change_credentials?: boolean;
 }
 
 export interface LoginResponse {

@@ -109,6 +109,7 @@ class CompanyController extends Controller
                 'nickname' => mb_substr($company->title ?: '企业', 0, 20).'管理员',
                 'company_id' => $company->id,
                 'status' => 1,
+                'must_change_credentials' => true,
             ]);
             $admin->assignRole('admin');
 

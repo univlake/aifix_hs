@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 Route::inertia('/', 'welcome')->name('home');
 Route::inertia('/login', 'auth/Login')->name('login');
 Route::inertia('/register', 'auth/Register')->name('register');
+Route::inertia('/first-login-setup', 'first-login-setup/Index')->name('first-login-setup');
 
 // ── 需要认证的页面 ────────────────────────────────────────────
 // Auth is enforced client-side (token in localStorage) via AppLayout's auth guard.
@@ -15,6 +16,10 @@ Route::group([], function () {
 
     // 仪表板
     Route::inertia('/dashboard', 'dashboard/Dashboard')->name('dashboard');
+
+    // ── 账号中心（个人）─────────────────────────────────────────
+    Route::inertia('/profile', 'profile/Index')->name('profile');
+    Route::inertia('/change-password', 'change-password/Index')->name('change-password');
 
     // ── 企业管理 ──────────────────────────────────────────────
     Route::inertia('/enterprise/current', 'enterprise/current/Index');

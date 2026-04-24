@@ -21,15 +21,26 @@ export default function AppLayout({ children }: AppLayoutProps) {
 }
 
 function AppLayoutInner({ children }: AppLayoutProps) {
-    const { isLoading, isAuthenticated, hasPermission } = useAuth();
+    const { user, isLoading, isAuthenticated, hasPermission } = useAuth();
     const { url } = usePage();
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
     useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.visit('/login');
+        if (isLoading) {
+            return;
         }
-    }, [isLoading, isAuthenticated]);
+
+        if (!isAuthenticated) {
+            router.visit('/login');
+
+            return;
+        }
+
+        // 首次登录必改账号信息 — 强制去 /first-login-setup
+        if (user?.must_change_credentials) {
+            router.visit('/first-login-setup');
+        }
+    }, [isLoading, isAuthenticated, user]);
 
     // Rule 3 at the route level: if the user navigates (or pastes a URL) to a
     // page they don't have permission for, bounce them to /dashboard. Runs after
