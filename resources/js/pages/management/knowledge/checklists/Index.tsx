@@ -89,7 +89,12 @@ const config: CrudPageConfig = {
             ],
             placeholder: '请选择状态',
         },
-        { key: 'preview_annex_url', label: '预览图', type: 'file' },
+        {
+            key: 'preview_annex_url',
+            label: '预览文件',
+            type: 'file',
+            hint: '请上传 PDF 文件，用于在检查表列表中预览。',
+        },
         { key: 'annex_url', label: '检查表文件', type: 'file', colSpan: 2 },
     ],
     searchField: 'title',

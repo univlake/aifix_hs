@@ -25,7 +25,6 @@ return new class extends Migration
         'personnels',
         'enterprise_types',
         'operational_types',
-        'base_areas',
         'record_types',
         'company_groups',
         'company_group_kids',
@@ -143,7 +142,11 @@ return new class extends Migration
     public function up(): void
     {
         foreach ($this->softDeleteOnlyTables as $tableName) {
-            if (Schema::hasTable($tableName) && ! $this->hasIndex($tableName, "{$tableName}_deleted_at_index")) {
+            if (
+                Schema::hasTable($tableName)
+                && Schema::hasColumn($tableName, 'deleted_at')
+                && ! $this->hasIndex($tableName, "{$tableName}_deleted_at_index")
+            ) {
                 Schema::table($tableName, function (Blueprint $table) {
                     $table->index('deleted_at');
                 });

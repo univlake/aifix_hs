@@ -13,7 +13,6 @@ class EmergencyDrill extends BaseModel
         'drill_number',
         'drill_type',
         'drill_form',
-        'drill_plan',
         'drill_kind',
         'event',
         'annex_url',

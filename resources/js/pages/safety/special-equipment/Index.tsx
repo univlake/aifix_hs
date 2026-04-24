@@ -639,12 +639,25 @@ export default function SpecialEquipmentIndex() {
     const currentTypeId =
         form.special_type_id !== '' ? Number(form.special_type_id) : null;
     const specFields = currentTypeId ? (SPEC_CONFIGS[currentTypeId] ?? []) : [];
+    const detailSpecFields = detailItem?.special_type_id
+        ? (SPEC_CONFIGS[detailItem.special_type_id] ?? [])
+        : [];
     const detailSpecLabels = Object.fromEntries(
-        (detailItem?.special_type_id
-            ? (SPEC_CONFIGS[detailItem.special_type_id] ?? [])
-            : []
-        ).map((field) => [field.key, field.label]),
+        detailSpecFields.map((field) => [field.key, field.label]),
     );
+    // Hide spec keys that don't apply to this equipment's type (only when a
+    // type is set; with no type we don't know what applies, so show all).
+    const allSpecKeys: SpecKey[] = [
+        'norm_model1',
+        'norm_model2',
+        'norm_model3',
+        'norm_model4',
+    ];
+    const detailHiddenSpecKeys = detailItem?.special_type_id
+        ? allSpecKeys.filter(
+              (k) => !detailSpecFields.some((f) => f.key === k),
+          )
+        : [];
 
     // When type changes, clear spec fields
     const handleTypeChange = (val: string) => {
@@ -790,6 +803,7 @@ export default function SpecialEquipmentIndex() {
                 title="特种设备详情"
                 data={detailItem as Record<string, unknown> | null}
                 onClose={detail.close}
+                hiddenKeys={detailHiddenSpecKeys}
                 labels={{
                     equipment_name: '设备名称',
                     special_type: '设备类型',

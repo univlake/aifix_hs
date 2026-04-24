@@ -23,7 +23,6 @@ class StoreEmergencyDrillRequest extends FormRequest
             'drill_number' => 'nullable|string|max:255',
             'drill_type' => 'nullable|string|max:255',
             'drill_form' => 'nullable|string|max:255',
-            'drill_plan' => 'nullable|string|max:255',
             'drill_kind' => 'nullable|string|max:255',
             'event' => 'nullable|string',
             'annex_url' => 'nullable|string',
@@ -42,7 +41,6 @@ class StoreEmergencyDrillRequest extends FormRequest
             'drill_number.max' => '不能超过255个字符',
             'drill_type.max' => '不能超过255个字符',
             'drill_form.max' => '不能超过255个字符',
-            'drill_plan.max' => '不能超过255个字符',
             'drill_kind.max' => '不能超过255个字符',
         ];
     }

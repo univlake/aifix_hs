@@ -64,6 +64,8 @@ export interface FormField {
     visibleWhen?: (form: Record<string, unknown>) => boolean;
     /** Columns for 'sub-table' type repeatable rows */
     subFields?: SubField[];
+    /** Small helper text rendered below the field */
+    hint?: string;
 }
 
 export interface CrudColumn {
@@ -1071,6 +1073,11 @@ export function CrudPage({ config }: { config: CrudPageConfig }) {
                                             form,
                                             updateForm,
                                             dynamicOptions,
+                                        )}
+                                        {field.hint && (
+                                            <p className="mt-1.5 text-xs text-slate-500">
+                                                {field.hint}
+                                            </p>
                                         )}
                                     </div>
                                 );

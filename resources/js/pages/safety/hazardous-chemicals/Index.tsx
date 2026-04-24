@@ -8,7 +8,7 @@ import {
     Loader2,
     FlaskConical,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
@@ -157,6 +157,41 @@ export default function HazardousChemicalsIndex() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const detail = useDetailDrawer<Chemical>();
     const detailItem = detail.data;
+
+    // Derive drawer data: merge value+unit pairs, flip 0/1 flags to 是/否.
+    const detailData = useMemo(() => {
+        if (!detailItem) {
+            return null;
+        }
+
+        const join = (v: unknown, unit: unknown) => {
+            const val = v != null && v !== '' ? String(v) : '';
+            const u = unit != null && unit !== '' ? String(unit) : '';
+
+            return val ? (u ? `${val} ${u}` : val) : null;
+        };
+
+        const d: Record<string, unknown> = {
+            ...(detailItem as unknown as Record<string, unknown>),
+            year_use: join(detailItem.year_use, detailItem.year_use_unit),
+            storage: join(detailItem.storage, detailItem.storage_unit),
+            pressure: join(detailItem.pressure, detailItem.pressure_unit),
+        };
+
+        for (const f of FLAG_FIELDS) {
+            d[f.key] = detailItem[f.key] ? '是' : '否';
+        }
+
+        delete d.year_use_unit;
+        delete d.storage_unit;
+        delete d.pressure_unit;
+
+        return d;
+    }, [detailItem]);
+
+    const detailHiddenKeys = detailItem?.is_mixing
+        ? []
+        : ['chemical_ingredients'];
     const [deleteItem, setDeleteItem] = useState<Chemical | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -393,8 +428,9 @@ export default function HazardousChemicalsIndex() {
             <ObjectDetailDrawer
                 open={detail.open}
                 title="危险化学品详情"
-                data={detailItem as Record<string, unknown> | null}
+                data={detailData}
                 onClose={detail.close}
+                hiddenKeys={detailHiddenKeys}
                 labels={{
                     name: '化学品名称',
                     alias: '别名',
@@ -405,10 +441,7 @@ export default function HazardousChemicalsIndex() {
                     temperature: '操作温度',
                     storage: '最大存储量',
                     year_use: '年使用量',
-                    year_use_unit: '年使用量单位',
-                    storage_unit: '存储量单位',
                     pressure: '操作压力',
-                    pressure_unit: '压力单位',
                     msds: 'MSDS附件',
                     is_supervision: '重点监管',
                     is_toxin: '毒性物质',
@@ -418,6 +451,7 @@ export default function HazardousChemicalsIndex() {
                     is_monitor: '监控化学品',
                     is_mixing: '混合物',
                     chemical_ingredients: '化学成分',
+                    name_ingredient: '成分名称',
                     content: '含量',
                 }}
             />

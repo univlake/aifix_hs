@@ -6,7 +6,7 @@ use RuntimeException;
 
 class OssService
 {
-    public static function signUrl(string $url, int $ttl = 3600): string
+    public static function signUrl(string $url, int $ttl = 3600, bool $forceDownload = false, ?string $filename = null): string
     {
         if (empty($url) || str_contains($url, 'OSSAccessKeyId')) {
             return $url; // already signed or empty
@@ -32,10 +32,22 @@ class OssService
         }
 
         $expireTime = time() + $ttl;
-        $stringToSign = "GET\n\n\n{$expireTime}\n/{$bucket}/{$objectKey}";
+        $resource = "/{$bucket}/{$objectKey}";
+        $extraQuery = '';
+
+        if ($forceDownload) {
+            $safeName = $filename ?: basename($objectKey);
+            // ASCII fallback (RFC 2616) + RFC 5987 for non-ASCII. Browsers prefer filename*.
+            $asciiFallback = preg_replace('/[^\x20-\x7E]/', '_', $safeName);
+            $rcdRaw = 'attachment; filename="'.$asciiFallback.'"; filename*=UTF-8\'\''.rawurlencode($safeName);
+            $resource .= '?response-content-disposition='.$rcdRaw;
+            $extraQuery = 'response-content-disposition='.rawurlencode($rcdRaw).'&';
+        }
+
+        $stringToSign = "GET\n\n\n{$expireTime}\n{$resource}";
         $signature = urlencode(base64_encode(hash_hmac('sha1', $stringToSign, $secretKey, true)));
 
-        return "{$host}/{$objectKey}?OSSAccessKeyId={$accessKeyId}&Expires={$expireTime}&Signature={$signature}";
+        return "{$host}/{$objectKey}?{$extraQuery}OSSAccessKeyId={$accessKeyId}&Expires={$expireTime}&Signature={$signature}";
     }
 
     /**

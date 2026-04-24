@@ -8,7 +8,7 @@ import {
     Loader2,
     ShieldAlert,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
@@ -108,6 +108,17 @@ export default function MajorHazardsIndex() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const detail = useDetailDrawer<MajorHazard>();
     const detailItem = detail.data;
+
+    const detailData = useMemo(() => {
+        if (!detailItem) {
+            return null;
+        }
+
+        return {
+            ...(detailItem as unknown as Record<string, unknown>),
+            is_sis: detailItem.is_sis ? '是' : '否',
+        };
+    }, [detailItem]);
     const [deleteItem, setDeleteItem] = useState<MajorHazard | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState('');
@@ -372,15 +383,15 @@ export default function MajorHazardsIndex() {
             <ObjectDetailDrawer
                 open={detail.open}
                 title="重大危险源详情"
-                data={detailItem as Record<string, unknown> | null}
+                data={detailData}
                 onClose={detail.close}
                 labels={{
                     name: '危险源名称',
                     level: '危险等级',
                     position: '所在位置',
                     r_value: 'R值',
-                    is_sis: '安全联锁',
-                    sil_level: 'SIL等级',
+                    is_sis: '安全仪表系统 (SIS)',
+                    sil_level: 'SIL 等级',
                     detect_parameter: '检测远传参数',
                     major_constitutes: '危险源构成',
                     hazardous_chemical_id: '危险化学品',

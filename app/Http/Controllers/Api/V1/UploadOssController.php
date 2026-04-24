@@ -82,8 +82,10 @@ class UploadOssController extends Controller
     public function signedUrl(Request $request): JsonResponse
     {
         $url = $request->get('url', '');
+        $forceDownload = $request->boolean('download');
+        $filename = $request->get('filename') ?: null;
 
-        return $this->success(OssService::signUrl($url));
+        return $this->success(OssService::signUrl($url, 3600, $forceDownload, $filename));
     }
 
     public function multipartInit(Request $request): JsonResponse
