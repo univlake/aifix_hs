@@ -112,14 +112,15 @@ Route::middleware('permission:certificate-statuses.update')->group(function () {
 });
 
 // ── 消控/淘汰控制人员（统一使用 elimination-control-staff，已合并原 fire-control-room-personnels 路径）────────────
-Route::middleware('permission:elimination-control-staff.list')->group(function () {
-    Route::get('/elimination-control-staff', [EliminationControlStaffController::class, 'index']);
-    Route::get('/elimination-control-staff/{id}', [EliminationControlStaffController::class, 'show']);
-});
+// Static routes (e.g. /template) must be registered before the {id} wildcard.
 Route::middleware('permission:elimination-control-staff.create')->group(function () {
     Route::get('/elimination-control-staff/template', [EliminationControlStaffController::class, 'template']);
     Route::post('/elimination-control-staff/import', [EliminationControlStaffController::class, 'import']);
     Route::post('/elimination-control-staff', [EliminationControlStaffController::class, 'store']);
+});
+Route::middleware('permission:elimination-control-staff.list')->group(function () {
+    Route::get('/elimination-control-staff', [EliminationControlStaffController::class, 'index']);
+    Route::get('/elimination-control-staff/{id}', [EliminationControlStaffController::class, 'show']);
 });
 Route::middleware('permission:elimination-control-staff.update')->group(function () {
     Route::put('/elimination-control-staff/{id}', [EliminationControlStaffController::class, 'update']);

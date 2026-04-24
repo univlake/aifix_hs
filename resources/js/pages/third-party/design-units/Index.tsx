@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Pencil, Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
@@ -198,14 +199,7 @@ export default function DesignUnitsIndex() {
             size: 80,
             cell: ({ row }) =>
                 row.original.annex_url ? (
-                    <a
-                        href={row.original.annex_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center rounded-md border border-blue-500/20 bg-blue-600/10 px-1.5 py-0.5 text-xs text-blue-400 hover:text-blue-300"
-                    >
-                        查看
-                    </a>
+                    <AttachmentViewer url={row.original.annex_url} />
                 ) : (
                     <span className="text-slate-700">—</span>
                 ),

@@ -1,5 +1,6 @@
 import { Download, FileText, Loader2, Send, X } from 'lucide-react';
 import { useState } from 'react';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import { uploadToOss } from '@/components/shared/OssUploadField';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -201,16 +202,17 @@ export function NormScoringModal({
                             />
                         </label>
                         {path && (
-                            <p className="mt-1 text-xs">
-                                <a
-                                    href={path}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-400 hover:text-blue-300"
-                                >
+                            <div className="mt-1 flex items-center gap-2 text-xs">
+                                <span className="truncate text-slate-300">
                                     {fileNameOf(path)}
-                                </a>
-                            </p>
+                                </span>
+                                <AttachmentViewer
+                                    url={path}
+                                    filename={fileNameOf(path)}
+                                    label="查看"
+                                    className="shrink-0 text-blue-400 hover:text-blue-300"
+                                />
+                            </div>
                         )}
                     </div>
                 </div>

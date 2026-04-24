@@ -941,13 +941,10 @@ function StaffTable({
             const link = document.createElement('a');
             link.href = url;
             const disposition = response.headers['content-disposition'] ?? '';
-            const match = disposition.match(
-                /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
+            link.setAttribute(
+                'download',
+                parseDispositionFilename(disposition, '导入模板.xlsx'),
             );
-            const filename = match
-                ? decodeURIComponent(match[1].replace(/['"]/g, ''))
-                : '导入模板.xlsx';
-            link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -1429,4 +1426,42 @@ function LoadingRow() {
 
 function Dash() {
     return <span className="text-slate-700">—</span>;
+}
+
+/**
+ * Parse a `Content-Disposition` header into a filename. Prefers RFC 5987
+ * `filename*=UTF-8''…` over the ASCII `filename=` fallback so Chinese template
+ * names round-trip correctly.
+ */
+function parseDispositionFilename(
+    disposition: string,
+    fallback: string,
+): string {
+    const ext = disposition.match(
+        /filename\*\s*=\s*([^']*)'[^']*'([^;]+)/i,
+    );
+
+    if (ext) {
+        try {
+            return decodeURIComponent(ext[2].trim());
+        } catch {
+            // fall through to ASCII form
+        }
+    }
+
+    const plain = disposition.match(
+        /filename\s*=\s*(?:"([^"]*)"|([^;]+))/i,
+    );
+
+    if (plain) {
+        const raw = (plain[1] ?? plain[2] ?? '').trim();
+
+        try {
+            return decodeURIComponent(raw) || fallback;
+        } catch {
+            return raw || fallback;
+        }
+    }
+
+    return fallback;
 }

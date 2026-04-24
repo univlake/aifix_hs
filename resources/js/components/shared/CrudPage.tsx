@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { OssVideoUploadField } from '@/components/shared/OssVideoUploadField';
@@ -1469,16 +1470,7 @@ function renderDetailField(field: FormField, row: Record<string, unknown>) {
     }
 
     if (field.type === 'file' || field.type === 'video') {
-        return (
-            <a
-                href={String(value)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md border border-blue-500/20 bg-blue-600/10 px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300"
-            >
-                查看附件
-            </a>
-        );
+        return <AttachmentViewer url={String(value)} label="查看附件" />;
     }
 
     if (field.type === 'date') {

@@ -1,5 +1,6 @@
 import { Loader2, Plus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import { useScope } from '@/contexts/ScopeContext';
 import api from '@/lib/api';
 import type { ApiResponse } from '@/types/models';
@@ -123,14 +124,11 @@ export function NormTab() {
                                 </td>
                                 <td className="px-4 py-3 text-slate-400">
                                     {r.path ? (
-                                        <a
-                                            href={r.path}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                        <AttachmentViewer
+                                            url={r.path}
+                                            label="查看"
                                             className="text-blue-400 hover:text-blue-300"
-                                        >
-                                            查看
-                                        </a>
+                                        />
                                     ) : (
                                         '—'
                                     )}

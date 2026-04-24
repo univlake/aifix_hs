@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 
 type DetailValue = unknown;
 
@@ -35,16 +36,7 @@ function isAttachmentField(fieldKey?: string): boolean {
 }
 
 function renderAttachmentLink(value: string): React.ReactNode {
-    return (
-        <a
-            href={value}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center rounded-md border border-blue-500/20 bg-blue-600/10 px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300"
-        >
-            查看附件
-        </a>
-    );
+    return <AttachmentViewer url={value} label="查看附件" />;
 }
 
 function renderValue(

@@ -9,12 +9,12 @@ import {
     X,
     AlertTriangle,
     Check,
-    FileText,
     ShieldCheck,
     Stethoscope,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { DataTable } from '@/components/data-table/DataTable';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import { DetailButton } from '@/components/shared/DetailButton';
 import { ObjectDetailDrawer } from '@/components/shared/ObjectDetailDrawer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
@@ -99,15 +99,11 @@ function ReadonlyFileField({
         <div className="rounded-lg bg-[#070d1f]/60 px-4 py-3">
             <dt className="mb-1 text-xs text-slate-600">{label}</dt>
             {value ? (
-                <a
-                    href={value}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <AttachmentViewer
+                    url={value}
+                    label="查看附件"
                     className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-400 transition-colors hover:text-blue-300"
-                >
-                    <FileText className="h-3.5 w-3.5" />
-                    查看附件
-                </a>
+                />
             ) : (
                 <dd className="text-sm font-medium text-slate-600">未上传</dd>
             )}
@@ -990,7 +986,7 @@ function FilingPermissionsSection({ companyId }: { companyId: number }) {
                     issuing_department: '发证部门',
                     filing_time: '备案/许可时间',
                     valid_period: '有效期',
-                    filing_scope: '备案/许可范围',
+                    filing_range: '备案/许可范围',
                     annex_url: '附件',
                     comment: '备注',
                 }}

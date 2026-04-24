@@ -93,6 +93,25 @@ describe('EliminationControlStaff API', function () {
         });
     });
 
+    describe('Template', function () {
+        it('downloads the import template with a Chinese filename', function () {
+            [$user] = createAdminWithCompany();
+
+            $response = $this->actingAs($user, 'api')
+                ->get('/api/v1/elimination-control-staff/template');
+
+            $response->assertOk();
+
+            $disposition = $response->headers->get('content-disposition');
+            preg_match(
+                "/filename\*\s*=\s*[^']*'[^']*'([^;]+)/i",
+                $disposition,
+                $m,
+            );
+            expect(urldecode($m[1] ?? ''))->toBe('消防控制室人员导入模板.xlsx');
+        });
+    });
+
     describe('Delete', function () {
         it('deletes record', function () {
             [$user, $company] = createAdminWithCompany();

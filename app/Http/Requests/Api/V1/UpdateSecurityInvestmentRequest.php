@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Enums\SecurityInvestmentType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateSecurityInvestmentRequest extends FormRequest
 {
@@ -15,8 +17,8 @@ class UpdateSecurityInvestmentRequest extends FormRequest
     {
         return [
             'company_id' => 'sometimes|required|integer',
-            'year' => 'sometimes|nullable|string|max:255',
-            'type' => 'sometimes|nullable|string|max:255',
+            'year' => 'sometimes|nullable|digits:4',
+            'type' => ['sometimes', 'nullable', Rule::enum(SecurityInvestmentType::class)],
             'title' => 'sometimes|nullable|string|max:255',
             'content' => 'sometimes|nullable|string',
             'budget' => 'sometimes|nullable|numeric',
@@ -29,8 +31,8 @@ class UpdateSecurityInvestmentRequest extends FormRequest
         return [
             'company_id.required' => '不能为空',
             'company_id.integer' => '必须是整数',
-            'year.max' => '不能超过255个字符',
-            'type.max' => '不能超过255个字符',
+            'year.digits' => '必须是4位年份',
+            'type.enum' => '类型不合法',
             'title.max' => '不能超过255个字符',
         ];
     }

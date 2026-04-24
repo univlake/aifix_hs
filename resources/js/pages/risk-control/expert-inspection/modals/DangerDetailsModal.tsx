@@ -1,4 +1,6 @@
 import { Image as ImageIcon } from 'lucide-react';
+import { useState } from 'react';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import { cn } from '@/lib/utils';
 import {
     Modal,
@@ -10,8 +12,37 @@ import {
 } from '../components';
 import type { AnnexItem, HiddenDanger } from '../types';
 
-function isImageUrl(url: string): boolean {
-    return /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(url);
+function AnnexTile({ item }: { item: AnnexItem }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="group relative block overflow-hidden rounded-md border border-blue-900/30 bg-[#070d1f] text-left hover:border-blue-500/40"
+                title={item.geolocation ?? undefined}
+            >
+                <div className="flex h-24 w-full flex-col items-center justify-center gap-1 px-2 text-[10px] text-slate-500">
+                    <ImageIcon className="h-5 w-5 text-slate-600" />
+                    <span className="w-full truncate text-center">
+                        {item.annex_url.split('/').pop() ?? '附件'}
+                    </span>
+                </div>
+                {item.geolocation && (
+                    <span className="absolute right-0 bottom-0 left-0 truncate bg-black/60 px-1 py-0.5 text-[9px] text-slate-300">
+                        📍 {item.geolocation}
+                    </span>
+                )}
+            </button>
+            <AttachmentViewer
+                url={item.annex_url}
+                headless
+                open={open}
+                onClose={() => setOpen(false)}
+            />
+        </>
+    );
 }
 
 function AnnexGallery({ items }: { items: AnnexItem[] }) {
@@ -26,34 +57,7 @@ function AnnexGallery({ items }: { items: AnnexItem[] }) {
     return (
         <div className="grid grid-cols-4 gap-2">
             {items.map((a, i) => (
-                <a
-                    key={a.id ?? i}
-                    href={a.annex_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group relative block overflow-hidden rounded-md border border-blue-900/30 bg-[#070d1f]"
-                    title={a.geolocation ?? undefined}
-                >
-                    {isImageUrl(a.annex_url) ? (
-                        <img
-                            src={a.annex_url}
-                            alt=""
-                            className="h-24 w-full object-cover transition-opacity group-hover:opacity-80"
-                        />
-                    ) : (
-                        <div className="flex h-24 w-full flex-col items-center justify-center gap-1 px-2 text-[10px] text-slate-500">
-                            <ImageIcon className="h-5 w-5 text-slate-600" />
-                            <span className="w-full truncate text-center">
-                                {a.annex_url.split('/').pop() ?? '附件'}
-                            </span>
-                        </div>
-                    )}
-                    {a.geolocation && (
-                        <span className="absolute right-0 bottom-0 left-0 truncate bg-black/60 px-1 py-0.5 text-[9px] text-slate-300">
-                            📍 {a.geolocation}
-                        </span>
-                    )}
-                </a>
+                <AnnexTile key={a.id ?? i} item={a} />
             ))}
         </div>
     );
