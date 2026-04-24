@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\SecurityInvestmentType;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\StoreYearStatisticsRequest;
 use App\Http\Requests\Api\V1\UpdateYearStatisticsRequest;
@@ -196,12 +197,12 @@ class YearStatisticsController extends Controller
             $ownSafety = (int) SecurityInvestment::query()
                 ->where('company_id', $company->id)
                 ->where('year', $year)
-                ->where('type', '安全投入')
+                ->where('type', SecurityInvestmentType::Safety->value)
                 ->sum('budget');
             $ownFire = (int) SecurityInvestment::query()
                 ->where('company_id', $company->id)
                 ->where('year', $year)
-                ->where('type', '消防投入')
+                ->where('type', SecurityInvestmentType::Fire->value)
                 ->sum('budget');
         }
 

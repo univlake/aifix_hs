@@ -1,12 +1,6 @@
-import {
-    Loader2,
-    Upload,
-    FileVideo,
-    X,
-    ExternalLink,
-    Pause,
-} from 'lucide-react';
+import { Loader2, Upload, FileVideo, X, Pause } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import api from '@/lib/api';
 import type { ApiResponse } from '@/types/models';
 
@@ -341,18 +335,17 @@ export function OssVideoUploadField({
             {error && <p className="text-xs text-red-400">{error}</p>}
 
             {!uploading && value && (
-                <a
-                    href={value}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-blue-400 transition-colors hover:text-blue-300"
-                >
+                <div className="flex items-center gap-1.5 text-xs text-slate-400">
                     <FileVideo className="h-3.5 w-3.5 shrink-0" />
                     <span className="max-w-xs truncate">
                         {filename || '查看视频'}
                     </span>
-                    <ExternalLink className="h-3 w-3 shrink-0" />
-                </a>
+                    <AttachmentViewer
+                        url={value}
+                        filename={filename}
+                        label="查看"
+                    />
+                </div>
             )}
         </div>
     );

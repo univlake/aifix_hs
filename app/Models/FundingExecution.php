@@ -4,8 +4,6 @@ namespace App\Models;
 
 class FundingExecution extends BaseModel
 {
-    protected $appends = ['scale'];
-
     protected $fillable = [
         'year',
         'security_investment_id',
@@ -16,16 +14,6 @@ class FundingExecution extends BaseModel
         'user_id',
         'last_user_id',
     ];
-
-    public function getScaleAttribute()
-    {
-        $investment = SecurityInvestment::find($this->security_investment_id);
-        if ($investment && $investment->budget > 0) {
-            return round($this->budget / $investment->budget * 100, 2).'%';
-        }
-
-        return '0%';
-    }
 
     public function security_investment()
     {

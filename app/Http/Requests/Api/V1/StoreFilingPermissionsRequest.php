@@ -16,6 +16,12 @@ class StoreFilingPermissionsRequest extends FormRequest
         return [
             'company_id' => 'required|integer',
             'record_type_id' => 'required|integer',
+            'issuing_department' => 'nullable|string|max:255',
+            'filing_range' => 'nullable|string|max:255',
+            'filing_time' => 'nullable|date',
+            'valid_period' => 'nullable|string|max:64',
+            'comment' => 'nullable|string',
+            'annex_url' => 'nullable|string',
         ];
     }
 

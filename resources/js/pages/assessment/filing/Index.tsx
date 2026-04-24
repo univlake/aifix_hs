@@ -14,6 +14,7 @@ import {
     X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import { uploadToOss } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { usePermission } from '@/hooks/use-permission';
@@ -840,14 +841,15 @@ export function MultiFileUpload({
                             className="flex items-center gap-2 text-xs"
                         >
                             <FileText className="h-3 w-3 shrink-0 text-blue-400" />
-                            <a
-                                href={p}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="truncate text-blue-400 hover:text-blue-300"
-                            >
+                            <span className="truncate text-slate-300">
                                 {fileNameOf(p)}
-                            </a>
+                            </span>
+                            <AttachmentViewer
+                                url={p}
+                                filename={fileNameOf(p)}
+                                label="查看"
+                                className="shrink-0 text-xs text-blue-400 hover:text-blue-300"
+                            />
                             <button
                                 type="button"
                                 onClick={() =>
@@ -1102,18 +1104,21 @@ export function FilingDetailsDrawer({
                                                                             className="flex items-center gap-1.5 text-xs"
                                                                         >
                                                                             <FileText className="h-3 w-3 shrink-0 text-blue-400" />
-                                                                            <a
-                                                                                href={
-                                                                                    p
-                                                                                }
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                className="truncate text-blue-400 hover:text-blue-300"
-                                                                            >
+                                                                            <span className="truncate text-slate-300">
                                                                                 {fileNameOf(
                                                                                     p,
                                                                                 )}
-                                                                            </a>
+                                                                            </span>
+                                                                            <AttachmentViewer
+                                                                                url={
+                                                                                    p
+                                                                                }
+                                                                                filename={fileNameOf(
+                                                                                    p,
+                                                                                )}
+                                                                                label="查看"
+                                                                                className="ml-auto shrink-0 text-blue-400 hover:text-blue-300"
+                                                                            />
                                                                         </li>
                                                                     ),
                                                                 )}

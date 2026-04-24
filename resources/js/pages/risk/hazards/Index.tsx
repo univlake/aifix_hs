@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { Loader2, ImageIcon, Save, Pencil, X, Upload } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import { OssUploadField } from '@/components/shared/OssUploadField';
 import { useScope } from '@/contexts/ScopeContext';
 import { usePermission } from '@/hooks/use-permission';
@@ -188,9 +189,9 @@ export default function RiskSourceIndex() {
                             </p>
                             <OssUploadField
                                 value={annexUrl}
-                                onChange={(url) => {
+                                onChange={(url, signedUrl) => {
                                     setAnnexUrl(url);
-                                    setDisplayUrl(url);
+                                    setDisplayUrl(signedUrl ?? url);
                                 }}
                                 accept="image/*,.pdf"
                                 dir="risk-distribution-maps/"
@@ -218,17 +219,14 @@ export default function RiskSourceIndex() {
                             </div>
                         ) : (
                             <div className="flex items-center justify-center rounded-xl border border-blue-900/30 bg-[#070d1f] p-12">
-                                <a
-                                    href={displayUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex flex-col items-center gap-3 text-blue-400 transition-colors hover:text-blue-300"
-                                >
+                                <div className="flex flex-col items-center gap-3 text-slate-400">
                                     <ImageIcon className="h-10 w-10 opacity-60" />
-                                    <span className="text-sm">
-                                        点击查看文件
-                                    </span>
-                                </a>
+                                    <AttachmentViewer
+                                        url={annexUrl || displayUrl}
+                                        label="点击查看文件"
+                                        className="text-sm text-blue-400 transition-colors hover:text-blue-300"
+                                    />
+                                </div>
                             </div>
                         )
                     ) : (

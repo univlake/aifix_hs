@@ -1,5 +1,5 @@
 import { Loader2, Upload, FileText, ExternalLink, X } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import api from '@/lib/api';
 import { getErrorMessage } from '@/types/api-error';
 import type { ApiResponse } from '@/types/models';
@@ -70,7 +70,11 @@ async function uploadToOss(file: File, dir?: string): Promise<string> {
 
 interface OssUploadFieldProps {
     value: string;
-    onChange: (url: string) => void;
+    /**
+     * Called with the raw OSS URL to store. On upload, a signed preview URL
+     * is also passed as the second argument for use in private-bucket previews.
+     */
+    onChange: (url: string, signedUrl?: string) => void;
     dir?: string;
     accept?: string;
     /** Signed/proxied URL to use for the preview thumbnail instead of `value`. */
@@ -86,15 +90,46 @@ export function OssUploadField({
 }: OssUploadFieldProps) {
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
+    const [lastSigned, setLastSigned] = useState<{
+        raw: string;
+        signed: string;
+    } | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const previewUrl = displayValue || value;
+    const signedForValue =
+        lastSigned && lastSigned.raw === value ? lastSigned.signed : '';
+    const previewUrl = displayValue || signedForValue || value;
     const isImage = previewUrl
         ? /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(previewUrl)
         : false;
     const filename = value
         ? decodeURIComponent(value.split('/').pop()?.split('?')[0] ?? '')
         : '';
+
+    // Auto-sign existing values (e.g. when editing a record). Without this,
+    // raw OSS URLs would 403 in the preview on private buckets.
+    useEffect(() => {
+        if (!value || displayValue || lastSigned?.raw === value) {
+            return;
+        }
+
+        let cancelled = false;
+        api.get<ApiResponse<string>>('/upload/oss-sign', { params: { url: value } })
+            .then(({ data: res }) => {
+                if (cancelled) {
+                    return;
+                }
+
+                setLastSigned({ raw: value, signed: res.data || value });
+            })
+            .catch(() => {
+                // Leave preview to fall back to raw value.
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [value, displayValue, lastSigned?.raw]);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -108,7 +143,22 @@ export function OssUploadField({
 
         try {
             const url = await uploadToOss(file, dir);
-            onChange(url);
+
+            let signed = url;
+
+            try {
+                const { data: res } = await api.get<ApiResponse<string>>(
+                    '/upload/oss-sign',
+                    { params: { url } },
+                );
+                signed = res.data || url;
+            } catch {
+                // Fall back to raw URL — preview may 403 on private buckets,
+                // but the upload itself succeeded.
+            }
+
+            setLastSigned({ raw: url, signed });
+            onChange(url, signed);
         } catch (err: unknown) {
             setUploadError(getErrorMessage(err, '上传失败，请重试'));
         } finally {

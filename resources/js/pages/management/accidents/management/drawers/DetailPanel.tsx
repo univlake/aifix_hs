@@ -1,5 +1,6 @@
 import { Loader2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import api from '@/lib/api';
 import type { ApiResponse } from '@/types/models';
 import {
@@ -117,16 +118,13 @@ export function DetailPanel({
                                                     FIELD_LABELS.accident_report_url
                                                 }
                                             </p>
-                                            <a
-                                                href={
+                                            <AttachmentViewer
+                                                url={
                                                     detail.accident_report_url
                                                 }
-                                                target="_blank"
-                                                rel="noreferrer"
+                                                label="查看附件"
                                                 className="mt-1 inline-block text-xs text-blue-400 underline underline-offset-2 hover:text-blue-300"
-                                            >
-                                                查看附件
-                                            </a>
+                                            />
                                         </div>
                                     )}
                                     {detail.accident_photo_url && (
@@ -136,14 +134,11 @@ export function DetailPanel({
                                                     FIELD_LABELS.accident_photo_url
                                                 }
                                             </p>
-                                            <a
-                                                href={detail.accident_photo_url}
-                                                target="_blank"
-                                                rel="noreferrer"
+                                            <AttachmentViewer
+                                                url={detail.accident_photo_url}
+                                                label="查看照片"
                                                 className="mt-1 inline-block text-xs text-blue-400 underline underline-offset-2 hover:text-blue-300"
-                                            >
-                                                查看照片
-                                            </a>
+                                            />
                                         </div>
                                     )}
                                 </div>

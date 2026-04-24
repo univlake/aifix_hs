@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\CorrectionResult;
 use App\Enums\HiddenDangerLevel;
 use App\Enums\MeetingType;
+use App\Enums\SecurityInvestmentType;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\StoreMonthStatisticsRequest;
 use App\Http\Requests\Api\V1\UpdateMonthStatisticsRequest;
@@ -377,13 +378,13 @@ class MonthStatisticsController extends Controller
             ->whereIn('company_id', $companyIds)
             ->whereYear('created_at', $year)->whereMonth('created_at', $month)
             ->whereHas('security_investment', function ($q) {
-                $q->where('type', '安全投入');
+                $q->where('type', SecurityInvestmentType::Safety->value);
             })->sum('budget');
         $fireFunding = (int) FundingExecution::query()
             ->whereIn('company_id', $companyIds)
             ->whereYear('created_at', $year)->whereMonth('created_at', $month)
             ->whereHas('security_investment', function ($q) {
-                $q->where('type', '消防投入');
+                $q->where('type', SecurityInvestmentType::Fire->value);
             })->sum('budget');
 
         $fireEquip = FireEquipment::query()

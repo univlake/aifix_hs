@@ -1,3 +1,4 @@
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import { CrudPage } from '@/components/shared/CrudPage';
 import type { CrudPageConfig } from '@/components/shared/CrudPage';
 
@@ -33,14 +34,7 @@ const config: CrudPageConfig = {
             width: 70,
             render: (val) =>
                 val ? (
-                    <a
-                        href={String(val)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center rounded-md border border-blue-500/20 bg-blue-600/10 px-1.5 py-0.5 text-xs font-medium text-blue-400 hover:text-blue-300"
-                    >
-                        查看
-                    </a>
+                    <AttachmentViewer url={String(val)} />
                 ) : (
                     <span className="text-slate-700">—</span>
                 ),

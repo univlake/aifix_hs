@@ -57,6 +57,33 @@ describe('FilingPermission API', function () {
             $response->assertOk();
         });
 
+        it('persists all optional fields on create', function () {
+            [$user, $company] = createAdminWithCompany();
+
+            $payload = [
+                'company_id' => $company->id,
+                'record_type_id' => 1,
+                'issuing_department' => '应急管理局',
+                'filing_range' => '全公司',
+                'filing_time' => '2026-01-15',
+                'valid_period' => '2028-01-15',
+                'comment' => '首次备案',
+                'annex_url' => 'https://example.com/file.pdf',
+            ];
+
+            $response = $this->actingAs($user, 'api')
+                ->postJson('/api/v1/filing-permissions', $payload);
+
+            $response->assertOk();
+
+            $record = FilingPermission::latest('id')->first();
+            expect($record->issuing_department)->toBe('应急管理局');
+            expect($record->filing_range)->toBe('全公司');
+            expect($record->valid_period)->toBe('2028-01-15');
+            expect($record->comment)->toBe('首次备案');
+            expect($record->annex_url)->toBe('https://example.com/file.pdf');
+        });
+
         it('denies create without permission', function () {
             [$user, $company] = createUserWithCompany();
 

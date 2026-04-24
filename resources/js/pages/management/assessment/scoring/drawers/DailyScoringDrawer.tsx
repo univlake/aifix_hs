@@ -1,5 +1,6 @@
 import { CheckCircle2, FileText, Loader2, Send, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { AttachmentViewer } from '@/components/shared/AttachmentViewer';
 import api from '@/lib/api';
 import {
     STATUS_SCORED,
@@ -247,18 +248,21 @@ export function DailyScoringDrawer({
                                                                             className="flex items-center gap-1.5 text-xs"
                                                                         >
                                                                             <FileText className="h-3 w-3 shrink-0 text-blue-400" />
-                                                                            <a
-                                                                                href={
-                                                                                    p
-                                                                                }
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                className="truncate text-blue-400 hover:text-blue-300"
-                                                                            >
+                                                                            <span className="truncate text-slate-300">
                                                                                 {fileNameOf(
                                                                                     p,
                                                                                 )}
-                                                                            </a>
+                                                                            </span>
+                                                                            <AttachmentViewer
+                                                                                url={
+                                                                                    p
+                                                                                }
+                                                                                filename={fileNameOf(
+                                                                                    p,
+                                                                                )}
+                                                                                label="查看"
+                                                                                className="ml-auto shrink-0 text-blue-400 hover:text-blue-300"
+                                                                            />
                                                                         </li>
                                                                     ),
                                                                 )}

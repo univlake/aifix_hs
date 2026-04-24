@@ -47,10 +47,18 @@ interface FundingExecution {
     proportion: string;
 }
 
-// ── Shared styles ─────────────────────────────────────────────────
+// ── Shared styles & constants ─────────────────────────────────────
 
 const inputCls =
     'w-full rounded-lg border border-blue-900/50 bg-[#0a1428] py-2 px-3 text-sm text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30';
+
+const INVESTMENT_TYPES = ['安全投入', '消防投入'] as const;
+
+function buildYearOptions(): string[] {
+    const current = new Date().getFullYear();
+
+    return Array.from({ length: 8 }, (_, i) => String(current + 1 - i));
+}
 
 function fmt(v: number | null | undefined): string {
     if (v == null) {
@@ -390,27 +398,55 @@ function InvestmentPlansTab({ companyId }: { companyId: number }) {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <FieldLabel>年份</FieldLabel>
-                                <input
-                                    type="text"
+                                <select
                                     value={form.year}
                                     onChange={(e) =>
                                         set('year', e.target.value)
                                     }
-                                    placeholder="如：2026"
-                                    className={inputCls}
-                                />
+                                    className={cn(
+                                        inputCls,
+                                        'cursor-pointer appearance-none',
+                                    )}
+                                >
+                                    <option value="" className="bg-[#0d1530]">
+                                        请选择年份
+                                    </option>
+                                    {buildYearOptions().map((y) => (
+                                        <option
+                                            key={y}
+                                            value={y}
+                                            className="bg-[#0d1530]"
+                                        >
+                                            {y}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <FieldLabel>类型</FieldLabel>
-                                <input
-                                    type="text"
+                                <select
                                     value={form.type}
                                     onChange={(e) =>
                                         set('type', e.target.value)
                                     }
-                                    placeholder="如：消防、设备"
-                                    className={inputCls}
-                                />
+                                    className={cn(
+                                        inputCls,
+                                        'cursor-pointer appearance-none',
+                                    )}
+                                >
+                                    <option value="" className="bg-[#0d1530]">
+                                        请选择类型
+                                    </option>
+                                    {INVESTMENT_TYPES.map((t) => (
+                                        <option
+                                            key={t}
+                                            value={t}
+                                            className="bg-[#0d1530]"
+                                        >
+                                            {t}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                         <div>
@@ -829,15 +865,29 @@ function FundingExecutionsTab({ companyId }: { companyId: number }) {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <FieldLabel>年份</FieldLabel>
-                                <input
-                                    type="text"
+                                <select
                                     value={form.year}
                                     onChange={(e) =>
                                         set('year', e.target.value)
                                     }
-                                    placeholder="如：2026"
-                                    className={inputCls}
-                                />
+                                    className={cn(
+                                        inputCls,
+                                        'cursor-pointer appearance-none',
+                                    )}
+                                >
+                                    <option value="" className="bg-[#0d1530]">
+                                        请选择年份
+                                    </option>
+                                    {buildYearOptions().map((y) => (
+                                        <option
+                                            key={y}
+                                            value={y}
+                                            className="bg-[#0d1530]"
+                                        >
+                                            {y}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <FieldLabel>关联安全投入计划</FieldLabel>
