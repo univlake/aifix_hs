@@ -651,7 +651,8 @@ trait CalculateRiskValue
             $logs['health_checkup_scale'] = $this->normalizedInverse($self, 'health_checkup_scale')
                 * self::FLOAT_WEIGHTS['health_checkup_scale'];
 
-            if ((int) $this->bulk['health_report_counts']->get($cid, 0) > 0) {
+            // "No occupational-health report filed" awards the full weight (legacy semantics).
+            if ((int) $this->bulk['health_report_counts']->get($cid, 0) === 0) {
                 $logs['health_report_scale'] = self::FLOAT_WEIGHTS['health_report_scale'];
             }
 
@@ -673,8 +674,12 @@ trait CalculateRiskValue
     }
 
     /**
-     * For each bloc company, calculate inherent_risk and float_risk
-     * as the weighted average of all active descendant produce companies.
+     * For each bloc, set inherent_risk and float_risk to the average of its
+     * DIRECT children only — never transitive descendants. Blocs are processed
+     * deepest-subtree-first and each bloc's update is written before the next
+     * bloc reads, so a parent bloc averages its child blocs' just-computed
+     * values (a bloc that is also is_produce has its Phase-2 produce score
+     * overwritten by its bloc-average here).
      */
     protected function calculateBlocRisk(string $content, ?string $now = null): void
     {
@@ -685,25 +690,28 @@ trait CalculateRiskValue
         }
 
         $companyTree = $this->loadCompanyTree();
+        $blocsSorted = $blocCompanies->sortBy(
+            fn ($b) => $this->subtreeDepth((int) $b->id, $companyTree)
+        )->values();
+
         $blocRiskLogRows = [];
-        $blocCompanyUpdates = [];
 
-        foreach ($blocCompanies as $bloc) {
-            $descendantIds = $this->descendantsOf((int) $bloc->id, $companyTree);
-            if (empty($descendantIds)) {
+        foreach ($blocsSorted as $bloc) {
+            $childIds = $companyTree[(int) $bloc->id] ?? [];
+            if (empty($childIds)) {
                 continue;
             }
 
-            $produces = Company::whereIn('id', $descendantIds)
-                ->where('is_produce', 1)->where('status', 1)
+            $children = Company::whereIn('id', $childIds)
+                ->where('status', 1)
                 ->whereNotNull('inherent_risk')->get();
-            if ($produces->isEmpty()) {
+            if ($children->isEmpty()) {
                 continue;
             }
 
-            $count = $produces->count();
-            $inherentAvg = round($produces->sum('inherent_risk') / $count, 2);
-            $floatAvg = round($produces->sum('float_risk') / $count, 2);
+            $count = $children->count();
+            $inherentAvg = round($children->sum('inherent_risk') / $count, 2);
+            $floatAvg = round($children->sum('float_risk') / $count, 2);
             $inherentGrade = $this->riskGrade($inherentAvg);
             $floatGrade = $this->riskGrade($floatAvg);
 
@@ -716,16 +724,42 @@ trait CalculateRiskValue
                 oldGrade: $bloc->float_risk_grade, newGrade: $floatGrade, content: $content, now: $now,
             );
 
-            $blocCompanyUpdates[(int) $bloc->id] = [
+            // Write per-bloc immediately so any shallower bloc that has this one
+            // as a direct child reads the freshly-averaged value below.
+            Company::where('id', $bloc->id)->update([
                 'inherent_risk' => $inherentAvg,
                 'inherent_risk_grade' => $inherentGrade,
                 'float_risk' => $floatAvg,
                 'float_risk_grade' => $floatGrade,
-            ];
+            ]);
         }
 
         $this->bulkInsertChunked('risk_logs', $blocRiskLogRows);
-        $this->batchUpdateCompanies($blocCompanyUpdates);
+    }
+
+    /**
+     * Maximum depth of descendants below $companyId. A leaf returns 0; a node
+     * whose only children are leaves returns 1; etc. Used to sort blocs into a
+     * bottom-up processing order in calculateBlocRisk().
+     *
+     * @param  array<int, array<int>>  $tree
+     */
+    protected function subtreeDepth(int $companyId, array $tree): int
+    {
+        $children = $tree[$companyId] ?? [];
+        if (empty($children)) {
+            return 0;
+        }
+
+        $max = 0;
+        foreach ($children as $child) {
+            $depth = 1 + $this->subtreeDepth($child, $tree);
+            if ($depth > $max) {
+                $max = $depth;
+            }
+        }
+
+        return $max;
     }
 
     /**
@@ -751,29 +785,6 @@ trait CalculateRiskValue
             });
 
         return $tree;
-    }
-
-    /**
-     * Resolve all descendant ids of $companyId from a pre-loaded parent→children map.
-     *
-     * @param  array<int, array<int>>  $tree
-     * @return array<int>
-     */
-    protected function descendantsOf(int $companyId, array $tree): array
-    {
-        $stack = $tree[$companyId] ?? [];
-        $out = [];
-        while (! empty($stack)) {
-            $id = array_pop($stack);
-            $out[] = $id;
-            if (! empty($tree[$id])) {
-                foreach ($tree[$id] as $child) {
-                    $stack[] = $child;
-                }
-            }
-        }
-
-        return $out;
     }
 
     /**
@@ -811,6 +822,11 @@ trait CalculateRiskValue
     /**
      * Insert rows into a table in chunks of $chunkSize. Skips when empty.
      *
+     * Each chunk is normalized to the union of its rows' keys, with missing
+     * keys defaulted to 0 — required because per-company $logs arrays are
+     * built conditionally and Laravel's bulk insert needs uniform columns.
+     * Explicit nulls (e.g. nullable old_risk_num) are preserved.
+     *
      * @param  array<int, array<string, mixed>>  $rows
      */
     protected function bulkInsertChunked(string $table, array $rows, int $chunkSize = 500): void
@@ -819,7 +835,22 @@ trait CalculateRiskValue
             return;
         }
         foreach (array_chunk($rows, $chunkSize) as $chunk) {
-            DB::table($table)->insert($chunk);
+            $columns = [];
+            foreach ($chunk as $row) {
+                foreach (array_keys($row) as $key) {
+                    $columns[$key] = true;
+                }
+            }
+            $columnKeys = array_keys($columns);
+            $normalized = array_map(static function (array $row) use ($columnKeys) {
+                $out = [];
+                foreach ($columnKeys as $key) {
+                    $out[$key] = array_key_exists($key, $row) ? $row[$key] : 0;
+                }
+
+                return $out;
+            }, $chunk);
+            DB::table($table)->insert($normalized);
         }
     }
 

@@ -85,12 +85,27 @@ interface PortraitData {
 
 interface TimelineEntry {
     id: number;
-    date?: string;
+    // `date` is stored as a YYYYMMDD integer column; `created_at` is an ISO string.
+    date?: string | number;
     risk_num?: number;
     old_risk_num?: number;
     risk_grade?: string;
     type?: string;
     created_at?: string;
+}
+
+// Normalize either source (`date` int or `created_at` ISO) to a YYYY-MM-DD prefix.
+function entryDateString(e: TimelineEntry): string {
+    const d = e.date ?? e.created_at ?? '';
+    if (!d) {
+        return '';
+    }
+    const s = String(d);
+    if (/^\d{8}$/.test(s)) {
+        return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+    }
+
+    return s.slice(0, 10);
 }
 
 // ── Grade config ───────────────────────────────────────────────────
@@ -181,9 +196,103 @@ function GradeBadge({ grade }: { grade?: string }) {
 
 // ── Dimension computation ──────────────────────────────────────────
 
-function sum(log: Record<string, unknown>, keys: string[]): number {
-    return keys.reduce((acc, k) => acc + (Number(log[k]) || 0), 0);
-}
+// Each dimension is the sum of a subset of *_scale fields stored on
+// inherent/float risk logs. Fields are raw weighted scores from the trait —
+// per-field max equals its weight constant (mostly 0.001–0.16). To make
+// dimensions comparable on a single radar, we score each as a % of its own
+// "full marks" — the sum of the weight constants for the fields it contains.
+// (Source-of-truth weights live in App\Traits\CalculateRiskValue::*_WEIGHTS.)
+type Dim = { label: string; source: 'i' | 'f'; fields: [string, number][] };
+
+const DIMENSIONS: Dim[] = [
+    {
+        label: '基础管理',
+        source: 'i',
+        fields: [
+            ['safety_architecture_value', 0.02496],
+            ['production_standardization_scale', 0.002665],
+            ['health_system_scale', 0.002665],
+            ['assess_detect_scale', 0.00533],
+            ['funding_execution_scale', 0.007345],
+        ],
+    },
+    {
+        label: '人员构成',
+        source: 'i',
+        fields: [
+            ['security_officer_scale', 0.007345],
+            ['already_obtain_people_scale', 0.007345],
+            ['high_school_diploma_scale', 0.014235],
+            ['staff_scale', 0.007865],
+            ['safety_engineering_major_scale', 0.035035],
+            ['last_year_income_scale', 0.007345],
+            ['acreage_scale', 0.007865],
+        ],
+    },
+    {
+        label: '工艺风险',
+        source: 'i',
+        fields: [
+            ['hazardous_processes_scale', 0.14775],
+            ['hazardous_process_scale', 0.04925],
+            ['hazardous_process_more_scale', 0.14775],
+            ['process_is_automatic_scale', 0.04925],
+        ],
+    },
+    {
+        label: '设备风险',
+        source: 'i',
+        fields: [
+            ['special_equipment_number_scale', 0.119],
+            ['equipment_more_number_scale', 0.119],
+        ],
+    },
+    {
+        label: '物料风险',
+        source: 'i',
+        fields: [
+            ['hazardous_chemical_scale', 0.158746],
+            ['hazardous_chemicals_number_scale', 0.0594405],
+            ['major_hazard_scale', 0.0198135],
+        ],
+    },
+    {
+        label: '会议培训',
+        source: 'f',
+        fields: [
+            ['internal_meeting_scale', 0.031635],
+            ['internal_training_scale', 0.063365],
+        ],
+    },
+    {
+        label: '应急管理',
+        source: 'f',
+        fields: [
+            ['emergency_team_scale', 0.0441225],
+            ['emergency_drill_scale', 0.0441225],
+            ['accident_bulletin_scale', 0.10075035],
+            ['accident_bulletin_severe_scale', 0.058859415],
+        ],
+    },
+    {
+        label: '风险管理',
+        source: 'f',
+        fields: [
+            ['monthly_investigation_scale', 0.083752],
+            ['three_together_over_scale', 0.048488],
+            ['job_management_scale', 0.228114],
+        ],
+    },
+    {
+        label: '职业健康',
+        source: 'f',
+        fields: [
+            ['health_checkup_scale', 0.022962],
+            ['health_checkup_people_scale', 0.009345],
+            ['health_report_scale', 0.056693],
+        ],
+    },
+];
 
 function computeDimensions(
     inherent?: InherentLog,
@@ -192,72 +301,22 @@ function computeDimensions(
     const i = (inherent ?? {}) as Record<string, unknown>;
     const f = (float_ ?? {}) as Record<string, unknown>;
 
-    return [
-        sum(i, [
-            'safety_architecture_value',
-            'production_standardization_scale',
-            'health_system_scale',
-            'assess_detect_scale',
-            'funding_execution_scale',
-        ]),
-        sum(i, [
-            'security_officer_scale',
-            'already_obtain_people_scale',
-            'high_school_diploma_scale',
-            'staff_scale',
-            'safety_engineering_major_scale',
-            'last_year_income_scale',
-            'acreage_scale',
-        ]),
-        sum(i, [
-            'hazardous_processes_scale',
-            'hazardous_process_scale',
-            'hazardous_process_more_scale',
-            'process_is_automatic_scale',
-        ]),
-        sum(i, [
-            'special_equipment_number_scale',
-            'equipment_more_number_scale',
-        ]),
-        sum(i, [
-            'hazardous_chemical_scale',
-            'hazardous_chemicals_number_scale',
-            'major_hazard_scale',
-        ]),
-        sum(f, ['internal_meeting_scale', 'internal_training_scale']),
-        sum(f, [
-            'emergency_team_scale',
-            'emergency_drill_scale',
-            'accident_bulletin_scale',
-            'accident_bulletin_severe_scale',
-        ]),
-        sum(f, [
-            'risk_source_scale',
-            'monthly_investigation_scale',
-            'three_together_over_scale',
-            'job_management_scale',
-        ]),
-        sum(f, [
-            'health_checkup_scale',
-            'health_checkup_people_scale',
-            'health_report_scale',
-        ]),
-    ];
+    return DIMENSIONS.map((d) => {
+        const log = d.source === 'i' ? i : f;
+        let raw = 0;
+        let max = 0;
+        for (const [key, weight] of d.fields) {
+            raw += Number(log[key]) || 0;
+            max += weight;
+        }
+
+        return max > 0 ? (raw / max) * 100 : 0;
+    });
 }
 
-const RADAR_LABELS = [
-    '基础管理',
-    '人员构成',
-    '工艺风险',
-    '设备风险',
-    '物料风险',
-    '会议培训',
-    '应急管理',
-    '风险管理',
-    '职业健康',
-];
-const FALLBACK_VALUES = [2.8, 6.49, 0, 0, 1.6, 0, 5.89, 0, 5.67];
-const RADAR_MAX = 10;
+const RADAR_LABELS = DIMENSIONS.map((d) => d.label);
+const FALLBACK_VALUES = [28, 65, 0, 0, 16, 0, 59, 0, 57];
+const RADAR_MAX = 100;
 
 // ── Radar Chart ────────────────────────────────────────────────────
 
@@ -432,12 +491,9 @@ function LineChart({ data }: { data: TimelineEntry[] }) {
         );
     }
 
-    const sorted = [...data].sort((a, b) => {
-        const da = a.date ?? a.created_at ?? '';
-        const db = b.date ?? b.created_at ?? '';
-
-        return da.localeCompare(db);
-    });
+    const sorted = [...data].sort((a, b) =>
+        entryDateString(a).localeCompare(entryDateString(b)),
+    );
 
     const values = sorted.map((e) => Number(e.risk_num) || 0);
     const maxVal = Math.max(...values, 1);
@@ -473,17 +529,8 @@ function LineChart({ data }: { data: TimelineEntry[] }) {
         y: padT + chartH - t * chartH,
     }));
 
-    const formatDate = (entry: TimelineEntry) => {
-        const d = entry.date ?? entry.created_at ?? '';
-
-        if (!d) {
-            return '';
-        }
-
-        const dateStr = d.slice(0, 10);
-
-        return dateStr.slice(5); // MM-DD
-    };
+    const formatDate = (entry: TimelineEntry) =>
+        entryDateString(entry).slice(5); // MM-DD
 
     const tickStep = Math.max(1, Math.floor(n / 6));
 
@@ -895,11 +942,7 @@ export default function RiskWarningIndex() {
                                                     className="flex items-center gap-3 border-b border-blue-900/20 px-4 py-2.5 transition-colors last:border-b-0 hover:bg-blue-600/5"
                                                 >
                                                     <span className="w-24 shrink-0 font-mono text-[11px] text-slate-500">
-                                                        {(
-                                                            entry.date ??
-                                                            entry.created_at ??
-                                                            ''
-                                                        ).slice(0, 10)}
+                                                        {entryDateString(entry)}
                                                     </span>
                                                     <div className="flex items-center gap-2">
                                                         <GradeBadge

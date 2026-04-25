@@ -45,10 +45,11 @@ describe('CalculateRiskValue trait via risk:calculate command', function () {
         expect($logs[0]->risk_grade)->toBe('红');
 
         // Float: `accident_bulletin_severe_scale = 0.058859415` (default match arm) +
-        // `risk_source_scale = 0`, risk_num = round(0.058859415 * 100, 2) = 5.89
-        expect((float) $logs[1]->risk_num)->toBe(5.89);
+        // `health_report_scale = 0.056693` (no health report on file → award full credit) +
+        // `risk_source_scale = 0`, risk_num = round((0.058859415 + 0.056693) * 100, 2) = 11.56
+        expect((float) $logs[1]->risk_num)->toBe(11.56);
         expect($logs[1]->type)->toBe(2);
-        expect($logs[1]->risk_grade)->toBe('橙');
+        expect($logs[1]->risk_grade)->toBe('黄');
 
         // ── inherent_risk_logs: 1 row, only major_hazard_scale set ───────────
         $inherent = InherentRiskLog::where('company_id', $company->id)->get();
@@ -64,9 +65,9 @@ describe('CalculateRiskValue trait via risk:calculate command', function () {
         // ── Company columns updated in place ─────────────────────────────────
         $company->refresh();
         expect((float) $company->inherent_risk)->toBe(1.98);
-        expect((float) $company->float_risk)->toBe(5.89);
+        expect((float) $company->float_risk)->toBe(11.56);
         expect($company->inherent_risk_grade)->toBe('红');
-        expect($company->float_risk_grade)->toBe('橙');
+        expect($company->float_risk_grade)->toBe('黄');
     });
 
     it('skips companies that are not produce companies', function () {
@@ -132,10 +133,10 @@ describe('CalculateRiskValue trait via risk:calculate command', function () {
         (new CalculateCompanyRisk)->countRisk('bloc-test');
 
         $bloc->refresh();
-        // Phase 4 averages the 2 subs (subs themselves are recomputed to ~1.98/5.89 in Phase 2/3 first).
-        // After Phase 2/3 reset their risk to 1.98 / 5.89 (empty data), Phase 4 averages 1.98/5.89 → bloc gets 1.98/5.89.
+        // Phase 2/3 reset both subs to 1.98 / 11.56 (empty data + health_report=0 awards full credit).
+        // Phase 4 averages bloc's direct children (the 2 subs) → bloc gets 1.98 / 11.56.
         expect((float) $bloc->inherent_risk)->toBe(1.98);
-        expect((float) $bloc->float_risk)->toBe(5.89);
+        expect((float) $bloc->float_risk)->toBe(11.56);
 
         // Bloc gets 2 risk_logs (type 1 + type 2)
         $blocLogs = RiskLog::where('company_id', $bloc->id)->where('content', 'bloc-test')->get();
