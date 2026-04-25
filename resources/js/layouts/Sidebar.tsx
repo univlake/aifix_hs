@@ -1339,8 +1339,8 @@ export function Sidebar({ open }: SidebarProps) {
         <aside className="hidden h-screen w-56 shrink-0 flex-col border-r border-blue-900/30 bg-[#060c1a] md:flex">
             {/* Logo */}
             <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-blue-900/30 px-4">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-blue-500/30 bg-blue-600/20">
-                    <Shield className="h-4 w-4 text-blue-400" />
+                <div className="brand-mark flex h-7 w-7 items-center justify-center rounded-lg">
+                    <Shield className="h-4 w-4 text-white" />
                 </div>
                 <Link
                     href="/dashboard"

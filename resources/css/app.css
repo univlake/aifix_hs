@@ -55,14 +55,15 @@
  *      the surface got lighter; net result = higher perceived contrast,
  *      lower eye fatigue (WCAG contrast stays ≥ 7:1 for body text)
  *
- *  LIGHT (re-tuned 2026-04-24 — "neutral body + solid intents")
- *    · body/borders/tables de-tinted to neutral gray (was blue-tinted)
- *      so UI doesn't feel "hazy blue" everywhere
- *    · cards/sidebar stay white with subtle shadow for elevation
- *    · text hierarchy kept: body slate-900, muted slate-500
- *    · primary intent buttons use SOLID fill + white text (not 20%
- *      transparent tints) so contrast is ≥ 7:1 and affordance clear
- *    · badges/pills (/5-/15 alphas) stay as soft tints for hierarchy
+ *  LIGHT (re-tuned 2026-04-25 — "warm-neutral + calm indigo + emerald")
+ *    · warm-neutral background (#f4f5f9) with pure white surfaces; cards
+ *      float on a soft body so elevation reads clearly
+ *    · calm indigo (#4f63d2) is the only accent; emerald (#1f9d7a)
+ *      appears only on positive/system-OK status moments
+ *    · indigo soft fill (#eef0fb) for chips, active nav, hover bg
+ *    · text hierarchy: near-black #1b2034, muted #6b7185, faint #a0a5b5
+ *    · borders: soft #ecedf2, stronger #dadde6
+ *    · solid intent buttons keep ≥ 7:1 contrast with white text
  * ═════════════════════════════════════════════════════════════════
  */
 
@@ -125,60 +126,60 @@
     color-scheme: dark;
 }
 
-/* LIGHT — neutral body + solid intent buttons */
+/* LIGHT — warm-neutral surfaces + calm indigo accent + emerald positive */
 html.light {
-    --background: 220 9% 95%;
-    --foreground: 222 47% 11%;
+    --background: 228 29% 97%; /* #f4f5f9 */
+    --foreground: 228 32% 16%; /* #1b2034 */
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 228 32% 16%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 48%;
+    --popover-foreground: 228 32% 16%;
+    --primary: 231 59% 57%; /* #4f63d2 — calm indigo */
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 13% 91%;
-    --secondary-foreground: 215 25% 27%;
-    --muted: 220 13% 91%;
-    --muted-foreground: 220 9% 45%;
-    --accent: 220 13% 91%;
-    --accent-foreground: 215 25% 27%;
-    --destructive: 0 84% 50%;
+    --secondary: 230 18% 93%; /* soft warm gray */
+    --secondary-foreground: 228 32% 16%;
+    --muted: 230 18% 93%;
+    --muted-foreground: 226 11% 47%; /* #6b7185 */
+    --accent: 231 62% 96%; /* #eef0fb — indigo soft (active/hover) */
+    --accent-foreground: 231 59% 57%; /* #4f63d2 */
+    --destructive: 358 62% 55%; /* #d3464a */
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 86%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 48%;
+    --border: 225 19% 88%; /* #dadde6 */
+    --input: 230 18% 93%;
+    --ring: 231 59% 57%;
 
-    /* Surface tokens — neutral gray body, white cards float */
-    --surface-base: #f1f3f5; /* neutral gray-100 (de-tinted) */
+    /* Surface tokens — warm-neutral body, white surfaces float */
+    --surface-base: #f4f5f9; /* warm neutral */
     --surface-sidebar: #ffffff;
     --surface-card: #ffffff;
-    --surface-input: #f8fafc; /* brighter than body */
-    --surface-input-2: #e5e7eb; /* gray-200 */
-    --surface-muted: #e5e7eb;
-    --text-base: #0f172a; /* slate-900 */
-    --text-secondary: #334155; /* slate-700 */
-    --text-muted: #64748b; /* slate-500 */
-    --border-subtle: rgba(156, 163, 175, 0.32); /* gray-400 */
+    --surface-input: #ffffff; /* white inputs read crisp on warm bg */
+    --surface-input-2: #ecedf2; /* soft border tone */
+    --surface-muted: #ecedf2;
+    --text-base: #1b2034; /* near-black */
+    --text-secondary: #6b7185; /* muted */
+    --text-muted: #a0a5b5; /* faint */
+    --border-subtle: rgba(218, 221, 230, 0.6); /* #dadde6 @ 60% */
 
-    /* Intent tokens — solid saturated colors for clear affordance */
-    --intent-primary: #2563eb; /* blue-600 */
-    --intent-primary-soft: rgba(37, 99, 235, 0.1);
-    --intent-primary-border: rgba(37, 99, 235, 0.25);
-    --intent-primary-text: #1d4ed8; /* blue-700 */
+    /* Intent tokens — single confident indigo + emerald for "OK" only */
+    --intent-primary: #4f63d2; /* calm indigo */
+    --intent-primary-soft: #eef0fb; /* indigo soft fill */
+    --intent-primary-border: rgba(79, 99, 210, 0.25);
+    --intent-primary-text: #4f63d2;
 
-    --intent-success: #059669; /* emerald-600 */
-    --intent-success-soft: rgba(5, 150, 105, 0.1);
-    --intent-success-border: rgba(5, 150, 105, 0.25);
-    --intent-success-text: #047857; /* emerald-700 */
+    --intent-success: #1f9d7a; /* emerald — system OK / positive */
+    --intent-success-soft: #e6f4ec;
+    --intent-success-border: rgba(31, 157, 122, 0.25);
+    --intent-success-text: #1f8a66;
 
-    --intent-warning: #d97706; /* amber-600 */
-    --intent-warning-soft: rgba(217, 119, 6, 0.1);
-    --intent-warning-border: rgba(217, 119, 6, 0.3);
-    --intent-warning-text: #b45309; /* amber-700 */
+    --intent-warning: #e0922b;
+    --intent-warning-soft: #fbf1e3;
+    --intent-warning-border: rgba(224, 146, 43, 0.3);
+    --intent-warning-text: #b07512;
 
-    --intent-danger: #dc2626; /* red-600 */
-    --intent-danger-soft: rgba(220, 38, 38, 0.08);
-    --intent-danger-border: rgba(220, 38, 38, 0.25);
-    --intent-danger-text: #b91c1c; /* red-700 */
+    --intent-danger: #d3464a;
+    --intent-danger-soft: #f9e6e7;
+    --intent-danger-border: rgba(211, 70, 74, 0.25);
+    --intent-danger-text: #c43a3e;
 
     color-scheme: light;
 }
@@ -201,7 +202,7 @@ input[type='datetime-local'] {
     opacity: 1;
 }
 html.light ::placeholder {
-    color: #9ca3af;
+    color: #a0a5b5; /* faint */
     opacity: 1;
 }
 
@@ -239,166 +240,169 @@ html.light ::placeholder {
 /* ── Light mode: surface elevation — subtle shadows ───────────── */
 html.light .bg-\[\#0d1530\] {
     box-shadow:
-        0 1px 2px rgba(15, 23, 42, 0.05),
-        0 1px 3px rgba(15, 23, 42, 0.07);
+        0 1px 2px rgba(27, 32, 52, 0.05),
+        0 1px 3px rgba(27, 32, 52, 0.07);
 }
 html.light .bg-\[\#060c1a\] {
-    box-shadow: 1px 0 5px rgba(15, 23, 42, 0.06);
+    box-shadow: 1px 0 5px rgba(27, 32, 52, 0.06);
 }
 
-/* ── Light mode: text — cool slate hierarchy ──────────────────── */
+/* ── Light mode: text — warm-neutral hierarchy ────────────────── */
 html.light .text-slate-100 {
-    color: #0f172a !important;
+    color: #1b2034 !important; /* near-black */
 }
 html.light .text-slate-200 {
-    color: #1b2a3a !important;
+    color: #2a304a !important;
 }
 html.light .text-slate-300 {
-    color: #31465d !important;
+    color: #4a5070 !important;
 }
 html.light .text-slate-400 {
-    color: #50657d !important;
+    color: #6b7185 !important; /* muted */
 }
 html.light .text-slate-500 {
-    color: #688099 !important;
+    color: #8a90a5 !important;
 }
 html.light .text-slate-600 {
-    color: #50657d !important;
+    color: #6b7185 !important;
 }
 html.light .text-slate-700 {
-    color: #31465d !important;
+    color: #4a5070 !important;
 }
 
-/* Blue accent text — saturate + darken for light backgrounds */
-html.light .text-blue-300 {
-    color: var(--intent-primary-text) !important;
-}
+/* Accent text — categorical foreground colors from soft-fill palette */
+html.light .text-blue-300,
 html.light .text-blue-400 {
-    color: var(--intent-primary) !important;
+    color: var(--intent-primary) !important; /* #4f63d2 */
 }
 html.light .text-emerald-300,
 html.light .text-emerald-400 {
-    color: var(--intent-success-text) !important;
+    color: var(--intent-success-text) !important; /* #1f8a66 */
 }
 html.light .text-amber-300,
 html.light .text-amber-400 {
-    color: var(--intent-warning-text) !important;
+    color: var(--intent-warning-text) !important; /* #b07512 */
 }
 html.light .text-red-300,
 html.light .text-red-400 {
-    color: var(--intent-danger-text) !important;
+    color: var(--intent-danger-text) !important; /* #c43a3e */
 }
 html.light .text-violet-300,
 html.light .text-violet-400 {
-    color: #6d28d9 !important;
+    color: #5e4dc2 !important;
 }
 html.light .text-orange-300,
 html.light .text-orange-400 {
-    color: #c2410c !important;
+    color: #b07512 !important;
 }
 
-/* ── Light mode: badges/pills (low alpha → soft tints) ─────────── */
+/* ── Light mode: badges/pills (low alpha → categorical soft-fills) ─ */
 html.light .bg-blue-600\/5 {
-    background-color: rgba(37, 99, 235, 0.06) !important;
+    background-color: rgba(79, 99, 210, 0.05) !important;
 }
 html.light .bg-blue-600\/8 {
-    background-color: rgba(37, 99, 235, 0.08) !important;
+    background-color: rgba(79, 99, 210, 0.08) !important;
 }
 html.light .bg-blue-600\/10 {
-    background-color: rgba(37, 99, 235, 0.1) !important;
+    background-color: #eef0fb !important; /* indigo soft */
 }
 html.light .bg-blue-600\/15 {
-    background-color: rgba(37, 99, 235, 0.12) !important;
+    background-color: rgba(79, 99, 210, 0.14) !important;
 }
 
 html.light .bg-emerald-600\/8,
 html.light .bg-emerald-600\/10 {
-    background-color: rgba(5, 150, 105, 0.1) !important;
+    background-color: #e6f4ec !important; /* emerald soft */
 }
 html.light .bg-emerald-600\/15 {
-    background-color: rgba(5, 150, 105, 0.13) !important;
+    background-color: rgba(31, 138, 102, 0.16) !important;
 }
 
 html.light .bg-amber-600\/10 {
-    background-color: rgba(217, 119, 6, 0.1) !important;
+    background-color: #fbf1e3 !important; /* amber soft */
 }
 html.light .bg-amber-600\/15 {
-    background-color: rgba(217, 119, 6, 0.14) !important;
+    background-color: rgba(176, 117, 18, 0.14) !important;
 }
 
 html.light .bg-red-600\/8,
 html.light .bg-red-600\/10 {
-    background-color: rgba(220, 38, 38, 0.09) !important;
+    background-color: #f9e6e7 !important; /* red soft */
 }
 html.light .bg-red-600\/15 {
-    background-color: rgba(220, 38, 38, 0.13) !important;
+    background-color: rgba(196, 58, 62, 0.14) !important;
 }
 
 html.light .bg-violet-600\/10,
 html.light .bg-violet-600\/15 {
-    background-color: rgba(109, 40, 217, 0.12) !important;
+    background-color: #efebfa !important; /* violet soft */
 }
 
 html.light .bg-orange-600\/10 {
-    background-color: rgba(194, 65, 12, 0.1) !important;
+    background-color: #fbf1e3 !important; /* amber-toned */
+}
+
+html.light .bg-sky-600\/10,
+html.light .bg-sky-600\/15 {
+    background-color: #e8f0fa !important; /* sky soft */
 }
 
 /* ── Light mode: primary buttons (/20+ → solid fill + white text) ─ */
 html.light .bg-blue-600\/20 {
-    background-color: #2563eb !important; /* blue-600 solid */
+    background-color: #4f63d2 !important; /* indigo */
     color: #ffffff !important;
 }
 html.light .bg-blue-600\/25,
 html.light .bg-blue-600\/30 {
-    background-color: #1d4ed8 !important; /* blue-700 (stronger) */
+    background-color: #4456c4 !important; /* darker indigo */
     color: #ffffff !important;
 }
 html.light .hover\:bg-blue-600\/25:hover,
 html.light .hover\:bg-blue-600\/30:hover {
-    background-color: #1e40af !important; /* blue-800 on hover */
+    background-color: #3a4baa !important; /* deepest indigo on hover */
     color: #ffffff !important;
 }
 
 html.light .bg-emerald-600\/20 {
-    background-color: #059669 !important; /* emerald-600 */
+    background-color: #1f9d7a !important; /* emerald */
     color: #ffffff !important;
 }
 html.light .bg-emerald-600\/25,
 html.light .bg-emerald-600\/30 {
-    background-color: #047857 !important; /* emerald-700 */
+    background-color: #1a8669 !important;
     color: #ffffff !important;
 }
 html.light .hover\:bg-emerald-600\/25:hover,
 html.light .hover\:bg-emerald-600\/30:hover {
-    background-color: #065f46 !important;
+    background-color: #167258 !important;
     color: #ffffff !important;
 }
 
 html.light .bg-amber-600\/20,
 html.light .bg-amber-600\/25 {
-    background-color: #d97706 !important; /* amber-600 */
+    background-color: #e0922b !important;
     color: #ffffff !important;
 }
 html.light .bg-amber-600\/30 {
-    background-color: #b45309 !important; /* amber-700 */
+    background-color: #c47a1f !important;
     color: #ffffff !important;
 }
 html.light .hover\:bg-amber-600\/30:hover {
-    background-color: #92400e !important;
+    background-color: #a36514 !important;
     color: #ffffff !important;
 }
 
 html.light .bg-red-600\/20,
 html.light .bg-red-600\/25 {
-    background-color: #dc2626 !important; /* red-600 */
+    background-color: #d3464a !important;
     color: #ffffff !important;
 }
 html.light .bg-red-600\/30 {
-    background-color: #b91c1c !important; /* red-700 */
+    background-color: #b03a3e !important;
     color: #ffffff !important;
 }
 html.light .hover\:bg-red-600\/30:hover {
-    background-color: #991b1b !important;
+    background-color: #952f33 !important;
     color: #ffffff !important;
 }
 
@@ -421,56 +425,56 @@ html.light .border-red-500\/40 {
     border-color: var(--intent-danger-border) !important;
 }
 
-/* ── Light mode: borders → neutral gray palette ──────────────── */
+/* ── Light mode: borders → soft #ecedf2 → stronger #dadde6 → deeper ─ */
 html.light .border-blue-900\/10 {
-    border-color: rgba(156, 163, 175, 0.22) !important;
+    border-color: #ecedf2 !important; /* soft */
 }
 html.light .border-blue-900\/15 {
-    border-color: rgba(148, 156, 168, 0.26) !important;
+    border-color: rgba(218, 221, 230, 0.7) !important;
 }
 html.light .border-blue-900\/20 {
-    border-color: rgba(140, 148, 160, 0.3) !important;
+    border-color: #dadde6 !important; /* stronger */
 }
 html.light .border-blue-900\/30 {
-    border-color: rgba(120, 128, 140, 0.38) !important;
+    border-color: rgba(160, 165, 181, 0.55) !important;
 }
 html.light .border-blue-900\/40 {
-    border-color: rgba(90, 98, 110, 0.32) !important;
+    border-color: rgba(130, 136, 154, 0.5) !important;
 }
 html.light .border-blue-900\/50 {
-    border-color: rgba(70, 78, 90, 0.38) !important;
+    border-color: rgba(107, 113, 133, 0.5) !important;
 }
 
-/* ── Light mode: table — neutral gray with clear zebra ─────────── */
+/* ── Light mode: table — warm-neutral with subtle indigo hover ──── */
 html.light thead tr {
-    background-color: #e5e7eb !important;
-    border-bottom-color: #d1d5db !important;
+    background-color: #ecedf2 !important; /* soft */
+    border-bottom-color: #dadde6 !important;
 }
 html.light thead th {
-    color: #374151 !important; /* gray-700 */
+    color: #4a5070 !important;
 }
 html.light tbody tr {
-    border-bottom-color: rgba(156, 163, 175, 0.32) !important;
+    border-bottom-color: rgba(218, 221, 230, 0.7) !important;
 }
 html.light tbody tr:nth-child(even) {
-    background-color: rgba(229, 231, 235, 0.5);
+    background-color: rgba(236, 237, 242, 0.5);
 }
 html.light tbody tr:hover {
-    background-color: rgba(107, 114, 128, 0.08) !important;
+    background-color: #eef0fb !important; /* indigo soft */
 }
 html.light tbody td {
-    color: #1f2937; /* gray-800 */
+    color: #1b2034;
 }
 
 /* ── Light mode: scrollbar — neutral gray ──────────────────────── */
 html.light ::-webkit-scrollbar-track {
-    background: #e5e7eb;
+    background: #ecedf2;
 }
 html.light ::-webkit-scrollbar-thumb {
-    background: #9ca3af;
+    background: #a0a5b5;
 }
 html.light ::-webkit-scrollbar-thumb:hover {
-    background: #6b7280;
+    background: #6b7185;
 }
 
 /* Scrollbar — theme-aware via CSS tokens */
@@ -488,9 +492,9 @@ html.light ::-webkit-scrollbar-thumb:hover {
     background: var(--intent-primary);
 }
 
-/* Modal overlay — neutral gray in light mode */
+/* Modal overlay — near-black tint in light mode */
 html.light .bg-black\/60 {
-    background-color: rgba(31, 41, 55, 0.4) !important; /* gray-800 @ 40% */
+    background-color: rgba(27, 32, 52, 0.4) !important; /* #1b2034 @ 40% */
 }
 
 /* Focus ring — theme-aware */
@@ -528,6 +532,19 @@ html.light a:not([class*='text-']) {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+/* Light mode: brand gradient — indigo → emerald (135°) */
+html.light .gradient-text {
+    background: linear-gradient(135deg, #4f63d2, #1f9d7a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Brand mark — 135° indigo→emerald gradient tile (same in both modes) */
+.brand-mark {
+    background: linear-gradient(135deg, #4f63d2, #1f9d7a);
 }
 
 /* Glassmorphism card */
